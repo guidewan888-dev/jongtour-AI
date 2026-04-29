@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { login, signup, signInWithGoogle, signInWithLine } from "./actions";
+import { login, signup } from "./actions";
 import SocialLoginButtons from "@/components/SocialLoginButtons";
 
 export default function LoginPage({ searchParams }: { searchParams: { message: string, error: string } }) {
