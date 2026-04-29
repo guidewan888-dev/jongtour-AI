@@ -14,9 +14,12 @@ export async function GET(request: Request) {
     const { error } = await supabase.auth.exchangeCodeForSession(code)
     if (!error) {
       return NextResponse.redirect(`${origin}${next}`)
+    } else {
+      // Add error message to URL for debugging
+      return NextResponse.redirect(`${origin}/login?error=${encodeURIComponent(error.message || 'Could not authenticate user')}`)
     }
   }
 
   // return the user to an error page with instructions
-  return NextResponse.redirect(`${origin}/login?error=Could not authenticate user`)
+  return NextResponse.redirect(`${origin}/login?error=No+code+provided`)
 }
