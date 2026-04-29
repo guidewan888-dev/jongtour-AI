@@ -4,7 +4,7 @@ import AiSearchBar from "@/components/AiSearchBar";
 import { createClient } from "@/utils/supabase/server";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import UserMenu from "@/components/UserMenu";
+import AuthButtons from "@/components/AuthButtons";
 
 export const dynamic = "force-dynamic";
 
@@ -23,14 +23,7 @@ export default async function Home() {
           <span className="text-xs bg-gray-100 text-gray-500 px-2 py-1 rounded-full">v2.1</span>
         </div>
         <div className="flex gap-4 items-center">
-          {user ? (
-            <UserMenu user={user} />
-          ) : (
-            <>
-              <Link href="/login" className="hidden md:flex px-4 py-2 text-gray-600 hover:text-blue-600 font-medium items-center">เข้าสู่ระบบ</Link>
-              <Link href="/login" className="px-5 py-2.5 bg-white border border-blue-600 text-blue-600 rounded-lg font-medium hover:bg-blue-50 transition-colors shadow-sm flex items-center">สร้างบัญชีผู้ใช้</Link>
-            </>
-          )}
+          <AuthButtons serverUser={user} />
         </div>
       </nav>
 

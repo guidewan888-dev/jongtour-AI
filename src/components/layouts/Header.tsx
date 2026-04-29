@@ -5,26 +5,10 @@ import { usePathname } from "next/navigation";
 import { ChevronDown } from "lucide-react";
 import { useEffect, useState } from "react";
 import { createClient } from "@/utils/supabase/client";
-import UserMenu from "@/components/UserMenu";
+import AuthButtons from "@/components/AuthButtons";
 
 export default function Header() {
   const pathname = usePathname();
-  const [user, setUser] = useState<any>(null);
-  const supabase = createClient();
-
-  useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      setUser(user);
-    });
-
-    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
-      setUser(session?.user ?? null);
-    });
-
-    return () => {
-      authListener.subscription.unsubscribe();
-    };
-  }, []);
 
   if (pathname === "/" || pathname.startsWith("/admin")) {
     return null;
@@ -185,14 +169,7 @@ export default function Header() {
         </div>
 
         <div className="flex gap-4 items-center">
-          {user ? (
-            <UserMenu user={user} />
-          ) : (
-            <>
-              <Link href="/login" className="hidden md:flex px-4 py-2 text-gray-600 hover:text-blue-600 font-medium items-center">เข้าสู่ระบบ</Link>
-              <Link href="/login" className="px-5 py-2.5 bg-white border border-blue-600 text-blue-600 rounded-lg font-medium hover:bg-blue-50 transition-colors shadow-sm flex items-center">สร้างบัญชีผู้ใช้</Link>
-            </>
-          )}
+          <AuthButtons />
         </div>
       </div>
     </nav>
