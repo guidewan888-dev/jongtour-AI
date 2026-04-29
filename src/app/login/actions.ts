@@ -67,7 +67,7 @@ export async function signInWithLine() {
   const origin = (await headers()).get('origin') || 'http://localhost:3000';
   
   const { data, error } = await supabase.auth.signInWithOAuth({
-    provider: 'line',
+    provider: 'line' as any,
     options: {
       redirectTo: `${origin}/auth/callback`,
     },
