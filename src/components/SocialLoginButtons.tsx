@@ -14,15 +14,8 @@ export default function SocialLoginButtons() {
     });
   };
 
-  const handleLineLogin = async () => {
-    const supabase = createClient();
-    const origin = window.location.origin;
-    await supabase.auth.signInWithOAuth({
-      provider: 'custom:line' as any,
-      options: {
-        redirectTo: `${origin}/auth/callback`,
-      },
-    });
+  const handleLineLogin = () => {
+    window.location.href = '/api/auth/line';
   };
 
   return (
