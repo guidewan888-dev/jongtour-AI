@@ -20,7 +20,7 @@ export default async function Home() {
       <nav className="absolute top-0 left-0 w-full p-6 flex justify-between items-center max-w-7xl mx-auto right-0">
         <div className="text-2xl md:text-3xl font-bold tracking-tight text-gray-800 flex items-center gap-2">
           <span><span className="text-orange-500">Jong</span>tour AI</span>
-          <span className="text-xs bg-gray-100 text-gray-500 px-2 py-1 rounded-full">v2.0</span>
+          <span className="text-xs bg-gray-100 text-gray-500 px-2 py-1 rounded-full">v2.1</span>
         </div>
         <div className="flex gap-4 items-center">
           {user ? (

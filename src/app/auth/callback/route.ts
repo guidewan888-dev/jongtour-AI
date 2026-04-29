@@ -12,8 +12,21 @@ export async function GET(request: Request) {
     const cookieStore = await cookies()
     const supabase = createClient(cookieStore)
     const { error } = await supabase.auth.exchangeCodeForSession(code)
+    
     if (!error) {
-      return NextResponse.redirect(`${origin}${next}`)
+      const response = NextResponse.redirect(`${origin}${next}`)
+      // Force copy all cookies to the response object to bypass Vercel edge issues
+      cookieStore.getAll().forEach((cookie) => {
+        response.cookies.set(cookie.name, cookie.value, {
+          domain: cookie.domain,
+          path: cookie.path,
+          secure: cookie.secure,
+          httpOnly: cookie.httpOnly,
+          sameSite: cookie.sameSite as any,
+          expires: cookie.expires,
+        })
+      })
+      return response
     } else {
       // Add error message to URL for debugging
       return NextResponse.redirect(`${origin}/login?error=${encodeURIComponent(error.message || 'Could not authenticate user')}`)
