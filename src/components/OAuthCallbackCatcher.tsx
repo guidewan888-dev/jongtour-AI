@@ -22,7 +22,6 @@ export default function OAuthCallbackCatcher() {
       return;
     }
     
-    // If there's a code in the URL, it means Supabase redirected here (PKCE flow)
     // ONLY run this if we are NOT on the official callback page, to avoid conflicts
     if (code && !exchangeAttempted.current && window.location.pathname !== '/auth/callback') {
       exchangeAttempted.current = true;
@@ -33,6 +32,14 @@ export default function OAuthCallbackCatcher() {
           setTimeout(() => {
             window.location.reload();
           }, 500);
+        } else {
+          // If error is "Unable to exchange external code", check if session actually succeeded in background
+          supabase.auth.getSession().then(({ data }) => {
+            if (data.session) {
+               window.history.replaceState({}, document.title, window.location.pathname);
+               window.location.reload();
+            }
+          });
         }
       });
     }

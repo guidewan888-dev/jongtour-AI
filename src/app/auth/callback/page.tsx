@@ -27,7 +27,15 @@ function AuthCallbackContent() {
       // PKCE Flow
       supabase.auth.exchangeCodeForSession(code).then(({ error }) => {
         if (error) {
-          window.location.href = '/login?error=' + encodeURIComponent(error.message);
+          // Sometimes React Strict Mode or automatic SDK exchange causes "Unable to exchange external code".
+          // If this happens, check if the session was ALREADY successfully established!
+          supabase.auth.getSession().then(({ data }) => {
+            if (!data.session) {
+              window.location.href = '/login?error=' + encodeURIComponent(error.message);
+            } else {
+              window.location.href = next;
+            }
+          });
         }
         // If no error, do NOT redirect yet! Let onAuthStateChange handle it to ensure cookies are written!
       });
