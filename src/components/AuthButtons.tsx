@@ -8,7 +8,7 @@ import UserMenu from "./UserMenu";
 export default function AuthButtons({ serverUser }: { serverUser?: any }) {
   const [user, setUser] = useState<any>(serverUser);
   const [loading, setLoading] = useState(!serverUser);
-  const supabase = createClient();
+  const [supabase] = useState(() => createClient());
 
   useEffect(() => {
     if (!serverUser) {
