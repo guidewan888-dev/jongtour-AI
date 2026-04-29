@@ -12,6 +12,14 @@ function AuthCallbackContent() {
     const supabase = createClient();
     const code = searchParams.get('code');
     const next = searchParams.get('next') || '/';
+    const error = searchParams.get('error');
+    const errorDesc = searchParams.get('error_description');
+
+    // Handle OAuth errors from Supabase
+    if (error || errorDesc) {
+      window.location.href = '/login?error=' + encodeURIComponent(errorDesc || error || 'Authentication failed');
+      return;
+    }
     
     if (code) {
       // PKCE Flow
@@ -23,16 +31,31 @@ function AuthCallbackContent() {
         }
       });
     } else {
-      // Implicit Flow fallback (or just check if session is already established by client SDK)
-      supabase.auth.getSession().then(({ data }) => {
-        if (data.session) {
+      // Implicit Flow fallback (URL hash)
+      // The Supabase client automatically parses the hash. We just need to listen for the event.
+      const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+        if (event === 'SIGNED_IN' || session) {
           window.location.href = next;
-        } else {
-          window.location.href = '/login?error=No+code+provided';
         }
       });
+
+      // If after 3 seconds no session is established, it means there was no valid auth data
+      const timer = setTimeout(() => {
+        supabase.auth.getSession().then(({ data }) => {
+          if (data.session) {
+            window.location.href = next;
+          } else {
+            window.location.href = '/login?error=' + encodeURIComponent('ไม่สามารถยืนยันตัวตนได้ กรุณาลองใหม่อีกครั้ง');
+          }
+        });
+      }, 3000);
+
+      return () => {
+        authListener.subscription.unsubscribe();
+        clearTimeout(timer);
+      };
     }
-  }, [router, searchParams]);
+  }, [searchParams]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#f8f8f8]">
