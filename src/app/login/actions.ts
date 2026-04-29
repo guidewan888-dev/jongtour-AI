@@ -42,14 +42,17 @@ export async function signup(formData: FormData) {
   redirect("/login?message=Check email to continue sign in process");
 }
 
+import { headers } from "next/headers";
+
 export async function signInWithGoogle() {
   const cookieStore = await cookies();
   const supabase = createClient(cookieStore);
+  const origin = (await headers()).get('origin') || 'http://localhost:3000';
   
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: {
-      redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/auth/callback`,
+      redirectTo: `${origin}/auth/callback`,
     },
   });
 
@@ -61,11 +64,12 @@ export async function signInWithGoogle() {
 export async function signInWithLine() {
   const cookieStore = await cookies();
   const supabase = createClient(cookieStore);
+  const origin = (await headers()).get('origin') || 'http://localhost:3000';
   
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'line',
     options: {
-      redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/auth/callback`,
+      redirectTo: `${origin}/auth/callback`,
     },
   });
 
