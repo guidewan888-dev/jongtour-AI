@@ -19,8 +19,8 @@ export async function login(formData: FormData) {
     return redirect("/login?error=" + encodeURIComponent(error.message));
   }
 
-  // Redirect to admin dashboard if successful
-  redirect("/admin");
+  // Redirect to homepage if successful
+  redirect("/");
 }
 
 export async function signup(formData: FormData) {
@@ -38,8 +38,8 @@ export async function signup(formData: FormData) {
     return redirect("/login?error=" + encodeURIComponent(error.message));
   }
 
-  // Usually requires email confirmation, but we redirect for now
-  redirect("/login?message=Check email to continue sign in process");
+  // Since email confirmation is disabled, we can redirect to homepage directly
+  redirect("/");
 }
 
 import { headers } from "next/headers";

@@ -187,8 +187,17 @@ export default function Header() {
           {user ? (
             <div className="flex items-center gap-3">
               <span className="text-sm font-medium text-gray-700 hidden md:block">สวัสดี, {user.user_metadata?.full_name || user.email}</span>
+              <Link 
+                href="/admin"
+                className="px-4 py-2 text-sm bg-orange-100 text-orange-600 font-bold hover:bg-orange-200 rounded-full transition-colors hidden md:block"
+              >
+                หลังบ้าน
+              </Link>
               <button 
-                onClick={() => supabase.auth.signOut()}
+                onClick={async () => {
+                  await supabase.auth.signOut();
+                  window.location.reload();
+                }}
                 className="px-4 py-2 text-sm text-red-500 font-medium hover:bg-red-50 rounded-full transition-colors"
               >
                 ออกจากระบบ
