@@ -17,7 +17,7 @@ export async function POST(request: Request) {
     else if (userMessage.includes("ไต้หวัน") || userMessage.includes("taiwan")) destinationFilter = "Taiwan";
 
     // 2. ดึงข้อมูลจาก Prisma Database (ถ้ามีคีย์เวิร์ด)
-    let tours = [];
+    let tours: any[] = [];
     if (destinationFilter) {
       tours = await prisma.tour.findMany({
         where: { destination: destinationFilter },
