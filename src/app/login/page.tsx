@@ -20,6 +20,19 @@ function LoginContent() {
   
   const supabase = createClient();
 
+  useEffect(() => {
+    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN' && session) {
+        // Safe to redirect because state is fully persisted
+        window.location.href = "/";
+      }
+    });
+
+    return () => {
+      authListener.subscription.unsubscribe();
+    };
+  }, [supabase.auth]);
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -33,10 +46,8 @@ function LoginContent() {
     if (error) {
       setLocalError(error.message);
       setLoading(false);
-    } else {
-      // Force hard redirect to ensure cache is completely bypassed
-      window.location.href = "/";
     }
+    // No need to redirect here, onAuthStateChange will handle it!
   };
 
   const handleSignup = async (e: React.MouseEvent) => {
@@ -62,8 +73,7 @@ function LoginContent() {
       return;
     }
     
-    // Force hard redirect
-    window.location.href = "/";
+    // No need to redirect here, onAuthStateChange will handle it!
   };
 
   const displayError = localError || errorParam;

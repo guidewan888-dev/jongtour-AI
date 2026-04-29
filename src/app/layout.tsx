@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import Header from "@/components/layouts/Header";
+import OAuthCallbackCatcher from "@/components/OAuthCallbackCatcher";
+import { Suspense } from "react";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -18,6 +20,9 @@ export default function RootLayout({
   return (
     <html lang="th">
       <body className={inter.className}>
+        <Suspense fallback={null}>
+          <OAuthCallbackCatcher />
+        </Suspense>
         <Header />
         {children}
       </body>

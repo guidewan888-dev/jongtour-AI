@@ -24,37 +24,39 @@ function AuthCallbackContent() {
     if (code) {
       // PKCE Flow
       supabase.auth.exchangeCodeForSession(code).then(({ error }) => {
-        if (!error) {
-          window.location.href = next;
-        } else {
+        if (error) {
           window.location.href = '/login?error=' + encodeURIComponent(error.message);
         }
+        // If no error, do NOT redirect yet! Let onAuthStateChange handle it to ensure cookies are written!
       });
-    } else {
-      // Implicit Flow fallback (URL hash)
-      // The Supabase client automatically parses the hash. We just need to listen for the event.
-      const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
-        if (event === 'SIGNED_IN' || session) {
-          window.location.href = next;
-        }
-      });
+    }
 
-      // If after 3 seconds no session is established, it means there was no valid auth data
-      const timer = setTimeout(() => {
-        supabase.auth.getSession().then(({ data }) => {
-          if (data.session) {
-            window.location.href = next;
-          } else {
+    // Both PKCE and Implicit flows will eventually trigger SIGNED_IN
+    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN' && session) {
+        // Safe to redirect because state is fully persisted
+        window.location.href = next;
+      }
+    });
+
+    // If after 3 seconds no session is established, it means there was no valid auth data or it failed
+    const timer = setTimeout(() => {
+      supabase.auth.getSession().then(({ data }) => {
+        if (data.session) {
+          window.location.href = next;
+        } else {
+          // Check if we are already redirecting
+          if (!window.location.href.includes('/login')) {
             window.location.href = '/login?error=' + encodeURIComponent('ไม่สามารถยืนยันตัวตนได้ กรุณาลองใหม่อีกครั้ง');
           }
-        });
-      }, 3000);
+        }
+      });
+    }, 3000);
 
-      return () => {
-        authListener.subscription.unsubscribe();
-        clearTimeout(timer);
-      };
-    }
+    return () => {
+      authListener.subscription.unsubscribe();
+      clearTimeout(timer);
+    };
   }, [searchParams]);
 
   return (
