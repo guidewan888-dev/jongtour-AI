@@ -59,7 +59,7 @@ export default function UserMenu({ user }: { user: any }) {
               <span>ทริปของฉัน</span>
             </Link>
             <Link href="/messages" className="px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center justify-between">
-              <span>ข้อความจากที่พัก/ทัวร์</span>
+              <span>ข้อความจากทัวร์</span>
             </Link>
             <Link href="/rewards" className="px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center justify-between">
               <span>Jongtour รีวอร์ด</span>
@@ -73,7 +73,7 @@ export default function UserMenu({ user }: { user: any }) {
               </span>
             </Link>
             <Link href="/favorites" className="px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center justify-between">
-              <span>ที่พัก/ทัวร์ถูกใจ</span>
+              <span>ทัวร์ถูกใจ</span>
             </Link>
             <Link href="/reviews" className="px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center justify-between">
               <span>รีวิวของฉัน</span>
@@ -113,7 +113,7 @@ export default function UserMenu({ user }: { user: any }) {
                 ร่วมเป็นพาร์ทเนอร์กับเรา
               </div>
               <div className="p-3 text-xs text-gray-500 text-center">
-                เพิ่มยอดขายทัวร์หรือที่พักของคุณ สมัครฟรีวันนี้!
+                เพิ่มยอดขายทัวร์ของคุณ สมัครฟรีวันนี้!
                 <span className="block mt-1 text-[#ff567d] font-medium">ลงประกาศฟรี</span>
               </div>
             </Link>
