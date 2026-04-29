@@ -29,7 +29,7 @@ export async function signup(formData: FormData) {
   const cookieStore = await cookies();
   const supabase = createClient(cookieStore);
 
-  const { error } = await supabase.auth.signUp({
+  const { data, error } = await supabase.auth.signUp({
     email,
     password,
   });
@@ -38,7 +38,10 @@ export async function signup(formData: FormData) {
     return redirect("/login?error=" + encodeURIComponent(error.message));
   }
 
-  // Since email confirmation is disabled, we can redirect to homepage directly
+  if (!data.session) {
+    return redirect("/login?message=" + encodeURIComponent("สมัครสมาชิกสำเร็จ! กรุณาตรวจสอบอีเมลของคุณเพื่อยืนยันบัญชี"));
+  }
+
   redirect("/");
 }
 

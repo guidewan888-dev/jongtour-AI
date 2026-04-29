@@ -17,20 +17,18 @@ function AuthCallbackContent() {
       // PKCE Flow
       supabase.auth.exchangeCodeForSession(code).then(({ error }) => {
         if (!error) {
-          router.push(next);
-          router.refresh(); // Force server to re-read cookies
+          window.location.href = next;
         } else {
-          router.push('/login?error=' + encodeURIComponent(error.message));
+          window.location.href = '/login?error=' + encodeURIComponent(error.message);
         }
       });
     } else {
       // Implicit Flow fallback (or just check if session is already established by client SDK)
       supabase.auth.getSession().then(({ data }) => {
         if (data.session) {
-          router.push(next);
-          router.refresh(); // Force server to re-read cookies
+          window.location.href = next;
         } else {
-          router.push('/login?error=No+code+provided');
+          window.location.href = '/login?error=No+code+provided';
         }
       });
     }
