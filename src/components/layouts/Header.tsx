@@ -3,9 +3,27 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ChevronDown } from "lucide-react";
+import { useEffect, useState } from "react";
+import { createClient } from "@/utils/supabase/client";
 
 export default function Header() {
   const pathname = usePathname();
+  const [user, setUser] = useState<any>(null);
+  const supabase = createClient();
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      setUser(user);
+    });
+
+    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => {
+      authListener.subscription.unsubscribe();
+    };
+  }, []);
 
   if (pathname === "/" || pathname.startsWith("/admin")) {
     return null;
@@ -165,9 +183,23 @@ export default function Header() {
           </Link>
         </div>
 
-        <div className="flex gap-4">
-          <Link href="/login" className="hidden md:flex px-4 py-2 text-gray-600 hover:text-orange-500 font-medium items-center">เข้าสู่ระบบ</Link>
-          <Link href="/login" className="px-6 py-2.5 bg-gray-900 text-white rounded-full font-medium hover:bg-orange-500 hover:text-white transition-colors shadow-sm flex items-center">สมัครสมาชิก</Link>
+        <div className="flex gap-4 items-center">
+          {user ? (
+            <div className="flex items-center gap-3">
+              <span className="text-sm font-medium text-gray-700 hidden md:block">สวัสดี, {user.user_metadata?.full_name || user.email}</span>
+              <button 
+                onClick={() => supabase.auth.signOut()}
+                className="px-4 py-2 text-sm text-red-500 font-medium hover:bg-red-50 rounded-full transition-colors"
+              >
+                ออกจากระบบ
+              </button>
+            </div>
+          ) : (
+            <>
+              <Link href="/login" className="hidden md:flex px-4 py-2 text-gray-600 hover:text-orange-500 font-medium items-center">เข้าสู่ระบบ</Link>
+              <Link href="/login" className="px-6 py-2.5 bg-gray-900 text-white rounded-full font-medium hover:bg-orange-500 hover:text-white transition-colors shadow-sm flex items-center">สมัครสมาชิก</Link>
+            </>
+          )}
         </div>
       </div>
     </nav>

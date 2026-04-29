@@ -41,3 +41,35 @@ export async function signup(formData: FormData) {
   // Usually requires email confirmation, but we redirect for now
   redirect("/login?message=Check email to continue sign in process");
 }
+
+export async function signInWithGoogle() {
+  const cookieStore = await cookies();
+  const supabase = createClient(cookieStore);
+  
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: {
+      redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/auth/callback`,
+    },
+  });
+
+  if (data.url) {
+    redirect(data.url);
+  }
+}
+
+export async function signInWithLine() {
+  const cookieStore = await cookies();
+  const supabase = createClient(cookieStore);
+  
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: 'line',
+    options: {
+      redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/auth/callback`,
+    },
+  });
+
+  if (data.url) {
+    redirect(data.url);
+  }
+}

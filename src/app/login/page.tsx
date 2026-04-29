@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { login, signup } from "./actions";
+import { login, signup, signInWithGoogle, signInWithLine } from "./actions";
 
 export default function LoginPage({ searchParams }: { searchParams: { message: string, error: string } }) {
   return (
@@ -77,16 +77,20 @@ export default function LoginPage({ searchParams }: { searchParams: { message: s
 
         <div className="flex flex-col gap-3">
           {/* ปุ่ม Gmail */}
-          <button className="w-full flex items-center justify-center gap-3 bg-white text-gray-700 border border-gray-300 font-bold py-3 rounded-xl hover:bg-gray-50 transition-colors">
-            <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" className="w-5 h-5" />
-            ดำเนินการต่อด้วย Gmail
-          </button>
+          <form action={signInWithGoogle}>
+            <button type="submit" className="w-full flex items-center justify-center gap-3 bg-white text-gray-700 border border-gray-300 font-bold py-3 rounded-xl hover:bg-gray-50 transition-colors">
+              <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" className="w-5 h-5" />
+              ดำเนินการต่อด้วย Gmail
+            </button>
+          </form>
           
           {/* ปุ่ม LINE */}
-          <button className="w-full flex items-center justify-center gap-3 bg-[#00C300] text-white font-bold py-3 rounded-xl hover:bg-[#00B000] transition-colors shadow-md shadow-[#00C300]/20">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/4/41/LINE_logo.svg" alt="LINE" className="w-6 h-6 brightness-0 invert" />
-            ดำเนินการต่อด้วย LINE
-          </button>
+          <form action={signInWithLine}>
+            <button type="submit" className="w-full flex items-center justify-center gap-3 bg-[#00C300] text-white font-bold py-3 rounded-xl hover:bg-[#00B000] transition-colors shadow-md shadow-[#00C300]/20">
+              <img src="https://upload.wikimedia.org/wikipedia/commons/4/41/LINE_logo.svg" alt="LINE" className="w-6 h-6 brightness-0 invert" />
+              ดำเนินการต่อด้วย LINE
+            </button>
+          </form>
         </div>
 
         <div className="mt-8 text-center text-sm text-gray-500">
