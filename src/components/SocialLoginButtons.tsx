@@ -18,7 +18,7 @@ export default function SocialLoginButtons() {
     const supabase = createClient();
     const origin = window.location.origin;
     await supabase.auth.signInWithOAuth({
-      provider: 'line' as any,
+      provider: 'custom:line' as any,
       options: {
         redirectTo: `${origin}/auth/callback`,
       },
