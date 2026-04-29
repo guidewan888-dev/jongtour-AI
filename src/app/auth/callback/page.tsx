@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, Suspense } from 'react';
+import { useEffect, Suspense, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
 
 function AuthCallbackContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const exchangeAttempted = useRef(false);
   
   useEffect(() => {
     const supabase = createClient();
@@ -21,7 +22,8 @@ function AuthCallbackContent() {
       return;
     }
     
-    if (code) {
+    if (code && !exchangeAttempted.current) {
+      exchangeAttempted.current = true;
       // PKCE Flow
       supabase.auth.exchangeCodeForSession(code).then(({ error }) => {
         if (error) {

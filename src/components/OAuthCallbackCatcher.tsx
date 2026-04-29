@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 
 export default function OAuthCallbackCatcher() {
   const searchParams = useSearchParams();
+  const exchangeAttempted = useRef(false);
 
   useEffect(() => {
     const supabase = createClient();
@@ -22,7 +23,9 @@ export default function OAuthCallbackCatcher() {
     }
     
     // If there's a code in the URL, it means Supabase redirected here (PKCE flow)
-    if (code) {
+    // ONLY run this if we are NOT on the official callback page, to avoid conflicts
+    if (code && !exchangeAttempted.current && window.location.pathname !== '/auth/callback') {
+      exchangeAttempted.current = true;
       supabase.auth.exchangeCodeForSession(code).then(({ error }) => {
         if (!error) {
           window.history.replaceState({}, document.title, window.location.pathname);
@@ -36,7 +39,7 @@ export default function OAuthCallbackCatcher() {
 
     const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_IN') {
-        if (window.location.hash.includes('access_token')) {
+        if (window.location.hash.includes('access_token') && window.location.pathname !== '/auth/callback') {
           window.history.replaceState({}, document.title, window.location.pathname);
           setTimeout(() => {
             window.location.reload();
