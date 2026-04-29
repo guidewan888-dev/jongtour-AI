@@ -4,7 +4,7 @@ import AiSearchBar from "@/components/AiSearchBar";
 import { createClient } from "@/utils/supabase/server";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-
+import UserMenu from "@/components/UserMenu";
 
 export default async function Home() {
   const cookieStore = await cookies();
@@ -22,33 +22,11 @@ export default async function Home() {
         </div>
         <div className="flex gap-4 items-center">
           {user ? (
-            <div className="flex items-center gap-3">
-              <span className="text-sm font-medium text-gray-700 hidden md:block">สวัสดี, {user.user_metadata?.full_name || user.email}</span>
-              <Link 
-                href="/admin"
-                className="px-4 py-2 text-sm bg-orange-100 text-orange-600 font-bold hover:bg-orange-200 rounded-full transition-colors hidden md:block"
-              >
-                หลังบ้าน
-              </Link>
-              <form action={async () => {
-                "use server";
-                const cookieStore = await cookies();
-                const supabase = createClient(cookieStore);
-                await supabase.auth.signOut();
-                redirect("/");
-              }}>
-                <button 
-                  type="submit"
-                  className="px-4 py-2 text-sm text-red-500 font-medium hover:bg-red-50 rounded-full transition-colors"
-                >
-                  ออกจากระบบ
-                </button>
-              </form>
-            </div>
+            <UserMenu user={user} />
           ) : (
             <>
-              <Link href="/login" className="hidden md:flex px-4 py-2 text-gray-600 hover:text-orange-500 font-medium items-center">เข้าสู่ระบบ</Link>
-              <Link href="/login" className="px-6 py-2 bg-orange-500 text-white rounded-full font-medium hover:bg-orange-600 transition-colors shadow-sm flex items-center">สมัครสมาชิก</Link>
+              <Link href="/login" className="hidden md:flex px-4 py-2 text-gray-600 hover:text-blue-600 font-medium items-center">เข้าสู่ระบบ</Link>
+              <Link href="/login" className="px-5 py-2.5 bg-white border border-blue-600 text-blue-600 rounded-lg font-medium hover:bg-blue-50 transition-colors shadow-sm flex items-center">สร้างบัญชีผู้ใช้</Link>
             </>
           )}
         </div>
