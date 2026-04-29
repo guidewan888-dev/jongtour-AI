@@ -78,7 +78,7 @@ async function main() {
         price: t.price,
         imageUrl: t.imageUrl,
         description: t.description,
-        source: t.source,
+        source: t.source as any,
       }
     });
 
