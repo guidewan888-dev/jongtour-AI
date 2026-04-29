@@ -47,7 +47,10 @@ import { headers } from "next/headers";
 export async function signInWithGoogle() {
   const cookieStore = await cookies();
   const supabase = createClient(cookieStore);
-  const origin = (await headers()).get('origin') || 'http://localhost:3000';
+  const headersList = await headers();
+  const host = headersList.get('host');
+  const protocol = process.env.NODE_ENV === 'production' ? 'https' : 'http';
+  const origin = host ? `${protocol}://${host}` : 'http://localhost:3000';
   
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
@@ -64,7 +67,10 @@ export async function signInWithGoogle() {
 export async function signInWithLine() {
   const cookieStore = await cookies();
   const supabase = createClient(cookieStore);
-  const origin = (await headers()).get('origin') || 'http://localhost:3000';
+  const headersList = await headers();
+  const host = headersList.get('host');
+  const protocol = process.env.NODE_ENV === 'production' ? 'https' : 'http';
+  const origin = host ? `${protocol}://${host}` : 'http://localhost:3000';
   
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'line' as any,
