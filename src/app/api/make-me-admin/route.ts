@@ -15,16 +15,16 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "กรุณาล็อกอินก่อนครับ!" }, { status: 401 });
     }
 
-    // 2. Update their role to ADMIN in Prisma
-    const updatedUser = await prisma.user.upsert({
-      where: { email: user.email },
-      update: { role: "ADMIN" },
-      create: {
+    // 2. Update their role to ADMIN in Supabase
+    // Note: This API shouldn't really be open in a real production app without a secret key!
+    const { data: updatedUser, error: updateError } = await supabase
+      .from('User')
+      .upsert({
         email: user.email,
         role: "ADMIN",
         password: "OAUTH_USER", // Dummy password since auth is handled by Supabase
-      }
-    });
+      }, { onConflict: 'email' })
+      .select();
 
     // 3. Redirect them to the Admin dashboard
     return NextResponse.redirect(new URL("/admin/bookings", request.url));

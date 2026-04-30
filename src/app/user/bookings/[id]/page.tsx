@@ -49,18 +49,30 @@ export default async function BookingDetailsPage({ params }: { params: { id: str
     };
   } else {
     // Fetch real data
-    const dbUser = await prisma.user.findUnique({ where: { email: user.email || "" } });
+    // Fetch real data
+    const { data: dbUser } = await supabase
+      .from('User')
+      .select('*')
+      .eq('email', user.email || '')
+      .single();
     if (!dbUser) redirect('/user/bookings');
 
-    booking = await prisma.booking.findUnique({
-      where: { id: bookingId, userId: dbUser.id },
-      include: {
-        departure: { include: { tour: true } },
-        travelers: true,
-        payments: true
-      }
-    });
+    const { data: bookingData } = await supabase
+      .from('Booking')
+      .select(`
+        *,
+        departure:TourDeparture(
+          *,
+          tour:Tour(*)
+        ),
+        travelers:Traveler(*),
+        payments:Payment(*)
+      `)
+      .eq('id', bookingId)
+      .eq('userId', dbUser.id)
+      .single();
 
+    booking = bookingData;
     if (!booking) redirect('/user/bookings');
   }
 

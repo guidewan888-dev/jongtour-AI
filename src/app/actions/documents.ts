@@ -16,13 +16,18 @@ export async function updateTravelerDocument(travelerId: string, documentType: "
     }
 
     // Verify that the traveler belongs to a booking owned by this user (or if user is ADMIN)
-    const dbUser = await prisma.user.findUnique({ where: { email: user.email || "" } });
+    const { data: dbUser } = await supabase
+      .from('User')
+      .select('*')
+      .eq('email', user.email || '')
+      .single();
     if (!dbUser) return { error: "User not found" };
 
-    const traveler = await prisma.traveler.findUnique({
-      where: { id: travelerId },
-      include: { booking: true }
-    });
+    const { data: traveler } = await supabase
+      .from('Traveler')
+      .select('*, booking:Booking(*)')
+      .eq('id', travelerId)
+      .single();
 
     if (!traveler) return { error: "Traveler not found" };
 
@@ -35,10 +40,14 @@ export async function updateTravelerDocument(travelerId: string, documentType: "
       ? { passportFileUrl: fileUrl }
       : { visaFileUrl: fileUrl };
 
-    const updatedTraveler = await prisma.traveler.update({
-      where: { id: travelerId },
-      data: updateData
-    });
+    const { data: updatedTraveler, error } = await supabase
+      .from('Traveler')
+      .update(updateData)
+      .eq('id', travelerId)
+      .select()
+      .single();
+
+    if (error) throw error;
 
     return { success: true, data: updatedTraveler };
   } catch (error: any) {

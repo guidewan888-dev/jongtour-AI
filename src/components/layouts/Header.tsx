@@ -50,9 +50,9 @@ export default function Header() {
                           <CityLink name="โตเกียว" href="/destinations/asia/japan/tokyo" />
                           <CityLink name="โอซาก้า" href="/destinations/asia/japan/osaka" />
                           <CityLink name="ฮอกไกโด" href="/destinations/asia/japan/hokkaido" />
-                          <CityLink name="ฟุกุโอกะ" href="/search/asia/japan/fukuoka" />
-                          <CityLink name="เกียวโต" href="/search/asia/japan/kyoto" />
-                          <CityLink name="โอกินาว่า" href="/search/asia/japan/okinawa" />
+                          <CityLink name="ฟุกุโอกะ" href="/destinations/asia/japan/fukuoka" />
+                          <CityLink name="เกียวโต" href="/destinations/asia/japan/kyoto" />
+                          <CityLink name="โอกินาว่า" href="/destinations/asia/japan/okinawa" />
                         </div>
                       </div>
                     </div>
@@ -61,29 +61,29 @@ export default function Header() {
                       <h3 className="text-lg font-bold text-transparent border-b-2 border-transparent pb-2 mb-4 hidden md:block">&nbsp;</h3>
                       <CountryLink countryCode="cn" name="ทัวร์จีน" href="/destinations/asia/china" />
                       <div className="grid grid-cols-2 gap-x-2 gap-y-1 mt-3 ml-2">
-                        <CityLink name="เฉิงตู" href="/search/asia/china/chengdu" />
+                        <CityLink name="เฉิงตู" href="/destinations/asia/china/chengdu" />
                         <CityLink name="เซี่ยงไฮ้" href="/destinations/asia/china/shanghai" />
-                        <CityLink name="จางเจียเจี้ย" href="/search/asia/china/zhangjiajie" />
+                        <CityLink name="จางเจียเจี้ย" href="/destinations/asia/china/zhangjiajie" />
                         <CityLink name="ฉงชิ่ง" href="/destinations/asia/china/chongqing" />
-                        <CityLink name="ปักกิ่ง" href="/search/asia/china/beijing" />
-                        <CityLink name="คุนหมิง" href="/search/asia/china/kunming" />
-                        <CityLink name="กุ้ยหลิน" href="/search/asia/china/guilin" />
-                        <CityLink name="ซีอาน" href="/search/asia/china/xian" />
-                        <CityLink name="เส้นทางสายไหม" href="/search/asia/china/silk-road" />
-                        <CityLink name="ซินเจียง" href="/search/asia/china/xinjiang" />
-                        <CityLink name="ทิเบต" href="/search/asia/china/tibet" />
-                        <CityLink name="ลี่เจียง" href="/search/asia/china/lijiang" />
-                        <CityLink name="อี้ชาง" href="/search/asia/china/yichang" />
-                        <CityLink name="หังโจว" href="/search/asia/china/hangzhou" />
-                        <CityLink name="ต้าหลี่" href="/search/asia/china/dali" />
-                        <CityLink name="กวางโจว" href="/search/asia/china/guangzhou" />
-                        <CityLink name="ฮาร์บิ้น" href="/search/asia/china/harbin" />
-                        <CityLink name="ลั่วหยาง" href="/search/asia/china/luoyang" />
-                        <CityLink name="หุบเขาเทวดา" href="/search/asia/china/wangxian" />
-                        <CityLink name="เอินซือ" href="/search/asia/china/enshi" />
-                        <CityLink name="ชิงเต่า" href="/search/asia/china/qingdao" />
-                        <CityLink name="ต้าเหลียน" href="/search/asia/china/dalian" />
-                        <CityLink name="มองโกเลีย" href="/search/asia/china/inner-mongolia" />
+                        <CityLink name="ปักกิ่ง" href="/destinations/asia/china/beijing" />
+                        <CityLink name="คุนหมิง" href="/destinations/asia/china/kunming" />
+                        <CityLink name="กุ้ยหลิน" href="/destinations/asia/china/guilin" />
+                        <CityLink name="ซีอาน" href="/destinations/asia/china/xian" />
+                        <CityLink name="เส้นทางสายไหม" href="/destinations/asia/china/silk-road" />
+                        <CityLink name="ซินเจียง" href="/destinations/asia/china/xinjiang" />
+                        <CityLink name="ทิเบต" href="/destinations/asia/china/tibet" />
+                        <CityLink name="ลี่เจียง" href="/destinations/asia/china/lijiang" />
+                        <CityLink name="อี้ชาง" href="/destinations/asia/china/yichang" />
+                        <CityLink name="หังโจว" href="/destinations/asia/china/hangzhou" />
+                        <CityLink name="ต้าหลี่" href="/destinations/asia/china/dali" />
+                        <CityLink name="กวางโจว" href="/destinations/asia/china/guangzhou" />
+                        <CityLink name="ฮาร์บิ้น" href="/destinations/asia/china/harbin" />
+                        <CityLink name="ลั่วหยาง" href="/destinations/asia/china/luoyang" />
+                        <CityLink name="หุบเขาเทวดา" href="/destinations/asia/china/wangxian" />
+                        <CityLink name="เอินซือ" href="/destinations/asia/china/enshi" />
+                        <CityLink name="ชิงเต่า" href="/destinations/asia/china/qingdao" />
+                        <CityLink name="ต้าเหลียน" href="/destinations/asia/china/dalian" />
+                        <CityLink name="มองโกเลีย" href="/destinations/asia/china/inner-mongolia" />
                         <CityLink name="จู่ไห่" href="/destinations/asia/china/zhuhai" />
                         <CityLink name="กวางโจว" href="/destinations/asia/china/guangzhou" />
                       </div>
@@ -92,12 +92,12 @@ export default function Header() {
                       <div className="mt-3 ml-2 border-t border-gray-100 pt-2">
                         <span className="text-xs font-bold text-gray-400 mb-1 block">เส้นทางพิเศษ</span>
                         <div className="flex flex-col gap-1">
-                          <CityLink name="ทัวร์ไม่ลงร้าน" href="/search/asia/china/no-shopping" />
-                          <CityLink name="ฉงชิ่ง-จางเจียเจี้ย" href="/search/asia/china/chongqing-zhangjiajie" />
-                          <CityLink name="เซี่ยงไฮ้-ปักกิ่ง" href="/search/asia/china/shanghai-beijing" />
-                          <CityLink name="จู่ไห่-มาเก๊า" href="/search/asia/china/zhuhai-macau" />
-                          <CityLink name="กวางโจว-มาเก๊า" href="/search/asia/china/guangzhou-macau" />
-                          <CityLink name="กวางโจว-ฮ่องกง" href="/search/asia/china/guangzhou-hongkong" />
+                          <CityLink name="ทัวร์ไม่ลงร้าน" href="/destinations/asia/china/no-shopping" />
+                          <CityLink name="ฉงชิ่ง-จางเจียเจี้ย" href="/destinations/asia/china/chongqing-zhangjiajie" />
+                          <CityLink name="เซี่ยงไฮ้-ปักกิ่ง" href="/destinations/asia/china/shanghai-beijing" />
+                          <CityLink name="จู่ไห่-มาเก๊า" href="/destinations/asia/china/zhuhai-macau" />
+                          <CityLink name="กวางโจว-มาเก๊า" href="/destinations/asia/china/guangzhou-macau" />
+                          <CityLink name="กวางโจว-ฮ่องกง" href="/destinations/asia/china/guangzhou-hongkong" />
                         </div>
                       </div>
                     </div>
@@ -107,16 +107,16 @@ export default function Header() {
                   <div className="col-span-1">
                     <h3 className="text-lg font-bold text-gray-800 border-b-2 border-orange-500 pb-2 mb-4">ทัวร์เอเชีย</h3>
                     <ul className="space-y-3">
-                      <CountryLink countryCode="kr" name="ทัวร์เกาหลีใต้" href="/search/asia/south-korea" />
-                      <CountryLink countryCode="tw" name="ทัวร์ไต้หวัน" href="/search/asia/taiwan" />
-                      <CountryLink countryCode="hk" name="ทัวร์ฮ่องกง" href="/search/asia/hongkong" />
-                      <CountryLink countryCode="mo" name="ทัวร์มาเก๊า" href="/search/asia/macau" />
-                      <CountryLink countryCode="vn" name="ทัวร์เวียดนาม" href="/search/asia/vietnam" />
-                      <CountryLink countryCode="sg" name="ทัวร์สิงคโปร์" href="/search/asia/singapore" />
-                      <CountryLink countryCode="my" name="ทัวร์มาเลเซีย" href="/search/asia/malaysia" />
-                      <CountryLink countryCode="id" name="ทัวร์อินโดนีเซีย" href="/search/asia/indonesia" />
-                      <CountryLink countryCode="in" name="ทัวร์อินเดีย" href="/search/asia/india" />
-                      <CountryLink countryCode="mv" name="ทัวร์มัลดีฟส์" href="/search/asia/maldives" />
+                      <CountryLink countryCode="kr" name="ทัวร์เกาหลีใต้" href="/destinations/asia/south-korea" />
+                      <CountryLink countryCode="tw" name="ทัวร์ไต้หวัน" href="/destinations/asia/taiwan" />
+                      <CountryLink countryCode="hk" name="ทัวร์ฮ่องกง" href="/destinations/asia/hongkong" />
+                      <CountryLink countryCode="mo" name="ทัวร์มาเก๊า" href="/destinations/asia/macau" />
+                      <CountryLink countryCode="vn" name="ทัวร์เวียดนาม" href="/destinations/asia/vietnam" />
+                      <CountryLink countryCode="sg" name="ทัวร์สิงคโปร์" href="/destinations/asia/singapore" />
+                      <CountryLink countryCode="my" name="ทัวร์มาเลเซีย" href="/destinations/asia/malaysia" />
+                      <CountryLink countryCode="id" name="ทัวร์อินโดนีเซีย" href="/destinations/asia/indonesia" />
+                      <CountryLink countryCode="in" name="ทัวร์อินเดีย" href="/destinations/asia/india" />
+                      <CountryLink countryCode="mv" name="ทัวร์มัลดีฟส์" href="/destinations/asia/maldives" />
                     </ul>
                   </div>
 
@@ -124,22 +124,22 @@ export default function Header() {
                   <div className="col-span-1">
                     <h3 className="text-lg font-bold text-gray-800 border-b-2 border-blue-500 pb-2 mb-4">ยุโรป & ตะวันออกกลาง</h3>
                     <ul className="space-y-3">
-                      <CountryLink countryCode="ch" name="สวิตเซอร์แลนด์" href="/search/europe/switzerland" titleColor="hover:text-blue-600" />
-                      <CountryLink countryCode="it" name="อิตาลี" href="/search/europe/italy" titleColor="hover:text-blue-600" />
-                      <CountryLink countryCode="fr" name="ฝรั่งเศส" href="/search/europe/france" titleColor="hover:text-blue-600" />
-                      <CountryLink countryCode="gb" name="อังกฤษ" href="/search/europe/uk" titleColor="hover:text-blue-600" />
-                      <CountryLink countryCode="de" name="เยอรมนี" href="/search/europe/germany" titleColor="hover:text-blue-600" />
-                      <CountryLink countryCode="at" name="ออสเตรีย" href="/search/europe/austria" titleColor="hover:text-blue-600" />
-                      <CountryLink countryCode="cz" name="เช็ก" href="/search/europe/czech" titleColor="hover:text-blue-600" />
-                      <CountryLink countryCode="es" name="สเปน" href="/search/europe/spain" titleColor="hover:text-blue-600" />
-                      <CountryLink countryCode="nl" name="เนเธอร์แลนด์" href="/search/europe/netherlands" titleColor="hover:text-blue-600" />
-                      <CountryLink countryCode="fi" name="ฟินแลนด์" href="/search/europe/finland" titleColor="hover:text-blue-600" />
+                      <CountryLink countryCode="ch" name="สวิตเซอร์แลนด์" href="/destinations/europe/switzerland" titleColor="hover:text-blue-600" />
+                      <CountryLink countryCode="it" name="อิตาลี" href="/destinations/europe/italy" titleColor="hover:text-blue-600" />
+                      <CountryLink countryCode="fr" name="ฝรั่งเศส" href="/destinations/europe/france" titleColor="hover:text-blue-600" />
+                      <CountryLink countryCode="gb" name="อังกฤษ" href="/destinations/europe/uk" titleColor="hover:text-blue-600" />
+                      <CountryLink countryCode="de" name="เยอรมนี" href="/destinations/europe/germany" titleColor="hover:text-blue-600" />
+                      <CountryLink countryCode="at" name="ออสเตรีย" href="/destinations/europe/austria" titleColor="hover:text-blue-600" />
+                      <CountryLink countryCode="cz" name="เช็ก" href="/destinations/europe/czech" titleColor="hover:text-blue-600" />
+                      <CountryLink countryCode="es" name="สเปน" href="/destinations/europe/spain" titleColor="hover:text-blue-600" />
+                      <CountryLink countryCode="nl" name="เนเธอร์แลนด์" href="/destinations/europe/netherlands" titleColor="hover:text-blue-600" />
+                      <CountryLink countryCode="fi" name="ฟินแลนด์" href="/destinations/europe/finland" titleColor="hover:text-blue-600" />
                       <div className="my-2 pt-2 border-t border-gray-100"></div>
-                      <CountryLink countryCode="tr" name="ทัวร์ตุรกี" href="/search/middle-east/turkey" titleColor="hover:text-blue-600" />
-                      <CountryLink countryCode="ge" name="ทัวร์จอร์เจีย" href="/search/europe/georgia" titleColor="hover:text-blue-600" />
-                      <CountryLink countryCode="eg" name="ทัวร์อียิปต์" href="/search/middle-east/egypt" titleColor="hover:text-blue-600" />
-                      <CountryLink countryCode="jo" name="ทัวร์จอร์แดน" href="/search/middle-east/jordan" titleColor="hover:text-blue-600" />
-                      <CountryLink countryCode="ma" name="ทัวร์โมร็อกโก" href="/search/africa/morocco" titleColor="hover:text-blue-600" />
+                      <CountryLink countryCode="tr" name="ทัวร์ตุรกี" href="/destinations/middle-east/turkey" titleColor="hover:text-blue-600" />
+                      <CountryLink countryCode="ge" name="ทัวร์จอร์เจีย" href="/destinations/europe/georgia" titleColor="hover:text-blue-600" />
+                      <CountryLink countryCode="eg" name="ทัวร์อียิปต์" href="/destinations/middle-east/egypt" titleColor="hover:text-blue-600" />
+                      <CountryLink countryCode="jo" name="ทัวร์จอร์แดน" href="/destinations/middle-east/jordan" titleColor="hover:text-blue-600" />
+                      <CountryLink countryCode="ma" name="ทัวร์โมร็อกโก" href="/destinations/africa/morocco" titleColor="hover:text-blue-600" />
                     </ul>
                   </div>
 
@@ -147,11 +147,11 @@ export default function Header() {
                   <div className="col-span-1">
                     <h3 className="text-lg font-bold text-gray-800 border-b-2 border-emerald-500 pb-2 mb-4">อเมริกา & โอเชียเนีย</h3>
                     <ul className="space-y-3">
-                      <CountryLink countryCode="us" name="ทัวร์อเมริกา" href="/search/america/usa" titleColor="hover:text-emerald-600" />
-                      <CountryLink countryCode="ca" name="ทัวร์แคนาดา" href="/search/america/canada" titleColor="hover:text-emerald-600" />
+                      <CountryLink countryCode="us" name="ทัวร์อเมริกา" href="/destinations/america/usa" titleColor="hover:text-emerald-600" />
+                      <CountryLink countryCode="ca" name="ทัวร์แคนาดา" href="/destinations/america/canada" titleColor="hover:text-emerald-600" />
                       <div className="my-4 pt-4 border-t border-gray-100"></div>
-                      <CountryLink countryCode="au" name="ทัวร์ออสเตรเลีย" href="/search/oceania/australia" titleColor="hover:text-emerald-600" />
-                      <CountryLink countryCode="nz" name="ทัวร์นิวซีแลนด์" href="/search/oceania/new-zealand" titleColor="hover:text-emerald-600" />
+                      <CountryLink countryCode="au" name="ทัวร์ออสเตรเลีย" href="/destinations/oceania/australia" titleColor="hover:text-emerald-600" />
+                      <CountryLink countryCode="nz" name="ทัวร์นิวซีแลนด์" href="/destinations/oceania/new-zealand" titleColor="hover:text-emerald-600" />
                     </ul>
                   </div>
 
@@ -160,7 +160,7 @@ export default function Header() {
             </div>
           </div>
 
-          <Link href="/search/thailand" className="px-4 py-2 text-gray-600 hover:text-orange-500 font-medium transition-colors">
+          <Link href="/destinations/thailand" className="px-4 py-2 text-gray-600 hover:text-orange-500 font-medium transition-colors">
             เที่ยวไทย
           </Link>
           

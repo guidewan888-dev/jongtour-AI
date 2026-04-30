@@ -1,6 +1,9 @@
 import Link from "next/link";
-import prisma from "@/lib/prisma";
+import { createClient } from "@/utils/supabase/server";
+import { cookies } from "next/headers";
 import { Map, Calendar, Users, Star, Filter } from "lucide-react";
+
+export const dynamic = "force-dynamic";
 
 export default async function SearchPage({ params }: { params: { slug?: string[] } }) {
   // Logic สำหรับอ่าน Slug เพื่อนำไป Filter (เช่น /search/asia/japan)
@@ -16,14 +19,16 @@ export default async function SearchPage({ params }: { params: { slug?: string[]
     destinationFilter = "South Korea";
   }
 
-  // ดึงข้อมูลทัวร์จากฐานข้อมูล พร้อมดึงรอบการเดินทาง (Departures) มาด้วย
-  const tours = await prisma.tour.findMany({
-    where: destinationFilter ? { destination: destinationFilter } : undefined,
-    include: {
-      departures: true
-    },
-    orderBy: { createdAt: 'desc' }
-  });
+  const cookieStore = await cookies();
+  const supabase = createClient(cookieStore);
+
+  let query = supabase.from('Tour').select(`*, departures:TourDeparture(*)`);
+  if (destinationFilter) {
+    query = query.eq('destination', destinationFilter);
+  }
+  
+  const { data: toursData } = await query.order('createdAt', { ascending: false });
+  const tours = toursData || [];
 
   return (
     <main className="min-h-screen bg-gray-50 pb-20">

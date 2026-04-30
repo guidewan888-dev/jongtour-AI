@@ -35,15 +35,28 @@ export default async function WriteReviewPage({ params }: { params: { id: string
     };
   } else {
     // Fetch real data
-    const dbUser = await prisma.user.findUnique({ where: { email: user.email || "" } });
+    // Fetch real data
+    const { data: dbUser } = await supabase
+      .from('User')
+      .select('*')
+      .eq('email', user.email || '')
+      .single();
     if (!dbUser) redirect('/user/bookings');
 
-    booking = await prisma.booking.findUnique({
-      where: { id: bookingId, userId: dbUser.id },
-      include: {
-        departure: { include: { tour: true } }
-      }
-    });
+    const { data: bookingData } = await supabase
+      .from('Booking')
+      .select(`
+        *,
+        departure:TourDeparture(
+          *,
+          tour:Tour(*)
+        )
+      `)
+      .eq('id', bookingId)
+      .eq('userId', dbUser.id)
+      .single();
+    
+    booking = bookingData;
 
     if (!booking) redirect('/user/bookings');
   }

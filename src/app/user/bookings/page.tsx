@@ -16,23 +16,32 @@ export default async function BookingsPage() {
   }
 
   // Find user in Prisma DB by email (since Supabase auth ID might differ from Prisma cuid, though usually they sync)
-  const dbUser = await prisma.user.findUnique({
-    where: { email: user.email || "" },
-  });
+  const { data: dbUser } = await supabase
+    .from('User')
+    .select('*')
+    .eq('email', user.email || '')
+    .single();
 
   // If user is not yet in Prisma, they won't have bookings
-  let bookings = dbUser ? await prisma.booking.findMany({
-    where: { userId: dbUser.id },
-    include: {
-      departure: {
-        include: {
-          tour: true
-        }
-      },
-      payments: true,
-    },
-    orderBy: { createdAt: 'desc' }
-  }) : [];
+  let bookingsData: any[] = [];
+  if (dbUser) {
+    const { data } = await supabase
+      .from('Booking')
+      .select(`
+        *,
+        departure:TourDeparture(
+          *,
+          tour:Tour(*)
+        ),
+        payments:Payment(*)
+      `)
+      .eq('userId', dbUser.id)
+      .order('createdAt', { ascending: false });
+    
+    if (data) bookingsData = data;
+  }
+  
+  let bookings = bookingsData;
 
   // --- MOCK DATA FOR DEMONSTRATION ---
   // If the user has no real bookings, show them a sample

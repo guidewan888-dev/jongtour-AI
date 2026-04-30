@@ -14,9 +14,11 @@ export default async function ProfilePage() {
   }
 
   // Fetch from DB if exists
-  const dbUser = await prisma.user.findUnique({
-    where: { email: user.email || "" },
-  });
+  const { data: dbUser } = await supabase
+    .from('User')
+    .select('*')
+    .eq('email', user.email || '')
+    .single();
 
   return (
     <div>

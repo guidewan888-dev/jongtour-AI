@@ -64,7 +64,8 @@ export async function POST() {
         description: zTour.Highlight || null,
         airlineCode: airlineCode,
         providerId: zTour.ProductID.toString(),
-        source: "API_ZEGO"
+        source: "API_ZEGO",
+        updatedAt: new Date().toISOString()
       });
 
       if (Array.isArray(zTour.Periods)) {

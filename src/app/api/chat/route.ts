@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
+import { createClient } from "@supabase/supabase-js";
 
 export async function POST(request: Request) {
   try {
@@ -14,16 +14,26 @@ export async function POST(request: Request) {
     else if (userMessage.includes("ยุโรป") || userMessage.includes("europe")) destinationFilter = "Europe";
     else if (userMessage.includes("ไต้หวัน") || userMessage.includes("taiwan")) destinationFilter = "Taiwan";
 
-    // 2. ดึงข้อมูลจาก Prisma Database (ถ้ามีคีย์เวิร์ด)
+    // 2. ดึงข้อมูลจาก Supabase Database (ถ้ามีคีย์เวิร์ด)
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://qterfftaebnoawnzkfgu.supabase.co";
+    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || "sb_publishable_SRwNSJ89mInda5FcuB1W2w_9IEJlSOI";
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
     let tours: any[] = [];
     if (destinationFilter) {
-      tours = await prisma.tour.findMany({
-        where: { destination: destinationFilter },
-        take: 3,
-      });
+      const { data } = await supabase
+        .from('Tour')
+        .select('*')
+        .eq('destination', destinationFilter)
+        .limit(3);
+      if (data) tours = data;
     } else if (userMessage.includes("แนะนำ") || userMessage.includes("ทัวร์ไหนดี")) {
       // ดึงทัวร์แนะนำแบบสุ่ม
-      tours = await prisma.tour.findMany({ take: 3 });
+      const { data } = await supabase
+        .from('Tour')
+        .select('*')
+        .limit(3);
+      if (data) tours = data;
     }
 
     // 3. จำลองข้อความตอบกลับของ AI (Generative Text)

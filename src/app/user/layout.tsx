@@ -3,7 +3,6 @@ import { ReactNode } from 'react';
 import { createClient } from "@/utils/supabase/server";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import prisma from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 
@@ -16,19 +15,24 @@ export default async function UserLayout({ children }: { children: ReactNode }) 
     redirect("/login");
   }
 
-  let dbUser = await prisma.user.findUnique({
-    where: { email: user.email || "" },
-  });
+  let { data: dbUser } = await supabase
+    .from('User')
+    .select('*')
+    .eq('email', user.email || '')
+    .single();
 
-  // Auto-create Prisma user if it doesn't exist
+  // Auto-create user if it doesn't exist
   if (!dbUser && user.email) {
-    dbUser = await prisma.user.create({
-      data: {
+    const { data: newUser } = await supabase
+      .from('User')
+      .insert({
         email: user.email,
         role: "CUSTOMER", // Default role
         password: "OAUTH_USER", // Dummy password since auth is handled by Supabase
-      }
-    });
+      })
+      .select()
+      .single();
+    dbUser = newUser;
   }
 
   // If Admin tries to access User Dashboard, optionally redirect them to Admin Panel

@@ -21,18 +21,29 @@ export default async function DocumentPreviewPage({
     const { data: { user } } = await supabase.auth.getUser();
 
     if (user) {
-      const dbUser = await prisma.user.findUnique({ where: { email: user.email || "" } });
+      const { data: dbUser } = await supabase
+        .from('User')
+        .select('*')
+        .eq('email', user.email || '')
+        .single();
       if (dbUser) {
         // Fetch the booking if it belongs to the user or if user is ADMIN
-        bookingData = await prisma.booking.findUnique({
-          where: { id: bookingId },
-          include: {
-            user: true,
-            departure: { include: { tour: true } },
-            travelers: true,
-            payments: true
-          }
-        });
+        const { data } = await supabase
+          .from('Booking')
+          .select(`
+            *,
+            user:User(*),
+            departure:TourDeparture(
+              *,
+              tour:Tour(*)
+            ),
+            travelers:Traveler(*),
+            payments:Payment(*)
+          `)
+          .eq('id', bookingId)
+          .single();
+        
+        bookingData = data;
 
         // Basic security check: Only allow the owner or ADMIN to view the document
         if (bookingData && bookingData.userId !== dbUser.id && dbUser.role !== "ADMIN") {
