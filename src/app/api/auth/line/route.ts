@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
 
 export async function GET(request: Request) {
-  let origin = 'https://jongtour.com';
+  const forwardedHost = request.headers.get('x-forwarded-host');
+  let origin = forwardedHost ? `https://${forwardedHost}` : (process.env.NEXT_PUBLIC_SITE_URL || 'https://jongtour.com');
   
   const redirectUri = `${origin}/api/auth/line/callback`;
   const clientId = process.env.LINE_CLIENT_ID || '2009935240';

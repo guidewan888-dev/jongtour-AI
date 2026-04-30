@@ -7,6 +7,7 @@ export const dynamic = "force-dynamic";
 
 async function TourDetailsContent({ params }: { params: { id: string } }) {
   // ดึงข้อมูลทัวร์จาก Database
+  console.log("FETCHING TOUR ID:", params.id);
   const tour = await prisma.tour.findUnique({
     where: { id: params.id },
     include: {
@@ -374,6 +375,7 @@ export default async function TourDetailsPage(props: { params: { id: string } })
   try {
     return await TourDetailsContent(props);
   } catch (error: any) {
+    if (error?.message === 'NEXT_NOT_FOUND') { throw error; }
     return (
       <main className="min-h-screen bg-[#f8f9fa] flex items-center justify-center p-4">
         <div className="bg-white p-8 rounded-2xl shadow-lg border border-red-100 max-w-2xl w-full text-center">
