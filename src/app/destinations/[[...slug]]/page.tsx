@@ -1,10 +1,8 @@
 import Link from "next/link";
-import { PrismaClient } from "@prisma/client";
+import prisma from "@/lib/prisma";
 import { MapPin, Calendar, Star, ChevronRight, CheckCircle2, Clock } from "lucide-react";
 import { destinationConfig, getDestinationData } from "@/lib/destinations";
 import { notFound } from "next/navigation";
-
-const prisma = new PrismaClient();
 
 export default async function DestinationPage({ params }: { params: { slug?: string[] } }) {
   const slug = params?.slug || [];

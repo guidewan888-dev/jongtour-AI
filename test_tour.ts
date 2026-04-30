@@ -1,0 +1,1 @@
+import TourDetailsPage from './src/app/tour/[id]/page'; async function run() { try { const html = await TourDetailsPage({ params: { id: 'cmol8qqaw0006ejg6monlbrie' } }); console.log('SUCCESS'); } catch(e) { console.error(e); } } run();

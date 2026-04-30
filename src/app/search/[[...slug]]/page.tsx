@@ -1,8 +1,6 @@
 import Link from "next/link";
-import { PrismaClient } from "@prisma/client";
+import prisma from "@/lib/prisma";
 import { Map, Calendar, Users, Star, Filter } from "lucide-react";
-
-const prisma = new PrismaClient();
 
 export default async function SearchPage({ params }: { params: { slug?: string[] } }) {
   // Logic สำหรับอ่าน Slug เพื่อนำไป Filter (เช่น /search/asia/japan)

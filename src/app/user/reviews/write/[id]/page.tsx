@@ -1,10 +1,8 @@
 import { createClient } from "@/utils/supabase/server";
 import { cookies } from "next/headers";
-import { PrismaClient } from "@prisma/client";
+import prisma from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import WriteReviewForm from "./WriteReviewForm";
-
-const prisma = new PrismaClient();
 
 export default async function WriteReviewPage({ params }: { params: { id: string } }) {
   const cookieStore = await cookies();

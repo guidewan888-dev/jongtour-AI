@@ -16,11 +16,15 @@ async function TourDetailsContent({ params }: { params: { id: string } }) {
     cache: "no-store"
   });
   
-  if (!res.ok) notFound();
+  if (!res.ok) {
+    console.error("FETCH ERROR:", res.status, res.statusText, await res.text());
+    notFound();
+  }
   const tours = await res.json();
   const tour = tours[0];
 
   if (!tour) {
+    console.error("NO TOUR FOUND");
     notFound(); // 404 page
   }
 

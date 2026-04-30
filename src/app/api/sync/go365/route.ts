@@ -1,7 +1,5 @@
 import { NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import prisma from "@/lib/prisma";
 
 // ข้อมูลสำหรับเชื่อมต่อ API ของ Go365 (เตรียมพร้อมรอข้อมูลจริง)
 const GO365_API_URL = process.env.GO365_API_URL || "https://api.go365.example.com";
