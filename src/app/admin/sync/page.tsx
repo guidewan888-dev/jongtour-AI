@@ -6,23 +6,37 @@ import { RefreshCcw, CheckCircle2, AlertTriangle, AlertCircle, Clock, Database, 
 export default function ApiSyncStatusPage() {
   const [isSyncingGo365, setIsSyncingGo365] = useState(false);
   const [lastSyncGo365, setLastSyncGo365] = useState("วันนี้ 08:00 น.");
+  const [go365Count, setGo365Count] = useState(1420);
+
   const [isSyncingZego, setIsSyncingZego] = useState(false);
   const [lastSyncZego, setLastSyncZego] = useState("วันนี้ 08:05 น.");
+  const [zegoCount, setZegoCount] = useState(1);
 
-  const handleForceSync = () => {
+  const handleForceSync = async () => {
     setIsSyncingGo365(true);
-    setTimeout(() => {
+    try {
+      const res = await fetch('/api/sync/go365', { method: 'POST' });
+      const data = await res.json();
+      if (data.data?.added) {
+        setGo365Count(prev => prev + data.data.added);
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
       setIsSyncingGo365(false);
       const now = new Date();
       setLastSyncGo365(`วันนี้ ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')} น.`);
-    }, 3000); // Simulate 3 seconds sync
+    }
   };
 
   const handleForceSyncZego = async () => {
     setIsSyncingZego(true);
     try {
       const res = await fetch('/api/sync/zego', { method: 'POST' });
-      await res.json();
+      const data = await res.json();
+      if (data.stats?.toursProcessed) {
+        setZegoCount(data.stats.toursProcessed);
+      }
     } catch (e) {
       console.error(e);
     } finally {
@@ -81,7 +95,7 @@ export default function ApiSyncStatusPage() {
             <div className="grid grid-cols-2 gap-4 mb-6">
               <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
                 <p className="text-xs text-gray-500 font-medium flex items-center gap-1.5"><ArrowDownToLine className="w-4 h-4" /> ดึงทัวร์ล่าสุด</p>
-                <p className="text-lg font-bold text-gray-900 mt-1">1,420 <span className="text-xs font-normal text-gray-500">รายการ</span></p>
+                <p className="text-lg font-bold text-gray-900 mt-1">{go365Count.toLocaleString()} <span className="text-xs font-normal text-gray-500">รายการ</span></p>
               </div>
               <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
                 <p className="text-xs text-gray-500 font-medium flex items-center gap-1.5"><Clock className="w-4 h-4" /> อัปเดตล่าสุด</p>
@@ -95,7 +109,7 @@ export default function ApiSyncStatusPage() {
               className="w-full py-3 bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 rounded-xl font-bold flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
             >
               {isSyncingGo365 ? (
-                <><RefreshCcw className="w-5 h-5 animate-spin" /> กำลังซิงค์ข้อมูล (อาจใช้เวลา 1-2 นาที)...</>
+                <><RefreshCcw className="w-5 h-5 animate-spin" /> กำลังซิงค์ข้อมูล...</>
               ) : (
                 <><RefreshCcw className="w-5 h-5" /> สั่งซิงค์ข้อมูลเดี๋ยวนี้ (Manual Sync)</>
               )}
@@ -124,7 +138,7 @@ export default function ApiSyncStatusPage() {
             <div className="grid grid-cols-2 gap-4 mb-6">
               <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
                 <p className="text-xs text-gray-500 font-medium flex items-center gap-1.5"><ArrowDownToLine className="w-4 h-4" /> ดึงทัวร์ล่าสุด</p>
-                <p className="text-lg font-bold text-gray-900 mt-1">1 <span className="text-xs font-normal text-gray-500">รายการ</span></p>
+                <p className="text-lg font-bold text-gray-900 mt-1">{zegoCount.toLocaleString()} <span className="text-xs font-normal text-gray-500">รายการ</span></p>
               </div>
               <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
                 <p className="text-xs text-gray-500 font-medium flex items-center gap-1.5"><Clock className="w-4 h-4" /> อัปเดตล่าสุด</p>
@@ -145,7 +159,6 @@ export default function ApiSyncStatusPage() {
             </button>
           </div>
         </div>
-
       </div>
 
       {/* Sync Logs Table */}

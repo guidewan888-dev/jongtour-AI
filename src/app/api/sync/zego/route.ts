@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+export const dynamic = "force-dynamic";
 import { createClient } from "@supabase/supabase-js";
 
 const ZEGO_API_URL = "https://www.zegoapi.com/v1.5/programtours";

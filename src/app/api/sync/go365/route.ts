@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+export const dynamic = "force-dynamic";
 import { createClient } from "@supabase/supabase-js";
 
 // ข้อมูลสำหรับเชื่อมต่อ API ของ Go365 (เตรียมพร้อมรอข้อมูลจริง)
