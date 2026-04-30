@@ -3,6 +3,8 @@ import prisma from "@/lib/prisma";
 import { MapPin, Calendar, Clock, Plane, CheckCircle2, Star, Share2, Heart, ShieldCheck, MessageCircle, ChevronRight, Info } from "lucide-react";
 import { notFound } from "next/navigation";
 
+export const dynamic = "force-dynamic";
+
 export default async function TourDetailsPage({ params }: { params: { id: string } }) {
   // ดึงข้อมูลทัวร์จาก Database
   const tour = await prisma.tour.findUnique({
