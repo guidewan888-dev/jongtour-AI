@@ -2,26 +2,37 @@ import { Ticket, DollarSign, RefreshCcw, Users, Link as LinkIcon, AlertTriangle,
 import Link from "next/link";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import prisma from "@/lib/prisma";
+import { createClient } from "@/utils/supabase/server";
 
 export default async function AdminDashboard() {
   const now = new Date();
+  
+  const cookieStore = await cookies();
+  const supabase = createClient(cookieStore);
 
-  // Fetch live bookings
-  const liveBookings = await prisma.booking.findMany({
-    include: {
-      user: true,
-      departure: {
-        include: { tour: true }
-      },
-      travelers: true,
-      payments: true
-    },
-    orderBy: { createdAt: 'desc' }
-  });
+  // ใช้ Supabase JS แทน Prisma เพื่อหลีกเลี่ยง Vercel IPv6 Panic
+  const { data: bookingsData, error } = await supabase
+    .from('Booking')
+    .select(`
+      *,
+      user:User(*),
+      departure:TourDeparture(
+        *,
+        tour:Tour(*)
+      ),
+      travelers:Traveler(*),
+      payments:Payment(*)
+    `)
+    .order('createdAt', { ascending: false });
+
+  if (error) {
+    console.error("Supabase fetch error:", error);
+  }
+
+  const liveBookings = bookingsData || [];
 
   const activeBookings = liveBookings
-    .map((b) => {
+    .map((b: any) => {
       let statusText = "รอตรวจสอบ";
       let color = "text-gray-600 bg-gray-100";
       let actionText = "ดูรายละเอียด";
@@ -30,7 +41,7 @@ export default async function AdminDashboard() {
       let warning = "";
 
       // Missing Documents Check
-      const missingDocsCount = b.travelers.filter(t => !t.passportFileUrl || !t.visaFileUrl).length;
+      const missingDocsCount = b.travelers?.filter((t: any) => !t.passportFileUrl || !t.visaFileUrl).length || 0;
 
       switch(b.status) {
         case "PENDING":
@@ -64,8 +75,8 @@ export default async function AdminDashboard() {
       return {
         id: b.id,
         customer: b.user?.name || b.user?.email || "Unknown",
-        tour: b.departure.tour.title,
-        amount: `${b.totalPrice.toLocaleString()} ฿`,
+        tour: b.departure?.tour?.title || "Unknown Tour",
+        amount: `${(b.totalPrice || 0).toLocaleString()} ฿`,
         statusText,
         color,
         actionUrl,
@@ -75,10 +86,10 @@ export default async function AdminDashboard() {
       };
     });
 
-  const pendingCount = liveBookings.filter(b => b.status === 'AWAITING_CONFIRMATION').length;
-  const newCustomersToday = liveBookings.filter(b => b.createdAt >= new Date(now.setHours(0,0,0,0))).length;
-  const unpaidCount = liveBookings.filter(b => b.status === 'PENDING').length;
-  const unpaidAmount = liveBookings.filter(b => b.status === 'PENDING').reduce((acc, curr) => acc + curr.totalPrice, 0);
+  const pendingCount = liveBookings.filter((b: any) => b.status === 'AWAITING_CONFIRMATION').length;
+  const newCustomersToday = liveBookings.filter((b: any) => new Date(b.createdAt) >= new Date(now.setHours(0,0,0,0))).length;
+  const unpaidCount = liveBookings.filter((b: any) => b.status === 'PENDING').length;
+  const unpaidAmount = liveBookings.filter((b: any) => b.status === 'PENDING').reduce((acc: any, curr: any) => acc + (curr.totalPrice || 0), 0);
 
   return (
     <div className="space-y-8">

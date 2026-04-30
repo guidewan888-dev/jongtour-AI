@@ -1,7 +1,6 @@
 import { createClient } from "@/utils/supabase/server";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import prisma from "@/lib/prisma";
 import AdminSidebar from "@/components/admin/AdminSidebar";
 import { Bell } from "lucide-react";
 import { ReactNode } from "react";
@@ -17,23 +16,31 @@ export default async function AdminLayout({ children }: { children: ReactNode })
     redirect("/login");
   }
 
-  let dbUser = await prisma.user.findUnique({
-    where: { email: user.email || "" },
-  });
+  // ใช้ Supabase JS แทน Prisma เพื่อหลีกเลี่ยง Vercel IPv6 Panic
+  const { data: dbUser } = await supabase
+    .from("User")
+    .select("*")
+    .eq("email", user.email || "")
+    .single();
 
-  // Auto-create Prisma user if it doesn't exist
-  if (!dbUser && user.email) {
-    dbUser = await prisma.user.create({
-      data: {
+  let finalUser = dbUser;
+
+  // Auto-create user if it doesn't exist
+  if (!finalUser && user.email) {
+    const { data: newUser } = await supabase
+      .from("User")
+      .insert({
         email: user.email,
         role: "CUSTOMER", // Default role
         password: "OAUTH_USER", // Dummy password since auth is handled by Supabase
-      }
-    });
+      })
+      .select()
+      .single();
+    finalUser = newUser;
   }
 
   // Prevent non-admins from accessing the admin panel
-  if (!dbUser || dbUser.role !== "ADMIN") {
+  if (!finalUser || finalUser.role !== "ADMIN") {
     redirect("/user/bookings");
   }
 
