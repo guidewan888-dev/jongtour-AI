@@ -148,7 +148,7 @@ async function main() {
         },
         payments: {
           create: statuses[i] !== "PENDING" && statuses[i] !== "CANCELLED" ? [
-            { amount: totalPrice, status: statuses[i] === "PAYMENT_UPLOADED" ? "PENDING" : "CONFIRMED", type: "FULL" }
+            { amount: totalPrice, status: statuses[i] === "PAYMENT_UPLOADED" ? "PENDING" : "APPROVED", type: "FULL" }
           ] : []
         }
       }

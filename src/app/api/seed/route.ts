@@ -145,7 +145,7 @@ export async function GET() {
           },
           payments: {
             create: statuses[i] !== "PENDING" && statuses[i] !== "CANCELLED" ? [
-              { amount: totalPrice, status: statuses[i] === "AWAITING_CONFIRMATION" ? "PENDING" : "APPROVED", type: "FULL" }
+              { amount: totalPrice, status: statuses[i] === "PAYMENT_UPLOADED" ? "PENDING" : "APPROVED", type: "FULL" }
             ] : []
           }
         }
