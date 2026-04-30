@@ -45,11 +45,11 @@ export default function Header() {
                       <h3 className="text-lg font-bold text-gray-800 border-b-2 border-orange-500 pb-2 mb-4">จุดหมายยอดฮิต</h3>
                       
                       <div className="mb-6">
-                        <CountryLink countryCode="jp" name="ทัวร์ญี่ปุ่น" href="/search/asia/japan" />
+                        <CountryLink countryCode="jp" name="ทัวร์ญี่ปุ่น" href="/destinations/asia/japan" />
                         <div className="grid grid-cols-2 gap-x-2 gap-y-2 mt-3 ml-2">
-                          <CityLink name="โตเกียว" href="/search/asia/japan/tokyo" />
-                          <CityLink name="โอซาก้า" href="/search/asia/japan/osaka" />
-                          <CityLink name="ฮอกไกโด" href="/search/asia/japan/hokkaido" />
+                          <CityLink name="โตเกียว" href="/destinations/asia/japan/tokyo" />
+                          <CityLink name="โอซาก้า" href="/destinations/asia/japan/osaka" />
+                          <CityLink name="ฮอกไกโด" href="/destinations/asia/japan/hokkaido" />
                           <CityLink name="ฟุกุโอกะ" href="/search/asia/japan/fukuoka" />
                           <CityLink name="เกียวโต" href="/search/asia/japan/kyoto" />
                           <CityLink name="โอกินาว่า" href="/search/asia/japan/okinawa" />
@@ -59,12 +59,12 @@ export default function Header() {
 
                     <div>
                       <h3 className="text-lg font-bold text-transparent border-b-2 border-transparent pb-2 mb-4 hidden md:block">&nbsp;</h3>
-                      <CountryLink countryCode="cn" name="ทัวร์จีน" href="/search/asia/china" />
+                      <CountryLink countryCode="cn" name="ทัวร์จีน" href="/destinations/asia/china" />
                       <div className="grid grid-cols-2 gap-x-2 gap-y-1 mt-3 ml-2">
                         <CityLink name="เฉิงตู" href="/search/asia/china/chengdu" />
-                        <CityLink name="เซี่ยงไฮ้" href="/search/asia/china/shanghai" />
+                        <CityLink name="เซี่ยงไฮ้" href="/destinations/asia/china/shanghai" />
                         <CityLink name="จางเจียเจี้ย" href="/search/asia/china/zhangjiajie" />
-                        <CityLink name="ฉงชิ่ง" href="/search/asia/china/chongqing" />
+                        <CityLink name="ฉงชิ่ง" href="/destinations/asia/china/chongqing" />
                         <CityLink name="ปักกิ่ง" href="/search/asia/china/beijing" />
                         <CityLink name="คุนหมิง" href="/search/asia/china/kunming" />
                         <CityLink name="กุ้ยหลิน" href="/search/asia/china/guilin" />
@@ -84,7 +84,8 @@ export default function Header() {
                         <CityLink name="ชิงเต่า" href="/search/asia/china/qingdao" />
                         <CityLink name="ต้าเหลียน" href="/search/asia/china/dalian" />
                         <CityLink name="มองโกเลีย" href="/search/asia/china/inner-mongolia" />
-                        <CityLink name="จู่ไห่" href="/search/asia/china/zhuhai" />
+                        <CityLink name="จู่ไห่" href="/destinations/asia/china/zhuhai" />
+                        <CityLink name="กวางโจว" href="/destinations/asia/china/guangzhou" />
                       </div>
                       
                       {/* เส้นทางพิเศษ */}

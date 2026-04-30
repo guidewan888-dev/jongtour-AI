@@ -1,59 +1,51 @@
-"use client";
+import { createClient } from "@/utils/supabase/server";
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
+import prisma from "@/lib/prisma";
+import AdminSidebar from "@/components/admin/AdminSidebar";
+import { Bell } from "lucide-react";
+import { ReactNode } from "react";
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { LayoutDashboard, Ticket, Users, FileText, Settings, LogOut, RefreshCcw, Bell } from "lucide-react";
+export const dynamic = "force-dynamic";
 
-export default function AdminLayout({ children }: { children: React.ReactNode }) {
-  const pathname = usePathname();
+export default async function AdminLayout({ children }: { children: ReactNode }) {
+  const cookieStore = await cookies();
+  const supabase = createClient(cookieStore);
+  let user = null;
+  try {
+    const { data } = await supabase.auth.getUser();
+    user = data?.user;
+  } catch (e) {
+    // safe fallback
+  }
 
-  const navItems = [
-    { name: "แดชบอร์ด", href: "/admin", icon: LayoutDashboard },
-    { name: "จัดการการจอง (Bookings)", href: "/admin/bookings", icon: Ticket },
-    { name: "ลูกค้าสมาชิก", href: "/admin/users", icon: Users },
-    { name: "การเงิน & เอกสาร", href: "/admin/finance", icon: FileText },
-    { name: "สถานะ API Sync", href: "/admin/sync", icon: RefreshCcw },
-    { name: "ตั้งค่าระบบ", href: "/admin/settings", icon: Settings },
-  ];
+  if (!user) {
+    redirect("/login");
+  }
+
+  let dbUser = await prisma.user.findUnique({
+    where: { email: user.email || "" },
+  });
+
+  // Auto-create Prisma user if it doesn't exist
+  if (!dbUser && user.email) {
+    dbUser = await prisma.user.create({
+      data: {
+        email: user.email,
+        role: "CUSTOMER", // Default role
+        password: "OAUTH_USER", // Dummy password since auth is handled by Supabase
+      }
+    });
+  }
+
+  // Prevent non-admins from accessing the admin panel
+  if (!dbUser || dbUser.role !== "ADMIN") {
+    redirect("/user/bookings");
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
-      {/* Sidebar */}
-      <aside className="w-64 bg-slate-900 text-white flex flex-col fixed h-full z-20">
-        <div className="p-6 border-b border-slate-800">
-          <Link href="/admin" className="text-2xl font-bold tracking-tight text-white flex items-center gap-2">
-            <span className="bg-orange-500 text-white px-2 py-1 rounded-md text-sm">ADMIN</span>
-            Jongtour AI
-          </Link>
-        </div>
-
-        <nav className="flex-1 py-6 px-4 space-y-1 overflow-y-auto">
-          <p className="text-xs font-semibold text-slate-500 mb-4 px-2 uppercase tracking-wider">เมนูหลัก</p>
-          {navItems.map((item) => {
-            const isActive = pathname === item.href;
-            const Icon = item.icon;
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`flex items-center gap-3 px-3 py-3 rounded-xl transition-colors ${
-                  isActive ? "bg-orange-500 text-white" : "text-slate-300 hover:bg-slate-800 hover:text-white"
-                }`}
-              >
-                <Icon className="w-5 h-5" />
-                <span className="font-medium text-sm">{item.name}</span>
-              </Link>
-            );
-          })}
-        </nav>
-
-        <div className="p-4 border-t border-slate-800">
-          <button className="flex items-center gap-3 px-3 py-3 rounded-xl w-full text-slate-400 hover:bg-slate-800 hover:text-red-400 transition-colors">
-            <LogOut className="w-5 h-5" />
-            <span className="font-medium text-sm">ออกจากระบบ</span>
-          </button>
-        </div>
-      </aside>
+      <AdminSidebar />
 
       {/* Main Content */}
       <div className="flex-1 ml-64 flex flex-col min-h-screen">
@@ -72,7 +64,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 AD
               </div>
               <div className="hidden md:block">
-                <p className="text-sm font-bold text-gray-700">ผู้ดูแลระบบ</p>
+                <p className="text-sm font-bold text-gray-700">{dbUser.name || "ผู้ดูแลระบบ"}</p>
                 <p className="text-xs text-gray-500">Super Admin</p>
               </div>
             </div>

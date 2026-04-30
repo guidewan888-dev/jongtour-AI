@@ -7,7 +7,14 @@ export async function GET(request: Request) {
   const requestUrl = new URL(request.url);
   const code = requestUrl.searchParams.get('code');
   const error = requestUrl.searchParams.get('error');
-  const origin = requestUrl.origin;
+  
+  let origin = process.env.NEXT_PUBLIC_SITE_URL || process.env.SITE_URL;
+  if (!origin) {
+    const forwardedHost = request.headers.get('x-forwarded-host');
+    const forwardedProto = request.headers.get('x-forwarded-proto') || 'https';
+    origin = forwardedHost ? `${forwardedProto}://${forwardedHost}` : requestUrl.origin;
+  }
+  origin = origin.replace(/\/$/, ''); // Remove trailing slash
 
   if (error) {
     return NextResponse.redirect(`${origin}/login?error=${error}`);
@@ -61,73 +68,79 @@ export async function GET(request: Request) {
     const { sub: lineId, name, picture, email: lineEmail } = profileData;
     
     // We must ensure the user has an email for Supabase.
-    // If LINE doesn't return an email (because user didn't allow it), we create a fallback one.
+    // If LINE doesn't return an email, we create a fallback one.
     const email = lineEmail || `line_${lineId}@jongtour.com`;
 
-    // 3. Initialize Admin Supabase Client (bypasses RLS and can manage users)
+    // 3. Initialize Admin Supabase Client
     const supabaseAdmin = createSupabaseAdmin(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     );
 
-    // 4. Create or Update user in Supabase auth.users
-    const { error: createError } = await supabaseAdmin.auth.admin.createUser({
-      email,
-      email_confirm: true,
-      user_metadata: {
-        full_name: name,
-        avatar_url: picture,
-        line_id: lineId,
-        provider: 'line',
-      },
-    });
+    // Generate a deterministic, secure password for this LINE user
+    const generatedPassword = `LineAuth@${lineId}!${clientSecret.substring(0, 10)}`;
 
-    // If user already exists, update their metadata to sync latest LINE profile
-    if (createError && createError.message.includes('already exists')) {
-       const { data: existingUsers } = await supabaseAdmin.auth.admin.listUsers();
-       const user = existingUsers.users.find(u => u.email === email);
-       if (user) {
-         await supabaseAdmin.auth.admin.updateUserById(user.id, {
-           user_metadata: {
-             ...user.user_metadata,
-             full_name: name,
-             avatar_url: picture,
-             line_id: lineId
-           }
-         });
-       }
-    } else if (createError && !createError.message.includes('already exists')) {
-       console.error('Supabase Create User Error:', createError);
-       return NextResponse.redirect(`${origin}/login?error=user_creation_failed`);
+    // 4. Check if user exists, create or update
+    let existingUser = null;
+    let page = 1;
+    while (true) {
+      const { data: existingUsers, error: listError } = await supabaseAdmin.auth.admin.listUsers({ page, perPage: 100 });
+      if (listError || !existingUsers || existingUsers.users.length === 0) break;
+      
+      existingUser = existingUsers.users.find(u => u.email?.toLowerCase() === email.toLowerCase());
+      if (existingUser) break;
+      
+      if (existingUsers.users.length < 100) break;
+      page++;
     }
 
-    // 5. Generate a Magic Link OTP to establish a session for the user
-    const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
-      type: 'magiclink',
-      email,
-    });
+    if (existingUser) {
+      // Update existing user with latest LINE data and ensure password is set
+      await supabaseAdmin.auth.admin.updateUserById(existingUser.id, {
+        password: generatedPassword,
+        email_confirm: true,
+        user_metadata: {
+          ...existingUser.user_metadata,
+          full_name: name,
+          avatar_url: picture,
+          line_id: lineId
+        }
+      });
+    } else {
+      // Create new user
+      const { error: createError } = await supabaseAdmin.auth.admin.createUser({
+        email,
+        password: generatedPassword,
+        email_confirm: true,
+        user_metadata: {
+          full_name: name,
+          avatar_url: picture,
+          line_id: lineId,
+          provider: 'line',
+        },
+      });
 
-    if (linkError || !linkData.properties?.hashed_token) {
-      console.error('Magic link generation error:', linkError);
-      return NextResponse.redirect(`${origin}/login?error=session_generation_failed`);
+      if (createError) {
+        console.error('Supabase Create User Error:', createError);
+        return NextResponse.redirect(`${origin}/login?error=user_creation_failed`);
+      }
     }
 
-    // 6. Verify the OTP on the server to set the cookies via SSR client
+    // 5. Sign in using the deterministic password
     const cookieStore = await cookies();
     const supabaseServer = createSupabaseServer(cookieStore);
 
-    const { error: verifyError } = await supabaseServer.auth.verifyOtp({
+    const { error: signInError } = await supabaseServer.auth.signInWithPassword({
       email,
-      token_hash: linkData.properties.hashed_token,
-      type: 'magiclink',
+      password: generatedPassword,
     });
 
-    if (verifyError) {
-      console.error('OTP verification error:', verifyError);
-      return NextResponse.redirect(`${origin}/login?error=session_verification_failed`);
+    if (signInError) {
+      console.error('Sign in error:', signInError);
+      return NextResponse.redirect(`${origin}/login?error=session_creation_failed`);
     }
 
-    // 7. Success! Redirect to home page
+    // 6. Success! Redirect to home page
     return NextResponse.redirect(`${origin}/`);
 
   } catch (err) {

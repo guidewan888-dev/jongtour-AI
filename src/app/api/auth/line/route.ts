@@ -1,7 +1,14 @@
 import { NextResponse } from 'next/server';
 
 export async function GET(request: Request) {
-  const origin = new URL(request.url).origin;
+  let origin = process.env.NEXT_PUBLIC_SITE_URL || process.env.SITE_URL;
+  if (!origin) {
+    const forwardedHost = request.headers.get('x-forwarded-host');
+    const forwardedProto = request.headers.get('x-forwarded-proto') || 'https';
+    origin = forwardedHost ? `${forwardedProto}://${forwardedHost}` : new URL(request.url).origin;
+  }
+  origin = origin.replace(/\/$/, ''); // Remove trailing slash
+  
   const redirectUri = `${origin}/api/auth/line/callback`;
   const clientId = process.env.LINE_CLIENT_ID;
   const state = Math.random().toString(36).substring(7);

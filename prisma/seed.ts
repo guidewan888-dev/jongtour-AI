@@ -5,6 +5,13 @@ const prisma = new PrismaClient();
 async function main() {
   console.log("Start seeding...");
 
+  // 0. Clean up existing data (Optional, useful for clean seeding)
+  await prisma.payment.deleteMany({});
+  await prisma.traveler.deleteMany({});
+  await prisma.booking.deleteMany({});
+  await prisma.tourDeparture.deleteMany({});
+  await prisma.tour.deleteMany({});
+
   // 1. สร้างลูกค้า (User)
   const user1 = await prisma.user.upsert({
     where: { email: "customer1@example.com" },
@@ -12,8 +19,20 @@ async function main() {
     create: {
       email: "customer1@example.com",
       password: "hashed_password",
-      name: "สมชาย ใจดี",
+      name: "คุณสมชาย ใจดี",
       phone: "0812345678",
+      role: "CUSTOMER",
+    },
+  });
+
+  const user2 = await prisma.user.upsert({
+    where: { email: "customer2@example.com" },
+    update: {},
+    create: {
+      email: "customer2@example.com",
+      password: "hashed_password",
+      name: "คุณวิภาวรรณ สมบูรณ์",
+      phone: "0898765432",
       role: "CUSTOMER",
     },
   });
@@ -69,6 +88,8 @@ async function main() {
     }
   ];
 
+  const createdTours = [];
+
   for (const t of tours) {
     const tour = await prisma.tour.create({
       data: {
@@ -82,7 +103,6 @@ async function main() {
       }
     });
 
-    // 3. สร้างรอบวันเดินทาง (TourDeparture) สำหรับแต่ละทัวร์
     const today = new Date();
     const nextMonth = new Date(today);
     nextMonth.setMonth(nextMonth.getMonth() + 1);
@@ -98,28 +118,41 @@ async function main() {
       }
     });
 
-    // สร้าง Booking จำลองให้ทัวร์ญี่ปุ่น
-    if (t.destination === "Japan") {
-      await prisma.booking.create({
-        data: {
-          userId: user1.id,
-          departureId: departure.id,
-          status: "AWAITING_CONFIRMATION",
-          totalPrice: t.price * 2,
-          travelers: {
-            create: [
-              { name: "สมชาย ใจดี" },
-              { name: "สมหญิง ใจดี" }
-            ]
-          },
-          payments: {
-            create: [
-              { amount: t.price * 2, status: "PENDING", type: "FULL" }
-            ]
-          }
+    createdTours.push({ tour, departure });
+  }
+
+  // 3. สร้าง Bookings จำลองหลากหลายสถานะ
+  const statuses = ["PENDING", "PAYMENT_UPLOADED", "FULL_PAID", "COMPLETED", "CANCELLED"];
+  
+  for (let i = 0; i < 5; i++) {
+    const td = createdTours[i % createdTours.length];
+    const user = i % 2 === 0 ? user1 : user2;
+    const travelerCount = (i % 3) + 1;
+    const totalPrice = td.tour.price * travelerCount;
+    
+    // Make created dates span over the last few days
+    const createdAt = new Date();
+    createdAt.setHours(createdAt.getHours() - (i * 12));
+
+    await prisma.booking.create({
+      data: {
+        userId: user.id,
+        departureId: td.departure.id,
+        status: statuses[i] as any,
+        totalPrice: totalPrice,
+        createdAt: createdAt,
+        travelers: {
+          create: Array.from({ length: travelerCount }).map((_, idx) => ({
+            name: `${user.name} ผู้ติดตาม ${idx + 1}`
+          }))
+        },
+        payments: {
+          create: statuses[i] !== "PENDING" && statuses[i] !== "CANCELLED" ? [
+            { amount: totalPrice, status: statuses[i] === "PAYMENT_UPLOADED" ? "PENDING" : "CONFIRMED", type: "FULL" }
+          ] : []
         }
-      });
-    }
+      }
+    });
   }
 
   console.log("Seeding finished.");

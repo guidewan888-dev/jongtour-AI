@@ -11,7 +11,13 @@ export const dynamic = "force-dynamic";
 export default async function Home() {
   const cookieStore = await cookies();
   const supabase = createClient(cookieStore);
-  const { data: { user } } = await supabase.auth.getUser();
+  let user = null;
+  try {
+    const { data } = await supabase.auth.getUser();
+    user = data?.user;
+  } catch (e) {
+    // Fallback safely if auth throws when not logged in
+  }
 
   return (
     <main className="min-h-screen bg-white flex flex-col items-center justify-center p-4 relative">
@@ -36,9 +42,9 @@ export default async function Home() {
 
         {/* Shortcuts */}
         <div className="flex flex-wrap justify-center gap-4 pt-6 w-full max-w-3xl">
-          <ShortcutButton icon="🌸" label="ทัวร์ญี่ปุ่น" href="/search/asia/japan" />
-          <ShortcutButton icon="🏔️" label="ยุโรป" href="/search/europe" />
-          <ShortcutButton icon="🔥" label="โปรไฟไหม้" href="/search/promotions" />
+          <ShortcutButton icon="🌸" label="ทัวร์ญี่ปุ่น" href="/destinations/asia/japan" />
+          <ShortcutButton icon="🐼" label="ทัวร์จีน" href="/destinations/asia/china" />
+          <ShortcutButton icon="🏔️" label="ทัวร์ยุโรป" href="/destinations/europe" />
           <ShortcutButton icon="✨" label="AI ออกแบบทริป" href="/ai-planner" />
           <AddShortcutButton />
         </div>

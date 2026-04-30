@@ -24,7 +24,7 @@ function LoginContent() {
     const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_IN' && session) {
         // Safe to redirect because state is fully persisted
-        window.location.href = "/";
+        window.location.href = "/user/bookings";
       }
     });
 

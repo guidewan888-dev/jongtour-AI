@@ -37,6 +37,7 @@ model Tour {
   price          Float
   imageUrl       String?
   description    String?
+  airlineCode    String?         // IATA code สายการบิน (เช่น TG, XJ)
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
 
@@ -86,11 +87,13 @@ enum BookingStatus {
 }
 
 model Traveler {
-  id          String   @id @default(cuid())
-  bookingId   String
-  name        String
-  passportNo  String?
-  dob         DateTime?
+  id              String   @id @default(cuid())
+  bookingId       String
+  name            String
+  passportNo      String?
+  dob             DateTime?
+  passportFileUrl String?
+  visaFileUrl     String?
 
   booking     Booking  @relation(fields: [bookingId], references: [id])
 }
