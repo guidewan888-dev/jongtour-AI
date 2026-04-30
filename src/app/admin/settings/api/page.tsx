@@ -95,22 +95,51 @@ export default function ApiSettingsPage() {
         </div>
 
         {/* Zego API */}
-        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden opacity-75">
+        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
           <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-slate-50">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-orange-500 rounded-lg flex items-center justify-center text-white font-bold">ZG</div>
               <div>
-                <h3 className="font-bold text-lg text-gray-900">ระบบ Zego (เตรียมเปิดใช้งาน)</h3>
-                <div className="flex items-center gap-1.5 mt-0.5 text-xs text-gray-500 font-medium">
-                  สถานะ: รอทีมฝั่ง Zego อนุมัติ API Key
+                <h3 className="font-bold text-lg text-gray-900">ระบบ Zego</h3>
+                <div className="flex items-center gap-1.5 mt-0.5 text-xs text-green-600 font-medium">
+                  <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></div>
+                  เชื่อมต่อล่าสุด: วันนี้ 08:05 น.
                 </div>
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <span className="px-3 py-1 bg-gray-100 text-gray-500 text-xs font-bold rounded-full border border-gray-200">Inactive</span>
-              <div className="w-12 h-6 bg-gray-200 rounded-full relative cursor-pointer">
-                <div className="w-4 h-4 bg-white rounded-full absolute left-1 top-1"></div>
+              <span className="px-3 py-1 bg-green-50 text-green-700 text-xs font-bold rounded-full border border-green-200">Active</span>
+              <div className="w-12 h-6 bg-green-500 rounded-full relative cursor-pointer">
+                <div className="w-4 h-4 bg-white rounded-full absolute right-1 top-1"></div>
               </div>
+            </div>
+          </div>
+
+          <div className="p-6 space-y-5">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-1.5">API Endpoint URL</label>
+                <input type="text" defaultValue="https://www.zegoapi.com/v1.5/programtours" className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-gray-800 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500" />
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-1.5">Company Code</label>
+                <input type="text" defaultValue="JT-BKK-002" className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-gray-800 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500" />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-bold text-gray-700 mb-1.5">Bearer Token / API Key</label>
+              <div className="relative">
+                <input type="password" defaultValue="ZG_MOCK_API_KEY_987654321" className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-gray-800 font-mono focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500" />
+              </div>
+              <p className="text-xs text-gray-500 mt-1.5 flex items-center gap-1"><AlertCircle className="w-3.5 h-3.5" /> ห้ามแชร์ API Key นี้ให้บุคคลภายนอกเด็ดขาด</p>
+            </div>
+
+            <div className="pt-4 flex items-center justify-between border-t border-gray-100">
+              <button onClick={handleTest} disabled={isTesting} className="flex items-center gap-2 text-sm font-bold text-indigo-600 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 px-4 py-2 rounded-lg transition-colors">
+                <Webhook className={`w-4 h-4 ${isTesting ? 'animate-pulse' : ''}`} /> 
+                {isTesting ? 'กำลังทดสอบการเชื่อมต่อ...' : 'ทดสอบการเชื่อมต่อ (Test Connection)'}
+              </button>
             </div>
           </div>
         </div>

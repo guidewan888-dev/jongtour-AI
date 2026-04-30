@@ -6,6 +6,8 @@ import { RefreshCcw, CheckCircle2, AlertTriangle, AlertCircle, Clock, Database, 
 export default function ApiSyncStatusPage() {
   const [isSyncingGo365, setIsSyncingGo365] = useState(false);
   const [lastSyncGo365, setLastSyncGo365] = useState("วันนี้ 08:00 น.");
+  const [isSyncingZego, setIsSyncingZego] = useState(false);
+  const [lastSyncZego, setLastSyncZego] = useState("วันนี้ 08:05 น.");
 
   const handleForceSync = () => {
     setIsSyncingGo365(true);
@@ -14,6 +16,20 @@ export default function ApiSyncStatusPage() {
       const now = new Date();
       setLastSyncGo365(`วันนี้ ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')} น.`);
     }, 3000); // Simulate 3 seconds sync
+  };
+
+  const handleForceSyncZego = async () => {
+    setIsSyncingZego(true);
+    try {
+      const res = await fetch('/api/sync/zego', { method: 'POST' });
+      await res.json();
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsSyncingZego(false);
+      const now = new Date();
+      setLastSyncZego(`วันนี้ ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')} น.`);
+    }
   };
 
   const logs = [
@@ -99,20 +115,34 @@ export default function ApiSyncStatusPage() {
                 <p className="text-sm text-gray-500">Secondary Provider</p>
               </div>
             </div>
-            <div className="bg-amber-100 text-amber-700 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1.5 border border-amber-200">
-              <AlertTriangle className="w-3.5 h-3.5" /> Setup Pending
+            <div className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1.5 border border-green-200">
+              <CheckCircle2 className="w-3.5 h-3.5" /> Online
             </div>
           </div>
           
-          <div className="p-6 bg-gray-50/50 flex flex-col justify-center h-[calc(100%-105px)]">
-            <div className="text-center">
-              <Database className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-              <p className="text-gray-600 font-medium">รอการยืนยัน API Key จากฝั่ง Zego</p>
-              <p className="text-sm text-gray-400 mt-1">ตั้งค่า Endpoint เรียบร้อยแล้ว รอเปิดใช้งาน</p>
-              <button className="mt-4 text-indigo-600 hover:text-indigo-800 text-sm font-bold underline">
-                ไปที่หน้าตั้งค่า API
-              </button>
+          <div className="p-6 bg-gray-50/50">
+            <div className="grid grid-cols-2 gap-4 mb-6">
+              <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
+                <p className="text-xs text-gray-500 font-medium flex items-center gap-1.5"><ArrowDownToLine className="w-4 h-4" /> ดึงทัวร์ล่าสุด</p>
+                <p className="text-lg font-bold text-gray-900 mt-1">1 <span className="text-xs font-normal text-gray-500">รายการ</span></p>
+              </div>
+              <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
+                <p className="text-xs text-gray-500 font-medium flex items-center gap-1.5"><Clock className="w-4 h-4" /> อัปเดตล่าสุด</p>
+                <p className="text-sm font-bold text-indigo-600 mt-2">{lastSyncZego}</p>
+              </div>
             </div>
+            
+            <button 
+              onClick={handleForceSyncZego}
+              disabled={isSyncingZego}
+              className="w-full py-3 bg-orange-50 text-orange-700 hover:bg-orange-100 border border-orange-200 rounded-xl font-bold flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
+            >
+              {isSyncingZego ? (
+                <><RefreshCcw className="w-5 h-5 animate-spin" /> กำลังซิงค์ข้อมูล...</>
+              ) : (
+                <><RefreshCcw className="w-5 h-5" /> สั่งซิงค์ข้อมูล Zego (Manual Sync)</>
+              )}
+            </button>
           </div>
         </div>
 
