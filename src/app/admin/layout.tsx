@@ -11,13 +11,7 @@ export const dynamic = "force-dynamic";
 export default async function AdminLayout({ children }: { children: ReactNode }) {
   const cookieStore = await cookies();
   const supabase = createClient(cookieStore);
-  let user = null;
-  try {
-    const { data } = await supabase.auth.getUser();
-    user = data?.user;
-  } catch (e) {
-    // safe fallback
-  }
+  const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) {
     redirect("/login");

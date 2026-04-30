@@ -18,13 +18,7 @@ export default async function DocumentPreviewPage({
   if (bookingId && !bookingId.includes('mock')) {
     const cookieStore = await cookies();
     const supabase = createClient(cookieStore);
-    let user = null;
-    try {
-      const { data } = await supabase.auth.getUser();
-      user = data?.user;
-    } catch (e) {
-      // safe fallback
-    }
+    const { data: { user } } = await supabase.auth.getUser();
 
     if (user) {
       const dbUser = await prisma.user.findUnique({ where: { email: user.email || "" } });

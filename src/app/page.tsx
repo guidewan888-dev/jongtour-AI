@@ -11,13 +11,7 @@ export const dynamic = "force-dynamic";
 export default async function Home() {
   const cookieStore = await cookies();
   const supabase = createClient(cookieStore);
-  let user = null;
-  try {
-    const { data } = await supabase.auth.getUser();
-    user = data?.user;
-  } catch (e) {
-    // Fallback safely if auth throws when not logged in
-  }
+  const { data: { user } } = await supabase.auth.getUser();
 
   return (
     <main className="min-h-screen bg-white flex flex-col items-center justify-center p-4 relative">
