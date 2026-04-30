@@ -8,7 +8,7 @@ export interface DestinationNode {
 export const destinationConfig: Record<string, DestinationNode> = {
   asia: {
     name: "เอเชีย",
-    keywords: ["CHINA", "JAPAN", "VIETNAM", "HONG KONG", "KOREA", "TAIWAN", "เอเชีย", "ญี่ปุ่น", "จีน", "เกาหลี", "ไต้หวัน", "เวียดนาม", "ฮ่องกง"],
+    keywords: ["CHINA", "JAPAN", "VIETNAM", "HONG KONG", "KOREA", "TAIWAN", "SINGAPORE", "INDIA", "เอเชีย", "ญี่ปุ่น", "จีน", "เกาหลี", "ไต้หวัน", "เวียดนาม", "ฮ่องกง", "สิงคโปร์", "อินเดีย"],
     coverImage: "https://images.unsplash.com/photo-1464817739973-0128fe77aaa1?q=80&w=2000",
     children: {
       japan: {
@@ -134,6 +134,16 @@ export const destinationConfig: Record<string, DestinationNode> = {
         keywords: ["HONG KONG", "ฮ่องกง", "ดิสนีย์แลนด์", "ไหว้พระ"],
         coverImage: "https://images.unsplash.com/photo-1507504031003-b417219a0fde?q=80&w=2000"
       },
+      singapore: {
+        name: "สิงคโปร์",
+        keywords: ["SINGAPORE", "สิงคโปร์", "มาริน่าเบย์"],
+        coverImage: "https://images.unsplash.com/photo-1525625293386-3f8f99389edd?q=80&w=2000"
+      },
+      india: {
+        name: "อินเดีย",
+        keywords: ["INDIA", "อินเดีย", "นิวเดลี", "ทัชมาฮาล"],
+        coverImage: "https://images.unsplash.com/photo-1524492412937-b28074a5d7da?q=80&w=2000"
+      },
       vietnam: {
         name: "เวียดนาม",
         keywords: ["VIETNAM", "เวียดนาม", "ดานัง", "ฮานอย", "โฮจิมินห์", "ดาลัด"],
@@ -160,7 +170,7 @@ export const destinationConfig: Record<string, DestinationNode> = {
   },
   europe: {
     name: "ยุโรป",
-    keywords: ["EUROPE", "ยุโรป", "ฝรั่งเศส", "สวิตเซอร์แลนด์", "อิตาลี", "อังกฤษ", "FRANCE", "SWITZERLAND", "ITALY", "UK"],
+    keywords: ["EUROPE", "ยุโรป", "ฝรั่งเศส", "สวิตเซอร์แลนด์", "อิตาลี", "อังกฤษ", "FRANCE", "SWITZERLAND", "ITALY", "UK", "ENGLAND", "GERMANY", "AUSTRIA", "CZECH", "SPAIN", "NETHERLANDS", "FINLAND", "GEORGIA"],
     coverImage: "https://images.unsplash.com/photo-1499856871958-5b9627545d1a?q=80&w=2000",
     children: {
       france: {
@@ -172,6 +182,38 @@ export const destinationConfig: Record<string, DestinationNode> = {
         name: "สวิตเซอร์แลนด์",
         keywords: ["SWITZERLAND", "สวิตเซอร์แลนด์", "สวิส"],
         coverImage: "https://images.unsplash.com/photo-1530122037265-a5f1f91d3b99?q=80&w=2000"
+      },
+      italy: {
+        name: "อิตาลี",
+        keywords: ["ITALY", "อิตาลี", "โรม", "เวนิส", "มิลาน"],
+        coverImage: "https://images.unsplash.com/photo-1515542622106-78b28af7815b?q=80&w=2000"
+      },
+      uk: {
+        name: "อังกฤษ",
+        keywords: ["UK", "ENGLAND", "อังกฤษ", "สหราชอาณาจักร", "ลอนดอน"],
+        coverImage: "https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?q=80&w=2000"
+      },
+      georgia: {
+        name: "จอร์เจีย",
+        keywords: ["GEORGIA", "จอร์เจีย", "ทบิลิซี"],
+        coverImage: "https://images.unsplash.com/photo-1565008576549-57569a49371d?q=80&w=2000"
+      }
+    }
+  },
+  "middle-east": {
+    name: "ตะวันออกกลาง",
+    keywords: ["MIDDLE EAST", "ตะวันออกกลาง", "TURKEY", "TURKIYE", "ตุรกี", "EGYPT", "อียิปต์", "JORDAN", "จอร์แดน"],
+    coverImage: "https://images.unsplash.com/photo-1541432901042-2d8bd64b4a9b?q=80&w=2000",
+    children: {
+      turkey: {
+        name: "ตุรกี",
+        keywords: ["TURKEY", "TURKIYE", "ตุรกี", "อิสตันบูล", "คัปปาโดเกีย"],
+        coverImage: "https://images.unsplash.com/photo-1524231757912-21f4fe3a7200?q=80&w=2000"
+      },
+      egypt: {
+        name: "อียิปต์",
+        keywords: ["EGYPT", "อียิปต์", "ไคโร", "พีระมิด"],
+        coverImage: "https://images.unsplash.com/photo-1539650116574-8efeb43e2b50?q=80&w=2000"
       }
     }
   }
