@@ -308,9 +308,9 @@ export default async function DestinationPage({ params }: { params: { slug?: str
                   // หาเดือนที่เดินทางจาก departures
                   let dateDisplay = "เร็วๆ นี้";
                   if (tour.departures && tour.departures.length > 0) {
-                    const sorted = [...tour.departures].sort((a, b) => a.startDate.getTime() - b.startDate.getTime());
-                    const firstDate = sorted[0].startDate;
-                    const lastDate = sorted[sorted.length - 1].startDate;
+                    const sorted = [...tour.departures].sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime());
+                    const firstDate = new Date(sorted[0].startDate);
+                    const lastDate = new Date(sorted[sorted.length - 1].startDate);
                     
                     const formatMonth = (d: Date) => d.toLocaleDateString("th-TH", { month: "short", year: "2-digit" });
                     const m1 = formatMonth(firstDate);
