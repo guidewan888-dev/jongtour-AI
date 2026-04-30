@@ -219,7 +219,7 @@ export default async function WholesaleLandingPage({ params }: { params: { slug:
                           <img 
                             src={tour.imageUrl || "https://images.unsplash.com/photo-1436491865332-7a61a109cc05"} 
                             alt={tour.title} 
-                            className="w-full h-[220px] object-contain bg-white"
+                            className="w-full aspect-square object-contain bg-white"
                           />
                           
                           {/* Map Pin Badge */}
