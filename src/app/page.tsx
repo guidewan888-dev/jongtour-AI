@@ -67,13 +67,7 @@ function ImageShortcutButton({ imgSrc, label, href, fallbackIcon }: { imgSrc: st
           src={imgSrc} 
           alt={label} 
           className="w-full h-full object-contain group-hover:scale-110 transition-transform"
-          onError={(e) => {
-            // Fallback if image not found
-            e.currentTarget.style.display = 'none';
-            e.currentTarget.nextElementSibling?.classList.remove('hidden');
-          }}
         />
-        <span className="text-2xl hidden group-hover:scale-110 transition-transform">{fallbackIcon}</span>
       </div>
       <span className="text-[10px] md:text-xs text-gray-700 font-bold text-center group-hover:text-orange-600 line-clamp-1">
         {label}
