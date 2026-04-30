@@ -28,19 +28,18 @@ export default async function Home() {
       </nav>
 
       {/* Hero Section */}
-      <div className="w-full max-w-4xl flex flex-col items-center justify-center space-y-8 mt-10">
+      <div className="w-full max-w-5xl flex flex-col items-center justify-center space-y-6 mt-0 -translate-y-8">
 
-        {/* AI Search Bar */}
         {/* AI Search Bar */}
         <AiSearchBar />
 
         {/* Shortcuts */}
-        <div className="flex flex-wrap justify-center gap-4 pt-6 w-full max-w-3xl">
-          <ShortcutButton icon="🌸" label="ทัวร์ญี่ปุ่น" href="/destinations/asia/japan" />
-          <ShortcutButton icon="🐼" label="ทัวร์จีน" href="/destinations/asia/china" />
-          <ShortcutButton icon="🏔️" label="ทัวร์ยุโรป" href="/destinations/europe" />
-          <ShortcutButton icon="✨" label="AI ออกแบบทริป" href="/ai-planner" />
-          <AddShortcutButton />
+        <div className="flex flex-wrap justify-center gap-4 pt-4 w-full max-w-4xl">
+          <ImageShortcutButton imgSrc="/images/wholesales/CH7.jpg" label="Check In Group" href="/search?wholesale=checkingroup" fallbackIcon="🌍" />
+          <ImageShortcutButton imgSrc="/images/wholesales/download.png" label="GO 365 Travel" href="/search?wholesale=go365" fallbackIcon="✈️" />
+          <ImageShortcutButton imgSrc="/images/wholesales/download.jfif" label="Let's Go Group" href="/search?wholesale=letsgo" fallbackIcon="🗺️" />
+          <ImageShortcutButton imgSrc="/images/wholesales/Tour-Factory.jpg" label="Tour Factory" href="/search?wholesale=tourfactory" fallbackIcon="🏭" />
+          <ShortcutButton icon="✨" label="AI วางแผน" href="/ai-planner" />
         </div>
       </div>
     </main>
@@ -49,26 +48,37 @@ export default async function Home() {
 
 function ShortcutButton({ icon, label, href }: { icon: string; label: string; href: string }) {
   return (
-    <Link href={href} className="flex flex-col items-center justify-center p-4 bg-white hover:bg-orange-50/50 rounded-2xl w-24 h-24 md:w-28 md:h-28 transition-all border-2 border-gray-100 hover:border-orange-200 shadow-sm hover:shadow-md group">
-      <span className="text-3xl mb-2 group-hover:scale-110 transition-transform">
+    <Link href={href} className="flex flex-col items-center justify-center p-3 bg-white hover:bg-orange-50/50 rounded-2xl w-20 h-20 md:w-24 md:h-24 transition-all border-2 border-gray-100 hover:border-orange-200 shadow-sm hover:shadow-md group">
+      <span className="text-2xl mb-1 group-hover:scale-110 transition-transform">
         {icon}
       </span>
-      <span className="text-xs md:text-sm text-gray-700 font-bold text-center group-hover:text-orange-600">
+      <span className="text-[10px] md:text-xs text-gray-700 font-bold text-center group-hover:text-orange-600 line-clamp-1">
         {label}
       </span>
     </Link>
   );
 }
 
-function AddShortcutButton() {
+function ImageShortcutButton({ imgSrc, label, href, fallbackIcon }: { imgSrc: string; label: string; href: string; fallbackIcon: string }) {
   return (
-    <button className="flex flex-col items-center justify-center p-4 bg-white hover:bg-gray-50 rounded-2xl w-24 h-24 md:w-28 md:h-28 transition-all border-2 border-gray-100 hover:border-gray-200 shadow-sm hover:shadow-md group">
-      <div className="w-10 h-10 rounded-full bg-gray-100 group-hover:bg-gray-200 flex items-center justify-center mb-2 transition-colors border border-gray-200">
-        <Plus className="w-5 h-5 text-gray-700" strokeWidth={2.5} />
+    <Link href={href} className="flex flex-col items-center justify-center p-3 bg-white hover:bg-orange-50/50 rounded-2xl w-20 h-20 md:w-24 md:h-24 transition-all border-2 border-gray-100 hover:border-orange-200 shadow-sm hover:shadow-md group">
+      <div className="w-10 h-10 md:w-12 md:h-12 mb-1 flex items-center justify-center overflow-hidden">
+        <img 
+          src={imgSrc} 
+          alt={label} 
+          className="w-full h-full object-contain group-hover:scale-110 transition-transform"
+          onError={(e) => {
+            // Fallback if image not found
+            e.currentTarget.style.display = 'none';
+            e.currentTarget.nextElementSibling?.classList.remove('hidden');
+          }}
+        />
+        <span className="text-2xl hidden group-hover:scale-110 transition-transform">{fallbackIcon}</span>
       </div>
-      <span className="text-xs md:text-sm text-gray-700 font-bold text-center">
-        เพิ่มทางลัด
+      <span className="text-[10px] md:text-xs text-gray-700 font-bold text-center group-hover:text-orange-600 line-clamp-1">
+        {label}
       </span>
-    </button>
+    </Link>
   );
 }
+
