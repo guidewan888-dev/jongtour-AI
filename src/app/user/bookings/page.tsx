@@ -17,7 +17,7 @@ export default async function BookingsPage() {
 
   // Find user in Prisma DB by email (since Supabase auth ID might differ from Prisma cuid, though usually they sync)
   const dbUser = await prisma.user.findUnique({
-    where: { email: user.email },
+    where: { email: user.email || "" },
   });
 
   // If user is not yet in Prisma, they won't have bookings

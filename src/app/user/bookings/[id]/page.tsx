@@ -49,7 +49,7 @@ export default async function BookingDetailsPage({ params }: { params: { id: str
     };
   } else {
     // Fetch real data
-    const dbUser = await prisma.user.findUnique({ where: { email: user.email } });
+    const dbUser = await prisma.user.findUnique({ where: { email: user.email || "" } });
     if (!dbUser) redirect('/user/bookings');
 
     booking = await prisma.booking.findUnique({

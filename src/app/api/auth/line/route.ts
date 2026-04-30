@@ -10,7 +10,7 @@ export async function GET(request: Request) {
   origin = origin.replace(/\/$/, ''); // Remove trailing slash
   
   const redirectUri = `${origin}/api/auth/line/callback`;
-  const clientId = process.env.LINE_CLIENT_ID;
+  const clientId = process.env.LINE_CLIENT_ID || '2009935240';
   const state = Math.random().toString(36).substring(7);
 
   if (!clientId) {

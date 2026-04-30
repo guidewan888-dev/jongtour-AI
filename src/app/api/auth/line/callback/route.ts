@@ -24,8 +24,8 @@ export async function GET(request: Request) {
     return NextResponse.redirect(`${origin}/login`);
   }
 
-  const clientId = process.env.LINE_CLIENT_ID!;
-  const clientSecret = process.env.LINE_CLIENT_SECRET!;
+  const clientId = process.env.LINE_CLIENT_ID || '2009935240';
+  const clientSecret = process.env.LINE_CLIENT_SECRET || 'cf1f206b44b04eaeeb31895cf156c800';
   const redirectUri = `${origin}/api/auth/line/callback`;
 
   try {

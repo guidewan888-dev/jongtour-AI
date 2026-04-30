@@ -17,7 +17,7 @@ export default async function ProfilePage() {
 
   // Fetch from DB if exists
   const dbUser = await prisma.user.findUnique({
-    where: { email: user.email },
+    where: { email: user.email || "" },
   });
 
   return (
