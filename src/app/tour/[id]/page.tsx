@@ -1,5 +1,4 @@
 import Link from "next/link";
-import prisma from "@/lib/prisma";
 import { MapPin, Calendar, Clock, Plane, CheckCircle2, Star, Share2, Heart, ShieldCheck, MessageCircle, ChevronRight, Info } from "lucide-react";
 import { notFound } from "next/navigation";
 

@@ -1,8 +1,31 @@
 import Link from "next/link";
-import { CheckCircle2, FileText, ArrowRight } from "lucide-react";
+import { CheckCircle2, FileText, ArrowRight, Calendar, MapPin } from "lucide-react";
+import { createClient } from "@/utils/supabase/server";
+import { cookies } from "next/headers";
+import { notFound } from "next/navigation";
 
-export default function PaymentSuccessPage({ params }: { params: { bookingId: string } }) {
+export default async function PaymentSuccessPage({ params }: { params: { bookingId: string } }) {
   const bookingId = params.bookingId;
+
+  const cookieStore = await cookies();
+  const supabase = createClient(cookieStore);
+
+  const { data: booking, error } = await supabase
+    .from('Booking')
+    .select(`
+      *,
+      departure:TourDeparture(
+        *,
+        tour:Tour(*)
+      )
+    `)
+    .eq('id', bookingId)
+    .single();
+
+  if (error || !booking) {
+    console.error("Booking not found on success page:", error);
+    // Even if it fails, we show a generic success just in case
+  }
 
   return (
     <main className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
@@ -39,8 +62,26 @@ export default function PaymentSuccessPage({ params }: { params: { bookingId: st
             แจ้งชำระเงินสำเร็จ!
           </h1>
           <p className="text-lg text-gray-600 mb-8 max-w-lg mx-auto">
-            ระบบได้รับข้อมูลการชำระเงินของท่านเรียบร้อยแล้ว สำหรับรหัสการจอง <span className="font-mono font-bold text-gray-900 bg-gray-100 px-2 py-1 rounded">{bookingId.slice(-8).toUpperCase()}</span>
+            ระบบได้รับข้อมูลการชำระเงินของท่านเรียบร้อยแล้ว สำหรับรหัสการจอง <span className="font-mono font-bold text-gray-900 bg-gray-100 px-2 py-1 rounded">{bookingId.slice(0, 8).toUpperCase()}</span>
           </p>
+
+          {booking && booking.departure && booking.departure.tour && (
+            <div className="bg-gray-50 border border-gray-100 rounded-2xl p-6 text-left mb-8 flex gap-4 items-center">
+              {booking.departure.tour.imageUrl && (
+                <img src={booking.departure.tour.imageUrl} alt="Tour" className="w-16 h-16 object-cover rounded-xl" />
+              )}
+              <div>
+                <h4 className="font-bold text-gray-900">{booking.departure.tour.title}</h4>
+                <div className="text-sm text-gray-500 mt-1 flex gap-4">
+                  <span className="flex items-center gap-1"><MapPin className="w-3 h-3" /> {booking.departure.tour.destination}</span>
+                  <span className="flex items-center gap-1">
+                    <Calendar className="w-3 h-3" /> 
+                    {new Date(booking.departure.startDate).toLocaleDateString('th-TH', {day:'2-digit', month:'short'})} - {new Date(booking.departure.endDate).toLocaleDateString('th-TH', {day:'2-digit', month:'short'})}
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
 
           <div className="bg-blue-50 border border-blue-100 rounded-2xl p-6 text-left mb-8">
             <h3 className="font-bold text-blue-900 mb-2 flex items-center gap-2">
@@ -58,27 +99,22 @@ export default function PaymentSuccessPage({ params }: { params: { bookingId: st
               </li>
               <li className="flex items-start gap-2">
                 <div className="w-1.5 h-1.5 rounded-full bg-blue-500 mt-2 shrink-0"></div>
-                ท่านสามารถตรวจสอบสถานะการจองล่าสุดได้ที่เมนู "รายการจอง" ในโปรไฟล์ส่วนตัว
+                กรุณาเตรียมภาพถ่ายพาสปอร์ตของท่าน เพื่อใช้ในการดำเนินการจองตั๋วเครื่องบิน
               </li>
             </ul>
           </div>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link 
-              href="/user/bookings" 
-              className="inline-flex items-center justify-center gap-2 bg-[#5392f9] text-white px-8 py-4 rounded-xl font-bold text-lg hover:bg-blue-600 transition-colors shadow-lg shadow-blue-500/30"
-            >
-              ไปที่หน้ารายการจอง <ArrowRight className="w-5 h-5" />
+            <Link href={`/user/bookings/${bookingId}`} className="flex-1 bg-white border-2 border-gray-200 text-gray-700 py-3.5 rounded-xl font-bold text-lg hover:bg-gray-50 hover:border-gray-300 transition-colors">
+              ดูรายละเอียดการจอง
             </Link>
-            <Link 
-              href="/" 
-              className="inline-flex items-center justify-center px-8 py-4 rounded-xl font-bold text-gray-600 bg-gray-100 hover:bg-gray-200 transition-colors"
-            >
-              กลับสู่หน้าหลัก
+            <Link href="/user/bookings" className="flex-1 flex items-center justify-center gap-2 bg-gray-900 text-white py-3.5 rounded-xl font-bold text-lg hover:bg-gray-800 transition-colors shadow-lg shadow-gray-900/20">
+              การจองของฉัน
+              <ArrowRight className="w-5 h-5" />
             </Link>
           </div>
         </div>
-
+        
       </div>
     </main>
   );

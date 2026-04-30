@@ -4,7 +4,6 @@ import { redirect } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import TravelerUploadItem from "@/components/user/TravelerUploadItem";
-import prisma from "@/lib/prisma";
 
 export default async function BookingDetailsPage({ params }: { params: { id: string } }) {
   const cookieStore = await cookies();
@@ -16,70 +15,34 @@ export default async function BookingDetailsPage({ params }: { params: { id: str
   }
 
   const bookingId = params.id;
-  const isMock = bookingId.includes('mock');
-
-  // If mock, hardcode the data
   let booking: any = null;
 
-  if (isMock) {
-    booking = {
-      id: bookingId,
-      status: bookingId.includes('12345678') ? 'PENDING' : bookingId.includes('87654321') ? 'DEPOSIT_PAID' : 'FULL_PAID',
-      totalPrice: bookingId.includes('12345678') ? 45900 : 15900,
-      createdAt: new Date(),
-      departure: {
-        startDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
-        endDate: new Date(Date.now() + 19 * 24 * 60 * 60 * 1000),
-        tour: {
-          title: bookingId.includes('12345678') ? 'ทัวร์ญี่ปุ่น โตเกียว ฟูจิ โอซาก้า 6 วัน 4 คืน' : bookingId.includes('99887766') ? 'ทัวร์เยอรมัน สวิตเซอร์แลนด์ ฝรั่งเศส 9 วัน 6 คืน' : 'ทัวร์เวียดนาม ดานัง ฮอยอัน บานาฮิลล์',
-          destination: bookingId.includes('12345678') ? 'ประเทศญี่ปุ่น' : bookingId.includes('99887766') ? 'เยอรมัน (Germany)' : 'ประเทศเวียดนาม',
-          imageUrl: bookingId.includes('12345678') ? 'https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?q=80&w=800&auto=format&fit=crop' : bookingId.includes('99887766') ? 'https://images.unsplash.com/photo-1467269204594-9661b134dd2b?q=80&w=800&auto=format&fit=crop' : 'https://images.unsplash.com/photo-1583417319070-4a69db38a482?q=80&w=800&auto=format&fit=crop',
-          durationDays: bookingId.includes('12345678') ? 6 : bookingId.includes('99887766') ? 9 : 4,
-          requiresVisa: bookingId.includes('99887766') // เยอรมันใช้วีซ่า
-        }
-      },
-      travelers: [
-        { name: 'คุณสมชาย ใจดี', passportNo: 'AA1234567', passportUploaded: true },
-        { name: 'คุณสมหญิง รักดี', passportNo: 'AB7654321', passportUploaded: false },
-        { name: 'ด.ช.สมบูรณ์ ใจดี', passportNo: 'AC1122334', passportUploaded: false },
-        { name: 'คุณปู่สมศักดิ์ ใจดี', passportNo: 'AD9988776', passportUploaded: true },
-        { name: 'คุณย่าสมศรี ใจดี', passportNo: 'AE5544332', passportUploaded: true },
-        { name: 'คุณน้าสมหวัง รักดี', passportNo: 'AF6677889', passportUploaded: false }
-      ]
-    };
-  } else {
-    // Fetch real data
-    // Fetch real data
-    const { data: dbUser } = await supabase
-      .from('User')
-      .select('*')
-      .eq('email', user.email || '')
-      .single();
-    if (!dbUser) redirect('/user/bookings');
+  // Fetch real data
+  const { data: dbUser } = await supabase
+    .from('User')
+    .select('*')
+    .eq('email', user.email || '')
+    .single();
+  
+  if (!dbUser) redirect('/user/bookings');
 
-    const { data: bookingData } = await supabase
-      .from('Booking')
-      .select(`
+  const { data: bookingData } = await supabase
+    .from('Booking')
+    .select(`
+      *,
+      departure:TourDeparture(
         *,
-        departure:TourDeparture(
-          *,
-          tour:Tour(*)
-        ),
-        travelers:Traveler(*),
-        payments:Payment(*)
-      `)
-      .eq('id', bookingId)
-      .eq('userId', dbUser.id)
-      .single();
+        tour:Tour(*)
+      ),
+      travelers:Traveler(*),
+      payments:Payment(*)
+    `)
+    .eq('id', bookingId)
+    .eq('userId', dbUser.id)
+    .single();
 
-    booking = bookingData;
-    if (!booking) redirect('/user/bookings');
-  }
-
-  // --- MOCK STATE OVERRIDE ---
-  if (isMock && cookieStore.get(`paid_${bookingId}`)?.value === 'true') {
-    booking.status = 'AWAITING_CONFIRMATION';
-  }
+  booking = bookingData;
+  if (!booking) redirect('/user/bookings');
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -107,7 +70,6 @@ export default async function BookingDetailsPage({ params }: { params: { id: str
           </svg>
         </Link>
         <h1 className="text-2xl font-bold text-gray-900">รายละเอียดการจอง</h1>
-        {isMock && <span className="bg-yellow-100 text-yellow-800 text-xs font-bold px-3 py-1 rounded-full border border-yellow-300 ml-auto">ข้อมูลตัวอย่าง</span>}
       </div>
 
       <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm mb-6">

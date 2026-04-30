@@ -3,7 +3,6 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import prisma from "@/lib/prisma";
 
 export default async function BookingsPage() {
   const cookieStore = await cookies();
@@ -43,75 +42,6 @@ export default async function BookingsPage() {
   
   let bookings = bookingsData;
 
-  // --- MOCK DATA FOR DEMONSTRATION ---
-  // If the user has no real bookings, show them a sample
-  if (bookings.length === 0) {
-    bookings = [
-      {
-        id: 'mock-booking-12345678',
-        status: 'PENDING',
-        totalPrice: 45900,
-        createdAt: new Date(),
-        departure: {
-          startDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), // 14 days from now
-          endDate: new Date(Date.now() + 19 * 24 * 60 * 60 * 1000), // 19 days from now
-          tour: {
-            title: 'ทัวร์ญี่ปุ่น โตเกียว ฟูจิ โอซาก้า 6 วัน 4 คืน (เที่ยวเต็มวัน ไม่มีวันอิสระ)',
-            destination: 'ประเทศญี่ปุ่น (Japan)',
-            imageUrl: 'https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?q=80&w=800&auto=format&fit=crop',
-          }
-        }
-      } as any,
-      {
-        id: 'mock-booking-87654321',
-        status: 'DEPOSIT_PAID',
-        totalPrice: 15900,
-        createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), // 30 days ago
-        departure: {
-          startDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
-          endDate: new Date(Date.now() + 33 * 24 * 60 * 60 * 1000),
-          tour: {
-            title: 'ทัวร์เวียดนาม ดานัง ฮอยอัน บานาฮิลล์ 4 วัน 3 คืน',
-            destination: 'ประเทศเวียดนาม (Vietnam)',
-            imageUrl: 'https://images.unsplash.com/photo-1583417319070-4a69db38a482?q=80&w=800&auto=format&fit=crop',
-          }
-        }
-      } as any,
-      {
-        id: 'mock-booking-11223344',
-        status: 'FULL_PAID',
-        totalPrice: 28900,
-        createdAt: new Date(Date.now() - 150 * 24 * 60 * 60 * 1000), // 5 months ago
-        departure: {
-          startDate: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000), // 2 months ago
-          endDate: new Date(Date.now() - 55 * 24 * 60 * 60 * 1000),
-          tour: {
-            title: 'ทัวร์เกาหลี โซล นามิ สกีรีสอร์ท 5 วัน 3 คืน',
-            destination: 'ประเทศเกาหลีใต้ (South Korea)',
-            imageUrl: 'https://images.unsplash.com/photo-1517154421773-0529f29ea451?q=80&w=800&auto=format&fit=crop',
-          }
-        }
-      } as any,
-      {
-        id: 'mock-booking-99887766',
-        status: 'FULL_PAID',
-        totalPrice: 89900,
-        createdAt: new Date(Date.now() - 45 * 24 * 60 * 60 * 1000), // 45 days ago
-        departure: {
-          startDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days from now
-          endDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
-          tour: {
-            title: 'ทัวร์เยอรมัน สวิตเซอร์แลนด์ ฝรั่งเศส 9 วัน 6 คืน',
-            destination: 'เยอรมัน (Germany) / ยุโรป',
-            imageUrl: 'https://images.unsplash.com/photo-1467269204594-9661b134dd2b?q=80&w=800&auto=format&fit=crop',
-            requiresVisa: true
-          }
-        }
-      } as any
-    ];
-  }
-
-
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'PENDING':
@@ -128,15 +58,6 @@ export default async function BookingsPage() {
         return <span className="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-xs font-semibold">{status}</span>;
     }
   };
-
-  // --- MOCK STATE OVERRIDE ---
-  // If the user has paid in the mock payment flow, update their status to AWAITING_CONFIRMATION
-  bookings = bookings.map((b: any) => {
-    if (b.id.includes('mock') && cookieStore.get(`paid_${b.id}`)?.value === 'true') {
-      return { ...b, status: 'AWAITING_CONFIRMATION' };
-    }
-    return b;
-  });
 
   const now = new Date();
   const upcomingBookings = bookings.filter((b: any) => new Date(b.departure.endDate) >= now);

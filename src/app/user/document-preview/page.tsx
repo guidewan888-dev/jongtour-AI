@@ -1,5 +1,4 @@
 import DocumentPreviewClient from "@/components/user/DocumentPreviewClient";
-import prisma from "@/lib/prisma";
 import { createClient } from "@/utils/supabase/server";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";

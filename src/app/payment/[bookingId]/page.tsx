@@ -1,9 +1,10 @@
 import { CheckCircle2 } from "lucide-react";
 import PaymentTabs from "./PaymentTabs";
 import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
+import { createClient } from "@/utils/supabase/server";
 
-export default function PaymentPage({ 
+export default async function PaymentPage({ 
   params,
   searchParams 
 }: { 
@@ -13,33 +14,61 @@ export default function PaymentPage({
   const bookingId = params.bookingId;
   const paymentType = searchParams.type || 'full';
   
-  // Mock logic based on our mock bookings
-  let totalAmount = 0;
-  let paymentTitle = "แจ้งชำระเงิน";
-  let paymentSubtitle = "ยอดชำระทั้งหมด";
+  const cookieStore = await cookies();
+  const supabase = createClient(cookieStore);
   
-  if (bookingId.includes('12345678')) {
-    if (paymentType === 'deposit') {
-      totalAmount = 10000;
-      paymentTitle = "ชำระเงินมัดจำบางส่วน";
-      paymentSubtitle = "ยอดชำระมัดจำ (Deposit)";
-    } else {
-      totalAmount = 45900;
-      paymentTitle = "ชำระเงินเต็มจำนวน";
-      paymentSubtitle = "ยอดชำระทั้งหมด (Total Amount)";
-    }
-  } else if (bookingId.includes('87654321')) {
-    totalAmount = 5900; // 15900 - 10000 deposit
-    paymentTitle = "ชำระเงินส่วนที่เหลือ";
-    paymentSubtitle = "ยอดคงเหลือที่ต้องชำระ (Remaining Balance)";
-  } else {
-    totalAmount = 15900;
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    redirect('/login');
   }
+
+  // Fetch real booking
+  const { data: booking, error } = await supabase
+    .from('Booking')
+    .select('*')
+    .eq('id', bookingId)
+    .single();
+
+  if (error || !booking) {
+    console.error("Booking not found:", error);
+    notFound();
+  }
+
+  // Only allow owner or ADMIN
+  const { data: dbUser } = await supabase.from('User').select('*').eq('email', user.email || '').single();
+  if (!dbUser || (dbUser.role !== 'ADMIN' && booking.userId !== dbUser.id)) {
+    notFound();
+  }
+
+  let totalAmount = booking.totalPrice;
+  let paymentTitle = "ชำระเงินเต็มจำนวน";
+  let paymentSubtitle = "ยอดชำระทั้งหมด (Total Amount)";
+  
+  // Real logic can calculate deposit if needed, but for now we just take the full amount
+  // assuming deposit is not dynamic right now
 
   async function handlePayment() {
     "use server";
     const cookieStore = await cookies();
-    cookieStore.set(`paid_${bookingId}`, 'true', { path: '/' });
+    const supabaseServer = createClient(cookieStore);
+    
+    // Mark as FULL_PAID
+    await supabaseServer
+      .from('Booking')
+      .update({ status: 'FULL_PAID' })
+      .eq('id', bookingId);
+
+    // Also record a payment
+    await supabaseServer
+      .from('Payment')
+      .insert({
+        bookingId,
+        amount: totalAmount,
+        method: 'CREDIT_CARD',
+        status: 'COMPLETED',
+        transactionId: 'TXN_' + Date.now()
+      });
+
     redirect(`/payment/${bookingId}/success`);
   }
 
@@ -67,22 +96,20 @@ export default function PaymentPage({
           </div>
         </div>
 
-        <div className="bg-white p-8 md:p-12 rounded-3xl shadow-lg border border-gray-100">
-          
+        <div className="bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-gray-100 max-w-2xl mx-auto mb-8">
           <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-gray-800 mb-2">{paymentTitle}</h1>
-            <p className="text-gray-500">หมายเลขการจอง: <span className="font-bold text-gray-800">{bookingId.slice(-8).toUpperCase()}</span></p>
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">{paymentTitle}</h1>
+            <p className="text-gray-500">{paymentSubtitle}</p>
+            <div className="text-4xl font-bold text-[#5392f9] mt-4">
+              {totalAmount.toLocaleString()} ฿
+            </div>
+            <p className="text-sm text-gray-400 mt-2">รหัสการจอง: {bookingId.slice(0, 8).toUpperCase()}</p>
           </div>
 
-          <div className="bg-blue-50 rounded-2xl p-6 md:p-8 text-center mb-8 border border-blue-100">
-            <p className="text-gray-600 mb-2 font-medium">{paymentSubtitle}</p>
-            <h2 className="text-5xl font-bold text-[#5392f9] mb-2">{totalAmount.toLocaleString()} ฿</h2>
-            <p className="text-sm text-gray-500">กรุณาชำระเงินภายใน 2 ชั่วโมง เพื่อรักษาสิทธิ์การจองของท่าน</p>
-          </div>
-
-          <PaymentTabs bookingId={bookingId} handlePayment={handlePayment} totalAmount={totalAmount} />
+          <PaymentTabs bookingId={bookingId} totalAmount={totalAmount} handlePayment={handlePayment} />
 
         </div>
+
       </div>
     </main>
   );
