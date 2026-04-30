@@ -219,7 +219,7 @@ export default async function WholesaleLandingPage({ params }: { params: { slug:
                           <img 
                             src={tour.imageUrl || "https://images.unsplash.com/photo-1436491865332-7a61a109cc05"} 
                             alt={tour.title} 
-                            className="w-full h-[180px] object-cover group-hover:scale-105 transition-transform duration-500"
+                            className="w-full h-[220px] object-contain bg-white"
                           />
                           
                           {/* Map Pin Badge */}
@@ -254,7 +254,7 @@ export default async function WholesaleLandingPage({ params }: { params: { slug:
                           {/* Footer / Price Box */}
                           <div className="flex justify-between items-end pt-3 border-t border-gray-100 mt-auto">
                             <div className="flex flex-col">
-                              <img src={wholesale.logo} alt={wholesale.name} className="h-5 md:h-6 w-auto object-contain mb-1 opacity-70 grayscale group-hover:grayscale-0 group-hover:opacity-100 transition-all" />
+                              <img src={wholesale.logo} alt={wholesale.name} className="h-8 md:h-10 w-auto object-contain mb-1" />
                             </div>
 
                             <div className="text-right">
