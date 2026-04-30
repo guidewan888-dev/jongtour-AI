@@ -1,8 +1,11 @@
 import Link from "next/link";
-import prisma from "@/lib/prisma";
+import { createClient } from "@supabase/supabase-js";
 import { MapPin, Calendar, Star, ChevronRight, CheckCircle2, Clock } from "lucide-react";
 import { destinationConfig, getDestinationData } from "@/lib/destinations";
 import { notFound } from "next/navigation";
+
+// บังคับให้เป็น dynamic page เพื่อใช้ fetch ตลอด ไม่แคช
+export const dynamic = "force-dynamic";
 
 export default async function DestinationPage({ params }: { params: { slug?: string[] } }) {
   const slug = params?.slug || [];
@@ -20,24 +23,24 @@ export default async function DestinationPage({ params }: { params: { slug?: str
     notFound();
   }
 
-  // 2. ดึงข้อมูลจาก Database
-  // ค้นหาทัวร์ที่มี destination ตรงกับ keyword หรือ title มีคำที่เกี่ยวข้อง
-  const keywordConditions = node.keywords.map(kw => ({
-    OR: [
-      { destination: { contains: kw, mode: 'insensitive' as const } },
-      { title: { contains: kw, mode: 'insensitive' as const } }
-    ]
-  }));
+  // 2. ดึงข้อมูลจาก Supabase API โดยตรงแทน Prisma (เพื่อเลี่ยงปัญหา Vercel IPv6)
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://qterfftaebnoawnzkfgu.supabase.co";
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || "sb_publishable_SRwNSJ89mInda5FcuB1W2w_9IEJlSOI";
+  const supabase = createClient(supabaseUrl, supabaseKey);
 
-  const tours = await prisma.tour.findMany({
-    where: {
-      OR: keywordConditions
-    },
-    include: {
-      departures: true
-    },
-    orderBy: { createdAt: 'desc' }
-  });
+  // สร้าง Filter สำหรับค้นหา destination หรือ title
+  const orFilter = node.keywords.map(kw => `destination.ilike.*${kw}*,title.ilike.*${kw}*`).join(',');
+
+  const { data: tours, error } = await supabase
+    .from('Tour')
+    .select('*, departures:TourDeparture(*)')
+    .or(orFilter)
+    .order('createdAt', { ascending: false });
+
+  if (error) {
+    console.error("Supabase Error:", error);
+    throw new Error("Failed to fetch tours");
+  }
 
   return (
     <main className="min-h-screen bg-[#f8f9fa] pb-20">
@@ -322,7 +325,7 @@ export default async function DestinationPage({ params }: { params: { slug?: str
 
                   // หาวันเดินทางที่ถูกที่สุด
                   const lowestPrice = tour.departures.length > 0 
-                    ? Math.min(...tour.departures.map(d => d.price)) 
+                    ? Math.min(...tour.departures.map((d: any) => d.price)) 
                     : tour.price;
 
                   return (
