@@ -8,14 +8,14 @@ export const dynamic = "force-dynamic";
 const wholesaleConfig: Record<string, { name: string, logo: string, source: string, description: string, coverImage: string }> = {
   "letsgo": {
     name: "Let's Go Group",
-    logo: "/images/wholesales/download.jfif",
+    logo: "/images/wholesales/download.png",
     source: "API_ZEGO",
     description: "โฮลเซลล์ทัวร์ชั้นนำผู้เชี่ยวชาญเส้นทางเอเชีย จัดเต็มทุกความประทับใจในราคาคุ้มค่า พร้อมบริการที่ได้มาตรฐาน",
     coverImage: "https://images.unsplash.com/photo-1436491865332-7a61a109cc05?q=80&w=2000"
   },
   "go365": {
     name: "GO 365 Travel",
-    logo: "/images/wholesales/download.png",
+    logo: "/images/wholesales/download.jfif",
     source: "API_GO365",
     description: "ผู้ให้บริการทัวร์คุณภาพ ครอบคลุมหลากหลายเส้นทางทั่วโลก พาคุณเที่ยวครบ จบในที่เดียว เที่ยวได้ทุกวัน 365 วัน",
     coverImage: "https://images.unsplash.com/photo-1506012787146-f92b2d7d6d96?q=80&w=2000"
@@ -34,6 +34,38 @@ const wholesaleConfig: Record<string, { name: string, logo: string, source: stri
     description: "โรงงานผลิตความสุขทางการท่องเที่ยว สร้างสรรค์ทริปในฝันของคุณด้วยแพ็กเกจทัวร์สุดพิเศษ",
     coverImage: "https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?q=80&w=2000"
   }
+};
+
+const countryMap: Record<string, { th: string, flag: string }> = {
+  "CHINA": { th: "จีน", flag: "🇨🇳" },
+  "EGYPT": { th: "อียิปต์", flag: "🇪🇬" },
+  "ENGLAND": { th: "อังกฤษ", flag: "🇬🇧" },
+  "EUROPE": { th: "ยุโรป", flag: "🇪🇺" },
+  "FRANCE": { th: "ฝรั่งเศส", flag: "🇫🇷" },
+  "GEORGIA": { th: "จอร์เจีย", flag: "🇬🇪" },
+  "HONG KONG": { th: "ฮ่องกง", flag: "🇭🇰" },
+  "INDIA": { th: "อินเดีย", flag: "🇮🇳" },
+  "ITALY": { th: "อิตาลี", flag: "🇮🇹" },
+  "JAPAN": { th: "ญี่ปุ่น", flag: "🇯🇵" },
+  "SINGAPORE": { th: "สิงคโปร์", flag: "🇸🇬" },
+  "TAIWAN": { th: "ไต้หวัน", flag: "🇹🇼" },
+  "TURKIYE": { th: "ตุรกี", flag: "🇹🇷" },
+  "VIETNAM": { th: "เวียดนาม", flag: "🇻🇳" },
+  "SOUTH KOREA": { th: "เกาหลีใต้", flag: "🇰🇷" },
+  "MACAU": { th: "มาเก๊า", flag: "🇲🇴" },
+  "MALAYSIA": { th: "มาเลเซีย", flag: "🇲🇾" },
+  "INDONESIA": { th: "อินโดนีเซีย", flag: "🇮🇩" },
+  "MALDIVES": { th: "มัลดีฟส์", flag: "🇲🇻" },
+  "SWITZERLAND": { th: "สวิตเซอร์แลนด์", flag: "🇨🇭" },
+  "UK": { th: "สหราชอาณาจักร", flag: "🇬🇧" },
+  "GERMANY": { th: "เยอรมนี", flag: "🇩🇪" },
+  "AUSTRIA": { th: "ออสเตรีย", flag: "🇦🇹" },
+  "CZECH": { th: "เช็ก", flag: "🇨🇿" },
+  "SPAIN": { th: "สเปน", flag: "🇪🇸" },
+  "NETHERLANDS": { th: "เนเธอร์แลนด์", flag: "🇳🇱" },
+  "FINLAND": { th: "ฟินแลนด์", flag: "🇫🇮" },
+  "JORDAN": { th: "จอร์แดน", flag: "🇯🇴" },
+  "MOROCCO": { th: "โมร็อกโก", flag: "🇲🇦" }
 };
 
 export default async function WholesaleLandingPage({ params }: { params: { slug: string } }) {
@@ -123,19 +155,27 @@ export default async function WholesaleLandingPage({ params }: { params: { slug:
             {destinationKeys.length > 1 && (
               <div className="flex flex-wrap items-center gap-3 bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
                 <span className="text-sm font-bold text-gray-700">เลือกเส้นทาง:</span>
-                {destinationKeys.map(dest => (
-                  <a key={dest} href={`#${dest}`} className="px-4 py-2 bg-gray-50 hover:bg-orange-50 hover:text-orange-600 text-gray-600 text-sm font-bold rounded-xl border border-gray-200 hover:border-orange-200 transition-colors">
-                    {dest} ({toursByDestination[dest].length})
-                  </a>
-                ))}
+                {destinationKeys.map(dest => {
+                  const mapped = countryMap[dest.toUpperCase()];
+                  const displayName = mapped ? `${mapped.flag} ${mapped.th}` : dest;
+                  return (
+                    <a key={dest} href={`#${dest}`} className="px-4 py-2 bg-gray-50 hover:bg-orange-50 hover:text-orange-600 text-gray-600 text-sm font-bold rounded-xl border border-gray-200 hover:border-orange-200 transition-colors">
+                      {displayName} ({toursByDestination[dest].length})
+                    </a>
+                  );
+                })}
               </div>
             )}
 
             {/* Tours by Destination */}
-            {destinationKeys.map((dest) => (
+            {destinationKeys.map((dest) => {
+              const mapped = countryMap[dest.toUpperCase()];
+              const displayTitle = mapped ? `ทัวร์${mapped.th} ${mapped.flag}` : `ทัวร์${dest}`;
+              
+              return (
               <div key={dest} id={dest} className="scroll-mt-24">
                 <div className="flex items-center gap-3 mb-6 pb-2 border-b-2 border-orange-100">
-                  <h2 className="text-2xl md:text-3xl font-black text-gray-800">ทัวร์{dest}</h2>
+                  <h2 className="text-2xl md:text-3xl font-black text-gray-800">{displayTitle}</h2>
                   <span className="bg-orange-100 text-orange-700 font-bold px-3 py-1 rounded-full text-sm">
                     {toursByDestination[dest].length} โปรแกรม
                   </span>
@@ -214,7 +254,7 @@ export default async function WholesaleLandingPage({ params }: { params: { slug:
                           {/* Footer / Price Box */}
                           <div className="flex justify-between items-end pt-3 border-t border-gray-100 mt-auto">
                             <div className="flex flex-col">
-                              <span className="text-[10px] text-gray-400">{wholesale.name}</span>
+                              <img src={wholesale.logo} alt={wholesale.name} className="h-5 md:h-6 w-auto object-contain mb-1 opacity-70 grayscale group-hover:grayscale-0 group-hover:opacity-100 transition-all" />
                             </div>
 
                             <div className="text-right">
@@ -230,7 +270,7 @@ export default async function WholesaleLandingPage({ params }: { params: { slug:
                   })}
                 </div>
               </div>
-            ))}
+            )})}
           </div>
         )}
       </div>

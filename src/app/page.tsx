@@ -35,8 +35,8 @@ export default async function Home() {
 
         {/* Shortcuts */}
         <div className="flex flex-wrap justify-center gap-4 pt-4 w-full max-w-4xl">
-          <ImageShortcutButton imgSrc="/images/wholesales/download.jfif" label="Let's Go Group" href="/wholesale/letsgo" fallbackIcon="🗺️" />
-          <ImageShortcutButton imgSrc="/images/wholesales/download.png" label="GO 365 Travel" href="/wholesale/go365" fallbackIcon="✈️" />
+          <ImageShortcutButton imgSrc="/images/wholesales/download.png" label="Let's Go Group" href="/wholesale/letsgo" fallbackIcon="🗺️" />
+          <ImageShortcutButton imgSrc="/images/wholesales/download.jfif" label="GO 365 Travel" href="/wholesale/go365" fallbackIcon="✈️" />
           <ImageShortcutButton imgSrc="/images/wholesales/CH7.jpg" label="Check In Group" href="/wholesale/checkingroup" fallbackIcon="🌍" />
           <ImageShortcutButton imgSrc="/images/wholesales/Tour-Factory.jpg" label="Tour Factory" href="/wholesale/tourfactory" fallbackIcon="🏭" />
           <ShortcutButton icon="✨" label="AI วางแผน" href="/ai-planner" />
