@@ -8,12 +8,17 @@ export const dynamic = "force-dynamic";
 async function TourDetailsContent({ params }: { params: { id: string } }) {
   // ดึงข้อมูลทัวร์จาก Database
   console.log("FETCHING TOUR ID:", params.id);
-  const tour = await prisma.tour.findUnique({
-    where: { id: params.id },
-    include: {
-      departures: true
-    }
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://qterfftaebnoawnzkfgu.supabase.co";
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || "sb_publishable_SRwNSJ89mInda5FcuB1W2w_9IEJlSOI";
+  
+  const res = await fetch(`${supabaseUrl}/rest/v1/Tour?id=eq.${params.id}&select=*,departures:TourDeparture(*)`, {
+    headers: { "apikey": supabaseKey, "Authorization": `Bearer ${supabaseKey}` },
+    cache: "no-store"
   });
+  
+  if (!res.ok) notFound();
+  const tours = await res.json();
+  const tour = tours[0];
 
   if (!tour) {
     notFound(); // 404 page
@@ -21,7 +26,7 @@ async function TourDetailsContent({ params }: { params: { id: string } }) {
 
   // หาวันเดินทางที่ถูกที่สุด
   const lowestPrice = (tour.departures?.length || 0) > 0 
-    ? Math.min(...(tour.departures || []).map(d => d.price)) 
+    ? Math.min(...(tour.departures || []).map((d: any) => d.price)) 
     : tour.price;
 
   return (
@@ -233,7 +238,7 @@ async function TourDetailsContent({ params }: { params: { id: string } }) {
                 </thead>
                 <tbody className="divide-y divide-gray-100">
                   {tour.departures.length > 0 ? (
-                    tour.departures.map((dep) => {
+                    tour.departures.map((dep: any) => {
                       const startDateStr = new Date(dep.startDate).toLocaleDateString('th-TH', {day: '2-digit', month: 'short', year: '2-digit'});
                       const endDateStr = new Date(dep.endDate).toLocaleDateString('th-TH', {day: '2-digit', month: 'short', year: '2-digit'});
                       return (
@@ -304,7 +309,7 @@ async function TourDetailsContent({ params }: { params: { id: string } }) {
               
               <div className="max-h-[280px] overflow-y-auto pr-2 space-y-2 custom-scrollbar">
                 {tour.departures.length > 0 ? (
-                  tour.departures.map(dep => (
+                  tour.departures.map((dep: any) => (
                     <label key={dep.id} className="block cursor-pointer group">
                       <input type="radio" name="departure" className="peer sr-only" defaultChecked={dep.price === lowestPrice} />
                       <div className="border-2 border-gray-200 rounded-lg p-3 hover:border-orange-300 peer-checked:border-orange-600 peer-checked:bg-orange-50/50 transition-all relative overflow-hidden">
