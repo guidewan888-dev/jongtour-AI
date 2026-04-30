@@ -6,6 +6,11 @@ export interface DestinationNode {
 }
 
 export const destinationConfig: Record<string, DestinationNode> = {
+  thailand: {
+    name: "ไทย",
+    keywords: ["THAILAND", "ไทย"],
+    coverImage: "https://images.unsplash.com/photo-1552465011-b4e21bf6e79a?q=80&w=2000"
+  },
   asia: {
     name: "เอเชีย",
     keywords: ["CHINA", "JAPAN", "VIETNAM", "HONG KONG", "KOREA", "TAIWAN", "SINGAPORE", "INDIA", "เอเชีย", "ญี่ปุ่น", "จีน", "เกาหลี", "ไต้หวัน", "เวียดนาม", "ฮ่องกง", "สิงคโปร์", "อินเดีย"],

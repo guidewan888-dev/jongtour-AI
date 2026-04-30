@@ -125,9 +125,9 @@ export default async function DestinationPage({ params }: { params: { slug?: str
                     <Link href="/destinations/asia/japan/tokyo" className="text-sm text-gray-600 hover:text-orange-600 block">โตเกียว</Link>
                     <Link href="/destinations/asia/japan/osaka" className="text-sm text-gray-600 hover:text-orange-600 block">โอซาก้า</Link>
                     <Link href="/destinations/asia/japan/hokkaido" className="text-sm text-gray-600 hover:text-orange-600 block">ฮอกไกโด</Link>
-                    <Link href="/search/asia/japan/fukuoka" className="text-sm text-gray-600 hover:text-orange-600 block">ฟุกุโอกะ</Link>
-                    <Link href="/search/asia/japan/kyoto" className="text-sm text-gray-600 hover:text-orange-600 block">เกียวโต</Link>
-                    <Link href="/search/asia/japan/okinawa" className="text-sm text-gray-600 hover:text-orange-600 block">โอกินาว่า</Link>
+                    <Link href="/destinations/asia/japan/fukuoka" className="text-sm text-gray-600 hover:text-orange-600 block">ฟุกุโอกะ</Link>
+                    <Link href="/destinations/asia/japan/kyoto" className="text-sm text-gray-600 hover:text-orange-600 block">เกียวโต</Link>
+                    <Link href="/destinations/asia/japan/okinawa" className="text-sm text-gray-600 hover:text-orange-600 block">โอกินาว่า</Link>
                   </div>
                 </div>
 
@@ -137,59 +137,59 @@ export default async function DestinationPage({ params }: { params: { slug?: str
                     จีน (CHINA) <ChevronRight className="w-4 h-4 text-gray-400" />
                   </Link>
                   <div className="pl-3 border-l-2 border-gray-100 space-y-2 ml-1">
-                    <Link href="/search/asia/china/chengdu" className="text-sm text-gray-600 hover:text-orange-600 block">เฉิงตู</Link>
+                    <Link href="/destinations/asia/china/chengdu" className="text-sm text-gray-600 hover:text-orange-600 block">เฉิงตู</Link>
                     <Link href="/destinations/asia/china/shanghai" className="text-sm text-gray-600 hover:text-orange-600 block">เซี่ยงไฮ้</Link>
-                    <Link href="/search/asia/china/zhangjiajie" className="text-sm text-gray-600 hover:text-orange-600 block">จางเจียเจี้ย</Link>
+                    <Link href="/destinations/asia/china/zhangjiajie" className="text-sm text-gray-600 hover:text-orange-600 block">จางเจียเจี้ย</Link>
                     <Link href="/destinations/asia/china/chongqing" className="text-sm text-gray-600 hover:text-orange-600 block">ฉงชิ่ง</Link>
-                    <Link href="/search/asia/china/beijing" className="text-sm text-gray-600 hover:text-orange-600 block">ปักกิ่ง</Link>
-                    <Link href="/search/asia/china/kunming" className="text-sm text-gray-600 hover:text-orange-600 block">คุนหมิง</Link>
-                    <Link href="/search/asia/china/guilin" className="text-sm text-gray-600 hover:text-orange-600 block">กุ้ยหลิน</Link>
-                    <Link href="/search/asia/china/xian" className="text-sm text-gray-600 hover:text-orange-600 block">ซีอาน</Link>
-                    <Link href="/search/asia/china/silk-road" className="text-sm text-gray-600 hover:text-orange-600 block">เส้นทางสายไหม</Link>
-                    <Link href="/search/asia/china/xinjiang" className="text-sm text-gray-600 hover:text-orange-600 block">ซินเจียง</Link>
-                    <Link href="/search/asia/china/tibet" className="text-sm text-gray-600 hover:text-orange-600 block">ทิเบต</Link>
-                    <Link href="/search/asia/china/lijiang" className="text-sm text-gray-600 hover:text-orange-600 block">ลี่เจียง</Link>
-                    <Link href="/search/asia/china/yichang" className="text-sm text-gray-600 hover:text-orange-600 block">อี้ชาง</Link>
-                    <Link href="/search/asia/china/hangzhou" className="text-sm text-gray-600 hover:text-orange-600 block">หังโจว</Link>
-                    <Link href="/search/asia/china/dali" className="text-sm text-gray-600 hover:text-orange-600 block">ต้าหลี่</Link>
-                    <Link href="/search/asia/china/guangzhou" className="text-sm text-gray-600 hover:text-orange-600 block">กวางโจว</Link>
-                    <Link href="/search/asia/china/harbin" className="text-sm text-gray-600 hover:text-orange-600 block">ฮาร์บิ้น</Link>
-                    <Link href="/search/asia/china/luoyang" className="text-sm text-gray-600 hover:text-orange-600 block">ลั่วหยาง</Link>
-                    <Link href="/search/asia/china/wangxian" className="text-sm text-gray-600 hover:text-orange-600 block">หุบเขาเทวดา</Link>
-                    <Link href="/search/asia/china/enshi" className="text-sm text-gray-600 hover:text-orange-600 block">เอินซือ</Link>
-                    <Link href="/search/asia/china/qingdao" className="text-sm text-gray-600 hover:text-orange-600 block">ชิงเต่า</Link>
-                    <Link href="/search/asia/china/dalian" className="text-sm text-gray-600 hover:text-orange-600 block">ต้าเหลียน</Link>
-                    <Link href="/search/asia/china/inner-mongolia" className="text-sm text-gray-600 hover:text-orange-600 block">มองโกเลีย</Link>
+                    <Link href="/destinations/asia/china/beijing" className="text-sm text-gray-600 hover:text-orange-600 block">ปักกิ่ง</Link>
+                    <Link href="/destinations/asia/china/kunming" className="text-sm text-gray-600 hover:text-orange-600 block">คุนหมิง</Link>
+                    <Link href="/destinations/asia/china/guilin" className="text-sm text-gray-600 hover:text-orange-600 block">กุ้ยหลิน</Link>
+                    <Link href="/destinations/asia/china/xian" className="text-sm text-gray-600 hover:text-orange-600 block">ซีอาน</Link>
+                    <Link href="/destinations/asia/china/silk-road" className="text-sm text-gray-600 hover:text-orange-600 block">เส้นทางสายไหม</Link>
+                    <Link href="/destinations/asia/china/xinjiang" className="text-sm text-gray-600 hover:text-orange-600 block">ซินเจียง</Link>
+                    <Link href="/destinations/asia/china/tibet" className="text-sm text-gray-600 hover:text-orange-600 block">ทิเบต</Link>
+                    <Link href="/destinations/asia/china/lijiang" className="text-sm text-gray-600 hover:text-orange-600 block">ลี่เจียง</Link>
+                    <Link href="/destinations/asia/china/yichang" className="text-sm text-gray-600 hover:text-orange-600 block">อี้ชาง</Link>
+                    <Link href="/destinations/asia/china/hangzhou" className="text-sm text-gray-600 hover:text-orange-600 block">หังโจว</Link>
+                    <Link href="/destinations/asia/china/dali" className="text-sm text-gray-600 hover:text-orange-600 block">ต้าหลี่</Link>
+                    <Link href="/destinations/asia/china/guangzhou" className="text-sm text-gray-600 hover:text-orange-600 block">กวางโจว</Link>
+                    <Link href="/destinations/asia/china/harbin" className="text-sm text-gray-600 hover:text-orange-600 block">ฮาร์บิ้น</Link>
+                    <Link href="/destinations/asia/china/luoyang" className="text-sm text-gray-600 hover:text-orange-600 block">ลั่วหยาง</Link>
+                    <Link href="/destinations/asia/china/wangxian" className="text-sm text-gray-600 hover:text-orange-600 block">หุบเขาเทวดา</Link>
+                    <Link href="/destinations/asia/china/enshi" className="text-sm text-gray-600 hover:text-orange-600 block">เอินซือ</Link>
+                    <Link href="/destinations/asia/china/qingdao" className="text-sm text-gray-600 hover:text-orange-600 block">ชิงเต่า</Link>
+                    <Link href="/destinations/asia/china/dalian" className="text-sm text-gray-600 hover:text-orange-600 block">ต้าเหลียน</Link>
+                    <Link href="/destinations/asia/china/inner-mongolia" className="text-sm text-gray-600 hover:text-orange-600 block">มองโกเลีย</Link>
                     <Link href="/destinations/asia/china/zhuhai" className="text-sm text-gray-600 hover:text-orange-600 block">จู่ไห่</Link>
 
                     <div className="mt-3 pt-2 border-t border-gray-100">
                       <span className="text-xs font-bold text-gray-400 mb-1 block">เส้นทางพิเศษ</span>
-                      <Link href="/search/asia/china/no-shopping" className="text-sm text-gray-600 hover:text-orange-600 block">ทัวร์ไม่ลงร้าน</Link>
-                      <Link href="/search/asia/china/chongqing-zhangjiajie" className="text-sm text-gray-600 hover:text-orange-600 block">ฉงชิ่ง-จางเจียเจี้ย</Link>
-                      <Link href="/search/asia/china/shanghai-beijing" className="text-sm text-gray-600 hover:text-orange-600 block">เซี่ยงไฮ้-ปักกิ่ง</Link>
-                      <Link href="/search/asia/china/zhuhai-macau" className="text-sm text-gray-600 hover:text-orange-600 block">จู่ไห่-มาเก๊า</Link>
-                      <Link href="/search/asia/china/guangzhou-macau" className="text-sm text-gray-600 hover:text-orange-600 block">กวางโจว-มาเก๊า</Link>
-                      <Link href="/search/asia/china/guangzhou-hongkong" className="text-sm text-gray-600 hover:text-orange-600 block">กวางโจว-ฮ่องกง</Link>
+                      <Link href="/destinations/asia/china/no-shopping" className="text-sm text-gray-600 hover:text-orange-600 block">ทัวร์ไม่ลงร้าน</Link>
+                      <Link href="/destinations/asia/china/chongqing-zhangjiajie" className="text-sm text-gray-600 hover:text-orange-600 block">ฉงชิ่ง-จางเจียเจี้ย</Link>
+                      <Link href="/destinations/asia/china/shanghai-beijing" className="text-sm text-gray-600 hover:text-orange-600 block">เซี่ยงไฮ้-ปักกิ่ง</Link>
+                      <Link href="/destinations/asia/china/zhuhai-macau" className="text-sm text-gray-600 hover:text-orange-600 block">จู่ไห่-มาเก๊า</Link>
+                      <Link href="/destinations/asia/china/guangzhou-macau" className="text-sm text-gray-600 hover:text-orange-600 block">กวางโจว-มาเก๊า</Link>
+                      <Link href="/destinations/asia/china/guangzhou-hongkong" className="text-sm text-gray-600 hover:text-orange-600 block">กวางโจว-ฮ่องกง</Link>
                     </div>
                   </div>
                 </div>
 
                 {/* ทัวร์เอเชีย */}
                 <div className="pt-2 border-t border-gray-50">
-                  <Link href="/search/asia" className="font-bold text-sm text-gray-800 hover:text-orange-600 flex justify-between items-center mb-2">
+                  <Link href="/destinations/asia" className="font-bold text-sm text-gray-800 hover:text-orange-600 flex justify-between items-center mb-2">
                     เอเชีย (ASIA) <ChevronRight className="w-4 h-4 text-gray-400" />
                   </Link>
                   <div className="pl-3 border-l-2 border-gray-100 space-y-2 ml-1">
-                    <Link href="/search/asia/south-korea" className="text-sm text-gray-600 hover:text-orange-600 block">เกาหลีใต้ (Korea)</Link>
-                    <Link href="/search/asia/taiwan" className="text-sm text-gray-600 hover:text-orange-600 block">ไต้หวัน (Taiwan)</Link>
-                    <Link href="/search/asia/hongkong" className="text-sm text-gray-600 hover:text-orange-600 block">ฮ่องกง (Hong Kong)</Link>
-                    <Link href="/search/asia/macau" className="text-sm text-gray-600 hover:text-orange-600 block">มาเก๊า (Macau)</Link>
-                    <Link href="/search/asia/vietnam" className="text-sm text-gray-600 hover:text-orange-600 block">เวียดนาม (Vietnam)</Link>
-                    <Link href="/search/asia/singapore" className="text-sm text-gray-600 hover:text-orange-600 block">สิงคโปร์ (Singapore)</Link>
-                    <Link href="/search/asia/malaysia" className="text-sm text-gray-600 hover:text-orange-600 block">มาเลเซีย (Malaysia)</Link>
-                    <Link href="/search/asia/indonesia" className="text-sm text-gray-600 hover:text-orange-600 block">อินโดนีเซีย (Indonesia)</Link>
-                    <Link href="/search/asia/india" className="text-sm text-gray-600 hover:text-orange-600 block">อินเดีย (India)</Link>
-                    <Link href="/search/asia/maldives" className="text-sm text-gray-600 hover:text-orange-600 block">มัลดีฟส์ (Maldives)</Link>
+                    <Link href="/destinations/asia/south-korea" className="text-sm text-gray-600 hover:text-orange-600 block">เกาหลีใต้ (Korea)</Link>
+                    <Link href="/destinations/asia/taiwan" className="text-sm text-gray-600 hover:text-orange-600 block">ไต้หวัน (Taiwan)</Link>
+                    <Link href="/destinations/asia/hongkong" className="text-sm text-gray-600 hover:text-orange-600 block">ฮ่องกง (Hong Kong)</Link>
+                    <Link href="/destinations/asia/macau" className="text-sm text-gray-600 hover:text-orange-600 block">มาเก๊า (Macau)</Link>
+                    <Link href="/destinations/asia/vietnam" className="text-sm text-gray-600 hover:text-orange-600 block">เวียดนาม (Vietnam)</Link>
+                    <Link href="/destinations/asia/singapore" className="text-sm text-gray-600 hover:text-orange-600 block">สิงคโปร์ (Singapore)</Link>
+                    <Link href="/destinations/asia/malaysia" className="text-sm text-gray-600 hover:text-orange-600 block">มาเลเซีย (Malaysia)</Link>
+                    <Link href="/destinations/asia/indonesia" className="text-sm text-gray-600 hover:text-orange-600 block">อินโดนีเซีย (Indonesia)</Link>
+                    <Link href="/destinations/asia/india" className="text-sm text-gray-600 hover:text-orange-600 block">อินเดีย (India)</Link>
+                    <Link href="/destinations/asia/maldives" className="text-sm text-gray-600 hover:text-orange-600 block">มัลดีฟส์ (Maldives)</Link>
                   </div>
                 </div>
 
@@ -199,22 +199,22 @@ export default async function DestinationPage({ params }: { params: { slug?: str
                     ยุโรป & ตะวันออกกลาง <ChevronRight className="w-4 h-4 text-gray-400" />
                   </Link>
                   <div className="pl-3 border-l-2 border-gray-100 space-y-2 ml-1">
-                    <Link href="/search/europe/switzerland" className="text-sm text-gray-600 hover:text-orange-600 block">สวิตเซอร์แลนด์</Link>
-                    <Link href="/search/europe/italy" className="text-sm text-gray-600 hover:text-orange-600 block">อิตาลี</Link>
-                    <Link href="/search/europe/france" className="text-sm text-gray-600 hover:text-orange-600 block">ฝรั่งเศส</Link>
-                    <Link href="/search/europe/uk" className="text-sm text-gray-600 hover:text-orange-600 block">อังกฤษ</Link>
-                    <Link href="/search/europe/germany" className="text-sm text-gray-600 hover:text-orange-600 block">เยอรมนี</Link>
-                    <Link href="/search/europe/austria" className="text-sm text-gray-600 hover:text-orange-600 block">ออสเตรีย</Link>
-                    <Link href="/search/europe/czech" className="text-sm text-gray-600 hover:text-orange-600 block">เช็ก</Link>
-                    <Link href="/search/europe/spain" className="text-sm text-gray-600 hover:text-orange-600 block">สเปน</Link>
-                    <Link href="/search/europe/netherlands" className="text-sm text-gray-600 hover:text-orange-600 block">เนเธอร์แลนด์</Link>
-                    <Link href="/search/europe/finland" className="text-sm text-gray-600 hover:text-orange-600 block">ฟินแลนด์</Link>
+                    <Link href="/destinations/europe/switzerland" className="text-sm text-gray-600 hover:text-orange-600 block">สวิตเซอร์แลนด์</Link>
+                    <Link href="/destinations/europe/italy" className="text-sm text-gray-600 hover:text-orange-600 block">อิตาลี</Link>
+                    <Link href="/destinations/europe/france" className="text-sm text-gray-600 hover:text-orange-600 block">ฝรั่งเศส</Link>
+                    <Link href="/destinations/europe/uk" className="text-sm text-gray-600 hover:text-orange-600 block">อังกฤษ</Link>
+                    <Link href="/destinations/europe/germany" className="text-sm text-gray-600 hover:text-orange-600 block">เยอรมนี</Link>
+                    <Link href="/destinations/europe/austria" className="text-sm text-gray-600 hover:text-orange-600 block">ออสเตรีย</Link>
+                    <Link href="/destinations/europe/czech" className="text-sm text-gray-600 hover:text-orange-600 block">เช็ก</Link>
+                    <Link href="/destinations/europe/spain" className="text-sm text-gray-600 hover:text-orange-600 block">สเปน</Link>
+                    <Link href="/destinations/europe/netherlands" className="text-sm text-gray-600 hover:text-orange-600 block">เนเธอร์แลนด์</Link>
+                    <Link href="/destinations/europe/finland" className="text-sm text-gray-600 hover:text-orange-600 block">ฟินแลนด์</Link>
                     <div className="my-2 pt-2 border-t border-gray-100"></div>
-                    <Link href="/search/middle-east/turkey" className="text-sm text-gray-600 hover:text-orange-600 block">ตุรกี</Link>
-                    <Link href="/search/europe/georgia" className="text-sm text-gray-600 hover:text-orange-600 block">จอร์เจีย</Link>
-                    <Link href="/search/middle-east/egypt" className="text-sm text-gray-600 hover:text-orange-600 block">อียิปต์</Link>
-                    <Link href="/search/middle-east/jordan" className="text-sm text-gray-600 hover:text-orange-600 block">จอร์แดน</Link>
-                    <Link href="/search/africa/morocco" className="text-sm text-gray-600 hover:text-orange-600 block">โมร็อกโก</Link>
+                    <Link href="/destinations/middle-east/turkey" className="text-sm text-gray-600 hover:text-orange-600 block">ตุรกี</Link>
+                    <Link href="/destinations/europe/georgia" className="text-sm text-gray-600 hover:text-orange-600 block">จอร์เจีย</Link>
+                    <Link href="/destinations/middle-east/egypt" className="text-sm text-gray-600 hover:text-orange-600 block">อียิปต์</Link>
+                    <Link href="/destinations/middle-east/jordan" className="text-sm text-gray-600 hover:text-orange-600 block">จอร์แดน</Link>
+                    <Link href="/destinations/africa/morocco" className="text-sm text-gray-600 hover:text-orange-600 block">โมร็อกโก</Link>
                   </div>
                 </div>
                 
@@ -224,11 +224,11 @@ export default async function DestinationPage({ params }: { params: { slug?: str
                     อเมริกา & โอเชียเนีย
                   </div>
                   <div className="pl-3 border-l-2 border-gray-100 space-y-2 ml-1">
-                    <Link href="/search/america/usa" className="text-sm text-gray-600 hover:text-orange-600 block">อเมริกา</Link>
-                    <Link href="/search/america/canada" className="text-sm text-gray-600 hover:text-orange-600 block">แคนาดา</Link>
+                    <Link href="/destinations/america/usa" className="text-sm text-gray-600 hover:text-orange-600 block">อเมริกา</Link>
+                    <Link href="/destinations/america/canada" className="text-sm text-gray-600 hover:text-orange-600 block">แคนาดา</Link>
                     <div className="my-2 pt-2 border-t border-gray-100"></div>
-                    <Link href="/search/oceania/australia" className="text-sm text-gray-600 hover:text-orange-600 block">ออสเตรเลีย</Link>
-                    <Link href="/search/oceania/new-zealand" className="text-sm text-gray-600 hover:text-orange-600 block">นิวซีแลนด์</Link>
+                    <Link href="/destinations/oceania/australia" className="text-sm text-gray-600 hover:text-orange-600 block">ออสเตรเลีย</Link>
+                    <Link href="/destinations/oceania/new-zealand" className="text-sm text-gray-600 hover:text-orange-600 block">นิวซีแลนด์</Link>
                   </div>
                 </div>
                 
