@@ -8,13 +8,7 @@ export async function GET(request: Request) {
   const code = requestUrl.searchParams.get('code');
   const error = requestUrl.searchParams.get('error');
   
-  let origin = process.env.NEXT_PUBLIC_SITE_URL || process.env.SITE_URL;
-  if (!origin) {
-    const forwardedHost = request.headers.get('x-forwarded-host');
-    const forwardedProto = request.headers.get('x-forwarded-proto') || 'https';
-    origin = forwardedHost ? `${forwardedProto}://${forwardedHost}` : requestUrl.origin;
-  }
-  origin = origin.replace(/\/$/, ''); // Remove trailing slash
+  let origin = 'https://jongtour.com';
 
   if (error) {
     return NextResponse.redirect(`${origin}/login?error=${error}`);

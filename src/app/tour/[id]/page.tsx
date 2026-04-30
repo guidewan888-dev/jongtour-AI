@@ -5,7 +5,7 @@ import { notFound } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
-export default async function TourDetailsPage({ params }: { params: { id: string } }) {
+async function TourDetailsContent({ params }: { params: { id: string } }) {
   // ดึงข้อมูลทัวร์จาก Database
   const tour = await prisma.tour.findUnique({
     where: { id: params.id },
@@ -19,8 +19,8 @@ export default async function TourDetailsPage({ params }: { params: { id: string
   }
 
   // หาวันเดินทางที่ถูกที่สุด
-  const lowestPrice = tour.departures.length > 0 
-    ? Math.min(...tour.departures.map(d => d.price)) 
+  const lowestPrice = (tour.departures?.length || 0) > 0 
+    ? Math.min(...(tour.departures || []).map(d => d.price)) 
     : tour.price;
 
   return (
@@ -30,7 +30,7 @@ export default async function TourDetailsPage({ params }: { params: { id: string
       <div className="max-w-7xl mx-auto px-4 mb-4 text-sm text-gray-500 flex items-center gap-2">
         <Link href="/" className="hover:text-orange-600 transition-colors">หน้าหลัก</Link>
         <ChevronRight className="w-4 h-4" />
-        <Link href={`/destinations/${tour.destination.toLowerCase()}`} className="hover:text-orange-600 transition-colors">{tour.destination}</Link>
+        <Link href={`/destinations/${(tour.destination || "").toLowerCase()}`} className="hover:text-orange-600 transition-colors">{tour.destination}</Link>
         <ChevronRight className="w-4 h-4" />
         <span className="text-gray-800 font-medium truncate">{tour.title}</span>
       </div>
@@ -178,7 +178,7 @@ export default async function TourDetailsPage({ params }: { params: { id: string
             </h2>
             
             <div className="space-y-0 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-gray-200 before:to-transparent">
-              {[...Array(tour.durationDays)].map((_, i) => {
+              {[...Array(Math.max(0, tour.durationDays || 0))].map((_, i) => {
                 const day = i + 1;
                 return (
                   <div key={day} className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active pb-10">
@@ -368,4 +368,25 @@ export default async function TourDetailsPage({ params }: { params: { id: string
       </div>
     </main>
   );
+}
+
+export default async function TourDetailsPage(props: { params: { id: string } }) {
+  try {
+    return await TourDetailsContent(props);
+  } catch (error: any) {
+    return (
+      <main className="min-h-screen bg-[#f8f9fa] flex items-center justify-center p-4">
+        <div className="bg-white p-8 rounded-2xl shadow-lg border border-red-100 max-w-2xl w-full text-center">
+          <h1 className="text-2xl font-bold text-red-600 mb-4">ขออภัย เกิดข้อผิดพลาดของระบบ (500)</h1>
+          <p className="text-gray-700 mb-4">ไม่สามารถโหลดข้อมูลทัวร์ได้ กรุณาลองใหม่อีกครั้ง</p>
+          <div className="bg-red-50 p-4 rounded-lg text-left overflow-x-auto text-xs text-red-800 font-mono mb-6 whitespace-pre-wrap break-all">
+            <strong>Error:</strong> {error?.message || "Unknown Server Error"}
+          </div>
+          <Link href="/" className="inline-block bg-orange-600 text-white px-6 py-2 rounded-lg font-bold hover:bg-orange-700">
+            กลับหน้าหลัก
+          </Link>
+        </div>
+      </main>
+    );
+  }
 }
