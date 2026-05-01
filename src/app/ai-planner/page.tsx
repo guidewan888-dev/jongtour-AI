@@ -2,7 +2,15 @@
 
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
-import { Send, Sparkles, User, Map, Loader2 } from "lucide-react";
+import { Send, Sparkles, User, Map, Loader2, Mic, MicOff } from "lucide-react";
+
+// Types for Speech Recognition
+declare global {
+  interface Window {
+    SpeechRecognition: any;
+    webkitSpeechRecognition: any;
+  }
+}
 
 type Tour = {
   id: string;
@@ -30,6 +38,9 @@ export default function AIPlannerPage() {
   ]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isListening, setIsListening] = useState(false);
+  const [speechSupported, setSpeechSupported] = useState(true);
+  const recognitionRef = useRef<any>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Auto scroll to bottom
@@ -40,8 +51,66 @@ export default function AIPlannerPage() {
     scrollToBottom();
   }, [messages, isLoading]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  // Initialize Speech Recognition
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (SpeechRecognition) {
+        recognitionRef.current = new SpeechRecognition();
+        recognitionRef.current.continuous = false;
+        recognitionRef.current.interimResults = true;
+        recognitionRef.current.lang = "th-TH"; // Set to Thai
+
+        recognitionRef.current.onresult = (event: any) => {
+          let interimTranscript = "";
+          let finalTranscript = "";
+
+          for (let i = event.resultIndex; i < event.results.length; ++i) {
+            if (event.results[i].isFinal) {
+              finalTranscript += event.results[i][0].transcript;
+            } else {
+              interimTranscript += event.results[i][0].transcript;
+            }
+          }
+          
+          if (finalTranscript) {
+            setInput((prev) => (prev ? prev + " " + finalTranscript : finalTranscript));
+          } else if (interimTranscript) {
+            setInput(interimTranscript);
+          }
+        };
+
+        recognitionRef.current.onerror = (event: any) => {
+          console.error("Speech recognition error", event.error);
+          setIsListening(false);
+        };
+
+        recognitionRef.current.onend = () => {
+          setIsListening(false);
+        };
+      } else {
+        setSpeechSupported(false);
+      }
+    }
+  }, []);
+
+  const toggleListening = () => {
+    if (isListening) {
+      recognitionRef.current?.stop();
+      setIsListening(false);
+    } else {
+      try {
+        setInput(""); // Clear input before listening
+        recognitionRef.current?.start();
+        setIsListening(true);
+      } catch (e) {
+        console.error(e);
+      }
+    }
+  };
+
+  const handleSubmit = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     if (!input.trim() || isLoading) return;
 
     const userMsg = input.trim();
@@ -262,13 +331,27 @@ export default function AIPlannerPage() {
         {/* Input Area */}
         <div className="bg-white p-4 rounded-b-3xl border-t border-gray-100 shadow-sm shrink-0">
           <form onSubmit={handleSubmit} className="flex gap-3 relative">
+            {speechSupported && (
+              <button
+                type="button"
+                onClick={toggleListening}
+                className={`absolute left-3 top-2 bottom-2 aspect-square rounded-xl flex items-center justify-center transition-all ${
+                  isListening 
+                    ? "bg-red-50 text-red-500 animate-pulse border border-red-200" 
+                    : "bg-gray-50 hover:bg-gray-100 text-gray-500"
+                }`}
+                title="พูดเพื่อพิมพ์"
+              >
+                {isListening ? <Mic className="w-5 h-5" /> : <MicOff className="w-5 h-5" />}
+              </button>
+            )}
             <input 
               type="text" 
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="อยากไปเที่ยวไหน พิมพ์บอก จองทัวร์ AI ได้เลย..."
-              className="flex-1 bg-gray-50 border border-gray-200 rounded-2xl py-4 pl-6 pr-14 outline-none focus:border-orange-500 focus:bg-white transition-all text-[15px]"
-              disabled={isLoading}
+              placeholder={isListening ? "กำลังฟังเสียงคุณ..." : "อยากไปเที่ยวไหน พิมพ์บอก หรือกดปุ่มไมค์พูดได้เลย..."}
+              className={`flex-1 bg-gray-50 border border-gray-200 rounded-2xl py-4 pr-14 outline-none focus:border-orange-500 focus:bg-white transition-all text-[15px] ${speechSupported ? 'pl-14' : 'pl-6'}`}
+              disabled={isLoading || isListening}
             />
             <button 
               type="submit" 
