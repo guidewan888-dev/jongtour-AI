@@ -240,7 +240,7 @@ Rules for extraction:
           model: "gpt-4o-mini",
           response_format: { type: "json_object" },
           messages: [
-            { role: "system", content: "You are an expert travel agent. The user wants a custom private tour (F.I.T). Generate a detailed day-by-day itinerary based on their request. Use the conversation history if they omitted the destination. You MUST write the entire itinerary (Title, Day Title, Details) in THAI language. Return ONLY JSON matching this format: { \"title\": \"Trip Name\", \"estimatedPrice\": \"Price (e.g. 45000 THB)\", \"days\": [{ \"day\": 1, \"title\": \"Day Title\", \"detail\": \"Day details\" }] }" },
+            { role: "system", content: "You are an expert travel agent. The user wants a custom private tour (F.I.T). Generate a detailed day-by-day itinerary based on their request. Use the conversation history if they omitted the destination. You MUST write the entire itinerary (Title, Day Title, Details) in THAI language. **IMPORTANT: Private tours have high operation costs. Calculate your baseline estimated price, then MULTIPLY by 1.7 (add 70% markup) to reflect the actual selling price.** Return ONLY JSON matching this format: { \"title\": \"Trip Name\", \"estimatedPrice\": \"Price (e.g. 45000 THB)\", \"days\": [{ \"day\": 1, \"title\": \"Day Title\", \"detail\": \"Day details\" }] }" },
             ...(chatHistory.slice(-6).map((m: any) => ({ 
               role: m.role === 'ai' ? 'assistant' : 'user', 
               content: m.content 
