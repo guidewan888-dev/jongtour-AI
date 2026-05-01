@@ -273,38 +273,9 @@ export default async function DestinationPage({ params }: { params: { slug?: str
           {/* Right Content (Tour Grid) */}
           <div className="flex-1 min-w-0">
             
-            {/* Sub-destinations Quick Links (ถ้ามี) */}
-            {node.children && Object.keys(node.children).length > 0 && (
-              <div className="mb-8 bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
-                <h2 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
-                  <MapPin className="w-5 h-5 text-orange-600" />
-                  พื้นที่น่าสนใจใน {node.name}
-                </h2>
-                <div className="flex flex-wrap gap-4">
-                  {Object.entries(node.children).map(([childKey, childNode]) => {
-                    const childUrl = `/destinations/${slug.join('/')}/${childKey}`;
-                    return (
-                      <Link href={childUrl} key={childKey} className="group flex flex-col items-center gap-2 hover:-translate-y-1 transition-transform w-16 md:w-20">
-                        <div className="w-16 h-16 md:w-20 md:h-20 rounded-full overflow-hidden shadow-sm border-2 border-gray-100 group-hover:border-orange-200 group-hover:shadow-md transition-all">
-                          <img 
-                            src={childNode.coverImage} 
-                            alt={childNode.name}
-                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-                          />
-                        </div>
-                        <span className="text-xs font-bold text-gray-600 group-hover:text-orange-600 text-center leading-tight">
-                          {childNode.name}
-                        </span>
-                      </Link>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            <div className="flex justify-between items-end mb-6">
+            <div className="flex justify-between items-end mb-6 mt-4">
               <h2 className="text-xl md:text-2xl font-bold text-gray-900">
-                มีที่พัก/ทัวร์ {tours.length} แห่งใน {node.name}
+                มีแพ็กเกจทัวร์ {validTours.length} โปรแกรมใน {node.name}
               </h2>
               <div className="hidden md:flex items-center gap-2">
                 <span className="text-sm text-gray-500">เรียงผลการค้นหาโดย:</span>
@@ -338,17 +309,22 @@ export default async function DestinationPage({ params }: { params: { slug?: str
                     <div key={wsKey} className="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-gray-100">
                       {/* Wholesale Header */}
                       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 pb-4 border-b border-gray-100">
-                        <div className="flex items-center gap-4">
+                        <Link 
+                          href={wsConfig.slug ? `/wholesale/${wsConfig.slug}${destParam ? `?dest=${encodeURIComponent(destParam)}` : ''}` : '#'}
+                          className={`flex items-center gap-4 group ${wsConfig.slug ? 'cursor-pointer' : 'cursor-default'}`}
+                        >
                           {wsConfig.logo && (
-                            <div className="w-14 h-14 bg-white rounded-full shadow-sm border border-gray-100 overflow-hidden flex items-center justify-center p-1 shrink-0">
-                              <img src={wsConfig.logo} alt={wsConfig.name} className="max-w-[90%] max-h-[90%] object-contain" />
+                            <div className="w-14 h-14 bg-white rounded-full shadow-sm border border-gray-100 overflow-hidden flex items-center justify-center p-1 shrink-0 group-hover:border-orange-300 transition-colors">
+                              <img src={wsConfig.logo} alt={wsConfig.name} className="max-w-[90%] max-h-[90%] object-contain group-hover:scale-105 transition-transform" />
                             </div>
                           )}
                           <div>
-                            <h3 className="text-2xl font-black text-gray-900">{wsConfig.name}</h3>
+                            <h3 className={`text-2xl font-black text-gray-900 ${wsConfig.slug ? 'group-hover:text-orange-600 transition-colors' : ''}`}>
+                              {wsConfig.name}
+                            </h3>
                             <p className="text-sm text-gray-500 font-medium">{wsTours.length} โปรแกรมทัวร์</p>
                           </div>
-                        </div>
+                        </Link>
                         
                         {wsConfig.slug && (
                           <Link 
@@ -397,7 +373,7 @@ export default async function DestinationPage({ params }: { params: { slug?: str
                                 <img 
                                   src={tour.imageUrl || "https://images.unsplash.com/photo-1436491865332-7a61a109cc05"} 
                                   alt={tour.title} 
-                                  className="w-full h-[160px] object-cover group-hover:scale-105 transition-transform duration-500"
+                                  className="w-full aspect-[4/3] object-cover group-hover:scale-105 transition-transform duration-500"
                                 />
                                 <div className="absolute bottom-2 left-2 bg-black/60 backdrop-blur-sm px-2 py-1 rounded text-[10px] font-bold text-white flex items-center gap-1">
                                   <MapPin className="w-3 h-3 text-white" /> {tour.destination}
