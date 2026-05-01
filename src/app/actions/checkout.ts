@@ -2,7 +2,7 @@
 
 import { createClient } from "@/utils/supabase/server";
 import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
+import { randomUUID } from "crypto";
 
 export async function submitCheckout(formData: FormData) {
   const cookieStore = await cookies();
@@ -53,9 +53,11 @@ export async function submitCheckout(formData: FormData) {
   }
 
   // Create booking
+  const bookingId = randomUUID();
   const { data: booking, error: bookingError } = await supabase
     .from('Booking')
     .insert({
+      id: bookingId,
       userId: dbUser.id,
       departureId,
       status: 'PENDING',
@@ -81,6 +83,7 @@ export async function submitCheckout(formData: FormData) {
   await supabase
     .from('Traveler')
     .insert({
+      id: randomUUID(),
       bookingId: booking.id,
       name: `${firstName} ${lastName}`
     });
@@ -90,6 +93,7 @@ export async function submitCheckout(formData: FormData) {
     await supabase
       .from('Traveler')
       .insert({
+        id: randomUUID(),
         bookingId: booking.id,
         name: `Traveler ${i + 1}`
       });
