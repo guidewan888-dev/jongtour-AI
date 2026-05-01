@@ -38,7 +38,7 @@ Return ONLY a JSON object with these exact keys:
 - "keywords": array of strings. Include destination countries, cities, or continents in THAI language (e.g., ["ญี่ปุ่น", "ยุโรป", "หน้าหนาว", "ฮอกไกโด"]). Leave empty if none found. Do NOT include generic words like "ทัวร์" or "ไปเที่ยว".
 - "maxPrice": number or null. Extract any maximum budget mentioned. Convert shorthand like "3 หมื่น" to 30000.
 - "isFire": boolean. true if the user is looking for last-minute deals (e.g., "ไฟไหม้", "โปรไฟไหม้").
-- "wholesale": string or null. Extract wholesale tour company names if mentioned (e.g. "Let's go", "Check in", "Go 365", "Tour Factory").`
+- "wholesale": string or null. Extract wholesale tour company names if mentioned (e.g. "Let's go", "Check in", "Go 365", "Tour Factory"). DO NOT put wholesale names in "keywords".`
             },
             ...(chatHistory.slice(-6).map((m: any) => ({ 
               role: m.role === 'ai' ? 'assistant' : 'user', 
@@ -148,7 +148,16 @@ Return ONLY a JSON object with these exact keys:
 
     if (isOpenAIAvailable && openai && !aiFailed) {
       try {
-        const tourTitles = tours.length > 0 ? tours.map(t => `- ${t.title} (ราคาเริ่มต้น ${t.price} บาท)`).join("\n") : "ไม่มีทัวร์ที่ตรงสเปก";
+        const tourTitles = tours.length > 0 ? tours.map(t => {
+          const deps = (t.departures || []).slice(0, 3).map((d: any) => d.dateText).join(", ");
+          return `- โค้ดทัวร์: ${t.code}
+- ชื่อแพ็กเกจ: ${t.title}
+- สายการบิน: ${t.airline || "ไม่ระบุ"}
+- ระยะเวลา: ${t.days || "-"} วัน ${t.nights || "-"} คืน
+- ราคาเริ่มต้น: ${t.price} บาท
+- วันเดินทาง: ${deps || t.periodText || "ดูรายละเอียดในเว็บ"}
+- โฮลเซลล์: ${t.source === 'API_ZEGO' ? "Let's Go" : t.source === 'CHECKIN' ? "Check In Tour" : t.source === 'API_GO365' ? "GO 365" : t.source === 'TOUR_FACTORY' ? "Tour Factory" : t.source}`;
+        }).join("\n\n") : "ไม่มีทัวร์ที่ตรงสเปก";
         
         const response = await openai.chat.completions.create({
           model: "gpt-4o-mini",
@@ -160,9 +169,9 @@ You searched the database based on the latest query and found ${tours.length} to
 ${tourTitles}
 
 CRITICAL RULES:
-1. You MUST ONLY talk about travel, tours, destinations, and Jongtour services. (Note: Let's Go, Check In Tour, GO 365, and Tour Factory are our trusted wholesale partners, so talking about them is allowed!).
-2. If the user asks about ANYTHING unrelated (politics, coding, general knowledge, cooking, etc.), politely decline to answer and steer the conversation back to travel (e.g., "ผมคือ จองทัวร์ AI ตอบได้เฉพาะเรื่องท่องเที่ยวนะครับ 😅 แต่อยากไปเที่ยวไหนบอกได้เลย!").
-3. If tours > 0: Excitedly and persuasively present the found tours. Tell them to check the cards below. Make it sound like a deal they can't miss!
+1. You MUST ONLY talk about travel, tours, destinations, and Jongtour services. (Note: Let's Go, Check In Tour, GO 365, and Tour Factory are our trusted wholesale partners).
+2. If the user asks about ANYTHING unrelated (politics, coding, general knowledge, etc.), politely decline to answer. HOWEVER, questions about airlines, tour codes, travel dates, and wholesale companies ARE travel-related and you MUST answer them using the provided tour data! Do NOT decline these.
+3. If tours > 0: Excitedly and persuasively present the found tours. Tell them to check the cards below. Highlight the airlines or dates if the user asked. Make it sound like a deal they can't miss!
 4. If tours = 0: Apologize playfully, suggest they adjust their budget or destination.
 Use emojis naturally. DO NOT use markdown bold/italic formatting to keep it clean for the chat UI.`
             },
