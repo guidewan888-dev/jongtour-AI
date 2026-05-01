@@ -3,6 +3,8 @@
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { Send, Sparkles, User, Map, Loader2, Mic, MicOff, ImagePlus, X } from "lucide-react";
+import { useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 
 // Types for Speech Recognition
 declare global {
@@ -29,7 +31,8 @@ type Message = {
   image?: string;
 };
 
-export default function AIPlannerPage() {
+function AIPlannerContent() {
+  const searchParams = useSearchParams();
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "welcome",
@@ -90,6 +93,16 @@ export default function AIPlannerPage() {
 
         recognitionRef.current.onend = () => {
           setIsListening(false);
+          // Auto submit when speech ends if there's input
+          setTimeout(() => {
+            const form = document.getElementById("ai-planner-form") as HTMLFormElement;
+            if (form) {
+              const inputField = form.querySelector('input[type="text"]') as HTMLInputElement;
+              if (inputField && inputField.value.trim().length > 0) {
+                form.requestSubmit();
+              }
+            }
+          }, 300);
         };
       } else {
         setSpeechSupported(false);
@@ -97,10 +110,38 @@ export default function AIPlannerPage() {
     }
   }, []);
 
+  // Handle incoming query params from Home Page
+  useEffect(() => {
+    const q = searchParams.get("q");
+    const action = searchParams.get("action");
+    
+    if (q) {
+      setInput(q);
+      // Wait a tick for state to update then submit
+      setTimeout(() => {
+        const form = document.getElementById("ai-planner-form") as HTMLFormElement;
+        if (form) form.requestSubmit();
+      }, 100);
+    } else if (action === "voice") {
+      // Auto-start listening
+      setTimeout(() => {
+        if (!isListening) toggleListening();
+      }, 500);
+    } else if (action === "image") {
+      const pendingImage = sessionStorage.getItem("pending_ai_image");
+      if (pendingImage) {
+        setSelectedImage(pendingImage);
+        sessionStorage.removeItem("pending_ai_image");
+        // Don't auto-submit image immediately so user can type a prompt with it
+      }
+    }
+  }, [searchParams]);
+
   const toggleListening = () => {
     if (isListening) {
       recognitionRef.current?.stop();
       setIsListening(false);
+      // Will auto-submit via onend event
     } else {
       try {
         setInput(""); // Clear input before listening
@@ -208,7 +249,7 @@ export default function AIPlannerPage() {
         buffer += chunk;
         
         if (!dataParsed) {
-          const match = buffer.match(/__DATA__(.*?)__DATA__\n/s);
+          const match = buffer.match(/__DATA__([\s\S]*?)__DATA__\n/);
           if (match) {
             try { toursData = JSON.parse(match[1]).tours || []; } catch(e) {}
             aiText = buffer.slice(match[0].length);
@@ -220,7 +261,7 @@ export default function AIPlannerPage() {
 
         if (dataParsed) {
           // Check for chips
-          const chipsMatch = aiText.match(/__CHIPS__\[(.*?)\]/s);
+          const chipsMatch = aiText.match(/__CHIPS__\[([\s\S]*?)\]/);
           let displayText = aiText;
           if (chipsMatch) {
             try {
@@ -381,7 +422,7 @@ export default function AIPlannerPage() {
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="flex gap-3 relative">
+          <form id="ai-planner-form" onSubmit={handleSubmit} className="flex gap-3 relative">
             <input 
               type="file"
               accept="image/*"
@@ -433,5 +474,13 @@ export default function AIPlannerPage() {
 
       </div>
     </main>
+  );
+}
+
+export default function AIPlannerPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-gray-50 flex items-center justify-center"><Loader2 className="w-8 h-8 text-orange-500 animate-spin" /></div>}>
+      <AIPlannerContent />
+    </Suspense>
   );
 }

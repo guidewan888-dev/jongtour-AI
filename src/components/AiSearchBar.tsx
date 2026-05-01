@@ -11,58 +11,23 @@ export default function AiSearchBar() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
 
-  // 1. ระบบค้นหาด้วยเสียง (Voice Search)
+  // 1. ระบบค้นหาด้วยเสียง (Voice Search) - Redirect to AI Planner
   const handleVoiceSearch = () => {
-    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-      alert("เบราว์เซอร์ของคุณไม่รองรับการพิมพ์ด้วยเสียง (แนะนำให้ใช้ Google Chrome ครับ)");
-      return;
-    }
-    
-    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    const recognition = new SpeechRecognition();
-    recognition.lang = 'th-TH';
-    recognition.continuous = false;
-    recognition.interimResults = false;
-
-    recognition.onstart = () => {
-      setIsListening(true);
-      setQuery("");
-    };
-    
-    recognition.onresult = (event: any) => {
-      const transcript = event.results[0][0].transcript;
-      setQuery(transcript);
-    };
-
-    recognition.onerror = (event: any) => {
-      console.error("Speech error", event.error);
-      setIsListening(false);
-    };
-
-    recognition.onend = () => {
-      setIsListening(false);
-    };
-
-    recognition.start();
+    router.push(`/ai-planner?action=voice`);
   };
 
-  // 2. ระบบค้นหาด้วยรูปภาพ (Visual Search)
+  // 2. ระบบค้นหาด้วยรูปภาพ (Visual Search) - Redirect to AI Planner
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    setIsAnalyzingImage(true);
-    setQuery(`AI กำลังสแกนภาพ: ${file.name}...`);
-
-    setTimeout(() => {
-      setIsAnalyzingImage(false);
-      const aiResult = "ทัวร์ญี่ปุ่น โตเกียว ภูเขาไฟฟูจิ";
-      setQuery(aiResult);
-      
-      setTimeout(() => {
-        router.push(`/ai-planner?q=${encodeURIComponent(aiResult)}`);
-      }, 800);
-    }, 2500);
+    // Convert to base64 and store in session storage to pass to the next page
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      sessionStorage.setItem("pending_ai_image", event.target?.result as string);
+      router.push(`/ai-planner?action=image`);
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleSubmit = (e?: React.FormEvent) => {
@@ -94,16 +59,9 @@ export default function AiSearchBar() {
         <div className="flex items-center gap-1.5 md:gap-2 pr-1 shrink-0">
           
           {/* ปุ่มไมโครโฟน */}
-          {isListening ? (
-            <div className="flex items-center justify-center w-10 h-10 rounded-full bg-red-100 text-red-600 animate-pulse relative">
-              <span className="absolute -inset-1 bg-red-200 rounded-full animate-ping opacity-50"></span>
-              <Mic className="w-5 h-5 relative z-10" />
-            </div>
-          ) : (
-            <button type="button" onClick={handleVoiceSearch} className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-50 hover:bg-gradient-to-tr hover:from-blue-50 hover:to-indigo-100 text-gray-500 hover:text-indigo-600 transition-all border border-gray-100 hover:border-indigo-200 hover:shadow-sm" title="ค้นหาด้วยเสียง">
-              <Mic className="w-[18px] h-[18px]" strokeWidth={2.5} />
-            </button>
-          )}
+          <button type="button" onClick={handleVoiceSearch} className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-50 hover:bg-gradient-to-tr hover:from-blue-50 hover:to-indigo-100 text-gray-500 hover:text-indigo-600 transition-all border border-gray-100 hover:border-indigo-200 hover:shadow-sm" title="ค้นหาด้วยเสียง">
+            <Mic className="w-[18px] h-[18px]" strokeWidth={2.5} />
+          </button>
 
           {/* ปุ่มอัปโหลดรูปภาพ */}
           <input 
@@ -113,16 +71,9 @@ export default function AiSearchBar() {
             accept="image/*" 
             className="hidden" 
           />
-          
-          {isAnalyzingImage ? (
-            <div className="w-10 h-10 flex items-center justify-center rounded-full bg-teal-100 text-teal-700">
-              <Loader2 className="w-5 h-5 animate-spin" />
-            </div>
-          ) : (
-            <button type="button" onClick={() => fileInputRef.current?.click()} className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-50 hover:bg-gradient-to-tr hover:from-emerald-50 hover:to-teal-100 text-gray-500 hover:text-teal-600 transition-all border border-gray-100 hover:border-teal-200 hover:shadow-sm" title="อัปโหลดรูปภาพให้ AI สแกน">
-              <ScanSearch className="w-[18px] h-[18px]" strokeWidth={2.5} />
-            </button>
-          )}
+          <button type="button" onClick={() => fileInputRef.current?.click()} className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-50 hover:bg-gradient-to-tr hover:from-emerald-50 hover:to-teal-100 text-gray-500 hover:text-teal-600 transition-all border border-gray-100 hover:border-teal-200 hover:shadow-sm" title="อัปโหลดรูปภาพให้ AI สแกน">
+            <ScanSearch className="w-[18px] h-[18px]" strokeWidth={2.5} />
+          </button>
 
           {/* ปุ่ม Submit (ลูกศรขวา แบบ ChatGPT) */}
           <button type="submit" className="ml-1 w-10 h-10 rounded-full bg-gradient-to-br from-orange-500 to-red-600 text-white flex items-center justify-center shadow-md hover:shadow-lg hover:scale-105 transition-all">
