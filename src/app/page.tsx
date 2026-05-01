@@ -6,9 +6,8 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import AuthButtons from "@/components/AuthButtons";
 
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
-export const fetchCache = "force-no-store";
+// ใช้ ISR Cache 1 นาที เพื่อให้เว็บเร็วขึ้น และข้อมูลยังอัปเดตอยู่
+export const revalidate = 60;
 
 export default async function Home() {
   const cookieStore = await cookies();

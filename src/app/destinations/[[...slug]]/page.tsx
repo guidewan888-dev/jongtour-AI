@@ -4,10 +4,8 @@ import { MapPin, Calendar, Star, ChevronRight, CheckCircle2, Clock } from "lucid
 import { destinationConfig, getDestinationData } from "@/lib/destinations";
 import { notFound } from "next/navigation";
 
-// บังคับให้เป็น dynamic page เพื่อใช้ fetch ตลอด ไม่แคช
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
-export const fetchCache = "force-no-store";
+// ใช้ ISR Cache 1 นาที เพื่อให้เว็บเร็วขึ้น และข้อมูลยังอัปเดตอยู่
+export const revalidate = 60;
 
 export default async function DestinationPage({ params }: { params: { slug?: string[] } }) {
   const slug = params?.slug || [];

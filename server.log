@@ -345,3 +345,15 @@ Require stack:
  ✓ Compiled / in 192ms (440 modules)
  GET / 200 in 336ms
  ✓ Compiled in 404ms (564 modules)
+ ✓ Compiled in 120ms (516 modules)
+ ✓ Compiled /destinations/[[...slug]] in 179ms (408 modules)
+ GET /destinations/asia/taiwan 200 in 570ms
+ GET /destinations/asia/china/shanghai 200 in 383ms
+ GET /destinations/asia/china/shanghai 200 in 45ms
+ GET /destinations/asia/china/shanghai 200 in 47ms
+ GET /destinations/asia/china/shanghai 200 in 60ms
+ ✓ Compiled in 223ms (564 modules)
+ ✓ Compiled in 128ms (516 modules)
+ ✓ Compiled in 412ms (516 modules)
+ ✓ Compiled in 132ms (516 modules)
+ ✓ Compiled in 141ms (516 modules)

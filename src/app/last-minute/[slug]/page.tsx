@@ -3,9 +3,8 @@ import { createClient } from "@supabase/supabase-js";
 import { MapPin, Calendar, Star, Clock, ChevronRight, Flame } from "lucide-react";
 import { notFound } from "next/navigation";
 
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
-export const fetchCache = "force-no-store";
+// ใช้ ISR Cache 1 นาที เพื่อให้เว็บเร็วขึ้น และข้อมูลยังอัปเดตอยู่
+export const revalidate = 60;
 
 const wholesaleConfig: Record<string, { name: string, logo: string, source: string, description: string, coverImage: string }> = {
   "letsgo": {
