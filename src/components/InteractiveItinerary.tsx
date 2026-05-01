@@ -68,11 +68,55 @@ export default function InteractiveItinerary({ itinerary }: { itinerary: any }) 
   return (
     <div className="w-full max-w-[900px] mx-auto mt-4 bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm flex flex-col">
       
-      {/* Header */}
-      <div className="bg-gradient-to-r from-orange-500 to-orange-600 p-6 text-white text-center">
-        <h2 className="text-2xl font-bold mb-2">✨ {itinerary.title}</h2>
-        <div className="inline-block bg-white text-orange-600 font-bold rounded-md px-4 py-1 mt-2 shadow-sm">
-          ราคาประเมินเบื้องต้น: {itinerary.estimatedPrice}
+      {/* Promotional Banner Header */}
+      <div className="relative w-full h-[250px] sm:h-[300px] overflow-hidden group">
+        {/* Background Image */}
+        <img 
+          src={itinerary.coverImagePrompt 
+            ? `https://image.pollinations.ai/prompt/${encodeURIComponent(itinerary.coverImagePrompt + ", travel photography, beautiful scenery, 4k, hyperrealistic")}?width=1200&height=400&nologo=true`
+            : "https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=1200&q=80"}
+          alt="Destination Cover"
+          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+          crossOrigin="anonymous"
+        />
+        {/* Gradient Overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/10"></div>
+        
+        {/* Banner Content */}
+        <div className="absolute inset-0 p-6 flex flex-col justify-end">
+          <div className="flex items-end justify-between gap-4">
+            <div className="flex-1">
+              {/* Marketing Headline */}
+              {itinerary.marketingHeadline && (
+                <div className="inline-block bg-orange-500 text-white text-xs sm:text-sm font-bold px-3 py-1 rounded-full mb-3 shadow-lg">
+                  🔥 {itinerary.marketingHeadline}
+                </div>
+              )}
+              {/* Title */}
+              <h2 className="text-2xl sm:text-3xl font-bold text-white mb-2 leading-tight drop-shadow-md outline-none focus:bg-white/10 rounded px-1 -mx-1" contentEditable suppressContentEditableWarning>
+                {itinerary.title}
+              </h2>
+              {/* Airline Badge */}
+              {itinerary.airlineCode && (
+                <div className="flex items-center gap-2 mt-2 bg-white/10 backdrop-blur-md w-max px-3 py-1.5 rounded-lg border border-white/20 shadow-sm">
+                  <span className="text-white text-xs">เดินทางกับ</span>
+                  <img 
+                    src={`https://images.kiwi.com/airlines/64/${itinerary.airlineCode}.png`} 
+                    alt={itinerary.airlineCode}
+                    className="h-5 bg-white rounded-sm px-1"
+                    crossOrigin="anonymous"
+                  />
+                </div>
+              )}
+            </div>
+            {/* Price Badge */}
+            <div className="shrink-0 text-right">
+              <div className="text-white/90 text-xs mb-1 drop-shadow-sm">ราคาประเมินเริ่มต้น</div>
+              <div className="bg-white text-orange-600 font-bold rounded-xl px-4 py-2 shadow-xl border-b-4 border-orange-200 outline-none focus:ring-2 focus:ring-orange-500" contentEditable suppressContentEditableWarning>
+                {itinerary.estimatedPrice}
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
