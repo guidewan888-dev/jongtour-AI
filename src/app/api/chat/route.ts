@@ -37,6 +37,7 @@ export async function POST(request: Request) {
       month: null as string | null,
     };
 
+    let isFitRequest = false;
     let aiFailed = false;
 
     if (isOpenAIAvailable && openai) {
@@ -56,7 +57,8 @@ Return ONLY a JSON object with these exact keys:
 - "wholesale": string or null. Extract wholesale tour company names if mentioned (e.g. "Let's go", "Check in", "Go 365", "Tour Factory"). DO NOT put wholesale names in "keywords".
 - "days": number or null. Extract the EXACT number of days requested (e.g. "3 วัน" -> 3).
 - "airline": string or null. Extract the specific airline requested (e.g. "การบินไทย", "แอร์เอเชีย", "TG", "XJ").
-- "month": string or null. Extract the month requested in English (e.g. "เมษา", "เมษายน", "สงกรานต์" -> "April").`
+- "month": string or null. Extract the month requested in English (e.g. "เมษา", "เมษายน", "สงกรานต์" -> "April").
+- "isFitRequest": boolean. true if the user wants a private tour, custom itinerary, or F.I.T. (e.g., "จัดทัวร์ส่วนตัว", "ไปกันเอง", "ช่วยจัดทริปให้หน่อย").`
             },
             ...(chatHistory.slice(-6).map((m: any) => ({ 
               role: m.role === 'ai' ? 'assistant' : 'user', 
@@ -74,6 +76,7 @@ Return ONLY a JSON object with these exact keys:
         if (typeof parsed.days === "number") searchCriteria.days = parsed.days;
         if (typeof parsed.airline === "string") searchCriteria.airline = parsed.airline;
         if (typeof parsed.month === "string") searchCriteria.month = parsed.month;
+        if (parsed.isFitRequest === true) isFitRequest = true;
         
         if (parsed.wholesale) {
           const w = parsed.wholesale.toLowerCase();
@@ -240,6 +243,23 @@ Return ONLY a JSON object with these exact keys:
     // Return max 4 for UI
     tours = tours.slice(0, 4);
 
+    let customItinerary = null;
+    if (isOpenAIAvailable && openai && isFitRequest) {
+      try {
+        const fitResponse = await openai.chat.completions.create({
+          model: "gpt-4o-mini",
+          response_format: { type: "json_object" },
+          messages: [
+            { role: "system", content: "You are an expert travel agent. The user wants a custom private tour (F.I.T). Generate a detailed day-by-day itinerary based on their request. Return ONLY JSON matching this format: { \"title\": \"Trip Name\", \"estimatedPrice\": \"Price (e.g. 45000 THB)\", \"days\": [{ \"day\": 1, \"title\": \"Day Title\", \"detail\": \"Day details\" }] }" },
+            { role: "user", content: userMessage }
+          ]
+        });
+        customItinerary = JSON.parse(fitResponse.choices[0].message.content || "null");
+      } catch (e) {
+        console.error("FIT Generation Error:", e);
+      }
+    }
+
     // 3. Generate natural response
     let aiReply = "";
 
@@ -257,12 +277,12 @@ Return ONLY a JSON object with these exact keys:
 - ไฮไลท์โปรแกรม: ${t.highlight ? t.highlight.substring(0, 150) + "..." : "ไม่ระบุ"}`;
         }).join("\n\n") : "ไม่มีทัวร์ที่ตรงสเปก";
         
-        const response = await openai.chat.completions.create({
-          model: "gpt-4o-mini",
-          messages: [
-            {
-              role: "system",
-              content: `You are จองทัวร์ AI (Jongtour AI), an incredibly enthusiastic, persuasive, and funny Thai travel agent! Your goal is to make the user excited to book tours. Use humor, excitement, and a bit of friendly Thai slang. Always refer to yourself as "จองทัวร์ AI".
+        const systemPromptContent = customItinerary 
+          ? `You are จองทัวร์ AI (Jongtour AI), an incredibly enthusiastic, persuasive, and funny Thai travel agent! Your goal is to make the user excited to book tours. Use humor, excitement, and a bit of friendly Thai slang. Always refer to yourself as "จองทัวร์ AI".
+The user you are talking to is named "${userName}". Greet them by name naturally in the conversation!
+You have successfully generated a Custom Private Tour Itinerary (F.I.T) for the user. Excitedly present it and tell them to check the interactive planner card below. Do not repeat the day-by-day details in your text response, just build hype! 
+Suggest exactly 3 short follow-up questions at the end like: __CHIPS__["อยากจองเลย", "ขอปรับแผนวันที่ 2", "ราคารวมวีซ่าไหม"]` 
+          : `You are จองทัวร์ AI (Jongtour AI), an incredibly enthusiastic, persuasive, and funny Thai travel agent! Your goal is to make the user excited to book tours. Use humor, excitement, and a bit of friendly Thai slang. Always refer to yourself as "จองทัวร์ AI".
 The user you are talking to is named "${userName}". Greet them by name naturally in the conversation!
 You searched the database based on the latest query and found ${tours.length} tours:
 ${tourTitles}
@@ -275,7 +295,14 @@ CRITICAL RULES:
 5. If tours = 0 and no image uploaded: Apologize playfully, suggest they adjust their budget or destination.
 6. Suggest exactly 3 short, helpful follow-up questions the user can ask next. Put them at the VERY END of your response in this exact format on a new line:
 __CHIPS__["question 1", "question 2", "question 3"]
-Use emojis naturally. DO NOT use markdown bold/italic formatting to keep it clean for the chat UI.`
+Use emojis naturally. DO NOT use markdown bold/italic formatting to keep it clean for the chat UI.`;
+
+        const response = await openai.chat.completions.create({
+          model: "gpt-4o-mini",
+          messages: [
+            {
+              role: "system",
+              content: systemPromptContent
             },
             ...(chatHistory.slice(-6).map((m: any) => ({ 
               role: m.role === 'ai' ? 'assistant' : 'user', 
@@ -296,9 +323,14 @@ Use emojis naturally. DO NOT use markdown bold/italic formatting to keep it clea
         
         const stream = new ReadableStream({
           async start(controller) {
-            // Send tours data first
-            const dataStr = JSON.stringify({ type: 'tours_data', tours });
-            controller.enqueue(encoder.encode(`__DATA__${dataStr}__DATA__\n`));
+            // Send tours data or custom itinerary first
+            if (customItinerary) {
+              const dataStr = JSON.stringify({ type: 'custom_itinerary', itinerary: customItinerary });
+              controller.enqueue(encoder.encode(`__DATA__${dataStr}__DATA__\n`));
+            } else {
+              const dataStr = JSON.stringify({ type: 'tours_data', tours });
+              controller.enqueue(encoder.encode(`__DATA__${dataStr}__DATA__\n`));
+            }
             
             try {
               for await (const chunk of response) {

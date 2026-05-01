@@ -33,3 +33,24 @@ body {
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: #94a3b8; 
 }
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  .no-print, nav, header, form, footer, .hide-scrollbar {
+    display: none !important;
+  }
+  .print-itinerary-body, .print-itinerary-body * {
+    visibility: visible;
+  }
+  .print-itinerary-body {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    margin: 0;
+    padding: 20px;
+    background: white !important;
+  }
+}
