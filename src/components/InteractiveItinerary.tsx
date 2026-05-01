@@ -80,7 +80,7 @@ export default function InteractiveItinerary({ itinerary }: { itinerary: any }) 
                     {/* Breakfast */}
                     <div>
                       {d.meals?.breakfast ? (
-                        <Check className="w-4 h-4 text-orange-500" strokeWidth={3} />
+                        <Check className="w-4 h-4 text-green-500" strokeWidth={3} />
                       ) : (
                         <X className="w-4 h-4 text-red-400" strokeWidth={3} />
                       )}
@@ -88,7 +88,7 @@ export default function InteractiveItinerary({ itinerary }: { itinerary: any }) 
                     {/* Lunch */}
                     <div>
                       {d.meals?.lunch ? (
-                        <Check className="w-4 h-4 text-orange-500" strokeWidth={3} />
+                        <Check className="w-4 h-4 text-green-500" strokeWidth={3} />
                       ) : (
                         <X className="w-4 h-4 text-red-400" strokeWidth={3} />
                       )}
@@ -96,7 +96,7 @@ export default function InteractiveItinerary({ itinerary }: { itinerary: any }) 
                     {/* Dinner */}
                     <div>
                       {d.meals?.dinner ? (
-                        <Check className="w-4 h-4 text-orange-500" strokeWidth={3} />
+                        <Check className="w-4 h-4 text-green-500" strokeWidth={3} />
                       ) : (
                         <X className="w-4 h-4 text-red-400" strokeWidth={3} />
                       )}
@@ -109,6 +109,11 @@ export default function InteractiveItinerary({ itinerary }: { itinerary: any }) 
                   <p className="text-[13px] font-bold text-orange-600 outline-none focus:bg-orange-50 focus:ring-2 focus:ring-orange-200 rounded px-1" contentEditable suppressContentEditableWarning>
                     {d.hotel || "-"}
                   </p>
+                  {d.hotel && d.hotel !== "-" && (
+                    <span className="block text-[10px] text-gray-400 font-normal mt-1 leading-tight">
+                      หรือเทียบเท่าระดับเดียวกัน
+                    </span>
+                  )}
                 </td>
 
                 {/* Action Controls */}
