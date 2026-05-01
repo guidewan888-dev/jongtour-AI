@@ -116,20 +116,21 @@ export default async function DestinationPage({ params }: { params: { slug?: str
             <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-200">
               <h3 className="font-bold text-gray-900 mb-4 pb-3 border-b border-gray-100">โฮลเซลล์ (Wholesale)</h3>
               <div className="space-y-3">
-                <label className="flex items-center gap-3 cursor-pointer group">
-                  <div className="w-10 h-10 border-2 border-transparent rounded overflow-hidden flex items-center justify-center bg-gray-50 group-hover:border-orange-500 transition-colors p-1">
-                    <img src="/images/logos/letsgo-logo.png" alt="LET'S GO" className="w-full h-full object-contain" />
-                  </div>
-                  <span className="text-sm font-bold text-gray-700 group-hover:text-orange-600 transition-colors">LET'S GO (Zego)</span>
-                  <span className="ml-auto text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">{tours.filter(t => t.source === 'API_ZEGO').length}</span>
-                </label>
-                <label className="flex items-center gap-3 cursor-pointer group">
-                  <div className="w-10 h-10 border-2 border-transparent rounded overflow-hidden flex items-center justify-center bg-gray-50 group-hover:border-orange-500 transition-colors p-1.5">
-                    <img src="/images/logos/go365-logo.png" alt="GO365" className="w-full h-full object-contain" />
-                  </div>
-                  <span className="text-sm font-bold text-gray-700 group-hover:text-orange-600 transition-colors">GO365</span>
-                  <span className="ml-auto text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">{tours.filter(t => t.source === 'API_GO365').length}</span>
-                </label>
+                {Object.keys(wholesaleMap).filter(k => k !== 'MANUAL').map(wsKey => {
+                  const wsConfig = wholesaleMap[wsKey];
+                  if (!wsConfig || !wsConfig.slug) return null;
+                  const count = tours.filter((t: any) => t.source === wsKey).length;
+                  
+                  return (
+                    <Link href={`/wholesale/${wsConfig.slug}`} key={wsKey} className="flex items-center gap-3 cursor-pointer group">
+                      <div className="w-10 h-10 border-2 border-transparent rounded overflow-hidden flex items-center justify-center bg-gray-50 group-hover:border-orange-500 transition-colors p-1">
+                        <img src={wsConfig.logo} alt={wsConfig.name} className="w-full h-full object-contain" />
+                      </div>
+                      <span className="text-sm font-bold text-gray-700 group-hover:text-orange-600 transition-colors">{wsConfig.name}</span>
+                      <span className="ml-auto text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">{count}</span>
+                    </Link>
+                  );
+                })}
               </div>
             </div>
 
@@ -373,7 +374,7 @@ export default async function DestinationPage({ params }: { params: { slug?: str
                                 <img 
                                   src={tour.imageUrl || "https://images.unsplash.com/photo-1436491865332-7a61a109cc05"} 
                                   alt={tour.title} 
-                                  className="w-full aspect-[4/3] object-cover group-hover:scale-105 transition-transform duration-500"
+                                  className="w-full h-[200px] object-cover group-hover:scale-105 transition-transform duration-500"
                                 />
                                 <div className="absolute bottom-2 left-2 bg-black/60 backdrop-blur-sm px-2 py-1 rounded text-[10px] font-bold text-white flex items-center gap-1">
                                   <MapPin className="w-3 h-3 text-white" /> {tour.destination}

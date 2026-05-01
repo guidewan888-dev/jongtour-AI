@@ -103,10 +103,19 @@ export default async function WholesaleLandingPage({ params, searchParams }: { p
     return acc;
   }, {});
 
-  const activeDest = searchParams?.dest;
+  const activeDest = searchParams?.dest?.toUpperCase();
   const allDestinationKeys = Object.keys(toursByDestination).sort();
-  const destinationKeysToRender = activeDest && toursByDestination[activeDest] 
-    ? [activeDest] 
+  
+  let matchedKey = null;
+  if (activeDest) {
+    matchedKey = allDestinationKeys.find(k => {
+       const mapped = countryMap[activeDest];
+       return k.toUpperCase() === activeDest || (mapped && k.includes(mapped.th));
+    });
+  }
+
+  const destinationKeysToRender = matchedKey 
+    ? [matchedKey] 
     : allDestinationKeys;
 
   return (
@@ -182,9 +191,14 @@ export default async function WholesaleLandingPage({ params, searchParams }: { p
               </div>
             )}
 
-            {/* Tours by Destination */}
             {destinationKeysToRender.map((dest) => {
-              const mapped = countryMap[dest.toUpperCase()];
+              // try to find reverse map if dest is in Thai
+              let mapped = countryMap[dest.toUpperCase()];
+              if (!mapped) {
+                 const foundKey = Object.keys(countryMap).find(k => dest.includes(countryMap[k].th));
+                 if (foundKey) mapped = countryMap[foundKey];
+              }
+
               const displayTitle = mapped ? `ทัวร์${mapped.th} ${mapped.flag}` : `ทัวร์${dest}`;
               
               return (
