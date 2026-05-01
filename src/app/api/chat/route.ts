@@ -110,9 +110,11 @@ The user said: "${userMessage}"
 You searched the database and found ${tours.length} tours:
 ${tourTitles}
 
-Write an engaging, helpful response (1-2 short paragraphs) in Thai.
-- If tours > 0: Excitedly present the found tours. Tell them to check the cards below.
-- If tours = 0: Apologize politely, suggest they adjust their budget or destination.
+CRITICAL RULES:
+1. You MUST ONLY talk about travel, tours, destinations, and Jongtour services. 
+2. If the user asks about ANYTHING unrelated (politics, coding, general knowledge, cooking, etc.), politely decline to answer and steer the conversation back to travel (e.g., "ผมเป็นผู้ช่วยจัดทริป ตอบได้เฉพาะเรื่องท่องเที่ยวนะครับ 😅 สนใจไปเที่ยวไหนบอกได้เลยครับ!").
+3. If tours > 0: Excitedly present the found tours. Tell them to check the cards below.
+4. If tours = 0: Apologize politely, suggest they adjust their budget or destination.
 Use emojis naturally. DO NOT use markdown bold/italic formatting to keep it clean for the chat UI.
         `;
         const replyResult = await replyModel.generateContent(replyPrompt);

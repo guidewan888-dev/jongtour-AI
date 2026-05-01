@@ -361,3 +361,7 @@ Require stack:
  ✓ Compiled in 120ms (516 modules)
  ✓ Compiled in 113ms (516 modules)
  ✓ Compiled in 111ms (516 modules)
+ ✓ Compiled in 305ms (564 modules)
+ ✓ Compiled in 96ms (516 modules)
+ ✓ Compiled /api/chat in 114ms (135 modules)
+ POST /api/chat 200 in 719ms
