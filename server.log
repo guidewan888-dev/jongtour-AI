@@ -365,3 +365,4 @@ Require stack:
  ✓ Compiled in 96ms (516 modules)
  ✓ Compiled /api/chat in 114ms (135 modules)
  POST /api/chat 200 in 719ms
+ ✓ Compiled in 254ms (564 modules)

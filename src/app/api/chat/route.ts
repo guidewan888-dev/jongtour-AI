@@ -126,15 +126,26 @@ Use emojis naturally. DO NOT use markdown bold/italic formatting to keep it clea
 
     // Fallback if Gemini is not available or failed
     if (!aiReply) {
-      if (tours.length > 0) {
+      if (searchCriteria.keywords.length === 0 && !searchCriteria.isFire && !searchCriteria.maxPrice) {
+        // If no keywords matched, check if it's a general greeting or travel request
+        const lower = userMessage.toLowerCase();
+        const isGeneralTravel = lower.includes("แนะนำ") || lower.includes("เที่ยว") || lower.includes("ทัวร์") || lower.includes("ไปไหนดี");
+        const isGreeting = lower.includes("สวัสดี") || lower.includes("หวัดดี") || lower === "hi" || lower === "hello";
+        
+        if (isGreeting) {
+          aiReply = "สวัสดีครับ ผม Jongtour AI 😊 คุณอยากไปเที่ยวประเทศไหน ช่วงเดือนอะไร หรือมีงบประมาณในใจเท่าไหร่ พิมพ์บอกผมได้เลยครับ!";
+          tours = []; // Don't show tours for a simple greeting
+        } else if (isGeneralTravel) {
+          aiReply = `พบแล้วครับ! 🎉 ผมคัดแพ็กเกจ ทัวร์น่าสนใจ มาให้ ${tours.length} รายการ ลองเลือกดูรายละเอียดด้านล่างได้เลยครับ 👇`;
+        } else {
+          aiReply = "ผมเป็นผู้ช่วยจัดทริปของ Jongtour ตอบได้เฉพาะเรื่องท่องเที่ยวนะครับ 😅 สนใจไปเที่ยวประเทศไหนบอกผมได้เลยครับ!";
+          tours = []; // Don't show tours for off-topic questions
+        }
+      } else if (tours.length > 0) {
         const destName = searchCriteria.keywords.length > 0 ? searchCriteria.keywords.join(" และ ") : "ทัวร์น่าสนใจ";
         aiReply = `พบแล้วครับ! 🎉 ผมคัดแพ็กเกจ ${destName} ที่ตรงกับความต้องการของคุณมาให้ ${tours.length} รายการ${searchCriteria.maxPrice ? ` ในงบไม่เกิน ${searchCriteria.maxPrice.toLocaleString()} บาท` : ''} ลองเลือกดูรายละเอียดด้านล่างได้เลยครับ 👇`;
       } else {
-        if (searchCriteria.keywords.length > 0) {
-          aiReply = `ต้องขออภัยด้วยครับ ตอนนี้ยังไม่มีแพ็กเกจทัวร์ ${searchCriteria.keywords.join(", ")} ${searchCriteria.maxPrice ? `ในงบ ${searchCriteria.maxPrice.toLocaleString()} บาท ` : ''}ที่เปิดรับจองในช่วงนี้ ลองเปลี่ยนจุดหมายหรือเพิ่มงบดูไหมครับ? 😊`;
-        } else {
-          aiReply = "สวัสดีครับ ผม Jongtour AI 😊 คุณอยากไปเที่ยวประเทศไหน ช่วงเดือนอะไร หรือมีงบประมาณในใจเท่าไหร่ พิมพ์บอกผมได้เลยครับ!";
-        }
+        aiReply = `ต้องขออภัยด้วยครับ ตอนนี้ยังไม่มีแพ็กเกจทัวร์ ${searchCriteria.keywords.join(", ")} ${searchCriteria.maxPrice ? `ในงบ ${searchCriteria.maxPrice.toLocaleString()} บาท ` : ''}ที่เปิดรับจองในช่วงนี้ ลองเปลี่ยนจุดหมายหรือเพิ่มงบดูไหมครับ? 😊`;
       }
     }
 
