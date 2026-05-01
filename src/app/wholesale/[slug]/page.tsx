@@ -68,7 +68,7 @@ const countryMap: Record<string, { th: string, flag: string }> = {
   "MOROCCO": { th: "โมร็อกโก", flag: "🇲🇦" }
 };
 
-export default async function WholesaleLandingPage({ params }: { params: { slug: string } }) {
+export default async function WholesaleLandingPage({ params, searchParams }: { params: { slug: string }, searchParams?: { dest?: string } }) {
   const wholesale = wholesaleConfig[params.slug];
   if (!wholesale) {
     notFound();
@@ -103,7 +103,11 @@ export default async function WholesaleLandingPage({ params }: { params: { slug:
     return acc;
   }, {});
 
-  const destinationKeys = Object.keys(toursByDestination).sort();
+  const activeDest = searchParams?.dest;
+  const allDestinationKeys = Object.keys(toursByDestination).sort();
+  const destinationKeysToRender = activeDest && toursByDestination[activeDest] 
+    ? [activeDest] 
+    : allDestinationKeys;
 
   return (
     <main className="min-h-screen bg-[#f8f9fa] pb-20">
@@ -152,23 +156,34 @@ export default async function WholesaleLandingPage({ params }: { params: { slug:
         ) : (
           <div className="space-y-12">
             {/* Nav Links for Destinations */}
-            {destinationKeys.length > 1 && (
+            {allDestinationKeys.length > 1 && (
               <div className="flex flex-wrap items-center gap-3 bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
                 <span className="text-sm font-bold text-gray-700">เลือกเส้นทาง:</span>
-                {destinationKeys.map(dest => {
+                <Link 
+                  href={`/wholesale/${params.slug}`} 
+                  className={`px-4 py-2 text-sm font-bold rounded-xl border transition-colors ${!activeDest ? 'bg-orange-500 text-white border-orange-500' : 'bg-gray-50 hover:bg-orange-50 text-gray-600 border-gray-200'}`}
+                >
+                  ดูทั้งหมด ({validTours.length})
+                </Link>
+                {allDestinationKeys.map(dest => {
                   const mapped = countryMap[dest.toUpperCase()];
                   const displayName = mapped ? `${mapped.flag} ${mapped.th}` : dest;
+                  const isActive = activeDest === dest;
                   return (
-                    <a key={dest} href={`#${dest}`} className="px-4 py-2 bg-gray-50 hover:bg-orange-50 hover:text-orange-600 text-gray-600 text-sm font-bold rounded-xl border border-gray-200 hover:border-orange-200 transition-colors">
+                    <Link 
+                      key={dest} 
+                      href={`/wholesale/${params.slug}?dest=${encodeURIComponent(dest)}`} 
+                      className={`px-4 py-2 text-sm font-bold rounded-xl border transition-colors ${isActive ? 'bg-orange-500 text-white border-orange-500' : 'bg-gray-50 hover:bg-orange-50 text-gray-600 border-gray-200'}`}
+                    >
                       {displayName} ({toursByDestination[dest].length})
-                    </a>
+                    </Link>
                   );
                 })}
               </div>
             )}
 
             {/* Tours by Destination */}
-            {destinationKeys.map((dest) => {
+            {destinationKeysToRender.map((dest) => {
               const mapped = countryMap[dest.toUpperCase()];
               const displayTitle = mapped ? `ทัวร์${mapped.th} ${mapped.flag}` : `ทัวร์${dest}`;
               
