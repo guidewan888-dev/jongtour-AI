@@ -50,7 +50,7 @@ export default function BookingWidget({ lowestPrice, tourId, departures }: { low
                 onChange={e => setAdults(Number(e.target.value))}
                 className="w-full border border-gray-300 rounded-md py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
               >
-                {[1,2,3,4,5,6,7,8,9,10].map(n => (
+                {Array.from({length: 30}, (_, i) => i + 1).map(n => (
                   <option key={n} value={n}>{n} ท่าน</option>
                 ))}
               </select>
@@ -63,7 +63,7 @@ export default function BookingWidget({ lowestPrice, tourId, departures }: { low
                 onChange={e => setChildren(Number(e.target.value))}
                 className="w-full border border-gray-300 rounded-md py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
               >
-                {[0,1,2,3,4,5].map(n => (
+                {Array.from({length: 21}, (_, i) => i).map(n => (
                   <option key={n} value={n}>{n} ท่าน</option>
                 ))}
               </select>
