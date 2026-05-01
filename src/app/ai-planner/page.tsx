@@ -126,9 +126,9 @@ export default function AIPlannerPage() {
                   <div className="flex gap-4 overflow-x-auto pb-4 w-full max-w-[600px] snap-x">
                     {msg.tours.map(tour => (
                       <Link href={`/tour/${tour.id}`} key={tour.id} className="min-w-[260px] bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow group snap-start block shrink-0">
-                        <div className="relative h-32 overflow-hidden">
-                          <img src={tour.imageUrl || ''} alt={tour.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                          <div className="absolute top-2 left-2 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-md text-[10px] font-bold text-gray-800 flex items-center gap-1">
+                        <div className="relative h-40 bg-gray-50 flex items-center justify-center p-2 overflow-hidden border-b border-gray-100">
+                          <img src={tour.imageUrl || ''} alt={tour.title} className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500 rounded-lg" />
+                          <div className="absolute top-2 left-2 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-md text-[10px] font-bold text-gray-800 flex items-center gap-1 shadow-sm">
                             <Map className="w-3 h-3" /> {tour.durationDays} วัน
                           </div>
                         </div>
