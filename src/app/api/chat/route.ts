@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { createClient as createServerClient } from "@/utils/supabase/server";
+import { cookies } from "next/headers";
 import OpenAI from "openai";
 
 export const dynamic = "force-dynamic";
@@ -14,12 +16,24 @@ export async function POST(request: Request) {
     const { message, chatHistory = [] } = await request.json();
     const userMessage = message.trim();
 
+    // Check if user is logged in for personalization
+    const cookieStore = await cookies();
+    const supabaseUserClient = createServerClient(cookieStore);
+    const { data: { user } } = await supabaseUserClient.auth.getUser();
+    let userName = "คุณลูกค้า";
+    if (user && user.user_metadata?.full_name) {
+      userName = `คุณ ${user.user_metadata.full_name.split(" ")[0]}`;
+    }
+
     // Default criteria
     const searchCriteria = {
       keywords: [] as string[],
       maxPrice: null as number | null,
       isFire: false,
       source: null as string | null,
+      days: null as number | null,
+      airline: null as string | null,
+      month: null as string | null,
     };
 
     let aiFailed = false;
@@ -38,7 +52,10 @@ Return ONLY a JSON object with these exact keys:
 - "keywords": array of strings. Include destination countries, cities, or continents in THAI language (e.g., ["ญี่ปุ่น", "ยุโรป", "หน้าหนาว", "ฮอกไกโด"]). Leave empty if none found. Do NOT include generic words like "ทัวร์" or "ไปเที่ยว".
 - "maxPrice": number or null. Extract any maximum budget mentioned. Convert shorthand like "3 หมื่น" to 30000.
 - "isFire": boolean. true if the user is looking for last-minute deals (e.g., "ไฟไหม้", "โปรไฟไหม้").
-- "wholesale": string or null. Extract wholesale tour company names if mentioned (e.g. "Let's go", "Check in", "Go 365", "Tour Factory"). DO NOT put wholesale names in "keywords".`
+- "wholesale": string or null. Extract wholesale tour company names if mentioned (e.g. "Let's go", "Check in", "Go 365", "Tour Factory"). DO NOT put wholesale names in "keywords".
+- "days": number or null. Extract the EXACT number of days requested (e.g. "3 วัน" -> 3).
+- "airline": string or null. Extract the specific airline requested (e.g. "การบินไทย", "แอร์เอเชีย", "TG", "XJ").
+- "month": string or null. Extract the month requested in English (e.g. "เมษา", "เมษายน", "สงกรานต์" -> "April").`
             },
             ...(chatHistory.slice(-6).map((m: any) => ({ 
               role: m.role === 'ai' ? 'assistant' : 'user', 
@@ -53,6 +70,9 @@ Return ONLY a JSON object with these exact keys:
         if (parsed.keywords && Array.isArray(parsed.keywords)) searchCriteria.keywords = parsed.keywords;
         if (typeof parsed.maxPrice === "number") searchCriteria.maxPrice = parsed.maxPrice;
         if (parsed.isFire === true) searchCriteria.isFire = true;
+        if (typeof parsed.days === "number") searchCriteria.days = parsed.days;
+        if (typeof parsed.airline === "string") searchCriteria.airline = parsed.airline;
+        if (typeof parsed.month === "string") searchCriteria.month = parsed.month;
         
         if (parsed.wholesale) {
           const w = parsed.wholesale.toLowerCase();
@@ -128,16 +148,49 @@ Return ONLY a JSON object with these exact keys:
     if (searchCriteria.source) {
       query = query.eq('source', searchCriteria.source);
     }
+    
+    if (searchCriteria.days) {
+      query = query.eq('days', searchCriteria.days);
+    }
+    
+    if (searchCriteria.airline) {
+      query = query.ilike('airline', `%${searchCriteria.airline}%`);
+    }
 
     // Always fetch some to sort
-    query = query.order('createdAt', { ascending: false }).limit(20);
+    query = query.order('createdAt', { ascending: false }).limit(30);
 
     const { data: rawTours, error } = await query;
     let tours = rawTours || [];
 
-    // Local Max Price Filter
+    // Local Filters
     if (searchCriteria.maxPrice && tours.length > 0) {
       tours = tours.filter(tour => tour.price <= searchCriteria.maxPrice!);
+    }
+
+    if (searchCriteria.month && tours.length > 0) {
+      const targetMonth = searchCriteria.month.toLowerCase();
+      const monthMap: Record<string, string[]> = {
+        "january": ["ม.ค.", "มกรา", "jan"],
+        "february": ["ก.พ.", "กุมภา", "feb"],
+        "march": ["มี.ค.", "มีนา", "mar"],
+        "april": ["เม.ย.", "เมษา", "สงกรานต์", "apr"],
+        "may": ["พ.ค.", "พฤษภา", "may"],
+        "june": ["มิ.ย.", "มิถุนา", "jun"],
+        "july": ["ก.ค.", "กรกฎา", "jul"],
+        "august": ["ส.ค.", "สิงหา", "aug"],
+        "september": ["ก.ย.", "กันยา", "sep"],
+        "october": ["ต.ค.", "ตุลา", "oct"],
+        "november": ["พ.ย.", "พฤศจิกา", "nov"],
+        "december": ["ธ.ค.", "ธันวา", "dec", "ปีใหม่"]
+      };
+      
+      const aliases = monthMap[targetMonth] || [targetMonth];
+      
+      tours = tours.filter(tour => {
+        const textToSearch = (tour.periodText || "") + " " + (tour.departures?.map((d:any)=>d.dateText).join(" ") || "");
+        return aliases.some(alias => textToSearch.toLowerCase().includes(alias));
+      });
     }
 
     // Return max 4 for UI
@@ -156,7 +209,8 @@ Return ONLY a JSON object with these exact keys:
 - ระยะเวลา: ${t.days || "-"} วัน ${t.nights || "-"} คืน
 - ราคาเริ่มต้น: ${t.price} บาท
 - วันเดินทาง: ${deps || t.periodText || "ดูรายละเอียดในเว็บ"}
-- โฮลเซลล์: ${t.source === 'API_ZEGO' ? "Let's Go" : t.source === 'CHECKIN' ? "Check In Tour" : t.source === 'API_GO365' ? "GO 365" : t.source === 'TOUR_FACTORY' ? "Tour Factory" : t.source}`;
+- โฮลเซลล์: ${t.source === 'API_ZEGO' ? "Let's Go" : t.source === 'CHECKIN' ? "Check In Tour" : t.source === 'API_GO365' ? "GO 365" : t.source === 'TOUR_FACTORY' ? "Tour Factory" : t.source}
+- ไฮไลท์โปรแกรม: ${t.highlight ? t.highlight.substring(0, 150) + "..." : "ไม่ระบุ"}`;
         }).join("\n\n") : "ไม่มีทัวร์ที่ตรงสเปก";
         
         const response = await openai.chat.completions.create({
@@ -165,6 +219,7 @@ Return ONLY a JSON object with these exact keys:
             {
               role: "system",
               content: `You are จองทัวร์ AI (Jongtour AI), an incredibly enthusiastic, persuasive, and funny Thai travel agent! Your goal is to make the user excited to book tours. Use humor, excitement, and a bit of friendly Thai slang. Always refer to yourself as "จองทัวร์ AI".
+The user you are talking to is named "${userName}". Greet them by name naturally in the conversation!
 You searched the database based on the latest query and found ${tours.length} tours:
 ${tourTitles}
 
@@ -173,6 +228,8 @@ CRITICAL RULES:
 2. If the user asks about ANYTHING unrelated (politics, coding, general knowledge, etc.), politely decline to answer. HOWEVER, questions about airlines, tour codes, travel dates, and wholesale companies ARE travel-related and you MUST answer them using the provided tour data! Do NOT decline these.
 3. If tours > 0: Excitedly and persuasively present the found tours. Tell them to check the cards below. Highlight the airlines or dates if the user asked. Make it sound like a deal they can't miss!
 4. If tours = 0: Apologize playfully, suggest they adjust their budget or destination.
+5. Suggest exactly 3 short, helpful follow-up questions the user can ask next. Put them at the VERY END of your response in this exact format on a new line:
+__CHIPS__["question 1", "question 2", "question 3"]
 Use emojis naturally. DO NOT use markdown bold/italic formatting to keep it clean for the chat UI.`
             },
             ...(chatHistory.slice(-6).map((m: any) => ({ 
@@ -180,10 +237,41 @@ Use emojis naturally. DO NOT use markdown bold/italic formatting to keep it clea
               content: m.content 
             }))),
             { role: "user", content: userMessage }
-          ]
+          ],
+          stream: true,
+        });
+
+        const encoder = new TextEncoder();
+        
+        const stream = new ReadableStream({
+          async start(controller) {
+            // Send tours data first
+            const dataStr = JSON.stringify({ type: 'tours_data', tours });
+            controller.enqueue(encoder.encode(`__DATA__${dataStr}__DATA__\n`));
+            
+            try {
+              for await (const chunk of response) {
+                const text = chunk.choices[0]?.delta?.content || "";
+                if (text) {
+                  controller.enqueue(encoder.encode(text));
+                }
+              }
+            } catch (e) {
+              console.error("Stream error", e);
+            } finally {
+              controller.close();
+            }
+          }
+        });
+
+        return new Response(stream, {
+          headers: {
+            'Content-Type': 'text/event-stream',
+            'Cache-Control': 'no-cache',
+            'Connection': 'keep-alive',
+          },
         });
         
-        aiReply = response.choices[0].message.content?.trim() || "";
       } catch (e) {
         console.error("OpenAI reply generation failed", e);
       }
@@ -219,13 +307,11 @@ Use emojis naturally. DO NOT use markdown bold/italic formatting to keep it clea
       }
     }
 
-    return NextResponse.json({
-      reply: aiReply,
-      tours: tours
-    });
-
+    // Since we return a stream now, this fallback block will only execute if AI completely failed before streaming
+    return NextResponse.json({ reply: aiReply, tours: tours });
+    
   } catch (error) {
-    console.error("Chat API Error:", error);
-    return NextResponse.json({ reply: "ขออภัยครับ ระบบ AI ขัดข้องชั่วคราว โปรดลองใหม่อีกครั้ง 😅" }, { status: 500 });
+    console.error("AI Chat Error:", error);
+    return NextResponse.json({ reply: "ขออภัย ระบบขัดข้อง 😅", tours: [] }, { status: 500 });
   }
 }

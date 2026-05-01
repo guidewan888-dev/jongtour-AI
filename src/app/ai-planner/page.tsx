@@ -17,6 +17,7 @@ type Message = {
   role: "user" | "ai";
   text: string;
   tours?: Tour[];
+  chips?: string[];
 };
 
 export default function AIPlannerPage() {
@@ -65,15 +66,77 @@ export default function AIPlannerPage() {
         body: JSON.stringify({ message: userMsg, chatHistory })
       });
       
-      const data = await response.json();
+      if (!response.ok) throw new Error("API failed");
       
-      // Add AI Message
+      // If it's returning JSON directly (fallback mode)
+      const contentType = response.headers.get("content-type");
+      if (contentType && contentType.includes("application/json")) {
+        const data = await response.json();
+        setMessages(prev => [...prev, {
+          id: (Date.now() + 1).toString(),
+          role: "ai",
+          text: data.reply,
+          tours: data.tours
+        }]);
+        setIsLoading(false);
+        return;
+      }
+
+      // Streaming Mode
+      const reader = response.body?.getReader();
+      if (!reader) throw new Error("No reader");
+      
+      const decoder = new TextDecoder();
+      let aiText = "";
+      let toursData: any[] = [];
+      let chipsData: string[] = [];
+      let buffer = "";
+      let dataParsed = false;
+      
+      const aiMsgId = (Date.now() + 1).toString();
+      // Add empty AI message first
       setMessages(prev => [...prev, {
-        id: (Date.now() + 1).toString(),
+        id: aiMsgId,
         role: "ai",
-        text: data.reply,
-        tours: data.tours
+        text: "",
+        tours: [],
+        chips: []
       }]);
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        
+        const chunk = decoder.decode(value, { stream: true });
+        buffer += chunk;
+        
+        if (!dataParsed) {
+          const match = buffer.match(/__DATA__(.*?)__DATA__\n/s);
+          if (match) {
+            try { toursData = JSON.parse(match[1]).tours || []; } catch(e) {}
+            aiText = buffer.slice(match[0].length);
+            dataParsed = true;
+          }
+        } else {
+          aiText += chunk;
+        }
+
+        if (dataParsed) {
+          // Check for chips
+          const chipsMatch = aiText.match(/__CHIPS__\[(.*?)\]/s);
+          let displayText = aiText;
+          if (chipsMatch) {
+            try {
+              chipsData = JSON.parse(`[${chipsMatch[1]}]`);
+              displayText = aiText.replace(chipsMatch[0], "").trim();
+            } catch(e) {}
+          }
+          
+          setMessages(prev => prev.map(m => 
+            m.id === aiMsgId ? { ...m, text: displayText, tours: toursData, chips: chipsData } : m
+          ));
+        }
+      }
       
     } catch (error) {
       setMessages(prev => [...prev, {
@@ -146,6 +209,21 @@ export default function AIPlannerPage() {
                           </div>
                         </div>
                       </Link>
+                    ))}
+                  </div>
+                )}
+
+                {/* Quick Reply Chips */}
+                {msg.chips && msg.chips.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {msg.chips.map((chip, idx) => (
+                      <button 
+                        key={idx}
+                        onClick={() => handleSuggestion(chip)}
+                        className="px-4 py-2 bg-white border border-orange-200 hover:border-orange-500 text-orange-600 hover:bg-orange-50 rounded-full text-sm font-medium transition-colors shadow-sm"
+                      >
+                        {chip}
+                      </button>
                     ))}
                   </div>
                 )}
