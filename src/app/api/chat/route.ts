@@ -102,6 +102,12 @@ Rules for extraction:
         aiFailed = true;
       }
     } 
+
+    // Fallback regex trigger for FIT if OpenAI misses it
+    const fitKeywords = ["จัดทริป", "จัดทัวร์", "ไปกันเอง", "ส่วนตัว", "รับจัด", "customize", "แพลน"];
+    if (fitKeywords.some(kw => userMessage.includes(kw))) {
+      isFitRequest = true;
+    }
     
     if (!isOpenAIAvailable || !openai || aiFailed) {
       // Fallback Keyword Logic if no OpenAI Key or if API throws error
@@ -262,7 +268,11 @@ Rules for extraction:
           model: "gpt-4o-mini",
           response_format: { type: "json_object" },
           messages: [
-            { role: "system", content: "You are an expert travel agent. The user wants a custom private tour (F.I.T). Generate a detailed day-by-day itinerary based on their request. Return ONLY JSON matching this format: { \"title\": \"Trip Name\", \"estimatedPrice\": \"Price (e.g. 45000 THB)\", \"days\": [{ \"day\": 1, \"title\": \"Day Title\", \"detail\": \"Day details\" }] }" },
+            { role: "system", content: "You are an expert travel agent. The user wants a custom private tour (F.I.T). Generate a detailed day-by-day itinerary based on their request. Use the conversation history if they omitted the destination. Return ONLY JSON matching this format: { \"title\": \"Trip Name\", \"estimatedPrice\": \"Price (e.g. 45000 THB)\", \"days\": [{ \"day\": 1, \"title\": \"Day Title\", \"detail\": \"Day details\" }] }" },
+            ...(chatHistory.slice(-6).map((m: any) => ({ 
+              role: m.role === 'ai' ? 'assistant' : 'user', 
+              content: m.content 
+            }))),
             { role: "user", content: userMessage }
           ]
         });
