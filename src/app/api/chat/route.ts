@@ -85,7 +85,15 @@ DO NOT wrap the response in markdown blocks like \`\`\`json. Return JUST the raw
     }
 
     if (searchCriteria.keywords.length > 0) {
-      const orConditions = searchCriteria.keywords.map(kw => `destination.ilike.*${kw}*,title.ilike.*${kw}*`);
+      const strictCountries = ["ยุโรป", "europe", "จีน", "china", "ญี่ปุ่น", "japan", "เกาหลี", "korea", "ไต้หวัน", "taiwan", "ฮ่องกง", "hong kong"];
+      
+      const orConditions = searchCriteria.keywords.map(kw => {
+        if (strictCountries.includes(kw.toLowerCase())) {
+          return `destination.ilike.*${kw}*`;
+        }
+        return `destination.ilike.*${kw}*,title.ilike.*${kw}*`;
+      });
+      
       query = query.or(orConditions.join(','));
     }
 
