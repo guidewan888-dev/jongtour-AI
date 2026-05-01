@@ -12,7 +12,14 @@ const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PU
 
 const supabase = createClient(supabaseUrl, supabaseKey);
 
-export async function POST() {
+export async function GET(request: Request) {
+  // Check authorization for Vercel Cron
+  const authHeader = request.headers.get('authorization');
+  // Allow manual trigger if CRON_SECRET is not set in environment (e.g., local dev), otherwise enforce it.
+  if (process.env.CRON_SECRET && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+    return new Response('Unauthorized', { status: 401 });
+  }
+
   try {
     // 1. Fetch data from Zego API
     const response = await fetch(ZEGO_API_URL, {
