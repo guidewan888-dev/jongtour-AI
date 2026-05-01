@@ -107,3 +107,26 @@ digest: "1983735211"
  ✓ Compiled in 47ms (319 modules)
  ✓ Compiled in 184ms (333 modules)
  ✓ Compiled in 137ms (333 modules)
+ ✓ Compiled in 150ms (333 modules)
+ ✓ Compiled in 186ms (319 modules)
+ ✓ Compiled in 98ms (333 modules)
+ ✓ Compiled in 125ms (333 modules)
+ ○ Compiling /api/sync/checkingroup ...
+ ✓ Compiled /api/sync/checkingroup in 551ms (94 modules)
+Check In Group Sync Error: {
+  code: '22P02',
+  details: null,
+  hint: null,
+  message: 'invalid input value for enum "TourSource": "CHECKIN"'
+}
+ GET /api/sync/checkingroup 500 in 2233ms
+ ✓ Compiled /api/sync/tourfactory in 41ms (96 modules)
+Tour Factory Sync Error: {
+  code: '22P02',
+  details: null,
+  hint: null,
+  message: 'invalid input value for enum "TourSource": "TOUR_FACTORY"'
+}
+ GET /api/sync/tourfactory 500 in 1292ms
+ GET /api/sync/checkingroup 200 in 2560ms
+ GET /api/sync/tourfactory 200 in 1591ms

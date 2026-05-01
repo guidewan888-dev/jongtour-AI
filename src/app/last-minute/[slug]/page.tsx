@@ -83,11 +83,8 @@ export default async function WholesaleLastMinutePage({ params, searchParams }: 
     .ilike('title', '%ไฟไหม้%')
     .order('createdAt', { ascending: false });
 
-  if (wholesale.source.startsWith('API_')) {
-    query = query.eq('source', wholesale.source);
-  } else {
-    query = query.eq('providerId', wholesale.source);
-  }
+  // Now that all sources are officially mapped to TourSource enum in Prisma/Supabase, we can filter directly by source
+  query = query.eq('source', wholesale.source);
 
   const { data: tours, error } = await query;
   

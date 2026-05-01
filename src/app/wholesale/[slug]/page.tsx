@@ -80,12 +80,8 @@ export default async function WholesaleLandingPage({ params, searchParams }: { p
 
   let query = supabase.from('Tour').select('*, departures:TourDeparture(*)').order('createdAt', { ascending: false });
 
-  if (wholesale.source.startsWith('API_')) {
-    query = query.eq('source', wholesale.source);
-  } else {
-    // For manual/partner tours not officially mapped to API source enum yet, try using providerId or filter manually
-    query = query.eq('providerId', wholesale.source);
-  }
+  // Now that all sources are officially mapped to TourSource enum in Prisma/Supabase, we can filter directly by source
+  query = query.eq('source', wholesale.source);
 
   const { data: tours, error } = await query;
   
