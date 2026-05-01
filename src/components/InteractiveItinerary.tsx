@@ -445,45 +445,7 @@ export default function InteractiveItinerary({ itinerary }: { itinerary: any }) 
         </div>
       )}
 
-      {/* Configuration Options */}
-      <div className="px-6 py-5 bg-orange-50/50 border-t border-gray-200 grid grid-cols-1 md:grid-cols-2 gap-6 no-print">
-        <div>
-           <label className="block text-sm font-bold text-gray-800 mb-2">✈️ เลือกสายการบิน (เพื่อโชว์โลโก้บนแผน)</label>
-           <select 
-             id="airline-select"
-             value={localAirline}
-             onChange={e => setLocalAirline(e.target.value)}
-             className="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-orange-500 bg-white"
-           >
-              <option value="">-- ไม่ระบุสายการบิน --</option>
-              <option value="TG">Thai Airways (TG)</option>
-              <option value="XJ">Thai AirAsia X (XJ)</option>
-              <option value="VZ">Thai Vietjet (VZ)</option>
-              <option value="EK">Emirates (EK)</option>
-              <option value="QR">Qatar Airways (QR)</option>
-              <option value="SQ">Singapore Airlines (SQ)</option>
-              <option value="CX">Cathay Pacific (CX)</option>
-              <option value="BR">EVA Air (BR)</option>
-              <option value="CI">China Airlines (CI)</option>
-              <option value="JX">STARLUX Airlines (JX)</option>
-              <option value="PG">Bangkok Airways (PG)</option>
-           </select>
-        </div>
-        <div>
-           <label className="block text-sm font-bold text-gray-800 mb-2">🏢 ต้องการให้โฮลเซลล์ไหนเสนอราคา?</label>
-           <select 
-             value={preferredWholesale}
-             onChange={e => setPreferredWholesale(e.target.value)}
-             className="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-orange-500 bg-white"
-           >
-              <option value="ไม่ระบุ (หาที่ราคาดีที่สุดให้)">ไม่ระบุ (หาที่ราคาดีที่สุดให้)</option>
-              <option value="Let's Go Group">Let's Go Group</option>
-              <option value="GO 365 Travel">GO 365 Travel</option>
-              <option value="Check In Group">Check In Group</option>
-              <option value="Tour Factory">Tour Factory</option>
-           </select>
-        </div>
-      </div>
+
 
       {/* Footer / Export */}
       <div className="p-4 bg-gray-100 border-t border-gray-200 no-print flex justify-between items-center px-6">
@@ -535,12 +497,48 @@ export default function InteractiveItinerary({ itinerary }: { itinerary: any }) 
                     <input type="tel" required value={leadForm.phone} onChange={e => setLeadForm({...leadForm, phone: e.target.value})} className="w-full border border-gray-300 rounded-lg px-4 py-2 outline-none focus:ring-2 focus:ring-orange-500" />
                   </div>
                   <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">สายการบินที่ต้องการ (อัปเดตโลโก้บนแผน)</label>
+                    <select 
+                      id="airline-select"
+                      value={localAirline}
+                      onChange={e => setLocalAirline(e.target.value)}
+                      className="w-full border border-gray-300 rounded-lg px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-orange-500 bg-white"
+                    >
+                       <option value="">-- ไม่ระบุสายการบิน --</option>
+                       <option value="TG">Thai Airways (TG)</option>
+                       <option value="XJ">Thai AirAsia X (XJ)</option>
+                       <option value="VZ">Thai Vietjet (VZ)</option>
+                       <option value="EK">Emirates (EK)</option>
+                       <option value="QR">Qatar Airways (QR)</option>
+                       <option value="SQ">Singapore Airlines (SQ)</option>
+                       <option value="CX">Cathay Pacific (CX)</option>
+                       <option value="BR">EVA Air (BR)</option>
+                       <option value="CI">China Airlines (CI)</option>
+                       <option value="JX">STARLUX Airlines (JX)</option>
+                       <option value="PG">Bangkok Airways (PG)</option>
+                    </select>
+                  </div>
+                  <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">อีเมล</label>
                     <input type="email" value={leadForm.email} onChange={e => setLeadForm({...leadForm, email: e.target.value})} className="w-full border border-gray-300 rounded-lg px-4 py-2 outline-none focus:ring-2 focus:ring-orange-500" />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">จำนวนผู้เดินทาง (ท่าน) *</label>
                     <input type="number" min="1" required value={leadForm.pax} onChange={e => setLeadForm({...leadForm, pax: e.target.value})} className="w-full border border-gray-300 rounded-lg px-4 py-2 outline-none focus:ring-2 focus:ring-orange-500" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">โฮลเซลล์ที่ต้องการให้เสนอราคา</label>
+                    <select 
+                      value={preferredWholesale}
+                      onChange={e => setPreferredWholesale(e.target.value)}
+                      className="w-full border border-gray-300 rounded-lg px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-orange-500 bg-white"
+                    >
+                       <option value="ไม่ระบุ (หาที่ราคาดีที่สุดให้)">ไม่ระบุ (หาที่ราคาดีที่สุดให้)</option>
+                       <option value="Let's Go Group">Let's Go Group</option>
+                       <option value="GO 365 Travel">GO 365 Travel</option>
+                       <option value="Check In Group">Check In Group</option>
+                       <option value="Tour Factory">Tour Factory</option>
+                    </select>
                   </div>
                   
                   <button type="submit" disabled={isSubmittingLead} className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 rounded-lg mt-4 transition-colors disabled:bg-gray-400">
