@@ -31,10 +31,26 @@ export default function CheckoutClient({ tour, departures }: { tour: any, depart
   const selectedDep = departures.find(d => d.id === selectedDepId);
   const pricePerPax = selectedDep ? selectedDep.price : tour.price;
   
-  // MOCK PRICES (To be replaced with real DB data later)
-  const childPrice = pricePerPax * 0.95; // 5% discount mock
-  const singleRoomPrice = 4000;
-  const depositPrice = 7000;
+  // Real Prices from Database (Zego API)
+  const childPrice = selectedDep?.childPrice || pricePerPax;
+  const singleRoomPrice = selectedDep?.singleRoomPrice || 0;
+  const depositPrice = selectedDep?.depositPrice || 0;
+  
+  // Check days before departure
+  const today = new Date();
+  today.setHours(0, 0, 0, 0); 
+  const startDate = selectedDep ? new Date(selectedDep.startDate) : new Date();
+  startDate.setHours(0, 0, 0, 0);
+  const diffDays = Math.ceil((startDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+  
+  const canPayDeposit = diffDays >= 30 && depositPrice > 0;
+  const effectivePaymentType = canPayDeposit ? paymentType : 'full';
+
+  // Calculate payment due date
+  const dueDate = new Date(startDate);
+  dueDate.setDate(dueDate.getDate() - 30);
+  const formattedDueDate = dueDate.toLocaleDateString('th-TH', {day: '2-digit', month: 'short', year: 'numeric'});
+
   const disneylandPrice = 2500;
   const insurancePrice = 500;
 
@@ -51,7 +67,7 @@ export default function CheckoutClient({ tour, departures }: { tour: any, depart
   const totalPrice = basePrice + singleSupplement + extrasTotal;
   const totalDeposit = (totalPax * depositPrice) + extrasTotal; // deposit + extras paid upfront usually
 
-  const finalAmountToPay = paymentType === 'deposit' ? totalDeposit : totalPrice;
+  const finalAmountToPay = effectivePaymentType === 'deposit' ? totalDeposit : totalPrice;
 
   const formatDate = (d: string) => new Date(d).toLocaleDateString('th-TH', {day: '2-digit', month: 'short', year: 'numeric'});
 
@@ -226,20 +242,25 @@ export default function CheckoutClient({ tour, departures }: { tour: any, depart
           <div className="bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-gray-100">
             <h2 className="text-2xl font-bold text-gray-800 mb-6">รูปแบบการชำระเงิน</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <label className={`flex flex-col p-5 border rounded-xl cursor-pointer transition-all ${paymentType === 'full' ? 'border-orange-500 bg-orange-50 ring-1 ring-orange-500' : 'border-gray-200 hover:border-orange-300'}`}>
+              <label className={`flex flex-col p-5 border rounded-xl cursor-pointer transition-all ${effectivePaymentType === 'full' ? 'border-orange-500 bg-orange-50 ring-1 ring-orange-500' : 'border-gray-200 hover:border-orange-300'}`}>
                 <div className="flex items-center gap-3 mb-2">
-                  <input type="radio" name="paymentType" value="full" checked={paymentType === 'full'} onChange={() => setPaymentType('full')} className="w-5 h-5 text-orange-600 focus:ring-orange-500" />
+                  <input type="radio" name="paymentType" value="full" checked={effectivePaymentType === 'full'} onChange={() => setPaymentType('full')} className="w-5 h-5 text-orange-600 focus:ring-orange-500" />
                   <span className="font-bold text-gray-800 text-lg">ชำระเต็มจำนวน</span>
                 </div>
                 <span className="text-sm text-gray-500 ml-8">ชำระยอดทั้งหมดรวดเดียว</span>
               </label>
 
-              <label className={`flex flex-col p-5 border rounded-xl cursor-pointer transition-all ${paymentType === 'deposit' ? 'border-orange-500 bg-orange-50 ring-1 ring-orange-500' : 'border-gray-200 hover:border-orange-300'}`}>
+              <label className={`flex flex-col p-5 border rounded-xl transition-all ${!canPayDeposit ? 'bg-gray-50 border-gray-200 opacity-60 cursor-not-allowed' : (effectivePaymentType === 'deposit' ? 'border-orange-500 bg-orange-50 ring-1 ring-orange-500 cursor-pointer' : 'border-gray-200 hover:border-orange-300 cursor-pointer')}`}>
                 <div className="flex items-center gap-3 mb-2">
-                  <input type="radio" name="paymentType" value="deposit" checked={paymentType === 'deposit'} onChange={() => setPaymentType('deposit')} className="w-5 h-5 text-orange-600 focus:ring-orange-500" />
+                  <input type="radio" name="paymentType" value="deposit" disabled={!canPayDeposit} checked={effectivePaymentType === 'deposit'} onChange={() => setPaymentType('deposit')} className="w-5 h-5 text-orange-600 focus:ring-orange-500 disabled:opacity-50" />
                   <span className="font-bold text-gray-800 text-lg">แบ่งชำระ (มัดจำ)</span>
                 </div>
-                <span className="text-sm text-gray-500 ml-8">ชำระมัดจำท่านละ {depositPrice.toLocaleString()} ฿ ส่วนที่เหลือชำระก่อนเดินทาง 15 วัน</span>
+                <span className="text-sm text-gray-500 ml-8">
+                  {canPayDeposit 
+                    ? `ชำระมัดจำท่านละ ${depositPrice.toLocaleString()} ฿ ส่วนที่เหลือชำระภายในวันที่ ${formattedDueDate}`
+                    : (depositPrice === 0 ? 'โปรแกรมนี้ไม่มีให้เลือกชำระแบบมัดจำได้' : 'ไม่สามารถชำระแบบมัดจำได้ เนื่องจากวันเดินทางเหลือน้อยกว่า 30 วัน')
+                  }
+                </span>
               </label>
             </div>
           </div>
@@ -319,7 +340,7 @@ export default function CheckoutClient({ tour, departures }: { tour: any, depart
                 </div>
               )}
               
-              {paymentType === 'deposit' && (
+              {effectivePaymentType === 'deposit' && (
                 <div className="pt-3 mt-3 border-t border-gray-200 font-medium">
                   <div className="flex justify-between text-gray-800">
                     <span>ยอดรวมทั้งสิ้น (Full Price)</span>
@@ -328,6 +349,10 @@ export default function CheckoutClient({ tour, departures }: { tour: any, depart
                   <div className="flex justify-between text-orange-600 mt-1">
                     <span>ยอดมัดจำที่ต้องชำระวันนี้</span>
                     <span>{totalDeposit.toLocaleString()} ฿</span>
+                  </div>
+                  <div className="text-xs text-gray-500 mt-2 bg-gray-50 p-2 rounded-lg text-center font-normal">
+                    ยอดค้างชำระ {(totalPrice - totalDeposit).toLocaleString()} ฿ 
+                    <br/>ต้องชำระภายในวันที่ <span className="font-bold text-gray-700">{formattedDueDate}</span>
                   </div>
                 </div>
               )}

@@ -83,6 +83,9 @@ export async function POST() {
             startDate: new Date(zPeriod.PeriodStartDate).toISOString(),
             endDate: new Date(zPeriod.PeriodEndDate).toISOString(),
             price: zPeriod.Price || 0,
+            childPrice: zPeriod.Price_Child || null,
+            singleRoomPrice: zPeriod.Price_Single_Bed || null,
+            depositPrice: zPeriod.Deposit || null,
             totalSeats: zPeriod.GroupSize || 0,
             availableSeats: zPeriod.Seat || 0,
           });

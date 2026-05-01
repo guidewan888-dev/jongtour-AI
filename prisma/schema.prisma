@@ -62,6 +62,9 @@ model TourDeparture {
   startDate      DateTime
   endDate        DateTime
   price          Float
+  childPrice     Float?
+  singleRoomPrice Float?
+  depositPrice   Float?
   availableSeats Int
   totalSeats     Int
   
