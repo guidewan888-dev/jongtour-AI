@@ -155,14 +155,19 @@ Use emojis naturally. DO NOT use markdown bold/italic formatting to keep it clea
       if (searchCriteria.keywords.length === 0 && !searchCriteria.isFire && !searchCriteria.maxPrice) {
         // If no keywords matched, check if it's a general greeting or travel request
         const lower = userMessage.toLowerCase();
-        const isGeneralTravel = lower.includes("แนะนำ") || lower.includes("เที่ยว") || lower.includes("ทัวร์") || lower.includes("ไปไหนดี");
+        const genericQueries = ["แนะนำทัวร์", "ไปเที่ยวไหนดี", "มีทัวร์อะไรบ้าง", "ทัวร์น่าสนใจ", "อยากไปเที่ยว", "มีโปรอะไรบ้าง", "มีโปรไหม"];
+        const isGenericRequest = genericQueries.some(q => lower.includes(q)) && lower.length < 30;
         const isGreeting = lower.includes("สวัสดี") || lower.includes("หวัดดี") || lower === "hi" || lower === "hello";
         
         if (isGreeting) {
           aiReply = "สวัสดีครับ ผม จองทัวร์ AI 😊 คุณอยากไปเที่ยวประเทศไหน ช่วงเดือนอะไร หรือมีงบประมาณในใจเท่าไหร่ พิมพ์บอกผมได้เลยครับ!";
           tours = []; // Don't show tours for a simple greeting
-        } else if (isGeneralTravel) {
-          aiReply = `พบแล้วครับ! 🎉 ผมคัดแพ็กเกจ ทัวร์น่าสนใจ มาให้ ${tours.length} รายการ ลองเลือกดูรายละเอียดด้านล่างได้เลยครับ 👇`;
+        } else if (isGenericRequest) {
+          aiReply = `พบแล้วครับ! 🎉 ผมคัดแพ็กเกจ ทัวร์ยอดฮิต มาให้ ${tours.length} รายการ ลองเลือกดูรายละเอียดด้านล่างได้เลยครับ 👇`;
+        } else if (lower.includes("ทัวร์") || lower.includes("เที่ยว") || lower.includes("ไป")) {
+          // They asked for a specific tour (e.g. "ทัวร์ดูบอล") but we didn't recognize the destination
+          aiReply = "ขออภัยด้วยครับ ตอนนี้ผมสามารถค้นหาทัวร์ได้จาก 'ชื่อประเทศ' หรือ 'เมือง' เป็นหลักครับ 😅 รบกวนคุณลูกค้าระบุชื่อประเทศที่สนใจ เช่น 'ทัวร์ยุโรป' หรือ 'ไปญี่ปุ่น' ให้ผมหน่อยนะครับ 🙏";
+          tours = []; // Don't show random tours
         } else {
           aiReply = "ผมเป็นผู้ช่วยจัดทริปของ จองทัวร์ ตอบได้เฉพาะเรื่องท่องเที่ยวนะครับ 😅 สนใจไปเที่ยวประเทศไหนบอกผมได้เลยครับ!";
           tours = []; // Don't show tours for off-topic questions
