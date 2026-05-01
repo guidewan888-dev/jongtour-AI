@@ -1,6 +1,8 @@
 import Link from "next/link";
-import { MapPin, Calendar, Clock, FileText, ChevronRight, Info, MessageCircle } from "lucide-react";
+import { MapPin, Calendar, Clock, FileText, ChevronRight, Info } from "lucide-react";
 import { notFound } from "next/navigation";
+import DeparturesTable from "./DeparturesTable";
+import BookingWidget from "./BookingWidget";
 
 export const dynamic = "force-dynamic";
 
@@ -118,137 +120,13 @@ async function TourDetailsContent({ params }: { params: { id: string } }) {
             </p>
           </div>
 
-          {/* Departures Table (เรียบๆ ทางการ) */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden mb-6" id="departures-table">
-            <div className="bg-gray-100 p-4 border-b border-gray-200">
-              <h2 className="text-lg font-bold text-gray-800 flex items-center gap-2">
-                <Calendar className="w-5 h-5 text-orange-600" /> ตารางวันเดินทางและราคา
-              </h2>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm text-center">
-                <thead className="bg-gray-50 text-gray-700 border-b border-gray-200">
-                  <tr>
-                    <th className="px-4 py-3 font-bold whitespace-nowrap border-r border-gray-200">วันเดินทาง</th>
-                    <th className="px-4 py-3 font-bold whitespace-nowrap border-r border-gray-200">ราคาผู้ใหญ่</th>
-                    <th className="px-4 py-3 font-bold whitespace-nowrap border-r border-gray-200">ที่นั่งทั้งหมด</th>
-                    <th className="px-4 py-3 font-bold whitespace-nowrap border-r border-gray-200">ที่นั่งว่าง</th>
-                    <th className="px-4 py-3 font-bold whitespace-nowrap border-r border-gray-200">สถานะ</th>
-                    <th className="px-4 py-3 font-bold whitespace-nowrap">ทำรายการ</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {tour.departures && tour.departures.length > 0 ? (
-                    tour.departures.map((dep: any) => {
-                      const startDateStr = new Date(dep.startDate).toLocaleDateString('th-TH', {day: '2-digit', month: 'short', year: '2-digit'});
-                      const endDateStr = new Date(dep.endDate).toLocaleDateString('th-TH', {day: '2-digit', month: 'short', year: '2-digit'});
-                      
-                      let statusEl;
-                      if (dep.availableSeats <= 0) {
-                        statusEl = <span className="text-red-600 bg-red-50 px-2 py-1 rounded font-bold">เต็ม</span>;
-                      } else if (dep.availableSeats <= 5) {
-                        statusEl = <span className="text-orange-600 bg-orange-50 px-2 py-1 rounded font-bold">ใกล้เต็ม</span>;
-                      } else {
-                        statusEl = <span className="text-emerald-600 bg-emerald-50 px-2 py-1 rounded font-bold">ว่าง</span>;
-                      }
-
-                      return (
-                        <tr key={dep.id} className="hover:bg-gray-50 transition-colors">
-                          <td className="px-4 py-4 whitespace-nowrap font-medium text-gray-800">
-                            {startDateStr} - {endDateStr}
-                          </td>
-                          <td className="px-4 py-4 font-bold text-gray-900 text-lg">฿{dep.price.toLocaleString()}</td>
-                          <td className="px-4 py-4 text-gray-600">{dep.totalSeats || '-'}</td>
-                          <td className="px-4 py-4 text-gray-600">{dep.availableSeats}</td>
-                          <td className="px-4 py-4">{statusEl}</td>
-                          <td className="px-4 py-4">
-                            {dep.availableSeats > 0 ? (
-                              <Link href={`/checkout/${tour.id}?departureId=${dep.id}`} className="inline-block bg-orange-600 hover:bg-orange-700 text-white font-bold py-1.5 px-4 rounded transition-colors text-xs">
-                                จองเลย
-                              </Link>
-                            ) : (
-                              <button className="bg-gray-300 text-gray-500 font-bold py-1.5 px-4 rounded text-xs cursor-not-allowed" disabled>
-                                เต็ม
-                              </button>
-                            )}
-                          </td>
-                        </tr>
-                      );
-                    })
-                  ) : (
-                    <tr>
-                      <td colSpan={6} className="px-4 py-8 text-center text-gray-500">
-                        ยังไม่มีรอบเดินทางในขณะนี้
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
+          {/* Departures Table (Client Component) */}
+          <DeparturesTable departures={tour.departures || []} tourId={tour.id} />
         </div>
 
         {/* Right Column: Formal Booking Panel (ไม่ทับแบนเนอร์) */}
         <aside className="w-full lg:w-[350px] shrink-0">
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 sticky top-24">
-            
-            <div className="bg-gray-800 text-white p-4 rounded-t-lg">
-              <h3 className="font-bold text-lg text-center">ทำรายการจอง / สอบถาม</h3>
-            </div>
-            
-            <div className="p-6">
-              <div className="mb-6 pb-6 border-b border-gray-100 text-center">
-                <span className="text-gray-500 text-sm block mb-1">ราคาเริ่มต้นต่อท่าน</span>
-                <span className="text-3xl font-black text-orange-600">
-                  ฿ {lowestPrice.toLocaleString()}
-                </span>
-              </div>
-
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-1">เลือกรอบเดินทาง</label>
-                  <select className="w-full border border-gray-300 rounded-md py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent">
-                    <option value="">-- กรุณาเลือกรอบเดินทาง --</option>
-                    {tour.departures && tour.departures.map((dep: any) => (
-                      <option key={dep.id} value={dep.id} disabled={dep.availableSeats <= 0}>
-                        {new Date(dep.startDate).toLocaleDateString('th-TH', {day: '2-digit', month: 'short'})} - {new Date(dep.endDate).toLocaleDateString('th-TH', {day: '2-digit', month: 'short'})} 
-                        (฿{dep.price.toLocaleString()}) {dep.availableSeats <= 0 ? '[เต็ม]' : ''}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-1">จำนวนผู้เดินทาง</label>
-                  <select className="w-full border border-gray-300 rounded-md py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent">
-                    {[1,2,3,4,5,6,7,8,9,10].map(n => (
-                      <option key={n} value={n}>{n} ท่าน</option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="pt-2">
-                  <Link href={`/checkout/${tour.id}`} className="block w-full text-center bg-orange-600 text-white py-3 rounded-md font-bold hover:bg-orange-700 transition-colors">
-                    ไปหน้าจองทัวร์
-                  </Link>
-                </div>
-                
-                <div className="relative flex py-2 items-center">
-                  <div className="flex-grow border-t border-gray-200"></div>
-                  <span className="flex-shrink-0 mx-4 text-gray-400 text-xs">หรือ</span>
-                  <div className="flex-grow border-t border-gray-200"></div>
-                </div>
-
-                <div>
-                  <a href="https://line.me/ti/p/~@jongtour" target="_blank" rel="noreferrer" className="flex items-center justify-center gap-2 w-full bg-[#00B900] text-white py-3 rounded-md font-bold hover:bg-[#009900] transition-colors">
-                    <MessageCircle className="w-5 h-5" />
-                    สอบถามทาง LINE
-                  </a>
-                </div>
-              </div>
-            </div>
-            
-          </div>
+          <BookingWidget lowestPrice={lowestPrice} tourId={tour.id} departures={tour.departures || []} />
         </aside>
 
       </div>
