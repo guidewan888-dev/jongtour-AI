@@ -54,6 +54,8 @@ enum TourSource {
   MANUAL
   API_ZEGO
   API_GO365
+  CHECKIN
+  TOUR_FACTORY
 }
 
 model TourDeparture {
