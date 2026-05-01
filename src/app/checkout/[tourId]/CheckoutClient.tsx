@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { ShieldCheck, MapPin, Calendar, Users, Info, Plus } from "lucide-react";
+import { useState, useRef } from "react";
+import { ShieldCheck, MapPin, Calendar, Users, Info, Plus, ScanLine, Loader2 } from "lucide-react";
 import { submitCheckout } from "@/app/actions/checkout";
 import { useSearchParams, useRouter } from "next/navigation";
 
@@ -28,6 +28,43 @@ export default function CheckoutClient({ tour, departures }: { tour: any, depart
   const [isAddingExtra, setIsAddingExtra] = useState(false);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const [isOcrLoading, setIsOcrLoading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsOcrLoading(true);
+    try {
+      const reader = new FileReader();
+      reader.onloadend = async () => {
+        const base64 = reader.result as string;
+        const res = await fetch('/api/ocr/passport', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ imageBase64: base64 })
+        });
+        const data = await res.json();
+        if (data.success && data.data) {
+          const form = document.getElementById('checkout-form') as HTMLFormElement;
+          if (form) {
+            if (data.data.firstName) form.firstName.value = data.data.firstName;
+            if (data.data.lastName) form.lastName.value = data.data.lastName;
+            // Optionally set other fields if added later
+          }
+        } else {
+          alert("ไม่สามารถอ่านข้อมูลพาสปอร์ตได้ กรุณากรอกด้วยตนเอง");
+        }
+        setIsOcrLoading(false);
+      };
+      reader.readAsDataURL(file);
+    } catch (err) {
+      console.error(err);
+      setIsOcrLoading(false);
+    }
+  };
 
   const selectedDep = departures.find(d => d.id === selectedDepId);
   const pricePerPax = selectedDep ? selectedDep.price : tour.price;
@@ -73,7 +110,7 @@ export default function CheckoutClient({ tour, departures }: { tour: any, depart
   const formatDate = (d: string) => new Date(d).toLocaleDateString('th-TH', {day: '2-digit', month: 'short', year: 'numeric'});
 
   return (
-    <form action={async (formData) => {
+    <form id="checkout-form" action={async (formData) => {
       setIsSubmitting(true);
       try {
         const result = await submitCheckout(formData);
@@ -279,7 +316,25 @@ export default function CheckoutClient({ tour, departures }: { tour: any, depart
           </div>
 
           <div className="bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-gray-100">
-            <h2 className="text-2xl font-bold text-gray-800 mb-6">ข้อมูลผู้ติดต่อหลัก (Lead Traveler)</h2>
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+              <h2 className="text-2xl font-bold text-gray-800">ข้อมูลผู้ติดต่อหลัก (Lead Traveler)</h2>
+              <button 
+                type="button" 
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isOcrLoading}
+                className="flex items-center gap-2 bg-blue-50 text-blue-600 px-4 py-2 rounded-xl font-bold hover:bg-blue-100 transition-colors border border-blue-200 text-sm"
+              >
+                {isOcrLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ScanLine className="w-4 h-4" />}
+                {isOcrLoading ? "กำลังสแกนพาสปอร์ต..." : "อัปโหลดพาสปอร์ต (กรอกอัตโนมัติ)"}
+              </button>
+              <input 
+                type="file" 
+                ref={fileInputRef} 
+                className="hidden" 
+                accept="image/*" 
+                onChange={handleFileUpload} 
+              />
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">ชื่อจริง (ภาษาอังกฤษตามพาสปอร์ต) *</label>
