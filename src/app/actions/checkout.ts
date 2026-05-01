@@ -69,7 +69,8 @@ export async function submitCheckout(formData: FormData) {
       children,
       singleRooms,
       paymentType,
-      depositAmount: paymentType === 'deposit' ? depositAmount : null
+      depositAmount: paymentType === 'deposit' ? depositAmount : null,
+      updatedAt: new Date().toISOString()
     })
     .select()
     .single();
