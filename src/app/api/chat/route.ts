@@ -21,7 +21,7 @@ export async function POST(request: Request) {
 
     if (isGeminiAvailable && genAI) {
       try {
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
         const prompt = `
 You are an intelligent travel agent parsing user travel queries.
 Extract the travel intent from this user message: "${userMessage}"
@@ -101,7 +101,7 @@ DO NOT wrap the response in markdown blocks like \`\`\`json. Return JUST the raw
 
     if (isGeminiAvailable && genAI) {
       try {
-        const replyModel = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+        const replyModel = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
         const tourTitles = tours.length > 0 ? tours.map(t => `- ${t.title} (ราคาเริ่มต้น ${t.price} บาท)`).join("\n") : "ไม่มีทัวร์ที่ตรงสเปก";
         
         const replyPrompt = `
