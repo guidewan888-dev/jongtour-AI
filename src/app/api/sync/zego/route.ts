@@ -65,6 +65,9 @@ export async function POST() {
         airlineCode: airlineCode,
         providerId: zTour.ProductID.toString(),
         source: "API_ZEGO",
+        pdfUrl: zTour.FilePDF || null,
+        itinerary: zTour.Itinerary ? JSON.parse(JSON.stringify(zTour.Itinerary)) : null,
+        flights: zTour.Flights ? JSON.parse(JSON.stringify(zTour.Flights)) : null,
         updatedAt: new Date().toISOString()
       });
 
