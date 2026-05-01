@@ -3,10 +3,11 @@
 import { useState } from "react";
 import { ShieldCheck, MapPin, Calendar, Users, Info, Plus } from "lucide-react";
 import { submitCheckout } from "@/app/actions/checkout";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 
 export default function CheckoutClient({ tour, departures }: { tour: any, departures: any[] }) {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const initAdults = parseInt(searchParams.get('adults') || '2', 10);
   const initChildren = parseInt(searchParams.get('children') || '0', 10);
   const initDepId = searchParams.get('departureId') || (departures.length > 0 ? departures[0].id : "");
@@ -75,7 +76,13 @@ export default function CheckoutClient({ tour, departures }: { tour: any, depart
     <form action={async (formData) => {
       setIsSubmitting(true);
       try {
-        await submitCheckout(formData);
+        const result = await submitCheckout(formData);
+        if (result?.success && result.bookingId) {
+          router.push(`/payment/${result.bookingId}`);
+        } else {
+          setIsSubmitting(false);
+          alert(result?.error || 'Error submitting booking');
+        }
       } catch (err) {
         setIsSubmitting(false);
         alert(err instanceof Error ? err.message : 'Error submitting booking');

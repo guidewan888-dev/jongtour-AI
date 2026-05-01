@@ -10,7 +10,7 @@ export async function submitCheckout(formData: FormData) {
   
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
-    redirect("/login");
+    return { success: false, error: "กรุณาเข้าสู่ระบบก่อนทำการจอง" };
   }
 
   const { data: dbUser } = await supabase
@@ -20,7 +20,7 @@ export async function submitCheckout(formData: FormData) {
     .single();
 
   if (!dbUser) {
-    throw new Error("User not found in DB");
+    return { success: false, error: "ไม่พบข้อมูลผู้ใช้ในระบบ" };
   }
 
   const tourId = formData.get("tourId") as string;
@@ -38,7 +38,7 @@ export async function submitCheckout(formData: FormData) {
   const phone = formData.get("phone") as string;
   
   if (!departureId) {
-    throw new Error("Please select a departure date");
+    return { success: false, error: "กรุณาเลือกรอบเดินทาง" };
   }
 
   // Fetch departure to check if it exists
@@ -49,7 +49,7 @@ export async function submitCheckout(formData: FormData) {
     .single();
 
   if (!departure) {
-    throw new Error("Departure not found");
+    return { success: false, error: "ไม่พบข้อมูลรอบเดินทางที่เลือก" };
   }
 
   // Create booking
@@ -73,7 +73,8 @@ export async function submitCheckout(formData: FormData) {
     .single();
 
   if (bookingError) {
-    throw new Error("Failed to create booking: " + bookingError.message);
+    console.error("Booking Creation Error:", bookingError);
+    return { success: false, error: "เกิดข้อผิดพลาดในการบันทึกข้อมูลการจอง: " + bookingError.message };
   }
 
   // Create travelers (lead traveler)
@@ -81,8 +82,7 @@ export async function submitCheckout(formData: FormData) {
     .from('Traveler')
     .insert({
       bookingId: booking.id,
-      name: `${firstName} ${lastName}`,
-      isLead: true
+      name: `${firstName} ${lastName}`
     });
 
   // Add dummy travelers for remaining pax
@@ -91,10 +91,9 @@ export async function submitCheckout(formData: FormData) {
       .from('Traveler')
       .insert({
         bookingId: booking.id,
-        name: `Traveler ${i + 1}`,
-        isLead: false
+        name: `Traveler ${i + 1}`
       });
   }
 
-  redirect(`/payment/${booking.id}`);
+  return { success: true, bookingId: booking.id };
 }
