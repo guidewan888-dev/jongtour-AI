@@ -144,7 +144,8 @@ ${tourTitles ? tourTitles : "ตอนนี้ไม่มีแพ็กเก
         "title": "เดินทางถึง / วันแรก", 
         "detail": "รายละเอียดสั้นๆ",
         "meals": { "breakfast": boolean, "lunch": boolean, "dinner": boolean },
-        "hotel": "ชื่อโรงแรม หรือ -" 
+        "hotel": "ชื่อโรงแรม หรือ -",
+        "imagePrompt": "A short ENGLISH phrase describing the main tourist attraction of this day (e.g. 'A beautiful photography of Mount Fuji in spring')"
       }
     ]
   }

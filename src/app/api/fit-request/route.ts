@@ -137,7 +137,8 @@ ${inclusionDetails}
         "lunch": boolean,
         "dinner": boolean
       },
-      "hotel": "string (ชื่อโรงแรม หรือ ระบุว่า '-' หากไม่มีการพัก)"
+      "hotel": "string (ชื่อโรงแรม หรือ ระบุว่า '-' หากไม่มีการพัก)",
+      "imagePrompt": "string (A short ENGLISH phrase describing the main tourist attraction of this day, optimized for AI image generation. e.g. 'A beautiful photography of Mount Fuji in spring'. If flight day, use 'A commercial airplane flying in the sky')"
     }
   ],
   "inclusions": ["string"],

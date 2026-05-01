@@ -65,13 +65,25 @@ export default function InteractiveItinerary({ itinerary }: { itinerary: any }) 
                 </td>
                 
                 {/* Tour Program */}
-                <td className="py-4 px-4 align-top">
+                <td className="py-4 px-4 align-top max-w-[350px]">
                   <h3 className="font-bold text-gray-800 text-sm mb-1 outline-none focus:bg-orange-50 focus:ring-2 focus:ring-orange-200 rounded px-1 -mx-1" contentEditable suppressContentEditableWarning>
                     {d.title}
                   </h3>
-                  <p className="text-gray-600 text-[13px] leading-relaxed outline-none focus:bg-orange-50 focus:ring-2 focus:ring-orange-200 rounded px-1 -mx-1 whitespace-pre-line" contentEditable suppressContentEditableWarning>
+                  <p className="text-gray-600 text-[13px] leading-relaxed outline-none focus:bg-orange-50 focus:ring-2 focus:ring-orange-200 rounded px-1 -mx-1 whitespace-pre-line mb-3" contentEditable suppressContentEditableWarning>
                     {d.detail}
                   </p>
+                  
+                  {/* Dynamic Destination Image */}
+                  {d.imagePrompt && (
+                    <div className="w-full mt-2 rounded-lg overflow-hidden border border-gray-100 shadow-sm relative bg-gray-100 min-h-[140px]">
+                      <img 
+                        src={`https://image.pollinations.ai/prompt/${encodeURIComponent(d.imagePrompt + " high quality travel photography bright sunny day")}?width=600&height=300&nologo=true`} 
+                        alt={d.title}
+                        className="w-full h-[140px] object-cover hover:scale-105 transition-transform duration-700"
+                        loading="lazy"
+                      />
+                    </div>
+                  )}
                 </td>
 
                 {/* Meals */}
