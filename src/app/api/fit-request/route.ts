@@ -24,7 +24,8 @@ export async function POST(req: NextRequest) {
       includeMeals,
       includeTransport,
       includeGuide,
-      includeInsurance
+      includeInsurance,
+      hotelStars
     } = body;
 
     // Calculate duration
@@ -53,6 +54,7 @@ export async function POST(req: NextRequest) {
           includeTransport: includeTransport ?? true,
           includeGuide: includeGuide ?? true,
           includeInsurance: includeInsurance ?? true,
+          hotelStars: Number(hotelStars) || 3,
           status: "PENDING"
         }
       });
@@ -73,7 +75,7 @@ export async function POST(req: NextRequest) {
       inclusionDetails = `
       กรุณารวมบริการเหล่านี้ในแพ็กเกจ:
       1. ตั๋วเครื่องบิน (Recommended Flights)
-      2. โรงแรมระดับ 3-4 ดาว
+      2. โรงแรมระดับ ${hotelStars || 3} ดาว
       3. อาหารครบทุกมื้อ
       4. รถบัส/รถตู้พร้อมคนขับ
       5. หัวหน้าทัวร์จากไทย
@@ -82,7 +84,7 @@ export async function POST(req: NextRequest) {
     } else {
       const selected = [];
       if (includeFlights) selected.push("ตั๋วเครื่องบิน");
-      if (includeHotels) selected.push("โรงแรมระดับ 3-4 ดาว");
+      if (includeHotels) selected.push(`โรงแรมระดับ ${hotelStars || 3} ดาว`);
       if (includeMeals) selected.push("อาหารครบทุกมื้อ");
       if (includeTransport) selected.push("รถบัส/รถตู้พร้อมคนขับ");
       if (includeGuide) selected.push("หัวหน้าทัวร์จากไทย");
@@ -127,6 +129,7 @@ ${inclusionDetails}
 {
   "title": "string",
   "estimatedPrice": "string",
+  "hotelStars": ${hotelStars || 3},
   "days": [
     {
       "day": number,
@@ -137,7 +140,7 @@ ${inclusionDetails}
         "lunch": boolean,
         "dinner": boolean
       },
-      "hotel": "string (ชื่อโรงแรม หรือ ระบุว่า '-' หากไม่มีการพัก)",
+      "hotel": "string (ชื่อโรงแรม ${hotelStars || 3} ดาว หรือ ระบุว่า '-' หากไม่มีการพัก)",
       "imagePrompt": "string (A short ENGLISH phrase describing the main tourist attraction of this day, optimized for AI image generation. e.g. 'A beautiful photography of Mount Fuji in spring'. If flight day, use 'A commercial airplane flying in the sky')"
     }
   ],

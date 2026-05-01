@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { CheckCircle2, XCircle, Check, X } from "lucide-react";
+import { CheckCircle2, XCircle, Check, X, Star } from "lucide-react";
 
 export default function InteractiveItinerary({ itinerary }: { itinerary: any }) {
   const [days, setDays] = useState(itinerary?.days || []);
@@ -106,6 +106,13 @@ export default function InteractiveItinerary({ itinerary }: { itinerary: any }) 
 
                 {/* Hotel */}
                 <td className="py-4 px-4 text-center align-middle border-l border-gray-100">
+                  {d.hotel && d.hotel !== "-" && (
+                    <div className="flex justify-center gap-0.5 mb-1.5">
+                      {[...Array(itinerary.hotelStars || 3)].map((_, i) => (
+                        <Star key={i} className="w-3 h-3 fill-orange-400 text-orange-400" />
+                      ))}
+                    </div>
+                  )}
                   <p className="text-[13px] font-bold text-orange-600 outline-none focus:bg-orange-50 focus:ring-2 focus:ring-orange-200 rounded px-1" contentEditable suppressContentEditableWarning>
                     {d.hotel || "-"}
                   </p>

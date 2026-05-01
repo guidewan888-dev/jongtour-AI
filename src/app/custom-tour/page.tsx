@@ -26,6 +26,7 @@ export default function CustomTourPage() {
     includeTransport: true,
     includeGuide: true,
     includeInsurance: true,
+    hotelStars: 3,
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -173,10 +174,40 @@ export default function CustomTourPage() {
 
             <hr className="border-gray-100" />
 
+            {/* Hotel Preferences */}
+            <div className="space-y-4">
+              <h3 className="font-bold text-gray-800 flex items-center gap-2"><Hotel className="w-5 h-5 text-orange-500"/> 3. ระดับโรงแรมที่ต้องการ</h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <label className={`flex items-center gap-3 p-4 border rounded-xl cursor-pointer transition-colors ${formData.hotelStars === 3 ? 'border-orange-500 bg-orange-50' : 'border-gray-200 hover:border-orange-300'}`}>
+                  <input type="radio" name="hotelStars" value={3} checked={Number(formData.hotelStars) === 3} onChange={handleChange} className="w-5 h-5 accent-orange-500 rounded-full" />
+                  <div>
+                    <span className="block font-bold text-gray-800">3 ดาว</span>
+                    <span className="text-xs text-gray-500">มาตรฐาน สะอาด คุ้มค่า</span>
+                  </div>
+                </label>
+                <label className={`flex items-center gap-3 p-4 border rounded-xl cursor-pointer transition-colors ${formData.hotelStars === 4 ? 'border-orange-500 bg-orange-50' : 'border-gray-200 hover:border-orange-300'}`}>
+                  <input type="radio" name="hotelStars" value={4} checked={Number(formData.hotelStars) === 4} onChange={handleChange} className="w-5 h-5 accent-orange-500 rounded-full" />
+                  <div>
+                    <span className="block font-bold text-gray-800">4 ดาว</span>
+                    <span className="text-xs text-gray-500">หรูหรา สะดวกสบาย</span>
+                  </div>
+                </label>
+                <label className={`flex items-center gap-3 p-4 border rounded-xl cursor-pointer transition-colors ${formData.hotelStars === 5 ? 'border-orange-500 bg-orange-50' : 'border-gray-200 hover:border-orange-300'}`}>
+                  <input type="radio" name="hotelStars" value={5} checked={Number(formData.hotelStars) === 5} onChange={handleChange} className="w-5 h-5 accent-orange-500 rounded-full" />
+                  <div>
+                    <span className="block font-bold text-gray-800">5 ดาว</span>
+                    <span className="text-xs text-gray-500">ระดับพรีเมียม บริการยอดเยี่ยม</span>
+                  </div>
+                </label>
+              </div>
+            </div>
+
+            <hr className="border-gray-100" />
+
             {/* A La Carte Options */}
             {serviceType === "A_LA_CARTE" ? (
               <div className="space-y-4">
-                <h3 className="font-bold text-gray-800">3. เลือกบริการที่ต้องการรวมในแพ็กเกจ</h3>
+                <h3 className="font-bold text-gray-800">4. เลือกบริการที่ต้องการรวมในแพ็กเกจ</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <label className="flex items-center gap-3 p-4 border border-gray-200 rounded-xl cursor-pointer hover:border-orange-500 transition-colors">
                     <input type="checkbox" name="includeFlights" checked={formData.includeFlights} onChange={handleChange} className="w-5 h-5 accent-orange-500 rounded" />
@@ -206,7 +237,7 @@ export default function CustomTourPage() {
               </div>
             ) : (
               <div className="space-y-4">
-                <h3 className="font-bold text-gray-800">3. บริการที่รวมในแพ็กเกจ (จัดเต็มครบวงจร)</h3>
+                <h3 className="font-bold text-gray-800">4. บริการที่รวมในแพ็กเกจ (จัดเต็มครบวงจร)</h3>
                 <div className="bg-orange-50 border border-orange-100 rounded-xl p-5 text-sm text-gray-700 space-y-2">
                   <p className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-orange-500" /> ตั๋วเครื่องบินไป-กลับ ชั้นประหยัด</p>
                   <p className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-orange-500" /> โรงแรมที่พักระดับ 3-4 ดาว</p>
@@ -222,7 +253,7 @@ export default function CustomTourPage() {
 
             {/* Contact Details */}
             <div className="space-y-4">
-              <h3 className="font-bold text-gray-800">4. ข้อมูลติดต่อผู้จอง</h3>
+              <h3 className="font-bold text-gray-800">5. ข้อมูลติดต่อผู้จอง</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">ชื่อ-นามสกุล</label>
