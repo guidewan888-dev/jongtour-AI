@@ -20,3 +20,22 @@ export async function GET() {
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }
+
+export async function PATCH(request: Request) {
+  try {
+    const { sessionId, status } = await request.json();
+    if (!sessionId || !status) {
+      return NextResponse.json({ error: 'Missing parameters' }, { status: 400 });
+    }
+
+    const updatedSession = await prisma.lineChatSession.update({
+      where: { id: sessionId },
+      data: { status }
+    });
+
+    return NextResponse.json({ success: true, session: updatedSession }, { status: 200 });
+  } catch (error) {
+    console.error('Error updating LINE CRM session:', error);
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+  }
+}

@@ -86,8 +86,8 @@ export async function processAiQuery(userMessage: string) {
   return tours;
 }
 
-export async function generateAiReply(userMessage: string, tours: any[], chatHistory: any[] = []) {
-  if (!openai) return "ขออภัยค่ะ ขณะนี้ระบบ AI ไม่พร้อมใช้งาน กรุณาติดต่อแอดมินนะคะ";
+export async function generateAiReply(userMessage: string, tours: any[], chatHistory: any[] = []): Promise<{text: string, needsHandoff: boolean}> {
+  if (!openai) return { text: "ขออภัยค่ะ ขณะนี้ระบบ AI ไม่พร้อมใช้งาน กรุณาติดต่อแอดมินนะคะ", needsHandoff: false };
 
   const tourTitles = tours.length > 0 ? tours.map(t => {
     return `- ชื่อทัวร์: ${t.title} (ราคาเริ่มต้น ${t.price.toLocaleString()} บาท) 
@@ -112,6 +112,11 @@ ${tourTitles ? tourTitles : "ตอนนี้ไม่มีแพ็กเก
 4. ไม่แต่งเรื่องเองเด็ดขาด ถ้าไม่รู้ให้แนะนำให้แอดไลน์ @Jongtour
 5. [สำคัญมาก] หากวิเคราะห์เจตนา (Intent) แล้วพบว่า "ลูกค้าต้องการจองทัวร์" (เช่น "ตกลงจองอันนี้", "เอาแพ็กเกจนี้", "ไปวันไหนได้บ้าง") ให้คุณสอบถามรายละเอียดที่จำเป็น เช่น ชื่อ จำนวนคน และวันเดินทางที่ต้องการ 
 6. [สำคัญมาก] เมื่อได้รายละเอียดครบถ้วนแล้ว ให้คุณแนบลิงก์จองทัวร์ให้ลูกค้า โดยใช้รูปแบบ URL นี้นะคะ: https://jongtour.com/tours/[รหัสทัวร์ (id)]
+7. [สำคัญที่สุด] คุณต้องตอบกลับเป็นรูปแบบ JSON เท่านั้น โดยมีโครงสร้างดังนี้:
+{
+  "text": "ข้อความตอบกลับของคุณ",
+  "needsHandoff": boolean // จะเป็น true เมื่อลูกค้ามีอารมณ์โกรธ ไม่พอใจ หรือเจาะจงขอคุยกับแอดมินคนจริง นอกนั้นเป็น false
+}
 `;
 
   try {
@@ -123,13 +128,18 @@ ${tourTitles ? tourTitles : "ตอนนี้ไม่มีแพ็กเก
         { role: "user", content: userMessage }
       ],
       temperature: 0.7,
-      max_tokens: 500,
+      max_tokens: 600,
+      response_format: { type: "json_object" }
     });
 
-    return response.choices[0].message.content || "ขออภัยค่ะ เกิดข้อผิดพลาดในการประมวลผล";
+    const parsedContent = JSON.parse(response.choices[0].message.content || "{}");
+    return {
+      text: parsedContent.text || "ขออภัยค่ะ เกิดข้อผิดพลาดในการประมวลผล",
+      needsHandoff: parsedContent.needsHandoff === true
+    };
   } catch (error) {
     console.error("OpenAI Error:", error);
-    return "ขออภัยค่ะ ขณะนี้ระบบ AI ไม่พร้อมใช้งาน กรุณาติดต่อแอดมินทาง @Jongtour นะคะ";
+    return { text: "ขออภัยค่ะ ขณะนี้ระบบ AI ไม่พร้อมใช้งาน กรุณาติดต่อแอดมินทาง @Jongtour นะคะ", needsHandoff: false };
   }
 }
 

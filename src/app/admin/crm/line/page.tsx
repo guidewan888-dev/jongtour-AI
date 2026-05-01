@@ -10,18 +10,41 @@ export default function LineCrmPage() {
   const [loading, setLoading] = useState(true);
   const [selectedSession, setSelectedSession] = useState<any | null>(null);
 
-  useEffect(() => {
+  const fetchSessions = () => {
     fetch('/api/admin/line-crm')
       .then(res => res.json())
       .then(data => {
         setSessions(data.sessions || []);
+        if (selectedSession) {
+          const updated = data.sessions.find((s: any) => s.id === selectedSession.id);
+          if (updated) setSelectedSession(updated);
+        }
         setLoading(false);
       })
       .catch(err => {
         console.error(err);
         setLoading(false);
       });
+  };
+
+  useEffect(() => {
+    fetchSessions();
   }, []);
+
+  const handleResolve = async (sessionId: string) => {
+    try {
+      const res = await fetch('/api/admin/line-crm', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sessionId, status: 'ACTIVE' })
+      });
+      if (res.ok) {
+        fetchSessions();
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
@@ -65,8 +88,8 @@ export default function LineCrmPage() {
                   )}
                 </div>
                 <div className="mt-2 flex items-center gap-2">
-                  <span className={`px-2 py-0.5 rounded text-xs font-medium ${session.status === 'ACTIVE' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}`}>
-                    {session.status}
+                  <span className={`px-2 py-0.5 rounded text-xs font-medium ${session.status === 'ACTIVE' ? 'bg-green-100 text-green-700' : session.status === 'ESCALATED' ? 'bg-red-100 text-red-700 animate-pulse' : 'bg-gray-100 text-gray-700'}`}>
+                    {session.status === 'ESCALATED' ? '🚨 แอดมินตอบด่วน' : session.status}
                   </span>
                   <span className="text-xs text-gray-500">{session.messages?.length || 0} ข้อความ</span>
                 </div>
@@ -84,6 +107,14 @@ export default function LineCrmPage() {
                   <h2 className="font-bold text-gray-800">แชทของ User: {selectedSession.lineUserId}</h2>
                   <p className="text-xs text-gray-500">อัปเดตล่าสุด: {new Date(selectedSession.updatedAt).toLocaleString('th-TH')}</p>
                 </div>
+                {selectedSession.status === 'ESCALATED' && (
+                  <button 
+                    onClick={() => handleResolve(selectedSession.id)}
+                    className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium shadow-sm"
+                  >
+                    ✅ ให้ AI กลับไปตอบ (Resolve)
+                  </button>
+                )}
               </div>
               <div className="flex-1 overflow-y-auto p-6 space-y-4">
                 {selectedSession.messages.map((msg: any) => (

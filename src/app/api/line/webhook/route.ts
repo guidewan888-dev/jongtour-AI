@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import * as line from '@line/bot-sdk';
 import { processAiQuery, generateAiReply, summarizeChatSession } from '@/services/aiPlanner';
 import { transcribeAudio, analyzeImage } from '@/services/aiMediaProcessor';
+import { buildTourCarousel } from '@/services/lineFlexBuilder';
 import { prisma } from '@/lib/prisma';
 
 // Configure LINE Client
@@ -89,6 +90,9 @@ export async function POST(request: Request) {
                 data: { lineUserId },
                 include: { messages: true }
               });
+            } else if (session.status === 'ESCALATED') {
+              // If escalated to human, AI should not reply automatically
+              return null;
             } else {
               chatHistory = session.messages.map(m => ({ role: m.role, content: m.content }));
             }
@@ -103,27 +107,41 @@ export async function POST(request: Request) {
           const tours = await processAiQuery(userMessage);
 
           // 4. Generate a conversational reply using GPT-4o and Company Knowledge Base
-          const replyText = await generateAiReply(userMessage, tours, chatHistory);
+          const aiReply = await generateAiReply(userMessage, tours, chatHistory);
+          const replyText = aiReply.text;
+          const needsHandoff = aiReply.needsHandoff;
 
-          // Save assistant reply to history
+          // Save assistant reply to history and check escalation
           if (lineUserId) {
             const session = await prisma.lineChatSession.findUnique({ where: { lineUserId } });
             if (session) {
               await prisma.lineChatMessage.create({
                 data: { sessionId: session.id, role: 'assistant', content: replyText }
               });
+              
+              if (needsHandoff) {
+                await prisma.lineChatSession.update({
+                  where: { id: session.id },
+                  data: { status: 'ESCALATED' }
+                });
+              }
             }
           }
 
-          // 5. Send reply back to LINE
-          const message: any = {
-            type: 'text',
-            text: replyText
-          };
+          // 5. Build Reply Payload
+          const messages: line.messagingApi.Message[] = [
+            { type: 'text', text: replyText }
+          ];
 
+          // If AI Planner found tours, we append the Flex Message Carousel!
+          if (tours.length > 0) {
+            messages.push(buildTourCarousel(tours) as line.messagingApi.FlexMessage);
+          }
+
+          // Reply via LINE API
           const result = await client.replyMessage({
             replyToken: replyToken,
-            messages: [message]
+            messages: messages
           });
 
           // Generate Summary occasionally (every 4 messages) to keep CRM updated
