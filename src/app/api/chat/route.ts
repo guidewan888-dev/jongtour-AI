@@ -11,7 +11,7 @@ export async function POST(request: Request) {
   const openai = isOpenAIAvailable ? new OpenAI({ apiKey: openaiApiKey }) : null;
 
   try {
-    const { message } = await request.json();
+    const { message, chatHistory = [] } = await request.json();
     const userMessage = message.trim();
 
     // Default criteria
@@ -32,12 +32,16 @@ export async function POST(request: Request) {
             {
               role: "system",
               content: `You are an intelligent travel agent parsing user travel queries.
-Extract the travel intent from the user message.
+Extract the travel intent from the latest user message, taking into account the conversation history.
 Return ONLY a JSON object with these exact keys:
 - "keywords": array of strings. Include destination countries, cities, or continents in THAI language (e.g., ["ญี่ปุ่น", "ยุโรป", "หน้าหนาว", "ฮอกไกโด"]). Leave empty if none found. Do NOT include generic words like "ทัวร์" or "ไปเที่ยว".
 - "maxPrice": number or null. Extract any maximum budget mentioned. Convert shorthand like "3 หมื่น" to 30000.
 - "isFire": boolean. true if the user is looking for last-minute deals (e.g., "ไฟไหม้", "โปรไฟไหม้").`
             },
+            ...(chatHistory.slice(-6).map((m: any) => ({ 
+              role: m.role === 'ai' ? 'assistant' : 'user', 
+              content: m.content 
+            }))),
             { role: "user", content: userMessage }
           ]
         });
@@ -138,7 +142,7 @@ Return ONLY a JSON object with these exact keys:
             {
               role: "system",
               content: `You are จองทัวร์ AI (Jongtour AI), a friendly, enthusiastic, and professional Thai travel agent. Always refer to yourself as "จองทัวร์ AI".
-You searched the database and found ${tours.length} tours:
+You searched the database based on the latest query and found ${tours.length} tours:
 ${tourTitles}
 
 CRITICAL RULES:
@@ -148,6 +152,10 @@ CRITICAL RULES:
 4. If tours = 0: Apologize politely, suggest they adjust their budget or destination.
 Use emojis naturally. DO NOT use markdown bold/italic formatting to keep it clean for the chat UI.`
             },
+            ...(chatHistory.slice(-6).map((m: any) => ({ 
+              role: m.role === 'ai' ? 'assistant' : 'user', 
+              content: m.content 
+            }))),
             { role: "user", content: userMessage }
           ]
         });

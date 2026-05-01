@@ -52,11 +52,17 @@ export default function AIPlannerPage() {
     setIsLoading(true);
 
     try {
+      // Map messages to a simpler format for the backend
+      const chatHistory = messages.map(m => ({
+        role: m.role,
+        content: m.text
+      }));
+
       // Call API
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: userMsg })
+        body: JSON.stringify({ message: userMsg, chatHistory })
       });
       
       const data = await response.json();
