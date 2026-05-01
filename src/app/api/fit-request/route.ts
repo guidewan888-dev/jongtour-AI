@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 import OpenAI from "openai";
+import { getEstimatedFlightPrice } from "@/services/flightPricing";
 
 const prisma = new PrismaClient();
 export const maxDuration = 60;
@@ -97,6 +98,12 @@ export async function POST(req: NextRequest) {
       `;
     }
 
+    // Fetch Flight Baseline Price from Cache Service
+    let flightData = { price: 25000, source: 'DEFAULT' };
+    if (serviceType === "FULL_SERVICE" || includeFlights) {
+      flightData = await getEstimatedFlightPrice(country, start, end);
+    }
+
     const systemPrompt = `คุณคือผู้เชี่ยวชาญด้านการจัดทริปทัวร์ส่วนตัว (F.I.T. Tour Expert)
 หน้าที่ของคุณคือออกแบบโปรแกรมการเดินทาง (Itinerary) ตามข้อมูลที่ลูกค้าให้มา
 
@@ -111,7 +118,8 @@ ${inclusionDetails}
 
 กฎการสร้าง JSON:
 1. "title": ตั้งชื่อทริปให้น่าสนใจ (ภาษาไทย)
-2. "estimatedPrice": ให้ประเมินราคารวมทั้งหมดตามบริการที่รวมไว้ (เป็นเงินบาท เช่น "45,000 THB/ท่าน") **สำคัญมาก: ทัวร์ส่วนตัว (Private Tour) มีต้นทุนการจัดการที่สูงกว่าปกติ ให้คุณคำนวณราคาต้นทุนประเมินของคุณ แล้วคูณด้วย 1.7 (บวกเพิ่ม 70%) เสมอ เพื่อให้สะท้อนราคาขายจริง**
+2. "estimatedPrice": ให้ประเมินราคารวมทั้งหมดตามบริการที่รวมไว้ (เป็นเงินบาท เช่น "45,000 THB/ท่าน") พร้อมวงเล็บต่อท้ายว่า "(ราคาโดยประมาณจากระบบอ้างอิง)"
+**สำคัญมาก: ทัวร์ส่วนตัว (Private Tour) มีต้นทุนการจัดการที่สูงกว่าปกติ ให้คุณคำนวณราคาต้นทุนประเมินของคุณ (อ้างอิงต้นทุนตั๋วเครื่องบินไป-กลับ ประมาณ ${flightData.price.toLocaleString()} THB/ท่าน) แล้วคูณด้วย 1.7 (บวกเพิ่ม 70%) เสมอ เพื่อให้สะท้อนราคาขายจริง**
 3. "days": สร้างแผนการเดินทางแบบรายวันให้ครบ ${durationDays} วัน 
 4. "inclusions": สรุปรายการที่รวมในราคา (ภาษาไทย) แบบสั้นๆ เช่น ["ตั๋วเครื่องบินไป-กลับ", "โรงแรม 3 ดาว", ...]
 5. "exclusions": คุณต้องใส่ข้อความฮาร์ดโค้ดเหล่านี้ลงไปเป๊ะๆ:

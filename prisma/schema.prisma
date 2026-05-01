@@ -198,3 +198,16 @@ model FitRequest {
   createdAt       DateTime @default(now())
 }
 
+model FlightPriceCache {
+  id              Int      @id @default(autoincrement())
+  originIata      String   // e.g., "BKK"
+  destinationIata String   // e.g., "NRT"
+  departureDate   DateTime?
+  returnDate      DateTime?
+  priceAmount     Float
+  currency        String   @default("THB")
+  provider        String   // e.g., "AMADEUS_MOCK"
+  fetchedAt       DateTime @default(now())
+  
+  @@index([originIata, destinationIata])
+}
