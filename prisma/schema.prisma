@@ -171,3 +171,29 @@ model LineChatMessage {
 
   session    LineChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
 }
+
+model FitRequest {
+  id              String   @id @default(cuid())
+  serviceType     String   // "FULL_SERVICE" or "A_LA_CARTE"
+  name            String
+  email           String?
+  phone           String?
+  pax             Int
+  startDate       DateTime
+  endDate         DateTime
+  durationDays    Int
+  country         String
+  cities          String
+  
+  // A La Carte Options
+  includeFlights  Boolean  @default(true)
+  includeHotels   Boolean  @default(true)
+  includeMeals    Boolean  @default(true)
+  includeTransport Boolean @default(true)
+  includeGuide    Boolean  @default(true)
+  includeInsurance Boolean @default(true)
+  
+  status          String   @default("PENDING")
+  createdAt       DateTime @default(now())
+}
+

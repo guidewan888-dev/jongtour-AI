@@ -63,10 +63,18 @@ export async function processAiQuery(userMessage: string) {
     query = query.in('id', matchedTourIds);
   }
 
-  query = query.order('createdAt', { ascending: false }).limit(30);
+  // Fetch a larger pool to shuffle
+  query = query.order('createdAt', { ascending: false }).limit(60);
 
   const { data: rawTours } = await query;
   let tours = rawTours || [];
+
+  if (isSemanticSearch && matchedTourIds.length > 0) {
+    tours.sort((a, b) => matchedTourIds.indexOf(a.id) - matchedTourIds.indexOf(b.id));
+  } else {
+    // Randomly shuffle to give visibility to older wholesale tours (like Let's Go)
+    tours = tours.sort(() => 0.5 - Math.random());
+  }
 
   if (isSemanticSearch && matchedTourIds.length > 0) {
     tours.sort((a, b) => matchedTourIds.indexOf(a.id) - matchedTourIds.indexOf(b.id));
@@ -122,7 +130,7 @@ ${tourTitles ? tourTitles : "ตอนนี้ไม่มีแพ็กเก
 4. ไม่แต่งเรื่องเองเด็ดขาด ถ้าไม่รู้ให้แนะนำให้แอดไลน์ @Jongtour
 5. [สำคัญมาก] หากวิเคราะห์เจตนา (Intent) แล้วพบว่า "ลูกค้าต้องการจองทัวร์" (เช่น "ตกลงจองอันนี้", "เอาแพ็กเกจนี้", "ไปวันไหนได้บ้าง") ให้คุณสอบถามรายละเอียดที่จำเป็น เช่น ชื่อ จำนวนคน และวันเดินทางที่ต้องการ 
 6. [สำคัญมาก] เมื่อได้รายละเอียดครบถ้วนแล้ว ให้คุณแนบลิงก์จองทัวร์ให้ลูกค้า โดยใช้รูปแบบ URL นี้นะคะ: https://jongtour.com/tours/[รหัสทัวร์ (id)]
-7. [สำคัญมาก] หากลูกค้าต้องการจัดกรุ๊ปส่วนตัว (Private Tour, กรุ๊ปเหมา, F.I.T.) ให้คุณออกแบบแผนการเดินทางแบบคร่าวๆ รายวัน พร้อมประเมินราคาส่งกลับไป โดยส่งในรูปแบบ customItinerary ใน JSON
+7. [สำคัญมาก] หากลูกค้าต้องการจัดกรุ๊ปส่วนตัว (Private Tour, กรุ๊ปเหมา, F.I.T.) ให้คุณออกแบบแผนการเดินทางแบบคร่าวๆ รายวัน พร้อมประเมินราคาส่งกลับไป โดยส่งในรูปแบบ customItinerary ใน JSON โดยจะต้องเขียนเป็นภาษาไทยทั้งหมด (You MUST write the entire itinerary in THAI language)
 8. [สำคัญที่สุด] คุณต้องตอบกลับเป็นรูปแบบ JSON เท่านั้น โดยมีโครงสร้างดังนี้:
 {
   "text": "ข้อความตอบกลับของคุณ",
