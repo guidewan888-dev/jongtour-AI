@@ -59,11 +59,13 @@ DO NOT wrap the response in markdown blocks like \`\`\`json. Return JUST the raw
       const commonDestinations = [
         "ญี่ปุ่น", "japan", "เกาหลี", "korea", "ยุโรป", "europe", "ไต้หวัน", "taiwan", 
         "ฮ่องกง", "hong kong", "จีน", "china", "สิงคโปร์", "singapore", "เวียดนาม", "vietnam", 
-        "อังกฤษ", "england", "uk", "จอร์เจีย", "georgia", "สวิส", "switzerland", "ฝรั่งเศส", "france", 
-        "อิตาลี", "italy", "มาเลเซีย", "malaysia", "พม่า", "myanmar", "ลาว", "laos", 
-        "ตุรกี", "turkey", "ออสเตรเลีย", "australia", "นิวซีแลนด์", "new zealand", 
-        "มัลดีฟส์", "maldives", "ดูไบ", "dubai", "อียิปต์", "egypt", "รัสเซีย", "russia",
-        "ซาปา", "ดานัง", "บานาฮิลล์", "ฮอกไกโด", "โตเกียว", "โอซาก้า", "ฟูจิ", "โซล", "ปูซาน", "มาเก๊า"
+        "อังกฤษ", "england", "uk", "ลอนดอน", "london", "แมนเชสเตอร์", "manchester", 
+        "จอร์เจีย", "georgia", "สวิส", "switzerland", "ฝรั่งเศส", "france", "ปารีส", "paris",
+        "อิตาลี", "italy", "โรม", "rome", "มิลาน", "milan", "มาเลเซีย", "malaysia", 
+        "พม่า", "myanmar", "ลาว", "laos", "ตุรกี", "turkey", "ออสเตรเลีย", "australia", 
+        "นิวซีแลนด์", "new zealand", "มัลดีฟส์", "maldives", "ดูไบ", "dubai", "อียิปต์", "egypt", 
+        "รัสเซีย", "russia", "มอสโก", "moscow", "ซาปา", "ดานัง", "บานาฮิลล์", "ฮอกไกโด", 
+        "โตเกียว", "โอซาก้า", "ฟูจิ", "โซล", "ปูซาน", "มาเก๊า", "อเมริกา", "usa"
       ];
       
       for (const dest of commonDestinations) {
