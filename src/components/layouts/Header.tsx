@@ -160,8 +160,8 @@ export default function Header() {
             </div>
           </div>
 
-          <Link href="/destinations/thailand" className="px-4 py-2 text-gray-600 hover:text-orange-500 font-medium transition-colors">
-            เที่ยวไทย
+          <Link href="/last-minute" className="px-4 py-2 text-rose-600 hover:text-rose-700 font-bold transition-colors flex items-center gap-1">
+            🔥 ทัวร์ไฟไหม้
           </Link>
           
           <Link href="/ai-planner" className="px-4 py-2 text-orange-500 hover:text-orange-600 font-bold transition-colors flex items-center gap-1">

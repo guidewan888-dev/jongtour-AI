@@ -258,16 +258,7 @@ export default async function DestinationPage({ params }: { params: { slug?: str
               </div>
             </div>
 
-            {/* Banner Add */}
-            <div className="rounded-2xl overflow-hidden relative group hidden lg:block">
-               <img src="https://images.unsplash.com/photo-1518548419970-58e3b4079ab2?q=80&w=400&auto=format&fit=crop" className="w-full h-[300px] object-cover group-hover:scale-105 transition-transform duration-700" alt="Promo" />
-               <div className="absolute inset-0 bg-gradient-to-t from-orange-600 via-orange-600/50 to-transparent flex flex-col justify-end p-5">
-                  <span className="bg-rose-500 text-white text-xs font-bold px-2 py-1 rounded w-fit mb-2">โปรลดพิเศษ</span>
-                  <h4 className="text-white font-bold text-lg leading-tight mb-2">เที่ยวฟินกว่าเดิมในราคาที่ถูกลง</h4>
-                  <p className="text-orange-100 text-xs mb-4">รับส่วนลดพิเศษสูงสุด 15% เมื่อจองภายในเดือนนี้</p>
-                  <button className="bg-white text-orange-600 font-bold text-sm py-2 rounded-lg w-full">ดูโปรโมชั่น</button>
-               </div>
-            </div>
+
 
           </aside>
 

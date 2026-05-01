@@ -1,0 +1,101 @@
+
+> jongtour-ai@0.1.0 dev
+> next dev
+
+  ▲ Next.js 14.2.3
+  - Local:        http://localhost:3000
+  - Environments: .env.local, .env
+
+ ✓ Starting...
+ ✓ Ready in 2.1s
+ ○ Compiling / ...
+ ✓ Compiled / in 2.9s (723 modules)
+ ⨯ Error: Event handlers cannot be passed to Client Component props.
+  <img src=... alt=... className=... onError={function onError}>
+                                             ^^^^^^^^^^^^^^^^^^
+If you need interactivity, consider converting part of this to a Client Component.
+    at stringify (<anonymous>)
+    at stringify (<anonymous>)
+digest: "1983735211"
+ ⨯ Error: Event handlers cannot be passed to Client Component props.
+  <img src=... alt=... className=... onError={function onError}>
+                                             ^^^^^^^^^^^^^^^^^^
+If you need interactivity, consider converting part of this to a Client Component.
+    at stringify (<anonymous>)
+    at stringify (<anonymous>)
+digest: "1983735211"
+ ⨯ Error: Event handlers cannot be passed to Client Component props.
+  <img src=... alt=... className=... onError={function onError}>
+                                             ^^^^^^^^^^^^^^^^^^
+If you need interactivity, consider converting part of this to a Client Component.
+    at stringify (<anonymous>)
+    at stringify (<anonymous>)
+digest: "1983735211"
+ ⨯ Error: Event handlers cannot be passed to Client Component props.
+  <img src=... alt=... className=... onError={function onError}>
+                                             ^^^^^^^^^^^^^^^^^^
+If you need interactivity, consider converting part of this to a Client Component.
+    at stringify (<anonymous>)
+    at stringify (<anonymous>)
+digest: "1983735211"
+ ⨯ Error: Event handlers cannot be passed to Client Component props.
+  <img src=... alt=... className=... onError={function onError}>
+                                             ^^^^^^^^^^^^^^^^^^
+If you need interactivity, consider converting part of this to a Client Component.
+    at stringify (<anonymous>)
+    at stringify (<anonymous>)
+digest: "1983735211"
+ GET / 500 in 3134ms
+ ✓ Compiled in 343ms (333 modules)
+ ✓ Compiled in 176ms (333 modules)
+ ✓ Compiled / in 100ms (381 modules)
+ GET / 200 in 223ms
+ ✓ Compiled in 262ms (333 modules)
+ ✓ Compiled in 141ms (333 modules)
+ ✓ Compiled in 188ms (333 modules)
+ ✓ Compiled in 66ms (319 modules)
+ ✓ Compiled in 224ms (333 modules)
+ ✓ Compiled in 171ms (333 modules)
+ ✓ Compiled in 149ms (333 modules)
+ ✓ Compiled in 159ms (333 modules)
+ ✓ Compiled in 189ms (333 modules)
+ ✓ Compiled in 264ms (333 modules)
+ ✓ Compiled in 103ms (333 modules)
+ ✓ Compiled in 174ms (333 modules)
+ ✓ Compiled in 102ms (333 modules)
+ ✓ Compiled in 194ms (333 modules)
+ ✓ Compiled in 170ms (333 modules)
+ ✓ Compiled in 132ms (333 modules)
+ ✓ Compiled in 139ms (333 modules)
+ ✓ Compiled in 165ms (333 modules)
+ ✓ Compiled in 157ms (333 modules)
+ ✓ Compiled in 109ms (333 modules)
+ ✓ Compiled in 173ms (333 modules)
+ ✓ Compiled in 621ms (333 modules)
+ ✓ Compiled in 128ms (333 modules)
+ ✓ Compiled in 175ms (333 modules)
+ ✓ Compiled in 172ms (333 modules)
+ ✓ Compiled in 359ms (333 modules)
+ ✓ Compiled in 185ms (333 modules)
+ ✓ Compiled in 290ms (333 modules)
+ ✓ Compiled in 113ms (333 modules)
+ ✓ Compiled in 119ms (333 modules)
+ ✓ Compiled in 135ms (333 modules)
+ ✓ Compiled in 120ms (333 modules)
+ ✓ Compiled in 132ms (333 modules)
+ ✓ Compiled in 111ms (333 modules)
+ ✓ Compiled in 130ms (333 modules)
+ ✓ Compiled in 169ms (333 modules)
+ ✓ Compiled in 126ms (333 modules)
+ ✓ Compiled in 161ms (333 modules)
+ ✓ Compiled in 135ms (333 modules)
+ ✓ Compiled in 191ms (333 modules)
+ ✓ Compiled in 93ms (333 modules)
+ ✓ Compiled in 178ms (333 modules)
+ ✓ Compiled in 158ms (333 modules)
+ ✓ Compiled in 365ms (333 modules)
+ ✓ Compiled in 193ms (333 modules)
+ ✓ Compiled in 162ms (333 modules)
+ ✓ Compiled in 153ms (333 modules)
+ ✓ Compiled in 304ms (333 modules)
+ ✓ Compiled in 189ms (333 modules)
