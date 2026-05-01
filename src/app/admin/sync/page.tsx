@@ -12,6 +12,14 @@ export default function ApiSyncStatusPage() {
   const [lastSyncZego, setLastSyncZego] = useState("วันนี้ 08:05 น.");
   const [zegoCount, setZegoCount] = useState(1);
 
+  const [isSyncingCheckIn, setIsSyncingCheckIn] = useState(false);
+  const [lastSyncCheckIn, setLastSyncCheckIn] = useState("วันนี้ 10:30 น.");
+  const [checkInCount, setCheckInCount] = useState(0);
+
+  const [isSyncingTourFactory, setIsSyncingTourFactory] = useState(false);
+  const [lastSyncTourFactory, setLastSyncTourFactory] = useState("วันนี้ 10:35 น.");
+  const [tourFactoryCount, setTourFactoryCount] = useState(0);
+
   const handleForceSync = async () => {
     setIsSyncingGo365(true);
     try {
@@ -43,6 +51,40 @@ export default function ApiSyncStatusPage() {
       setIsSyncingZego(false);
       const now = new Date();
       setLastSyncZego(`วันนี้ ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')} น.`);
+    }
+  };
+
+  const handleForceSyncCheckIn = async () => {
+    setIsSyncingCheckIn(true);
+    try {
+      const res = await fetch('/api/sync/checkingroup', { method: 'POST' });
+      const data = await res.json();
+      if (data.stats?.toursProcessed) {
+        setCheckInCount(data.stats.toursProcessed);
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsSyncingCheckIn(false);
+      const now = new Date();
+      setLastSyncCheckIn(`วันนี้ ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')} น.`);
+    }
+  };
+
+  const handleForceSyncTourFactory = async () => {
+    setIsSyncingTourFactory(true);
+    try {
+      const res = await fetch('/api/sync/tourfactory', { method: 'POST' });
+      const data = await res.json();
+      if (data.stats?.toursProcessed) {
+        setTourFactoryCount(data.stats.toursProcessed);
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsSyncingTourFactory(false);
+      const now = new Date();
+      setLastSyncTourFactory(`วันนี้ ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')} น.`);
     }
   };
 
@@ -155,6 +197,92 @@ export default function ApiSyncStatusPage() {
                 <><RefreshCcw className="w-5 h-5 animate-spin" /> กำลังซิงค์ข้อมูล...</>
               ) : (
                 <><RefreshCcw className="w-5 h-5" /> สั่งซิงค์ข้อมูล Zego (Manual Sync)</>
+              )}
+            </button>
+          </div>
+        </div>
+
+        {/* Check In Group Card */}
+        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+          <div className="p-6 border-b border-gray-100 flex justify-between items-start">
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 bg-teal-500 rounded-2xl flex items-center justify-center text-white font-bold text-xl shadow-inner shadow-teal-700/50">
+                CI
+              </div>
+              <div>
+                <h3 className="font-bold text-xl text-gray-900">Check In Group</h3>
+                <p className="text-sm text-gray-500">API Provider</p>
+              </div>
+            </div>
+            <div className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1.5 border border-green-200">
+              <CheckCircle2 className="w-3.5 h-3.5" /> Online
+            </div>
+          </div>
+          
+          <div className="p-6 bg-gray-50/50">
+            <div className="grid grid-cols-2 gap-4 mb-6">
+              <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
+                <p className="text-xs text-gray-500 font-medium flex items-center gap-1.5"><ArrowDownToLine className="w-4 h-4" /> ดึงทัวร์ล่าสุด</p>
+                <p className="text-lg font-bold text-gray-900 mt-1">{checkInCount.toLocaleString()} <span className="text-xs font-normal text-gray-500">รายการ</span></p>
+              </div>
+              <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
+                <p className="text-xs text-gray-500 font-medium flex items-center gap-1.5"><Clock className="w-4 h-4" /> อัปเดตล่าสุด</p>
+                <p className="text-sm font-bold text-indigo-600 mt-2">{lastSyncCheckIn}</p>
+              </div>
+            </div>
+            
+            <button 
+              onClick={handleForceSyncCheckIn}
+              disabled={isSyncingCheckIn}
+              className="w-full py-3 bg-teal-50 text-teal-700 hover:bg-teal-100 border border-teal-200 rounded-xl font-bold flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
+            >
+              {isSyncingCheckIn ? (
+                <><RefreshCcw className="w-5 h-5 animate-spin" /> กำลังซิงค์ข้อมูล...</>
+              ) : (
+                <><RefreshCcw className="w-5 h-5" /> สั่งซิงค์ข้อมูล Check In Group</>
+              )}
+            </button>
+          </div>
+        </div>
+
+        {/* Tour Factory Card */}
+        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+          <div className="p-6 border-b border-gray-100 flex justify-between items-start">
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 bg-fuchsia-500 rounded-2xl flex items-center justify-center text-white font-bold text-xl shadow-inner shadow-fuchsia-700/50">
+                TF
+              </div>
+              <div>
+                <h3 className="font-bold text-xl text-gray-900">Tour Factory</h3>
+                <p className="text-sm text-gray-500">API Provider</p>
+              </div>
+            </div>
+            <div className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1.5 border border-green-200">
+              <CheckCircle2 className="w-3.5 h-3.5" /> Online
+            </div>
+          </div>
+          
+          <div className="p-6 bg-gray-50/50">
+            <div className="grid grid-cols-2 gap-4 mb-6">
+              <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
+                <p className="text-xs text-gray-500 font-medium flex items-center gap-1.5"><ArrowDownToLine className="w-4 h-4" /> ดึงทัวร์ล่าสุด</p>
+                <p className="text-lg font-bold text-gray-900 mt-1">{tourFactoryCount.toLocaleString()} <span className="text-xs font-normal text-gray-500">รายการ</span></p>
+              </div>
+              <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
+                <p className="text-xs text-gray-500 font-medium flex items-center gap-1.5"><Clock className="w-4 h-4" /> อัปเดตล่าสุด</p>
+                <p className="text-sm font-bold text-indigo-600 mt-2">{lastSyncTourFactory}</p>
+              </div>
+            </div>
+            
+            <button 
+              onClick={handleForceSyncTourFactory}
+              disabled={isSyncingTourFactory}
+              className="w-full py-3 bg-fuchsia-50 text-fuchsia-700 hover:bg-fuchsia-100 border border-fuchsia-200 rounded-xl font-bold flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
+            >
+              {isSyncingTourFactory ? (
+                <><RefreshCcw className="w-5 h-5 animate-spin" /> กำลังซิงค์ข้อมูล...</>
+              ) : (
+                <><RefreshCcw className="w-5 h-5" /> สั่งซิงค์ข้อมูล Tour Factory</>
               )}
             </button>
           </div>

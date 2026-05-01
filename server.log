@@ -130,3 +130,218 @@ Tour Factory Sync Error: {
  GET /api/sync/tourfactory 500 in 1292ms
  GET /api/sync/checkingroup 200 in 2560ms
  GET /api/sync/tourfactory 200 in 1591ms
+ ✓ Compiled in 164ms (333 modules)
+ ✓ Compiled in 130ms (333 modules)
+ ✓ Compiled in 475ms (333 modules)
+ ✓ Compiled in 148ms (333 modules)
+ ✓ Compiled in 221ms (333 modules)
+ ✓ Compiled in 119ms (333 modules)
+ ○ Compiling /destinations/[[...slug]] ...
+ ✓ Compiled /destinations/[[...slug]] in 1335ms (702 modules)
+ GET /destinations/asia/taiwan 200 in 2465ms
+ GET /destinations/asia/hongkong 200 in 968ms
+ GET /destinations/asia/taiwan 200 in 72ms
+ ✓ Compiled /wholesale/[slug] in 221ms (704 modules)
+ ⨯ Error: Cannot find module './vendor-chunks/@supabase.js'
+Require stack:
+- C:\Users\uSeR\jongtour\.next\server\webpack-runtime.js
+- C:\Users\uSeR\jongtour\.next\server\app\wholesale\[slug]\page.js
+- C:\Users\uSeR\jongtour\node_modules\next\dist\server\require.js
+- C:\Users\uSeR\jongtour\node_modules\next\dist\server\load-components.js
+- C:\Users\uSeR\jongtour\node_modules\next\dist\build\utils.js
+- C:\Users\uSeR\jongtour\node_modules\next\dist\server\dev\static-paths-worker.js
+- C:\Users\uSeR\jongtour\node_modules\next\dist\compiled\jest-worker\processChild.js
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1476:15)
+    at C:\Users\uSeR\jongtour\node_modules\next\dist\server\require-hook.js:55:36
+    at wrapResolveFilename (node:internal/modules/cjs/loader:1049:27)
+    at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1073:10)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1094:12)
+    at Module._load (node:internal/modules/cjs/loader:1262:25)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1576:12)
+    at mod.require (C:\Users\uSeR\jongtour\node_modules\next\dist\server\require-hook.js:65:28)
+    at require (node:internal/modules/helpers:153:16) {
+  type: 'Error',
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    'C:\\Users\\uSeR\\jongtour\\.next\\server\\webpack-runtime.js',
+    'C:\\Users\\uSeR\\jongtour\\.next\\server\\app\\wholesale\\[slug]\\page.js',
+    'C:\\Users\\uSeR\\jongtour\\node_modules\\next\\dist\\server\\require.js',
+    'C:\\Users\\uSeR\\jongtour\\node_modules\\next\\dist\\server\\load-components.js',
+    'C:\\Users\\uSeR\\jongtour\\node_modules\\next\\dist\\build\\utils.js',
+    'C:\\Users\\uSeR\\jongtour\\node_modules\\next\\dist\\server\\dev\\static-paths-worker.js',
+    'C:\\Users\\uSeR\\jongtour\\node_modules\\next\\dist\\compiled\\jest-worker\\processChild.js'
+  ],
+  page: '/wholesale/tourfactory'
+}
+ ○ Compiling /_error ...
+ ✓ Compiled /_error in 705ms (914 modules)
+ GET /wholesale/tourfactory?dest=%E0%B9%84%E0%B8%95%E0%B9%89%E0%B8%AB%E0%B8%A7%E0%B8%B1%E0%B8%99 500 in 1248ms
+ ⨯ Error: Cannot find module './vendor-chunks/@supabase.js'
+Require stack:
+- C:\Users\uSeR\jongtour\.next\server\webpack-runtime.js
+- C:\Users\uSeR\jongtour\.next\server\app\wholesale\[slug]\page.js
+- C:\Users\uSeR\jongtour\node_modules\next\dist\server\require.js
+- C:\Users\uSeR\jongtour\node_modules\next\dist\server\load-components.js
+- C:\Users\uSeR\jongtour\node_modules\next\dist\build\utils.js
+- C:\Users\uSeR\jongtour\node_modules\next\dist\server\dev\static-paths-worker.js
+- C:\Users\uSeR\jongtour\node_modules\next\dist\compiled\jest-worker\processChild.js
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1476:15)
+    at C:\Users\uSeR\jongtour\node_modules\next\dist\server\require-hook.js:55:36
+    at wrapResolveFilename (node:internal/modules/cjs/loader:1049:27)
+    at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1073:10)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1094:12)
+    at Module._load (node:internal/modules/cjs/loader:1262:25)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1576:12)
+    at mod.require (C:\Users\uSeR\jongtour\node_modules\next\dist\server\require-hook.js:65:28)
+    at require (node:internal/modules/helpers:153:16) {
+  type: 'Error',
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    'C:\\Users\\uSeR\\jongtour\\.next\\server\\webpack-runtime.js',
+    'C:\\Users\\uSeR\\jongtour\\.next\\server\\app\\wholesale\\[slug]\\page.js',
+    'C:\\Users\\uSeR\\jongtour\\node_modules\\next\\dist\\server\\require.js',
+    'C:\\Users\\uSeR\\jongtour\\node_modules\\next\\dist\\server\\load-components.js',
+    'C:\\Users\\uSeR\\jongtour\\node_modules\\next\\dist\\build\\utils.js',
+    'C:\\Users\\uSeR\\jongtour\\node_modules\\next\\dist\\server\\dev\\static-paths-worker.js',
+    'C:\\Users\\uSeR\\jongtour\\node_modules\\next\\dist\\compiled\\jest-worker\\processChild.js'
+  ],
+  page: '/wholesale/checkingroup'
+}
+ GET /wholesale/checkingroup?dest=%E0%B9%84%E0%B8%95%E0%B9%89%E0%B8%AB%E0%B8%A7%E0%B8%B1%E0%B8%99 500 in 233ms
+ ⨯ Error: Cannot find module './vendor-chunks/@supabase.js'
+Require stack:
+- C:\Users\uSeR\jongtour\.next\server\webpack-runtime.js
+- C:\Users\uSeR\jongtour\.next\server\app\wholesale\[slug]\page.js
+- C:\Users\uSeR\jongtour\node_modules\next\dist\server\require.js
+- C:\Users\uSeR\jongtour\node_modules\next\dist\server\load-components.js
+- C:\Users\uSeR\jongtour\node_modules\next\dist\build\utils.js
+- C:\Users\uSeR\jongtour\node_modules\next\dist\server\dev\static-paths-worker.js
+- C:\Users\uSeR\jongtour\node_modules\next\dist\compiled\jest-worker\processChild.js
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1476:15)
+    at C:\Users\uSeR\jongtour\node_modules\next\dist\server\require-hook.js:55:36
+    at wrapResolveFilename (node:internal/modules/cjs/loader:1049:27)
+    at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1073:10)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1094:12)
+    at Module._load (node:internal/modules/cjs/loader:1262:25)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1576:12)
+    at mod.require (C:\Users\uSeR\jongtour\node_modules\next\dist\server\require-hook.js:65:28)
+    at require (node:internal/modules/helpers:153:16) {
+  type: 'Error',
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    'C:\\Users\\uSeR\\jongtour\\.next\\server\\webpack-runtime.js',
+    'C:\\Users\\uSeR\\jongtour\\.next\\server\\app\\wholesale\\[slug]\\page.js',
+    'C:\\Users\\uSeR\\jongtour\\node_modules\\next\\dist\\server\\require.js',
+    'C:\\Users\\uSeR\\jongtour\\node_modules\\next\\dist\\server\\load-components.js',
+    'C:\\Users\\uSeR\\jongtour\\node_modules\\next\\dist\\build\\utils.js',
+    'C:\\Users\\uSeR\\jongtour\\node_modules\\next\\dist\\server\\dev\\static-paths-worker.js',
+    'C:\\Users\\uSeR\\jongtour\\node_modules\\next\\dist\\compiled\\jest-worker\\processChild.js'
+  ],
+  page: '/wholesale/checkingroup'
+}
+ GET /wholesale/checkingroup?dest=%E0%B9%84%E0%B8%95%E0%B9%89%E0%B8%AB%E0%B8%A7%E0%B8%B1%E0%B8%99 500 in 173ms
+ GET /destinations/asia/hongkong 200 in 142ms
+ ⨯ Failed to generate static paths for /destinations/[[...slug]]:
+Error: Cannot find module './vendor-chunks/@supabase.js'
+Require stack:
+- C:\Users\uSeR\jongtour\.next\server\webpack-runtime.js
+- C:\Users\uSeR\jongtour\.next\server\app\destinations\[[...slug]]\page.js
+- C:\Users\uSeR\jongtour\node_modules\next\dist\server\require.js
+- C:\Users\uSeR\jongtour\node_modules\next\dist\server\load-components.js
+- C:\Users\uSeR\jongtour\node_modules\next\dist\build\utils.js
+- C:\Users\uSeR\jongtour\node_modules\next\dist\server\dev\static-paths-worker.js
+- C:\Users\uSeR\jongtour\node_modules\next\dist\compiled\jest-worker\processChild.js
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1476:15)
+    at C:\Users\uSeR\jongtour\node_modules\next\dist\server\require-hook.js:55:36
+    at wrapResolveFilename (node:internal/modules/cjs/loader:1049:27)
+    at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1073:10)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1094:12)
+    at Module._load (node:internal/modules/cjs/loader:1262:25)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1576:12)
+    at mod.require (C:\Users\uSeR\jongtour\node_modules\next\dist\server\require-hook.js:65:28)
+    at require (node:internal/modules/helpers:153:16) {
+  type: 'Error',
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    'C:\\Users\\uSeR\\jongtour\\.next\\server\\webpack-runtime.js',
+    'C:\\Users\\uSeR\\jongtour\\.next\\server\\app\\destinations\\[[...slug]]\\page.js',
+    'C:\\Users\\uSeR\\jongtour\\node_modules\\next\\dist\\server\\require.js',
+    'C:\\Users\\uSeR\\jongtour\\node_modules\\next\\dist\\server\\load-components.js',
+    'C:\\Users\\uSeR\\jongtour\\node_modules\\next\\dist\\build\\utils.js',
+    'C:\\Users\\uSeR\\jongtour\\node_modules\\next\\dist\\server\\dev\\static-paths-worker.js',
+    'C:\\Users\\uSeR\\jongtour\\node_modules\\next\\dist\\compiled\\jest-worker\\processChild.js'
+  ]
+}
+ ⨯ Error: Cannot find module './vendor-chunks/@supabase.js'
+Require stack:
+- C:\Users\uSeR\jongtour\.next\server\webpack-runtime.js
+- C:\Users\uSeR\jongtour\.next\server\app\wholesale\[slug]\page.js
+- C:\Users\uSeR\jongtour\node_modules\next\dist\server\require.js
+- C:\Users\uSeR\jongtour\node_modules\next\dist\server\load-components.js
+- C:\Users\uSeR\jongtour\node_modules\next\dist\build\utils.js
+- C:\Users\uSeR\jongtour\node_modules\next\dist\server\dev\static-paths-worker.js
+- C:\Users\uSeR\jongtour\node_modules\next\dist\compiled\jest-worker\processChild.js
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1476:15)
+    at C:\Users\uSeR\jongtour\node_modules\next\dist\server\require-hook.js:55:36
+    at wrapResolveFilename (node:internal/modules/cjs/loader:1049:27)
+    at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1073:10)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1094:12)
+    at Module._load (node:internal/modules/cjs/loader:1262:25)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1576:12)
+    at mod.require (C:\Users\uSeR\jongtour\node_modules\next\dist\server\require-hook.js:65:28)
+    at require (node:internal/modules/helpers:153:16) {
+  type: 'Error',
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    'C:\\Users\\uSeR\\jongtour\\.next\\server\\webpack-runtime.js',
+    'C:\\Users\\uSeR\\jongtour\\.next\\server\\app\\wholesale\\[slug]\\page.js',
+    'C:\\Users\\uSeR\\jongtour\\node_modules\\next\\dist\\server\\require.js',
+    'C:\\Users\\uSeR\\jongtour\\node_modules\\next\\dist\\server\\load-components.js',
+    'C:\\Users\\uSeR\\jongtour\\node_modules\\next\\dist\\build\\utils.js',
+    'C:\\Users\\uSeR\\jongtour\\node_modules\\next\\dist\\server\\dev\\static-paths-worker.js',
+    'C:\\Users\\uSeR\\jongtour\\node_modules\\next\\dist\\compiled\\jest-worker\\processChild.js'
+  ],
+  page: '/wholesale/checkingroup'
+}
+ GET /wholesale/checkingroup?dest=%E0%B9%84%E0%B8%95%E0%B9%89%E0%B8%AB%E0%B8%A7%E0%B8%B1%E0%B8%99 500 in 178ms
+ ⨯ Error: Cannot find module './vendor-chunks/@supabase.js'
+Require stack:
+- C:\Users\uSeR\jongtour\.next\server\webpack-runtime.js
+- C:\Users\uSeR\jongtour\.next\server\app\wholesale\[slug]\page.js
+- C:\Users\uSeR\jongtour\node_modules\next\dist\server\require.js
+- C:\Users\uSeR\jongtour\node_modules\next\dist\server\load-components.js
+- C:\Users\uSeR\jongtour\node_modules\next\dist\build\utils.js
+- C:\Users\uSeR\jongtour\node_modules\next\dist\server\dev\static-paths-worker.js
+- C:\Users\uSeR\jongtour\node_modules\next\dist\compiled\jest-worker\processChild.js
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1476:15)
+    at C:\Users\uSeR\jongtour\node_modules\next\dist\server\require-hook.js:55:36
+    at wrapResolveFilename (node:internal/modules/cjs/loader:1049:27)
+    at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1073:10)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1094:12)
+    at Module._load (node:internal/modules/cjs/loader:1262:25)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1576:12)
+    at mod.require (C:\Users\uSeR\jongtour\node_modules\next\dist\server\require-hook.js:65:28)
+    at require (node:internal/modules/helpers:153:16) {
+  type: 'Error',
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    'C:\\Users\\uSeR\\jongtour\\.next\\server\\webpack-runtime.js',
+    'C:\\Users\\uSeR\\jongtour\\.next\\server\\app\\wholesale\\[slug]\\page.js',
+    'C:\\Users\\uSeR\\jongtour\\node_modules\\next\\dist\\server\\require.js',
+    'C:\\Users\\uSeR\\jongtour\\node_modules\\next\\dist\\server\\load-components.js',
+    'C:\\Users\\uSeR\\jongtour\\node_modules\\next\\dist\\build\\utils.js',
+    'C:\\Users\\uSeR\\jongtour\\node_modules\\next\\dist\\server\\dev\\static-paths-worker.js',
+    'C:\\Users\\uSeR\\jongtour\\node_modules\\next\\dist\\compiled\\jest-worker\\processChild.js'
+  ],
+  page: '/wholesale/checkingroup'
+}
+ GET /wholesale/checkingroup?dest=%E0%B9%84%E0%B8%95%E0%B9%89%E0%B8%AB%E0%B8%A7%E0%B8%B1%E0%B8%99 500 in 176ms
+ ✓ Compiled / in 192ms (440 modules)
+ GET / 200 in 336ms
+ ✓ Compiled in 404ms (564 modules)

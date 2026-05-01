@@ -4,6 +4,8 @@ import { MapPin, Calendar, Star, Clock, ChevronRight } from "lucide-react";
 import { notFound } from "next/navigation";
 
 export const dynamic = "force-dynamic";
+export const revalidate = 0;
+export const fetchCache = "force-no-store";
 
 const wholesaleConfig: Record<string, { name: string, logo: string, source: string, description: string, coverImage: string }> = {
   "letsgo": {
