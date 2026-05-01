@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 import OpenAI from "openai";
 import { getEstimatedFlightPrice } from "@/services/flightPricing";
+import { getEstimatedHotelPrice } from "@/services/hotelPricing";
 
 const prisma = new PrismaClient();
 export const maxDuration = 60;
@@ -104,6 +105,13 @@ export async function POST(req: NextRequest) {
       flightData = await getEstimatedFlightPrice(country, start, end);
     }
 
+    // Fetch Hotel Baseline Price from Cache Service
+    let hotelData = { totalCost: 0, source: 'DEFAULT' };
+    if (serviceType === "FULL_SERVICE" || includeHotels) {
+      hotelData = await getEstimatedHotelPrice(country, Number(hotelStars) || 3, durationDays, Number(pax) || 1);
+    }
+    const hotelCostPerPax = Math.round(hotelData.totalCost / Math.max(1, Number(pax) || 1));
+
     const systemPrompt = `คุณคือผู้เชี่ยวชาญด้านการจัดทริปทัวร์ส่วนตัว (F.I.T. Tour Expert)
 หน้าที่ของคุณคือออกแบบโปรแกรมการเดินทาง (Itinerary) ตามข้อมูลที่ลูกค้าให้มา
 
@@ -119,7 +127,7 @@ ${inclusionDetails}
 กฎการสร้าง JSON:
 1. "title": ตั้งชื่อทริปให้น่าสนใจ (ภาษาไทย)
 2. "estimatedPrice": ให้ประเมินราคารวมทั้งหมดตามบริการที่รวมไว้ (เป็นเงินบาท เช่น "45,000 THB/ท่าน") พร้อมวงเล็บต่อท้ายว่า "(ราคาโดยประมาณจากระบบอ้างอิง)"
-**สำคัญมาก: ทัวร์ส่วนตัว (Private Tour) มีต้นทุนการจัดการที่สูงกว่าปกติ ให้คุณคำนวณราคาต้นทุนประเมินของคุณ (อ้างอิงต้นทุนตั๋วเครื่องบินไป-กลับ ประมาณ ${flightData.price.toLocaleString()} THB/ท่าน) แล้วคูณด้วย 1.2 (บวกเพิ่ม 20%) เสมอ เพื่อให้สะท้อนราคาขายจริง**
+**สำคัญมาก: ทัวร์ส่วนตัว (Private Tour) มีต้นทุนการจัดการที่สูงกว่าปกติ ให้คุณคำนวณราคาต้นทุนประเมินของคุณ (อ้างอิงต้นทุนตั๋วเครื่องบินไป-กลับ ประมาณ ${flightData.price.toLocaleString()} THB/ท่าน และค่าโรงแรมประมาณ ${hotelCostPerPax.toLocaleString()} THB/ท่าน) แล้วคูณด้วย 1.2 (บวกเพิ่ม 20%) เสมอ เพื่อให้สะท้อนราคาขายจริง**
 3. "days": สร้างแผนการเดินทางแบบรายวันให้ครบ ${durationDays} วัน 
 4. "inclusions": สรุปรายการที่รวมในราคา (ภาษาไทย) แบบสั้นๆ เช่น ["ตั๋วเครื่องบินไป-กลับ", "โรงแรม 3 ดาว", ...]
 5. "exclusions": คุณต้องใส่ข้อความฮาร์ดโค้ดเหล่านี้ลงไปเป๊ะๆ:

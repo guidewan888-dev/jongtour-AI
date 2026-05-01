@@ -211,3 +211,15 @@ model FlightPriceCache {
   
   @@index([originIata, destinationIata])
 }
+
+model HotelPriceCache {
+  id              Int      @id @default(autoincrement())
+  city            String   // e.g., "Tokyo"
+  hotelStars      Int      @default(3) // 3, 4, 5
+  pricePerNight   Float
+  currency        String   @default("THB")
+  provider        String   // e.g., "SERPAPI_MOCK"
+  fetchedAt       DateTime @default(now())
+  
+  @@index([city, hotelStars])
+}
