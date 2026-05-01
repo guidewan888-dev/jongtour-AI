@@ -86,7 +86,17 @@ export async function processAiQuery(userMessage: string) {
   return tours;
 }
 
-export async function generateAiReply(userMessage: string, tours: any[], chatHistory: any[] = []): Promise<{text: string, needsHandoff: boolean}> {
+export interface AiReplyResult {
+  text: string;
+  needsHandoff: boolean;
+  customItinerary?: {
+    title: string;
+    estimatedPrice: string;
+    days: { day: number; title: string; detail: string }[];
+  };
+}
+
+export async function generateAiReply(userMessage: string, tours: any[], chatHistory: any[] = []): Promise<AiReplyResult> {
   if (!openai) return { text: "ขออภัยค่ะ ขณะนี้ระบบ AI ไม่พร้อมใช้งาน กรุณาติดต่อแอดมินนะคะ", needsHandoff: false };
 
   const tourTitles = tours.length > 0 ? tours.map(t => {
@@ -112,10 +122,19 @@ ${tourTitles ? tourTitles : "ตอนนี้ไม่มีแพ็กเก
 4. ไม่แต่งเรื่องเองเด็ดขาด ถ้าไม่รู้ให้แนะนำให้แอดไลน์ @Jongtour
 5. [สำคัญมาก] หากวิเคราะห์เจตนา (Intent) แล้วพบว่า "ลูกค้าต้องการจองทัวร์" (เช่น "ตกลงจองอันนี้", "เอาแพ็กเกจนี้", "ไปวันไหนได้บ้าง") ให้คุณสอบถามรายละเอียดที่จำเป็น เช่น ชื่อ จำนวนคน และวันเดินทางที่ต้องการ 
 6. [สำคัญมาก] เมื่อได้รายละเอียดครบถ้วนแล้ว ให้คุณแนบลิงก์จองทัวร์ให้ลูกค้า โดยใช้รูปแบบ URL นี้นะคะ: https://jongtour.com/tours/[รหัสทัวร์ (id)]
-7. [สำคัญที่สุด] คุณต้องตอบกลับเป็นรูปแบบ JSON เท่านั้น โดยมีโครงสร้างดังนี้:
+7. [สำคัญมาก] หากลูกค้าต้องการจัดกรุ๊ปส่วนตัว (Private Tour, กรุ๊ปเหมา, F.I.T.) ให้คุณออกแบบแผนการเดินทางแบบคร่าวๆ รายวัน พร้อมประเมินราคาส่งกลับไป โดยส่งในรูปแบบ customItinerary ใน JSON
+8. [สำคัญที่สุด] คุณต้องตอบกลับเป็นรูปแบบ JSON เท่านั้น โดยมีโครงสร้างดังนี้:
 {
   "text": "ข้อความตอบกลับของคุณ",
-  "needsHandoff": boolean // จะเป็น true เมื่อลูกค้ามีอารมณ์โกรธ ไม่พอใจ หรือเจาะจงขอคุยกับแอดมินคนจริง นอกนั้นเป็น false
+  "needsHandoff": boolean, // จะเป็น true เมื่อลูกค้ามีอารมณ์โกรธ ไม่พอใจ หรือเจาะจงขอคุยกับแอดมินคนจริง นอกนั้นเป็น false
+  "customItinerary": { // (ใส่มาเฉพาะเมื่อลูกค้าขอจัดทัวร์ส่วนตัว/กรุ๊ปเหมาเท่านั้น ถ้าไม่ใช่ให้ใส่ null)
+    "title": "ชื่อทริป (เช่น ทริปส่วนตัวญี่ปุ่น 5 วัน)",
+    "estimatedPrice": "ราคาประเมิน (เช่น 45,000 บาท/ท่าน)",
+    "days": [
+      { "day": 1, "title": "เดินทางถึง / วันแรก", "detail": "รายละเอียดสั้นๆ" },
+      { "day": 2, "title": "เที่ยวจุดสำคัญ", "detail": "รายละเอียดสั้นๆ" }
+    ]
+  }
 }
 `;
 
@@ -135,7 +154,8 @@ ${tourTitles ? tourTitles : "ตอนนี้ไม่มีแพ็กเก
     const parsedContent = JSON.parse(response.choices[0].message.content || "{}");
     return {
       text: parsedContent.text || "ขออภัยค่ะ เกิดข้อผิดพลาดในการประมวลผล",
-      needsHandoff: parsedContent.needsHandoff === true
+      needsHandoff: parsedContent.needsHandoff === true,
+      customItinerary: parsedContent.customItinerary || undefined
     };
   } catch (error) {
     console.error("OpenAI Error:", error);

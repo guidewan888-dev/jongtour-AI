@@ -1,4 +1,4 @@
-export function buildTourCarousel(tours: any[]) {
+export function buildTourCarousel(tours: any[], lineUserId?: string) {
   return {
     type: "flex",
     altText: "แพ็กเกจทัวร์แนะนำสำหรับคุณ",
@@ -87,7 +87,7 @@ export function buildTourCarousel(tours: any[]) {
                 action: {
                   type: "uri",
                   label: "ดูรายละเอียด / จอง",
-                  uri: `https://jongtour.vercel.app/tours/${tour.id}`,
+                  uri: `https://jongtour.vercel.app/tours/${tour.id}${lineUserId ? `?ref=line_${lineUserId}` : ''}`,
                 },
               },
             ],
@@ -95,5 +95,114 @@ export function buildTourCarousel(tours: any[]) {
         };
       }),
     },
+  };
+}
+
+export function buildItineraryFlex(itinerary: { title: string; estimatedPrice: string; days: { day: number; title: string; detail: string }[] }) {
+  return {
+    type: "flex",
+    altText: `แผนการเดินทาง: ${itinerary.title}`,
+    contents: {
+      type: "bubble",
+      size: "giga",
+      header: {
+        type: "box",
+        layout: "vertical",
+        backgroundColor: "#ff7f50",
+        paddingAll: "xl",
+        contents: [
+          {
+            type: "text",
+            text: "✨ แผนการเดินทางส่วนตัว",
+            color: "#ffffff",
+            weight: "bold",
+            size: "md"
+          },
+          {
+            type: "text",
+            text: itinerary.title,
+            color: "#ffffff",
+            weight: "bold",
+            size: "xl",
+            wrap: true,
+            margin: "md"
+          },
+          {
+            type: "text",
+            text: `งบประมาณประเมิน: ${itinerary.estimatedPrice}`,
+            color: "#ffffff",
+            size: "sm",
+            margin: "sm"
+          }
+        ]
+      },
+      body: {
+        type: "box",
+        layout: "vertical",
+        spacing: "md",
+        paddingAll: "xl",
+        contents: itinerary.days.map(day => ({
+          type: "box",
+          layout: "horizontal",
+          spacing: "md",
+          contents: [
+            {
+              type: "box",
+              layout: "vertical",
+              flex: 1,
+              contents: [
+                {
+                  type: "text",
+                  text: `Day ${day.day}`,
+                  weight: "bold",
+                  color: "#ff7f50",
+                  size: "sm",
+                  align: "center"
+                }
+              ]
+            },
+            {
+              type: "box",
+              layout: "vertical",
+              flex: 4,
+              contents: [
+                {
+                  type: "text",
+                  text: day.title,
+                  weight: "bold",
+                  size: "md",
+                  wrap: true
+                },
+                {
+                  type: "text",
+                  text: day.detail,
+                  size: "sm",
+                  color: "#666666",
+                  wrap: true,
+                  margin: "sm"
+                }
+              ]
+            }
+          ]
+        }))
+      },
+      footer: {
+        type: "box",
+        layout: "vertical",
+        paddingAll: "xl",
+        contents: [
+          {
+            type: "button",
+            style: "primary",
+            color: "#00c300",
+            action: {
+              type: "message",
+              label: "สอบถามรายละเอียดเพิ่ม",
+              text: "สนใจจัดทริปนี้ ขอคุยกับพนักงานหน่อยครับ"
+            }
+          }
+        ]
+      }
+    }
   };
 }

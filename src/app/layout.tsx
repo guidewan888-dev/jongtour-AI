@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import Header from "@/components/layouts/Header";
 import OAuthCallbackCatcher from "@/components/OAuthCallbackCatcher";
+import LineTracker from "@/components/LineTracker";
 import { Suspense } from "react";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -22,6 +23,7 @@ export default function RootLayout({
       <body className={inter.className}>
         <Suspense fallback={null}>
           <OAuthCallbackCatcher />
+          <LineTracker />
         </Suspense>
         <Header />
         {children}

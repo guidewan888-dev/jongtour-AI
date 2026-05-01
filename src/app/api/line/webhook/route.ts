@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import * as line from '@line/bot-sdk';
 import { processAiQuery, generateAiReply, summarizeChatSession } from '@/services/aiPlanner';
 import { transcribeAudio, analyzeImage } from '@/services/aiMediaProcessor';
-import { buildTourCarousel } from '@/services/lineFlexBuilder';
+import { buildTourCarousel, buildItineraryFlex } from '@/services/lineFlexBuilder';
 import { prisma } from '@/lib/prisma';
 
 // Configure LINE Client
@@ -133,9 +133,14 @@ export async function POST(request: Request) {
             { type: 'text', text: replyText }
           ];
 
+          // If AI Planner generated a Custom Itinerary, append it!
+          if (aiReply.customItinerary) {
+            messages.push(buildItineraryFlex(aiReply.customItinerary) as line.messagingApi.FlexMessage);
+          }
+
           // If AI Planner found tours, we append the Flex Message Carousel!
-          if (tours.length > 0) {
-            messages.push(buildTourCarousel(tours) as line.messagingApi.FlexMessage);
+          if (tours.length > 0 && !aiReply.customItinerary) {
+            messages.push(buildTourCarousel(tours, lineUserId) as line.messagingApi.FlexMessage);
           }
 
           // Reply via LINE API

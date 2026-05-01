@@ -5,6 +5,8 @@ import { createClient } from "@/utils/supabase/server";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import AuthButtons from "@/components/AuthButtons";
+import { prisma } from "@/lib/prisma";
+import { processAiQuery } from "@/services/aiPlanner";
 
 // ใช้ ISR Cache 1 นาที เพื่อให้เว็บเร็วขึ้น และข้อมูลยังอัปเดตอยู่
 export const revalidate = 60;
@@ -13,6 +15,18 @@ export default async function Home() {
   const cookieStore = await cookies();
   const supabase = createClient(cookieStore);
   const { data: { user } } = await supabase.auth.getUser();
+
+  const lineUid = cookieStore.get('jongtour_line_uid')?.value;
+  let dynamicGreeting = null;
+  let recommendedTours: any[] = [];
+
+  if (lineUid) {
+    const session = await prisma.lineChatSession.findUnique({ where: { lineUserId: lineUid } });
+    if (session && session.summary) {
+      dynamicGreeting = "ทัวร์แนะนำพิเศษสำหรับคุณ (อ้างอิงจากแชทล่าสุดใน LINE)";
+      recommendedTours = await processAiQuery(session.summary);
+    }
+  }
 
   return (
     <main className="min-h-screen bg-white flex flex-col items-center justify-center p-4 relative">
@@ -42,6 +56,38 @@ export default async function Home() {
           <ImageShortcutButton imgSrc="/images/wholesales/Tour-Factory.jpg" label="Tour Factory" href="/wholesale/tourfactory" fallbackIcon="🏭" />
           <ShortcutButton icon="✨" label="AI วางแผน" href="/ai-planner" />
         </div>
+
+        {/* AI Dynamic Personalized Recommendations */}
+        {recommendedTours.length > 0 && (
+          <div className="w-full max-w-6xl mt-12 animate-fade-in-up">
+            <h2 className="text-xl md:text-2xl font-bold text-gray-800 mb-6 text-center">
+              ✨ {dynamicGreeting}
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {recommendedTours.slice(0, 3).map((tour) => (
+                <div key={tour.id} className="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm hover:shadow-lg transition-all group flex flex-col">
+                  <div className="w-full h-48 bg-gray-200 overflow-hidden relative">
+                    <img 
+                      src={tour.imageUrl || "https://images.unsplash.com/photo-1436491865332-7a61a109cc05?q=80&w=600&auto=format&fit=crop"} 
+                      alt={tour.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
+                    />
+                  </div>
+                  <div className="p-5 flex-1 flex flex-col justify-between">
+                    <div>
+                      <h3 className="font-bold text-gray-800 mb-2 line-clamp-2">{tour.title}</h3>
+                      <p className="text-sm text-gray-500 line-clamp-1">{tour.destination}</p>
+                    </div>
+                    <div className="flex justify-between items-center mt-4">
+                      <span className="text-xl font-bold text-green-600">฿{Number(tour.price).toLocaleString()}</span>
+                      <Link href={`/tours/${tour.id}`} className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium">ดูรายละเอียด</Link>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </main>
   );
