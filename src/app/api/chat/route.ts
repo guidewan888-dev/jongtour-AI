@@ -21,6 +21,8 @@ export async function POST(request: Request) {
       isFire: false,
     };
 
+    let geminiFailed = false;
+
     if (isGeminiAvailable && genAI) {
       try {
         const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
@@ -46,9 +48,12 @@ DO NOT wrap the response in markdown blocks like \`\`\`json. Return JUST the raw
         if (parsed.isFire === true) searchCriteria.isFire = true;
       } catch (e) {
         console.error("Failed to parse Gemini intent:", e);
+        geminiFailed = true;
       }
-    } else {
-      // Fallback Keyword Logic if no Gemini Key
+    } 
+    
+    if (!isGeminiAvailable || !genAI || geminiFailed) {
+      // Fallback Keyword Logic if no Gemini Key or if API throws 429 Limit Error
       const lower = userMessage.toLowerCase();
       if (lower.includes("ญี่ปุ่น") || lower.includes("japan")) searchCriteria.keywords.push("ญี่ปุ่น");
       if (lower.includes("เกาหลี") || lower.includes("korea")) searchCriteria.keywords.push("เกาหลี");
@@ -101,7 +106,7 @@ DO NOT wrap the response in markdown blocks like \`\`\`json. Return JUST the raw
     // 3. Generate natural response
     let aiReply = "";
 
-    if (isGeminiAvailable && genAI) {
+    if (isGeminiAvailable && genAI && !geminiFailed) {
       try {
         const replyModel = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
         const tourTitles = tours.length > 0 ? tours.map(t => `- ${t.title} (ราคาเริ่มต้น ${t.price} บาท)`).join("\n") : "ไม่มีทัวร์ที่ตรงสเปก";
