@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { Client, WebhookEvent, TextMessage } from '@line/bot-sdk';
+import * as line from '@line/bot-sdk';
 import { processAiQuery, generateAiReply } from '@/services/aiPlanner';
 
 // Configure LINE Client
@@ -9,7 +9,7 @@ const config = {
 };
 
 // Create a new LINE client
-const client = new Client(config);
+const client = new line.messagingApi.MessagingApiClient(config);
 
 export async function POST(request: Request) {
   try {
@@ -25,7 +25,7 @@ export async function POST(request: Request) {
     // if (!isValid) return NextResponse.json({}, { status: 401 });
 
     const data = JSON.parse(body);
-    const events: WebhookEvent[] = data.events;
+    const events: line.WebhookEvent[] = data.events;
 
     if (!events || events.length === 0) {
       return NextResponse.json({ message: 'No events' }, { status: 200 });
@@ -50,18 +50,24 @@ export async function POST(request: Request) {
           const replyText = await generateAiReply(userMessage, tours);
 
           // 3. Send reply back to LINE
-          const message: TextMessage = {
+          const message: line.TextMessage = {
             type: 'text',
             text: replyText
           };
 
-          return await client.replyMessage(replyToken, message);
+          return await client.replyMessage({
+            replyToken: replyToken,
+            messages: [message]
+          });
         } catch (error) {
           console.error("Error processing LINE event:", error);
           // Fallback reply
-          return await client.replyMessage(replyToken, {
-            type: 'text',
-            text: "ขออภัยค่ะ แอดมิน AI กำลังติดปัญหาเล็กน้อย กรุณารอสักครู่หรือติดต่อแอดมินทาง @Jongtour นะคะ"
+          return await client.replyMessage({
+            replyToken: replyToken,
+            messages: [{
+              type: 'text',
+              text: "ขออภัยค่ะ แอดมิน AI กำลังติดปัญหาเล็กน้อย กรุณารอสักครู่หรือติดต่อแอดมินทาง @Jongtour นะคะ"
+            }]
           });
         }
       })
