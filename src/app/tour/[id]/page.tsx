@@ -136,51 +136,21 @@ async function TourDetailsContent({ params }: { params: { id: string } }) {
           {/* Departures Table (Client Component) */}
           <DeparturesTable departures={tour.departures || []} tourId={tour.id} />
 
-          {/* Itinerary Timeline */}
-          {tour.itinerary && Array.isArray(tour.itinerary) && tour.itinerary.length > 0 && (
-            <div className="bg-white p-6 md:p-8 rounded-lg shadow-sm border border-gray-200 mb-6" id="itinerary">
-              <h2 className="text-xl font-bold text-gray-900 mb-8 flex items-center gap-2">
-                <MapPin className="w-5 h-5 text-orange-600" /> แผนการเดินทาง (Itinerary)
+          {/* PDF Viewer (แทนที่แผนการเดินทางแบบตัวหนังสือ) */}
+          {tour.pdfUrl && (
+            <div className="bg-white p-4 md:p-6 rounded-lg shadow-sm border border-gray-200 mb-6" id="program-pdf">
+              <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+                <FileText className="w-5 h-5 text-orange-600" /> โปรแกรมทัวร์ (PDF)
               </h2>
-              
-              <div className="space-y-0 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-gray-200 before:to-transparent">
-                {tour.itinerary.map((dayData: any) => {
-                  const day = dayData.ItinDay;
-                  return (
-                    <div key={dayData.ItinID || day} className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group pb-10">
-                      {/* Timeline Dot */}
-                      <div className="flex items-center justify-center w-10 h-10 rounded-full border-4 border-white bg-orange-600 text-white font-bold shadow-md shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 z-10">
-                        {day}
-                      </div>
-                      
-                      {/* Content Box */}
-                      <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] p-5 rounded-lg bg-white border border-gray-200 shadow-sm transition-all hover:border-orange-200 hover:shadow-md">
-                        <div className="flex items-center gap-2 mb-2 text-xs font-bold text-orange-600 bg-orange-50 w-fit px-2 py-1 rounded">
-                          <Calendar className="w-3 h-3" /> วันที่ {day}
-                        </div>
-                        <p className="text-gray-700 text-sm leading-relaxed whitespace-pre-line font-medium mb-3">
-                          {dayData.ItinDes}
-                        </p>
-                        
-                        {/* Meals & Hotel Info */}
-                        <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t border-gray-100">
-                          {dayData.ItinBfast === 'Y' && (
-                            <span className="bg-blue-50 text-blue-700 px-2 py-1 rounded text-xs font-medium border border-blue-100">🍳 เช้า {dayData.ItinBfastDes ? `(${dayData.ItinBfastDes})` : ''}</span>
-                          )}
-                          {dayData.ItinLunch === 'Y' && (
-                            <span className="bg-blue-50 text-blue-700 px-2 py-1 rounded text-xs font-medium border border-blue-100">🍱 เที่ยง {dayData.ItinLunchDes ? `(${dayData.ItinLunchDes})` : ''}</span>
-                          )}
-                          {dayData.ItinDnr === 'Y' && (
-                            <span className="bg-blue-50 text-blue-700 px-2 py-1 rounded text-xs font-medium border border-blue-100">🍽️ เย็น {dayData.ItinDnrDes ? `(${dayData.ItinDnrDes})` : ''}</span>
-                          )}
-                          {dayData.ItinHotel && (
-                            <span className="bg-indigo-50 text-indigo-700 px-2 py-1 rounded text-xs font-medium border border-indigo-100 w-full mt-1">🏨 ที่พัก: {dayData.ItinHotel} {dayData.ItinHotelStar ? `(${dayData.ItinHotelStar} ดาว)` : ''}</span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
+              <div className="w-full aspect-[1/1.4] md:aspect-auto md:h-[800px] rounded-lg overflow-hidden border border-gray-300 bg-gray-50">
+                <iframe 
+                  src={`${tour.pdfUrl}#toolbar=0&navpanes=0&scrollbar=0`} 
+                  className="w-full h-full border-none"
+                  title="Tour Program PDF"
+                  loading="lazy"
+                >
+                  <p>เบราว์เซอร์ของคุณไม่รองรับการแสดงผล PDF กรุณา <a href={tour.pdfUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">ดาวน์โหลดไฟล์</a> แทน</p>
+                </iframe>
               </div>
             </div>
           )}
