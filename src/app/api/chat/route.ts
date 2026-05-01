@@ -55,12 +55,23 @@ DO NOT wrap the response in markdown blocks like \`\`\`json. Return JUST the raw
     if (!isGeminiAvailable || !genAI || geminiFailed) {
       // Fallback Keyword Logic if no Gemini Key or if API throws 429 Limit Error
       const lower = userMessage.toLowerCase();
-      if (lower.includes("ญี่ปุ่น") || lower.includes("japan")) searchCriteria.keywords.push("ญี่ปุ่น");
-      if (lower.includes("เกาหลี") || lower.includes("korea")) searchCriteria.keywords.push("เกาหลี");
-      if (lower.includes("ยุโรป") || lower.includes("europe")) searchCriteria.keywords.push("ยุโรป");
-      if (lower.includes("ไต้หวัน") || lower.includes("taiwan")) searchCriteria.keywords.push("ไต้หวัน");
-      if (lower.includes("ฮ่องกง") || lower.includes("hong kong")) searchCriteria.keywords.push("ฮ่องกง");
-      if (lower.includes("จีน") || lower.includes("china")) searchCriteria.keywords.push("จีน");
+      // Comprehensive fallback list if Gemini is offline
+      const commonDestinations = [
+        "ญี่ปุ่น", "japan", "เกาหลี", "korea", "ยุโรป", "europe", "ไต้หวัน", "taiwan", 
+        "ฮ่องกง", "hong kong", "จีน", "china", "สิงคโปร์", "singapore", "เวียดนาม", "vietnam", 
+        "อังกฤษ", "england", "uk", "จอร์เจีย", "georgia", "สวิส", "switzerland", "ฝรั่งเศส", "france", 
+        "อิตาลี", "italy", "มาเลเซีย", "malaysia", "พม่า", "myanmar", "ลาว", "laos", 
+        "ตุรกี", "turkey", "ออสเตรเลีย", "australia", "นิวซีแลนด์", "new zealand", 
+        "มัลดีฟส์", "maldives", "ดูไบ", "dubai", "อียิปต์", "egypt", "รัสเซีย", "russia",
+        "ซาปา", "ดานัง", "บานาฮิลล์", "ฮอกไกโด", "โตเกียว", "โอซาก้า", "ฟูจิ", "โซล", "ปูซาน", "มาเก๊า"
+      ];
+      
+      for (const dest of commonDestinations) {
+        if (lower.includes(dest)) {
+          searchCriteria.keywords.push(dest);
+        }
+      }
+
       if (lower.includes("ไฟไหม้")) searchCriteria.isFire = true;
       
       // Simple price extraction fallback
