@@ -160,6 +160,41 @@ export default function Header() {
             </div>
           </div>
 
+          {/* Wholesale Mega Menu */}
+          <div className="group py-8 relative">
+            <button className="flex items-center gap-1 px-4 py-2 text-gray-600 group-hover:text-blue-600 font-medium transition-colors">
+              โฮลเซลล์ (Wholesale)
+              <ChevronDown className="w-4 h-4 group-hover:rotate-180 transition-transform duration-300" />
+            </button>
+
+            <div className="absolute left-1/2 -translate-x-1/2 top-full w-[650px] bg-white border border-gray-100 shadow-2xl rounded-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 transform origin-top translate-y-2 group-hover:translate-y-0 p-6 z-50">
+              <div className="grid grid-cols-2 gap-8">
+                {[
+                  { slug: "letsgo", name: "Let's Go Group", logo: "/images/wholesales/download.png", dests: ["ญี่ปุ่น", "จีน", "เกาหลีใต้", "ไต้หวัน", "ฮ่องกง", "เวียดนาม", "ยุโรป"] },
+                  { slug: "go365", name: "GO 365 Travel", logo: "/images/wholesales/download.jfif", dests: ["ญี่ปุ่น", "จีน", "ยุโรป", "เวียดนาม", "สิงคโปร์", "ตุรกี"] },
+                  { slug: "checkingroup", name: "Check In Group", logo: "/images/wholesales/CH7.jpg", dests: ["จีน", "ฮ่องกง", "มาเก๊า", "ไต้หวัน"] },
+                  { slug: "tourfactory", name: "Tour Factory", logo: "/images/wholesales/Tour-Factory.jpg", dests: ["จีน", "ฮ่องกง", "มาเก๊า", "ไต้หวัน", "เวียดนาม"] }
+                ].map((ws) => (
+                  <div key={ws.slug} className="flex flex-col">
+                    <Link href={`/wholesale/${ws.slug}`} className="flex items-center gap-3 mb-3 group/ws">
+                      <div className="w-14 h-14 bg-white rounded-xl border border-gray-100 p-1.5 flex items-center justify-center shadow-sm group-hover/ws:border-blue-500 group-hover/ws:shadow-md transition-all shrink-0">
+                        <img src={ws.logo} alt={ws.name} className="max-w-full max-h-full object-contain" />
+                      </div>
+                      <span className="font-bold text-gray-800 text-lg group-hover/ws:text-blue-600 transition-colors">{ws.name}</span>
+                    </Link>
+                    <div className="flex flex-wrap gap-1.5 pl-[68px] mt-auto">
+                      {ws.dests.map(dest => (
+                         <Link key={dest} href={`/wholesale/${ws.slug}?dest=${encodeURIComponent(dest)}`} className="text-[11px] font-medium text-gray-500 hover:text-blue-600 hover:bg-blue-50 px-2 py-1 rounded-md transition-colors bg-gray-50 border border-gray-100">
+                           {dest}
+                         </Link>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
           <Link href="/last-minute" className="px-4 py-2 text-rose-600 hover:text-rose-700 font-bold transition-colors flex items-center gap-1">
             🔥 ทัวร์ไฟไหม้
           </Link>
