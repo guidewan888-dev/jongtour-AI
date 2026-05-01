@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
-import { Send, Sparkles, User, Map, Loader2, Mic, MicOff } from "lucide-react";
+import { Send, Sparkles, User, Map, Loader2, Mic, MicOff, ImagePlus, X } from "lucide-react";
 
 // Types for Speech Recognition
 declare global {
@@ -26,6 +26,7 @@ type Message = {
   text: string;
   tours?: Tour[];
   chips?: string[];
+  image?: string;
 };
 
 export default function AIPlannerPage() {
@@ -37,6 +38,8 @@ export default function AIPlannerPage() {
     }
   ]);
   const [input, setInput] = useState("");
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const [speechSupported, setSpeechSupported] = useState(true);
@@ -109,20 +112,45 @@ export default function AIPlannerPage() {
     }
   };
 
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 4 * 1024 * 1024) {
+      alert("รูปภาพต้องมีขนาดไม่เกิน 4MB ครับ");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      setSelectedImage(event.target?.result as string);
+    };
+    reader.readAsDataURL(file);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
   const handleSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    if (!input.trim() || isLoading) return;
+    if ((!input.trim() && !selectedImage) || isLoading) return;
 
     const userMsg = input.trim();
+    const currentImage = selectedImage;
+    
     setInput("");
+    setSelectedImage(null);
     
     // Add User Message
-    const userMessageObj: Message = { id: Date.now().toString(), role: "user", text: userMsg };
+    const userMessageObj: Message = { 
+      id: Date.now().toString(), 
+      role: "user", 
+      text: userMsg,
+      image: currentImage || undefined
+    };
     setMessages(prev => [...prev, userMessageObj]);
     setIsLoading(true);
 
     try {
-      // Map messages to a simpler format for the backend
+      // Map messages to a simpler format for the backend (excluding base64 images from history to save payload size, only send text history, BUT send current image)
       const chatHistory = messages.map(m => ({
         role: m.role,
         content: m.text
@@ -132,7 +160,7 @@ export default function AIPlannerPage() {
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: userMsg, chatHistory })
+        body: JSON.stringify({ message: userMsg, chatHistory, image: currentImage })
       });
       
       if (!response.ok) throw new Error("API failed");
@@ -251,13 +279,20 @@ export default function AIPlannerPage() {
 
               {/* Message Bubble */}
               <div className={`max-w-[80%] ${msg.role === "user" ? "items-end" : "items-start"} flex flex-col gap-3`}>
-                <div className={`p-4 rounded-2xl text-[15px] leading-relaxed shadow-sm ${
-                  msg.role === "user" 
-                    ? "bg-gray-900 text-white rounded-tr-sm" 
-                    : "bg-orange-50/50 text-gray-800 border border-orange-100/50 rounded-tl-sm whitespace-pre-line"
-                }`}>
-                  {msg.text}
-                </div>
+                {msg.image && (
+                  <div className="rounded-2xl overflow-hidden shadow-sm border border-gray-100 max-w-[200px] bg-white p-1">
+                    <img src={msg.image} alt="User Upload" className="w-full h-auto rounded-xl" />
+                  </div>
+                )}
+                {msg.text && (
+                  <div className={`p-4 rounded-2xl text-[15px] leading-relaxed shadow-sm ${
+                    msg.role === "user" 
+                      ? "bg-gray-900 text-white rounded-tr-sm" 
+                      : "bg-orange-50/50 text-gray-800 border border-orange-100/50 rounded-tl-sm whitespace-pre-line"
+                  }`}>
+                    {msg.text}
+                  </div>
+                )}
 
                 {/* Tour Cards (If AI returns tours) */}
                 {msg.tours && msg.tours.length > 0 && (
@@ -330,32 +365,65 @@ export default function AIPlannerPage() {
 
         {/* Input Area */}
         <div className="bg-white p-4 rounded-b-3xl border-t border-gray-100 shadow-sm shrink-0">
+          
+          {/* Image Preview */}
+          {selectedImage && (
+            <div className="mb-3 flex items-start">
+              <div className="relative inline-block border-2 border-orange-200 rounded-xl p-1 bg-orange-50">
+                <img src={selectedImage} alt="Preview" className="h-16 w-16 object-cover rounded-lg" />
+                <button 
+                  onClick={() => setSelectedImage(null)}
+                  className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow-md hover:bg-red-600 transition-colors"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </div>
+            </div>
+          )}
+
           <form onSubmit={handleSubmit} className="flex gap-3 relative">
+            <input 
+              type="file"
+              accept="image/*"
+              className="hidden"
+              ref={fileInputRef}
+              onChange={handleImageSelect}
+            />
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="absolute left-3 top-2 bottom-2 aspect-square rounded-xl flex items-center justify-center transition-all bg-gray-50 hover:bg-orange-50 hover:text-orange-600 text-gray-500"
+              title="แนบรูปภาพโปรแกรมทัวร์คู่แข่ง"
+            >
+              <ImagePlus className="w-5 h-5" />
+            </button>
+
             {speechSupported && (
               <button
                 type="button"
                 onClick={toggleListening}
-                className={`absolute left-3 top-2 bottom-2 aspect-square rounded-xl flex items-center justify-center transition-all ${
+                className={`absolute left-14 top-2 bottom-2 aspect-square rounded-xl flex items-center justify-center transition-all ${
                   isListening 
                     ? "bg-red-50 text-red-500 animate-pulse border border-red-200" 
-                    : "bg-gray-50 hover:bg-gray-100 text-gray-500"
+                    : "bg-gray-50 hover:bg-orange-50 hover:text-orange-600 text-gray-500"
                 }`}
                 title="พูดเพื่อพิมพ์"
               >
                 {isListening ? <Mic className="w-5 h-5" /> : <MicOff className="w-5 h-5" />}
               </button>
             )}
+            
             <input 
               type="text" 
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder={isListening ? "กำลังฟังเสียงคุณ..." : "อยากไปเที่ยวไหน พิมพ์บอก หรือกดปุ่มไมค์พูดได้เลย..."}
-              className={`flex-1 bg-gray-50 border border-gray-200 rounded-2xl py-4 pr-14 outline-none focus:border-orange-500 focus:bg-white transition-all text-[15px] ${speechSupported ? 'pl-14' : 'pl-6'}`}
+              placeholder={isListening ? "กำลังฟังเสียงคุณ..." : "อยากไปเที่ยวไหน พิมพ์บอก หรือส่งรูปทัวร์มาถามได้เลย..."}
+              className={`flex-1 bg-gray-50 border border-gray-200 rounded-2xl py-4 pr-14 outline-none focus:border-orange-500 focus:bg-white transition-all text-[15px] ${speechSupported ? 'pl-24' : 'pl-14'}`}
               disabled={isLoading || isListening}
             />
             <button 
               type="submit" 
-              disabled={!input.trim() || isLoading}
+              disabled={(!input.trim() && !selectedImage) || isLoading}
               className="absolute right-2 top-2 bottom-2 aspect-square bg-orange-500 hover:bg-orange-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white rounded-xl flex items-center justify-center transition-colors shadow-sm"
             >
               <Send className="w-5 h-5 ml-1" />

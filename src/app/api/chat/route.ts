@@ -13,8 +13,9 @@ export async function POST(request: Request) {
   const openai = isOpenAIAvailable ? new OpenAI({ apiKey: openaiApiKey }) : null;
 
   try {
-    const { message, chatHistory = [] } = await request.json();
+    const { message = "", chatHistory = [], image } = await request.json();
     const userMessage = message.trim();
+    const userImage = image; // base64 string
 
     // Check if user is logged in for personalization
     const cookieStore = await cookies();
@@ -226,9 +227,10 @@ ${tourTitles}
 CRITICAL RULES:
 1. You MUST ONLY talk about travel, tours, destinations, and Jongtour services. (Note: Let's Go, Check In Tour, GO 365, and Tour Factory are our trusted wholesale partners).
 2. If the user asks about ANYTHING unrelated (politics, coding, general knowledge, etc.), politely decline to answer. HOWEVER, questions about airlines, tour codes, travel dates, and wholesale companies ARE travel-related and you MUST answer them using the provided tour data! Do NOT decline these.
-3. If tours > 0: Excitedly and persuasively present the found tours. Tell them to check the cards below. Highlight the airlines or dates if the user asked. Make it sound like a deal they can't miss!
-4. If tours = 0: Apologize playfully, suggest they adjust their budget or destination.
-5. Suggest exactly 3 short, helpful follow-up questions the user can ask next. Put them at the VERY END of your response in this exact format on a new line:
+3. If the user uploaded an image of a competitor's tour program: Act like an expert travel agent. Analyze the highlights in the image. Then, present our similar tours (if any) and enthusiastically persuade the user that our packages are better, cheaper, or have better service! If tours = 0, say we have customized trips available.
+4. If tours > 0: Excitedly and persuasively present the found tours. Tell them to check the cards below. Highlight the airlines or dates if the user asked. Make it sound like a deal they can't miss!
+5. If tours = 0 and no image uploaded: Apologize playfully, suggest they adjust their budget or destination.
+6. Suggest exactly 3 short, helpful follow-up questions the user can ask next. Put them at the VERY END of your response in this exact format on a new line:
 __CHIPS__["question 1", "question 2", "question 3"]
 Use emojis naturally. DO NOT use markdown bold/italic formatting to keep it clean for the chat UI.`
             },
@@ -236,7 +238,13 @@ Use emojis naturally. DO NOT use markdown bold/italic formatting to keep it clea
               role: m.role === 'ai' ? 'assistant' : 'user', 
               content: m.content 
             }))),
-            { role: "user", content: userMessage }
+            { 
+              role: "user", 
+              content: userImage ? [
+                { type: "text", text: userMessage || "ช่วยวิเคราะห์รูปโปรแกรมทัวร์นี้หน่อยครับ และเทียบกับของ จองทัวร์ ให้ที" },
+                { type: "image_url", image_url: { url: userImage } }
+              ] : userMessage 
+            }
           ],
           stream: true,
         });
@@ -279,7 +287,7 @@ Use emojis naturally. DO NOT use markdown bold/italic formatting to keep it clea
 
     // Fallback if AI is not available or failed
     if (!aiReply) {
-      if (searchCriteria.keywords.length === 0 && !searchCriteria.isFire && !searchCriteria.maxPrice) {
+      if (searchCriteria.keywords.length === 0 && !searchCriteria.isFire && !searchCriteria.maxPrice && !userImage) {
         // If no keywords matched, check if it's a general greeting or travel request
         const lower = userMessage.toLowerCase();
         const genericQueries = ["แนะนำทัวร์", "ไปเที่ยวไหนดี", "มีทัวร์อะไรบ้าง", "ทัวร์น่าสนใจ", "อยากไปเที่ยว", "มีโปรอะไรบ้าง", "มีโปรไหม"];
