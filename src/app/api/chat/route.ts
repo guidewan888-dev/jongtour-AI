@@ -105,14 +105,14 @@ DO NOT wrap the response in markdown blocks like \`\`\`json. Return JUST the raw
         const tourTitles = tours.length > 0 ? tours.map(t => `- ${t.title} (ราคาเริ่มต้น ${t.price} บาท)`).join("\n") : "ไม่มีทัวร์ที่ตรงสเปก";
         
         const replyPrompt = `
-You are Jongtour AI, a friendly, enthusiastic, and professional Thai travel agent. 
+You are จองทัวร์ AI (Jongtour AI), a friendly, enthusiastic, and professional Thai travel agent. Always refer to yourself as "จองทัวร์ AI".
 The user said: "${userMessage}"
 You searched the database and found ${tours.length} tours:
 ${tourTitles}
 
 CRITICAL RULES:
 1. You MUST ONLY talk about travel, tours, destinations, and Jongtour services. 
-2. If the user asks about ANYTHING unrelated (politics, coding, general knowledge, cooking, etc.), politely decline to answer and steer the conversation back to travel (e.g., "ผมเป็นผู้ช่วยจัดทริป ตอบได้เฉพาะเรื่องท่องเที่ยวนะครับ 😅 สนใจไปเที่ยวไหนบอกได้เลยครับ!").
+2. If the user asks about ANYTHING unrelated (politics, coding, general knowledge, cooking, etc.), politely decline to answer and steer the conversation back to travel (e.g., "ผมคือ จองทัวร์ AI ตอบได้เฉพาะเรื่องท่องเที่ยวนะครับ 😅 สนใจไปเที่ยวประเทศไหนบอกได้เลยครับ!").
 3. If tours > 0: Excitedly present the found tours. Tell them to check the cards below.
 4. If tours = 0: Apologize politely, suggest they adjust their budget or destination.
 Use emojis naturally. DO NOT use markdown bold/italic formatting to keep it clean for the chat UI.
@@ -133,12 +133,12 @@ Use emojis naturally. DO NOT use markdown bold/italic formatting to keep it clea
         const isGreeting = lower.includes("สวัสดี") || lower.includes("หวัดดี") || lower === "hi" || lower === "hello";
         
         if (isGreeting) {
-          aiReply = "สวัสดีครับ ผม Jongtour AI 😊 คุณอยากไปเที่ยวประเทศไหน ช่วงเดือนอะไร หรือมีงบประมาณในใจเท่าไหร่ พิมพ์บอกผมได้เลยครับ!";
+          aiReply = "สวัสดีครับ ผม จองทัวร์ AI 😊 คุณอยากไปเที่ยวประเทศไหน ช่วงเดือนอะไร หรือมีงบประมาณในใจเท่าไหร่ พิมพ์บอกผมได้เลยครับ!";
           tours = []; // Don't show tours for a simple greeting
         } else if (isGeneralTravel) {
           aiReply = `พบแล้วครับ! 🎉 ผมคัดแพ็กเกจ ทัวร์น่าสนใจ มาให้ ${tours.length} รายการ ลองเลือกดูรายละเอียดด้านล่างได้เลยครับ 👇`;
         } else {
-          aiReply = "ผมเป็นผู้ช่วยจัดทริปของ Jongtour ตอบได้เฉพาะเรื่องท่องเที่ยวนะครับ 😅 สนใจไปเที่ยวประเทศไหนบอกผมได้เลยครับ!";
+          aiReply = "ผมเป็นผู้ช่วยจัดทริปของ จองทัวร์ ตอบได้เฉพาะเรื่องท่องเที่ยวนะครับ 😅 สนใจไปเที่ยวประเทศไหนบอกผมได้เลยครับ!";
           tours = []; // Don't show tours for off-topic questions
         }
       } else if (tours.length > 0) {

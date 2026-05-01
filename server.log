@@ -367,3 +367,7 @@ Require stack:
  POST /api/chat 200 in 719ms
  ✓ Compiled in 254ms (564 modules)
  ✓ Compiled in 155ms (516 modules)
+   Reload env: .env
+ ✓ Compiled in 223ms (564 modules)
+ ✓ Compiled in 166ms (516 modules)
+ ✓ Compiled in 106ms (516 modules)

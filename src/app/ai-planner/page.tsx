@@ -24,7 +24,7 @@ export default function AIPlannerPage() {
     {
       id: "welcome",
       role: "ai",
-      text: "สวัสดีครับ! ผมคือ Jongtour AI 🤖✨\nบอกผมมาได้เลยว่าคุณอยากไปที่ไหน หรือทริปในฝันของคุณเป็นยังไง ผมจะคัดสรรแพ็กเกจทัวร์ที่ตรงใจที่สุดมาให้ครับ!",
+      text: "สวัสดีครับ! ผมคือ จองทัวร์ AI 🤖✨\nบอกผมมาได้เลยว่าคุณอยากไปที่ไหน หรือทริปในฝันของคุณเป็นยังไง ผมจะคัดสรรแพ็กเกจทัวร์ที่ตรงใจที่สุดมาให้ครับ!",
     }
   ]);
   const [input, setInput] = useState("");
@@ -95,7 +95,7 @@ export default function AIPlannerPage() {
               <Sparkles className="w-6 h-6" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-gray-800">Jongtour AI Planner</h1>
+              <h1 className="text-xl font-bold text-gray-800">จองทัวร์ AI Planner</h1>
               <p className="text-sm text-gray-500">ผู้ช่วยจัดทริปอัจฉริยะ (ค้นหาจากฐานข้อมูลจริง)</p>
             </div>
           </div>
@@ -182,7 +182,7 @@ export default function AIPlannerPage() {
               type="text" 
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="อยากไปเที่ยวไหน พิมพ์บอก Jongtour AI ได้เลย..."
+              placeholder="อยากไปเที่ยวไหน พิมพ์บอก จองทัวร์ AI ได้เลย..."
               className="flex-1 bg-gray-50 border border-gray-200 rounded-2xl py-4 pl-6 pr-14 outline-none focus:border-orange-500 focus:bg-white transition-all text-[15px]"
               disabled={isLoading}
             />
