@@ -25,7 +25,7 @@ export async function POST(request: Request) {
     // if (!isValid) return NextResponse.json({}, { status: 401 });
 
     const data = JSON.parse(body);
-    const events: line.WebhookEvent[] = data.events;
+    const events: any[] = data.events;
 
     if (!events || events.length === 0) {
       return NextResponse.json({ message: 'No events' }, { status: 200 });
@@ -50,7 +50,7 @@ export async function POST(request: Request) {
           const replyText = await generateAiReply(userMessage, tours);
 
           // 3. Send reply back to LINE
-          const message: line.TextMessage = {
+          const message: any = {
             type: 'text',
             text: replyText
           };
