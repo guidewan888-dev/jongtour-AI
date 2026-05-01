@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import * as line from '@line/bot-sdk';
-import { processAiQuery, generateAiReply } from '@/services/aiPlanner';
+import { processAiQuery, generateAiReply, summarizeChatSession } from '@/services/aiPlanner';
+import { transcribeAudio, analyzeImage } from '@/services/aiMediaProcessor';
+import { prisma } from '@/lib/prisma';
 
 // Configure LINE Client
 const config = {
@@ -34,31 +36,106 @@ export async function POST(request: Request) {
     // Process each event
     const results = await Promise.all(
       events.map(async (event) => {
-        // We only handle text messages
-        if (event.type !== 'message' || event.message.type !== 'text') {
+        // We only handle message events of type text, image, or audio
+        if (event.type !== 'message' || !['text', 'image', 'audio'].includes(event.message.type)) {
           return null;
         }
 
-        const userMessage = event.message.text;
         const replyToken = event.replyToken;
+        const lineUserId = event.source?.userId;
+        let userMessage = '';
 
         try {
-          // 1. Process query and find relevant tours using RAG
+          // 1. Process Media Messages
+          if (event.message.type === 'text') {
+            userMessage = event.message.text;
+          } else if (event.message.type === 'audio') {
+            // Fetch audio from LINE
+            const stream = await client.getMessageContent(event.message.id);
+            const chunks = [];
+            for await (const chunk of stream) chunks.push(chunk);
+            const buffer = Buffer.concat(chunks);
+            // Transcribe via Whisper
+            userMessage = await transcribeAudio(buffer);
+          } else if (event.message.type === 'image') {
+            // Fetch image from LINE
+            const stream = await client.getMessageContent(event.message.id);
+            const chunks = [];
+            for await (const chunk of stream) chunks.push(chunk);
+            const buffer = Buffer.concat(chunks);
+            const base64 = buffer.toString('base64');
+            // Analyze via GPT-4o Vision
+            userMessage = await analyzeImage(base64);
+          }
+
+          if (!userMessage || userMessage.trim() === '') {
+            return await client.replyMessage({
+              replyToken: replyToken,
+              messages: [{ type: 'text', text: 'ขออภัยค่ะ ระบบไม่สามารถประมวลผลข้อความนี้ได้ กรุณาลองใหม่อีกครั้งค่ะ' }]
+            });
+          }
+
+          // 2. Fetch or Create Chat Session
+          let chatHistory: any[] = [];
+          if (lineUserId) {
+            let session = await prisma.lineChatSession.findUnique({
+              where: { lineUserId },
+              include: { messages: { orderBy: { createdAt: 'asc' }, take: 10 } }
+            });
+
+            if (!session) {
+              session = await prisma.lineChatSession.create({
+                data: { lineUserId },
+                include: { messages: true }
+              });
+            } else {
+              chatHistory = session.messages.map(m => ({ role: m.role, content: m.content }));
+            }
+
+            // Save user message to history
+            await prisma.lineChatMessage.create({
+              data: { sessionId: session.id, role: 'user', content: userMessage }
+            });
+          }
+
+          // 3. Process query and find relevant tours using RAG
           const tours = await processAiQuery(userMessage);
 
-          // 2. Generate a conversational reply using GPT-4o-mini and Company Knowledge Base
-          const replyText = await generateAiReply(userMessage, tours);
+          // 4. Generate a conversational reply using GPT-4o and Company Knowledge Base
+          const replyText = await generateAiReply(userMessage, tours, chatHistory);
 
-          // 3. Send reply back to LINE
+          // Save assistant reply to history
+          if (lineUserId) {
+            const session = await prisma.lineChatSession.findUnique({ where: { lineUserId } });
+            if (session) {
+              await prisma.lineChatMessage.create({
+                data: { sessionId: session.id, role: 'assistant', content: replyText }
+              });
+            }
+          }
+
+          // 5. Send reply back to LINE
           const message: any = {
             type: 'text',
             text: replyText
           };
 
-          return await client.replyMessage({
+          const result = await client.replyMessage({
             replyToken: replyToken,
             messages: [message]
           });
+
+          // Generate Summary occasionally (every 4 messages) to keep CRM updated
+          if (lineUserId && chatHistory.length % 4 === 0) {
+            const allMessages = [...chatHistory, {role: 'user', content: userMessage}, {role: 'assistant', content: replyText}];
+            const summary = await summarizeChatSession(allMessages);
+            await prisma.lineChatSession.update({
+              where: { lineUserId },
+              data: { summary }
+            });
+          }
+
+          return result;
         } catch (error) {
           console.error("Error processing LINE event:", error);
           // Fallback reply

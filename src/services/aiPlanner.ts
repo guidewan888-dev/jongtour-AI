@@ -86,7 +86,7 @@ export async function processAiQuery(userMessage: string) {
   return tours;
 }
 
-export async function generateAiReply(userMessage: string, tours: any[]) {
+export async function generateAiReply(userMessage: string, tours: any[], chatHistory: any[] = []) {
   if (!openai) return "ขออภัยค่ะ ขณะนี้ระบบ AI ไม่พร้อมใช้งาน กรุณาติดต่อแอดมินนะคะ";
 
   const tourTitles = tours.length > 0 ? tours.map(t => {
@@ -105,11 +105,13 @@ export async function generateAiReply(userMessage: string, tours: any[]) {
 **ข้อมูลทัวร์ที่มีในระบบตอนนี้ (อ้างอิงจากฐานข้อมูล):**
 ${tourTitles ? tourTitles : "ตอนนี้ไม่มีแพ็กเกจทัวร์ที่ตรงกับที่คุณลูกค้าตามหาค่ะ แต่สามารถบอกให้เราหาทัวร์ประเทศอื่นได้นะคะ"}
 
-**กฎการตอบ:**
+**กฎการตอบ และ การปิดการขาย (AUTO-BOOKING):**
 1. ถ้ามีทัวร์ที่ตรงกับความต้องการ ให้แนะนำพร้อมไฮไลท์เด่นๆ 1-2 ทัวร์ (อ้างอิงเฉพาะทัวร์ที่มีในระบบ)
 2. ถ้าลูกค้าถามเรื่องการจ่ายเงิน วีซ่า หรือติดต่อแอดมิน ให้อ้างอิงจากข้อมูลบริษัท
 3. ตอบสั้นๆ กระชับ เป็นธรรมชาติ มีอิโมจิน่ารักๆ
 4. ไม่แต่งเรื่องเองเด็ดขาด ถ้าไม่รู้ให้แนะนำให้แอดไลน์ @Jongtour
+5. [สำคัญมาก] หากวิเคราะห์เจตนา (Intent) แล้วพบว่า "ลูกค้าต้องการจองทัวร์" (เช่น "ตกลงจองอันนี้", "เอาแพ็กเกจนี้", "ไปวันไหนได้บ้าง") ให้คุณสอบถามรายละเอียดที่จำเป็น เช่น ชื่อ จำนวนคน และวันเดินทางที่ต้องการ 
+6. [สำคัญมาก] เมื่อได้รายละเอียดครบถ้วนแล้ว ให้คุณแนบลิงก์จองทัวร์ให้ลูกค้า โดยใช้รูปแบบ URL นี้นะคะ: https://jongtour.com/tours/[รหัสทัวร์ (id)]
 `;
 
   try {
@@ -117,6 +119,7 @@ ${tourTitles ? tourTitles : "ตอนนี้ไม่มีแพ็กเก
       model: "gpt-4o-mini",
       messages: [
         { role: "system", content: systemPrompt },
+        ...chatHistory.map(m => ({ role: m.role, content: m.content })),
         { role: "user", content: userMessage }
       ],
       temperature: 0.7,
@@ -129,3 +132,31 @@ ${tourTitles ? tourTitles : "ตอนนี้ไม่มีแพ็กเก
     return "ขออภัยค่ะ ขณะนี้ระบบ AI ไม่พร้อมใช้งาน กรุณาติดต่อแอดมินทาง @Jongtour นะคะ";
   }
 }
+
+export async function summarizeChatSession(chatHistory: any[]): Promise<string> {
+  if (!openai || chatHistory.length === 0) return "ไม่มีข้อมูลแชท";
+
+  try {
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        { 
+          role: "system", 
+          content: "คุณคือระบบ AI หลังบ้านที่ช่วยสรุปการคุยระหว่างลูกค้าและ AI เซลส์\nให้อ่านประวัติการแชทแล้วสรุปใจความสำคัญสั้นๆ (ไม่เกิน 2 บรรทัด) เช่น 'ลูกค้าสนใจทัวร์ญี่ปุ่น แต่ยังลังเลเรื่องราคา', 'ลูกค้าต้องการจองทัวร์ยุโรป กำลังรอโอนเงิน' เป็นต้น" 
+        },
+        { 
+          role: "user", 
+          content: chatHistory.map(m => `${m.role === 'user' ? 'ลูกค้า' : 'AI'}: ${m.content}`).join('\n') 
+        }
+      ],
+      temperature: 0.3,
+      max_tokens: 150,
+    });
+
+    return response.choices[0].message.content || "ไม่สามารถสรุปได้";
+  } catch (error) {
+    console.error("Summarize Error:", error);
+    return "ไม่สามารถสรุปได้เนื่องจากระบบขัดข้อง";
+  }
+}
+
