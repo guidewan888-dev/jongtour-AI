@@ -42,6 +42,28 @@ export default async function DestinationPage({ params }: { params: { slug?: str
     throw new Error("Failed to fetch tours");
   }
 
+  const validTours = tours || [];
+  
+  const wholesaleMap: Record<string, { slug: string, name: string, logo: string }> = {
+    "API_ZEGO": { slug: "letsgo", name: "Let's Go Group", logo: "/images/wholesales/download.png" },
+    "API_GO365": { slug: "go365", name: "GO 365 Travel", logo: "/images/wholesales/download.jfif" },
+    "CHECKIN": { slug: "checkingroup", name: "Check In Group", logo: "/images/wholesales/CH7.jpg" },
+    "TOUR_FACTORY": { slug: "tourfactory", name: "Tour Factory", logo: "/images/wholesales/Tour-Factory.jpg" },
+    "MANUAL": { slug: "", name: "Jongtour Packages", logo: "" }
+  };
+
+  const toursByWholesale = validTours.reduce((acc: Record<string, any[]>, tour: any) => {
+    const ws = tour.source || 'MANUAL';
+    if (!acc[ws]) acc[ws] = [];
+    acc[ws].push(tour);
+    return acc;
+  }, {});
+
+  const wholesaleKeys = Object.keys(toursByWholesale).sort((a, b) => {
+    const order = ['API_ZEGO', 'API_GO365', 'CHECKIN', 'TOUR_FACTORY', 'MANUAL'];
+    return (order.indexOf(a) === -1 ? 99 : order.indexOf(a)) - (order.indexOf(b) === -1 ? 99 : order.indexOf(b));
+  });
+
   return (
     <main className="min-h-screen bg-[#f8f9fa] pb-20">
       
@@ -294,7 +316,7 @@ export default async function DestinationPage({ params }: { params: { slug?: str
               </div>
             </div>
 
-            {tours.length === 0 ? (
+            {validTours.length === 0 ? (
                 <div className="bg-white p-12 rounded-2xl border border-gray-100 text-center shadow-sm">
                   <div className="w-20 h-20 bg-orange-50 rounded-full flex items-center justify-center mx-auto mb-6">
                     <MapPin className="w-10 h-10 text-orange-400" />
@@ -303,108 +325,116 @@ export default async function DestinationPage({ params }: { params: { slug?: str
                   <p className="text-gray-500 text-sm">แพ็กเกจสำหรับ {node.name} กำลังจะมาเร็วๆ นี้ โปรดรอติดตาม</p>
                 </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-                {tours.map((tour) => {
-                  // หาเดือนที่เดินทางจาก departures
-                  let dateDisplay = "เร็วๆ นี้";
-                  if (tour.departures && tour.departures.length > 0) {
-                    const sorted = [...tour.departures].sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime());
-                    const firstDate = new Date(sorted[0].startDate);
-                    const lastDate = new Date(sorted[sorted.length - 1].startDate);
-                    
-                    const formatMonth = (d: Date) => d.toLocaleDateString("th-TH", { month: "short", year: "2-digit" });
-                    const m1 = formatMonth(firstDate);
-                    const m2 = formatMonth(lastDate);
-                    
-                    if (m1 === m2) {
-                      dateDisplay = `เดินทาง ${m1}`;
-                    } else {
-                      dateDisplay = `เดินทาง ${m1} - ${m2}`;
-                    }
-                  }
-
-                  // หาวันเดินทางที่ถูกที่สุด
-                  const lowestPrice = tour.departures.length > 0 
-                    ? Math.min(...tour.departures.map((d: any) => d.price)) 
-                    : tour.price;
+              <div className="space-y-12">
+                {wholesaleKeys.map((wsKey) => {
+                  const wsConfig = wholesaleMap[wsKey] || { slug: "", name: wsKey, logo: "" };
+                  const wsTours = toursByWholesale[wsKey];
+                  if (!wsTours || wsTours.length === 0) return null;
+                  
+                  // หา Country สำหรับส่งไป ?dest= 
+                  const destParam = slug.length > 0 ? node.name.replace(/^[^\(]*\(/, '').replace(/\)/, '').toUpperCase().trim() : '';
 
                   return (
-                    <div key={tour.id} className="bg-white rounded-xl overflow-hidden shadow-[0_2px_8px_rgba(0,0,0,0.08)] hover:shadow-[0_8px_20px_rgba(0,0,0,0.12)] transition-all group flex flex-col h-full border border-gray-200">
-                      
-                      {/* Tour Image - Variable height to fit width without cropping */}
-                      <div className="relative bg-gray-100 overflow-hidden flex items-center justify-center">
-                        {tour.price > lowestPrice && (
-                          <div className="absolute top-0 left-0 bg-orange-600 text-white px-3 py-1 rounded-br-lg text-xs font-bold z-10 shadow-sm flex items-center gap-1">
-                            <Star className="w-3 h-3 fill-white" /> ได้รับรางวัล
+                    <div key={wsKey} className="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-gray-100">
+                      {/* Wholesale Header */}
+                      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 pb-4 border-b border-gray-100">
+                        <div className="flex items-center gap-4">
+                          {wsConfig.logo && (
+                            <div className="w-14 h-14 bg-white rounded-full shadow-sm border border-gray-100 overflow-hidden flex items-center justify-center p-1 shrink-0">
+                              <img src={wsConfig.logo} alt={wsConfig.name} className="max-w-[90%] max-h-[90%] object-contain" />
+                            </div>
+                          )}
+                          <div>
+                            <h3 className="text-2xl font-black text-gray-900">{wsConfig.name}</h3>
+                            <p className="text-sm text-gray-500 font-medium">{wsTours.length} โปรแกรมทัวร์</p>
                           </div>
-                        )}
-                        <img 
-                          src={tour.imageUrl || "https://images.unsplash.com/photo-1436491865332-7a61a109cc05"} 
-                          alt={tour.title} 
-                          className="w-full h-[180px] object-cover group-hover:scale-105 transition-transform duration-500"
-                        />
-                        
-                        {/* Map Pin Badge */}
-                        <div className="absolute bottom-3 left-3 bg-black/60 backdrop-blur-sm px-2 py-1 rounded text-[10px] font-bold text-white flex items-center gap-1">
-                          <MapPin className="w-3 h-3 text-white" /> {tour.destination}
                         </div>
-
-                        {/* Wholesale Logos */}
-                        {tour.source === "API_ZEGO" && (
-                          <div className="absolute top-3 right-3 bg-white w-10 h-10 rounded-full shadow-md overflow-hidden flex items-center justify-center p-0.5 border border-gray-100 z-10">
-                             <img src="/images/logos/letsgo-logo.png" alt="LET'S GO" className="w-full h-full object-contain" />
-                          </div>
-                        )}
-                        {tour.source === "API_GO365" && (
-                          <div className="absolute top-3 right-3 bg-white w-10 h-10 rounded-full shadow-md overflow-hidden flex items-center justify-center p-1.5 border border-gray-100 z-10">
-                             <img src="/images/logos/go365-logo.png" alt="GO365" className="w-full h-full object-contain" />
-                          </div>
+                        
+                        {wsConfig.slug && (
+                          <Link 
+                            href={`/wholesale/${wsConfig.slug}${destParam ? `?dest=${encodeURIComponent(destParam)}` : ''}`}
+                            className="bg-orange-50 hover:bg-orange-100 text-orange-600 px-5 py-2.5 rounded-xl font-bold text-sm transition-colors flex items-center gap-2 shrink-0"
+                          >
+                            ดูเพิ่มเติม
+                            <ChevronRight className="w-4 h-4" />
+                          </Link>
                         )}
                       </div>
 
-                      {/* Tour Content */}
-                      <div className="p-4 flex-1 flex flex-col">
-                        
-                        <Link href={`/tour/${tour.id}`} className="block flex-1">
-                          <h3 className="font-bold text-orange-600 text-base leading-snug mb-1 group-hover:underline transition-colors line-clamp-2">
-                            {tour.title}
-                          </h3>
-                          <div className="flex gap-0.5 mb-2">
-                            {[1,2,3,4,5].map(i => <Star key={i} className="w-3 h-3 text-yellow-400 fill-yellow-400" />)}
-                          </div>
-                          <p className="text-xs text-gray-500 mb-3 line-clamp-2">
-                            {tour.description}
-                          </p>
-                        </Link>
+                      {/* 4 Tours Grid */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5">
+                        {wsTours.slice(0, 4).map((tour: any) => {
+                          let dateDisplay = "เร็วๆ นี้";
+                          if (tour.departures && tour.departures.length > 0) {
+                            const sorted = [...tour.departures].sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime());
+                            const firstDate = new Date(sorted[0].startDate);
+                            const lastDate = new Date(sorted[sorted.length - 1].startDate);
+                            
+                            const formatMonth = (d: Date) => d.toLocaleDateString("th-TH", { month: "short", year: "2-digit" });
+                            const m1 = formatMonth(firstDate);
+                            const m2 = formatMonth(lastDate);
+                            
+                            if (m1 === m2) {
+                              dateDisplay = `เดินทาง ${m1}`;
+                            } else {
+                              dateDisplay = `เดินทาง ${m1} - ${m2}`;
+                            }
+                          }
 
-                        <div className="flex flex-wrap gap-1.5 mb-4">
-                          <div className="bg-gray-100 text-gray-700 px-2 py-1 rounded text-[10px] font-medium flex items-center gap-1 border border-gray-200">
-                            <Clock className="w-3 h-3" /> {tour.durationDays} วัน {tour.durationDays > 1 ? tour.durationDays - 1 : 0} คืน
-                          </div>
-                          <div className="bg-green-50 text-green-700 px-2 py-1 rounded text-[10px] font-medium flex items-center gap-1 border border-green-200">
-                             <Calendar className="w-3 h-3" /> {dateDisplay}
-                          </div>
-                        </div>
+                          const lowestPrice = tour.departures && tour.departures.length > 0 
+                            ? Math.min(...tour.departures.map((d: any) => d.price)) 
+                            : tour.price;
 
-                        {/* Footer / Price Box */}
-                        <div className="flex justify-between items-end pt-3 border-t border-gray-100 mt-auto">
-                          <div className="flex flex-col">
-                            <div className="bg-orange-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-sm w-fit mb-1">
-                              8.5 ดีเยี่ยม
+                          return (
+                            <div key={tour.id} className="bg-white rounded-xl overflow-hidden shadow-[0_2px_8px_rgba(0,0,0,0.06)] hover:shadow-[0_8px_20px_rgba(0,0,0,0.12)] transition-all group flex flex-col h-full border border-gray-100">
+                              
+                              <div className="relative bg-gray-100 overflow-hidden flex items-center justify-center">
+                                {tour.price > lowestPrice && (
+                                  <div className="absolute top-0 left-0 bg-orange-600 text-white px-3 py-1 rounded-br-lg text-xs font-bold z-10 shadow-sm flex items-center gap-1">
+                                    <Star className="w-3 h-3 fill-white" /> ได้รับรางวัล
+                                  </div>
+                                )}
+                                <img 
+                                  src={tour.imageUrl || "https://images.unsplash.com/photo-1436491865332-7a61a109cc05"} 
+                                  alt={tour.title} 
+                                  className="w-full h-[160px] object-cover group-hover:scale-105 transition-transform duration-500"
+                                />
+                                <div className="absolute bottom-2 left-2 bg-black/60 backdrop-blur-sm px-2 py-1 rounded text-[10px] font-bold text-white flex items-center gap-1">
+                                  <MapPin className="w-3 h-3 text-white" /> {tour.destination}
+                                </div>
+                              </div>
+
+                              <div className="p-3.5 flex-1 flex flex-col">
+                                <Link href={`/tour/${tour.id}`} className="block flex-1">
+                                  <h3 className="font-bold text-gray-800 text-sm leading-snug mb-1 group-hover:text-orange-600 transition-colors line-clamp-2">
+                                    {tour.title}
+                                  </h3>
+                                  <div className="flex gap-0.5 mb-2">
+                                    {[1,2,3,4,5].map(i => <Star key={i} className="w-3 h-3 text-yellow-400 fill-yellow-400" />)}
+                                  </div>
+                                </Link>
+
+                                <div className="flex flex-wrap gap-1.5 mb-3">
+                                  <div className="bg-gray-50 text-gray-600 px-2 py-1 rounded text-[10px] font-medium flex items-center gap-1 border border-gray-100">
+                                    <Clock className="w-3 h-3" /> {tour.durationDays} วัน {tour.durationDays > 1 ? tour.durationDays - 1 : 0} คืน
+                                  </div>
+                                  <div className="bg-green-50 text-green-700 px-2 py-1 rounded text-[10px] font-medium flex items-center gap-1 border border-green-100">
+                                     <Calendar className="w-3 h-3" /> {dateDisplay}
+                                  </div>
+                                </div>
+
+                                <div className="flex justify-between items-end pt-2 border-t border-gray-50 mt-auto">
+                                  <div className="text-right w-full">
+                                    <p className="text-base font-black text-orange-600 leading-none">
+                                      ฿ {lowestPrice.toLocaleString()}
+                                    </p>
+                                    <p className="text-[9px] text-gray-400 mt-1">ราคาเริ่มต้น</p>
+                                  </div>
+                                </div>
+                              </div>
                             </div>
-                            <span className="text-[10px] text-gray-400">128 รีวิว</span>
-                          </div>
-
-                          <div className="text-right">
-                            {tour.price > lowestPrice && (
-                              <p className="text-[10px] text-red-500 line-through mb-0.5">฿ {tour.price.toLocaleString()}</p>
-                            )}
-                            <p className="text-lg font-black text-gray-900 leading-none">
-                              ฿ {lowestPrice.toLocaleString()}
-                            </p>
-                            <p className="text-[9px] text-gray-400 mt-1">รวมภาษีและค่าธรรมเนียมแล้ว</p>
-                          </div>
-                        </div>
+                          );
+                        })}
                       </div>
                     </div>
                   );

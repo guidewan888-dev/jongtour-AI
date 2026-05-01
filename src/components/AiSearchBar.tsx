@@ -72,8 +72,8 @@ export default function AiSearchBar() {
   };
 
   return (
-    <div className="w-full max-w-2xl relative shadow-[0_8px_30px_rgb(249,115,22,0.15)] rounded-full hover:shadow-[0_8px_30px_rgb(249,115,22,0.25)] transition-all duration-500 bg-white group">
-      <form onSubmit={handleSubmit} className="flex items-center rounded-full border-2 border-gray-100 hover:border-orange-100 bg-white overflow-hidden px-3 py-2 md:py-3 transition-all">
+    <div className="w-full max-w-3xl relative shadow-[0_8px_30px_rgb(249,115,22,0.15)] rounded-full hover:shadow-[0_8px_30px_rgb(249,115,22,0.25)] transition-all duration-500 bg-white group">
+      <form onSubmit={handleSubmit} className="flex items-center rounded-full border-2 border-gray-100 hover:border-orange-100 bg-white overflow-hidden px-4 py-3 md:py-4 transition-all">
         
         {/* ไอคอนประกายดาวซ้ายสุด */}
         <div className="w-10 h-10 flex items-center justify-center shrink-0">
@@ -85,7 +85,7 @@ export default function AiSearchBar() {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder={isListening ? "กำลังฟังสิ่งที่คุณพูด..." : "อยากไปไหน พิมพ์เลย... เช่น ญี่ปุ่น 5 วัน งบ 3 หมื่น ช่วงปีใหม่"}
-          className={`w-full bg-transparent outline-none px-2 text-[15px] md:text-[17px] font-medium transition-colors ${
+          className={`w-full bg-transparent outline-none px-2 text-[16px] md:text-[18px] font-medium transition-colors ${
             isListening ? "text-orange-600 placeholder-orange-400" : "text-gray-800 placeholder-gray-400"
           }`}
           disabled={isAnalyzingImage}
