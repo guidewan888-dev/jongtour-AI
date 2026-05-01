@@ -2,12 +2,14 @@ import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-// Initialize Gemini if API key is provided
-const geminiApiKey = process.env.GEMINI_API_KEY;
-const isGeminiAvailable = !!geminiApiKey;
-const genAI = isGeminiAvailable ? new GoogleGenerativeAI(geminiApiKey) : null;
+export const dynamic = "force-dynamic";
 
 export async function POST(request: Request) {
+  // Initialize Gemini at runtime to ensure latest environment variables are used
+  const geminiApiKey = process.env.GEMINI_API_KEY;
+  const isGeminiAvailable = !!geminiApiKey;
+  const genAI = isGeminiAvailable ? new GoogleGenerativeAI(geminiApiKey) : null;
+
   try {
     const { message } = await request.json();
     const userMessage = message.trim();
