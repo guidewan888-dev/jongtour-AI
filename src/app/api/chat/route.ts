@@ -119,13 +119,19 @@ __CHIPS__["question 1", "question 2", "question 3"]`;
           const args = JSON.parse(toolCall.function.arguments);
           let query = supabase.from('Tour').select('*, departures:TourDeparture(*)');
           
+          if (args.isLastMinute) {
+            const today = new Date();
+            const next30Days = new Date();
+            next30Days.setDate(today.getDate() + 30);
+            query = supabase.from('Tour').select('*, departures:TourDeparture!inner(*)').gte('departures.startDate', today.toISOString()).lte('departures.startDate', next30Days.toISOString());
+          }
+
           if (args.destination) {
             query = query.or(`title.ilike.%${args.destination}%,description.ilike.%${args.destination}%,destination.ilike.%${args.destination}%`);
           }
           if (args.maxPrice) {
             query = query.lte('price', args.maxPrice);
           }
-          if (args.isLastMinute) query = query.eq('isFire', true);
           query = query.order('createdAt', { ascending: false }).limit(60);
 
           const { data: rawTours } = await query;

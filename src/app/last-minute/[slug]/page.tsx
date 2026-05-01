@@ -79,9 +79,14 @@ export default async function WholesaleLastMinutePage({ params, searchParams }: 
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || "sb_publishable_SRwNSJ89mInda5FcuB1W2w_9IEJlSOI";
   const supabase = createClient(supabaseUrl, supabaseKey);
 
+  const today = new Date();
+  const next30Days = new Date();
+  next30Days.setDate(today.getDate() + 30);
+
   let query = supabase.from('Tour')
-    .select('*, departures:TourDeparture(*)')
-    .ilike('title', '%ไฟไหม้%')
+    .select('*, departures:TourDeparture!inner(*)')
+    .gte('departures.startDate', today.toISOString())
+    .lte('departures.startDate', next30Days.toISOString())
     .order('createdAt', { ascending: false });
 
   // Now that all sources are officially mapped to TourSource enum in Prisma/Supabase, we can filter directly by source

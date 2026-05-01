@@ -9,11 +9,16 @@ export default async function LastMinutePage() {
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || "sb_publishable_SRwNSJ89mInda5FcuB1W2w_9IEJlSOI";
   const supabase = createClient(supabaseUrl, supabaseKey);
 
-  // ดึงเฉพาะทัวร์ที่มีคำว่า ไฟไหม้ ในชื่อ
+  const today = new Date();
+  const next30Days = new Date();
+  next30Days.setDate(today.getDate() + 30);
+
+  // ดึงทัวร์ที่มีรอบเดินทางภายใน 30 วันข้างหน้า (Last Minute Deals)
   const { data: tours, error } = await supabase
     .from('Tour')
-    .select('*, departures:TourDeparture(*)')
-    .ilike('title', '%ไฟไหม้%')
+    .select('*, departures:TourDeparture!inner(*)')
+    .gte('departures.startDate', today.toISOString())
+    .lte('departures.startDate', next30Days.toISOString())
     .order('createdAt', { ascending: false });
 
   if (error) {
