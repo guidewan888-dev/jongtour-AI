@@ -1,4 +1,4 @@
-import { prisma } from "@/utils/prisma";
+import { prisma } from "@/lib/prisma";
 
 const CACHE_TTL_HOURS = 24;
 
@@ -50,7 +50,7 @@ export async function getEstimatedHotelPrice(
       const ageHours = (Date.now() - cached.fetchedAt.getTime()) / (1000 * 60 * 60);
       if (ageHours < CACHE_TTL_HOURS) {
         console.log(`[Hotel Cache HIT] Using cached price for ${cityOrCountry} (${stars} Star)`);
-        pricePerNight = cached.priceAmount;
+        pricePerNight = cached.pricePerNight;
         provider = cached.provider;
         fetchedAt = cached.fetchedAt;
       }
@@ -99,7 +99,7 @@ export async function getEstimatedHotelPrice(
       rooms,
       totalCost: grandTotal,
       currency: "THB",
-      source: pricePerNight === cached?.priceAmount ? 'CACHE' : 'LIVE_API',
+      source: pricePerNight === cached?.pricePerNight ? 'CACHE' : 'LIVE_API',
       provider,
       fetchedAt
     };
