@@ -30,9 +30,9 @@ export default function InteractiveItinerary({ itinerary }: { itinerary: any }) 
     <div className="w-full max-w-[900px] mx-auto mt-4 bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm flex flex-col font-sans">
       
       {/* Header */}
-      <div className="bg-[#11b559] p-6 text-white text-center">
+      <div className="bg-gradient-to-r from-orange-500 to-orange-600 p-6 text-white text-center">
         <h2 className="text-2xl font-bold mb-2">✨ {itinerary.title}</h2>
-        <div className="inline-block bg-white text-[#11b559] font-bold rounded-md px-4 py-1 mt-2">
+        <div className="inline-block bg-white text-orange-600 font-bold rounded-md px-4 py-1 mt-2 shadow-sm">
           ราคาประเมินเบื้องต้น: {itinerary.estimatedPrice}
         </div>
       </div>
@@ -41,7 +41,7 @@ export default function InteractiveItinerary({ itinerary }: { itinerary: any }) 
       <div className="p-0 print-itinerary-body overflow-x-auto">
         <table className="w-full text-left border-collapse min-w-[700px]">
           <thead>
-            <tr className="bg-[#11b559] text-white">
+            <tr className="bg-orange-500 text-white">
               <th className="py-3 px-4 w-16 text-center font-bold text-sm">วันที่</th>
               <th className="py-3 px-4 font-bold text-sm">รายการทัวร์</th>
               <th className="py-3 px-2 w-32 text-center border-l border-white/20">
@@ -60,16 +60,16 @@ export default function InteractiveItinerary({ itinerary }: { itinerary: any }) 
             {days.map((d: any, index: number) => (
               <tr key={d.day} className="border-b border-gray-200 hover:bg-gray-50 group">
                 {/* Day Number */}
-                <td className="py-4 px-4 text-center font-bold text-lg text-[#11b559] align-top">
+                <td className="py-4 px-4 text-center font-bold text-lg text-orange-500 align-top">
                   {d.day}
                 </td>
                 
                 {/* Tour Program */}
                 <td className="py-4 px-4 align-top">
-                  <h3 className="font-bold text-gray-800 text-sm mb-1 outline-none focus:bg-white focus:ring-2 focus:ring-[#11b559] rounded px-1 -mx-1" contentEditable suppressContentEditableWarning>
+                  <h3 className="font-bold text-gray-800 text-sm mb-1 outline-none focus:bg-orange-50 focus:ring-2 focus:ring-orange-200 rounded px-1 -mx-1" contentEditable suppressContentEditableWarning>
                     {d.title}
                   </h3>
-                  <p className="text-gray-600 text-[13px] leading-relaxed outline-none focus:bg-white focus:ring-2 focus:ring-[#11b559] rounded px-1 -mx-1 whitespace-pre-line" contentEditable suppressContentEditableWarning>
+                  <p className="text-gray-600 text-[13px] leading-relaxed outline-none focus:bg-orange-50 focus:ring-2 focus:ring-orange-200 rounded px-1 -mx-1 whitespace-pre-line" contentEditable suppressContentEditableWarning>
                     {d.detail}
                   </p>
                 </td>
@@ -80,25 +80,25 @@ export default function InteractiveItinerary({ itinerary }: { itinerary: any }) 
                     {/* Breakfast */}
                     <div>
                       {d.meals?.breakfast ? (
-                        <Check className="w-4 h-4 text-[#11b559]" strokeWidth={3} />
+                        <Check className="w-4 h-4 text-orange-500" strokeWidth={3} />
                       ) : (
-                        <X className="w-4 h-4 text-red-500" strokeWidth={3} />
+                        <X className="w-4 h-4 text-red-400" strokeWidth={3} />
                       )}
                     </div>
                     {/* Lunch */}
                     <div>
                       {d.meals?.lunch ? (
-                        <Check className="w-4 h-4 text-[#11b559]" strokeWidth={3} />
+                        <Check className="w-4 h-4 text-orange-500" strokeWidth={3} />
                       ) : (
-                        <X className="w-4 h-4 text-red-500" strokeWidth={3} />
+                        <X className="w-4 h-4 text-red-400" strokeWidth={3} />
                       )}
                     </div>
                     {/* Dinner */}
                     <div>
                       {d.meals?.dinner ? (
-                        <Check className="w-4 h-4 text-[#11b559]" strokeWidth={3} />
+                        <Check className="w-4 h-4 text-orange-500" strokeWidth={3} />
                       ) : (
-                        <X className="w-4 h-4 text-red-500" strokeWidth={3} />
+                        <X className="w-4 h-4 text-red-400" strokeWidth={3} />
                       )}
                     </div>
                   </div>
@@ -106,7 +106,7 @@ export default function InteractiveItinerary({ itinerary }: { itinerary: any }) 
 
                 {/* Hotel */}
                 <td className="py-4 px-4 text-center align-middle border-l border-gray-100">
-                  <p className="text-[13px] font-bold text-[#11b559] outline-none focus:bg-white focus:ring-2 focus:ring-[#11b559] rounded px-1" contentEditable suppressContentEditableWarning>
+                  <p className="text-[13px] font-bold text-orange-600 outline-none focus:bg-orange-50 focus:ring-2 focus:ring-orange-200 rounded px-1" contentEditable suppressContentEditableWarning>
                     {d.hotel || "-"}
                   </p>
                 </td>
@@ -114,10 +114,10 @@ export default function InteractiveItinerary({ itinerary }: { itinerary: any }) 
                 {/* Action Controls */}
                 <td className="py-4 px-2 align-middle border-l border-gray-100 no-print">
                   <div className="flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button onClick={() => moveDay(index, 'up')} disabled={index === 0} className="p-1 text-gray-400 hover:text-[#11b559] hover:bg-green-50 rounded disabled:opacity-30">
+                    <button onClick={() => moveDay(index, 'up')} disabled={index === 0} className="p-1 text-gray-400 hover:text-orange-500 hover:bg-orange-50 rounded disabled:opacity-30">
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m18 15-6-6-6 6"/></svg>
                     </button>
-                    <button onClick={() => moveDay(index, 'down')} disabled={index === days.length - 1} className="p-1 text-gray-400 hover:text-[#11b559] hover:bg-green-50 rounded disabled:opacity-30">
+                    <button onClick={() => moveDay(index, 'down')} disabled={index === days.length - 1} className="p-1 text-gray-400 hover:text-orange-500 hover:bg-orange-50 rounded disabled:opacity-30">
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>
                     </button>
                   </div>
@@ -134,13 +134,13 @@ export default function InteractiveItinerary({ itinerary }: { itinerary: any }) 
           {/* Inclusions */}
           {itinerary.inclusions && itinerary.inclusions.length > 0 && (
             <div>
-              <h4 className="font-bold text-[#11b559] mb-3 flex items-center gap-2">
+              <h4 className="font-bold text-orange-600 mb-3 flex items-center gap-2">
                 <CheckCircle2 className="w-4 h-4" /> สิ่งที่รวมในราคาทัวร์
               </h4>
               <ul className="space-y-2">
                 {itinerary.inclusions.map((item: string, idx: number) => (
                   <li key={idx} className="flex items-start gap-2 text-gray-700">
-                    <span className="text-[#11b559] mt-0.5">•</span>
+                    <span className="text-orange-500 mt-0.5">•</span>
                     <span>{item}</span>
                   </li>
                 ))}
@@ -181,7 +181,7 @@ export default function InteractiveItinerary({ itinerary }: { itinerary: any }) 
       {/* Footer / Export */}
       <div className="p-4 bg-gray-100 border-t border-gray-200 no-print flex justify-between items-center px-6">
         <p className="text-gray-500 text-xs">Generated by Jongtour AI</p>
-        <button onClick={() => window.print()} className="bg-[#11b559] hover:bg-green-600 text-white px-6 py-2 rounded-lg text-sm font-bold shadow-sm flex items-center gap-2 transition-colors">
+        <button onClick={() => window.print()} className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-2 rounded-lg text-sm font-bold shadow-sm flex items-center gap-2 transition-colors">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v8H6z"/></svg>
           Print PDF
         </button>
