@@ -51,6 +51,18 @@ export async function POST(request: Request) {
               content: `You are an intelligent travel agent parsing user travel queries.
 Extract the travel intent from the latest user message, taking into account the conversation history.
 Return ONLY a JSON object with these exact keys:
+{
+  "keywords": ["..."],
+  "maxPrice": null,
+  "isFire": false,
+  "wholesale": null,
+  "days": null,
+  "airline": null,
+  "month": null,
+  "isFitRequest": false
+}
+
+Rules for extraction:
 - "keywords": array of strings. Include destination countries, cities, or continents in THAI language (e.g., ["ญี่ปุ่น", "ยุโรป", "หน้าหนาว", "ฮอกไกโด"]). Leave empty if none found. Do NOT include generic words like "ทัวร์" or "ไปเที่ยว".
 - "maxPrice": number or null. Extract any maximum budget mentioned. Convert shorthand like "3 หมื่น" to 30000.
 - "isFire": boolean. true if the user is looking for last-minute deals (e.g., "ไฟไหม้", "โปรไฟไหม้").
@@ -58,7 +70,7 @@ Return ONLY a JSON object with these exact keys:
 - "days": number or null. Extract the EXACT number of days requested (e.g. "3 วัน" -> 3).
 - "airline": string or null. Extract the specific airline requested (e.g. "การบินไทย", "แอร์เอเชีย", "TG", "XJ").
 - "month": string or null. Extract the month requested in English (e.g. "เมษา", "เมษายน", "สงกรานต์" -> "April").
-- "isFitRequest": boolean. true if the user wants a private tour, custom itinerary, or F.I.T. (e.g., "จัดทัวร์ส่วนตัว", "ไปกันเอง", "ช่วยจัดทริปให้หน่อย").`
+- "isFitRequest": boolean. MUST be true if the user wants a private tour, custom itinerary, or F.I.T. (e.g., "จัดทัวร์ส่วนตัว", "ไปกันเอง", "ช่วยจัดทริปให้หน่อย", "จัดทริป").`
             },
             ...(chatHistory.slice(-6).map((m: any) => ({ 
               role: m.role === 'ai' ? 'assistant' : 'user', 
@@ -72,11 +84,11 @@ Return ONLY a JSON object with these exact keys:
         const parsed = JSON.parse(text);
         if (parsed.keywords && Array.isArray(parsed.keywords)) searchCriteria.keywords = parsed.keywords;
         if (typeof parsed.maxPrice === "number") searchCriteria.maxPrice = parsed.maxPrice;
-        if (parsed.isFire === true) searchCriteria.isFire = true;
+        if (parsed.isFire === true || String(parsed.isFire) === "true") searchCriteria.isFire = true;
         if (typeof parsed.days === "number") searchCriteria.days = parsed.days;
         if (typeof parsed.airline === "string") searchCriteria.airline = parsed.airline;
         if (typeof parsed.month === "string") searchCriteria.month = parsed.month;
-        if (parsed.isFitRequest === true) isFitRequest = true;
+        if (parsed.isFitRequest === true || String(parsed.isFitRequest) === "true") isFitRequest = true;
         
         if (parsed.wholesale) {
           const w = parsed.wholesale.toLowerCase();
