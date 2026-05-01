@@ -5,7 +5,7 @@ import { cookies } from "next/headers";
 import OpenAI from "openai";
 import { type NextRequest } from "next/server";
 
-export const maxDuration = 60; // Increase max execution time to 60s for slow AI responses
+export const maxDuration = 60; // Increase Vercel timeout for slow AI generation
 export const dynamic = "force-dynamic";
 
 export async function POST(request: NextRequest) {
@@ -83,7 +83,7 @@ Rules for extraction:
         });
         
         const text = response.choices[0].message.content || "{}";
-        const parsed = JSON.parse(text);
+        const parsed = JSON.parse(text.replace(/```json/gi, "").replace(/```/g, ""));
         if (parsed.keywords && Array.isArray(parsed.keywords)) searchCriteria.keywords = parsed.keywords;
         if (typeof parsed.maxPrice === "number") searchCriteria.maxPrice = parsed.maxPrice;
         if (parsed.isFire === true || String(parsed.isFire) === "true") searchCriteria.isFire = true;
@@ -112,9 +112,7 @@ Rules for extraction:
     }
     
     if (!isOpenAIAvailable || !openai || aiFailed) {
-      // Fallback Keyword Logic if no OpenAI Key or if API throws error
       const lower = userMessage.toLowerCase();
-      // Comprehensive fallback list if Gemini is offline
       const commonDestinations = [
         "ญี่ปุ่น", "japan", "เกาหลี", "korea", "ยุโรป", "europe", "ไต้หวัน", "taiwan", 
         "ฮ่องกง", "hong kong", "จีน", "china", "สิงคโปร์", "singapore", "เวียดนาม", "vietnam", 
@@ -135,7 +133,6 @@ Rules for extraction:
 
       if (lower.includes("ไฟไหม้")) searchCriteria.isFire = true;
       
-      // Simple price extraction fallback
       const priceMatch = lower.match(/งบ\s*(\d+)\s*(หมื่น|พัน)?/);
       if (priceMatch) {
         let num = parseInt(priceMatch[1]);
@@ -145,7 +142,6 @@ Rules for extraction:
       }
     }
 
-    // 2. Query Supabase
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://qterfftaebnoawnzkfgu.supabase.co";
     const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || "sb_publishable_SRwNSJ89mInda5FcuB1W2w_9IEJlSOI";
     const supabase = createClient(supabaseUrl, supabaseKey);
@@ -153,8 +149,7 @@ Rules for extraction:
     let matchedTourIds: string[] = [];
     let isSemanticSearch = false;
 
-    // Perform Semantic Search (RAG) if OpenAI is available and query is somewhat descriptive
-    if (openai && userMessage.length > 5) {
+    if (openai && userMessage.length > 5 && !isFitRequest) {
       try {
         const embedResponse = await openai.embeddings.create({
           model: "text-embedding-3-small",
@@ -166,17 +161,13 @@ Rules for extraction:
 
         const { data: matches, error: matchError } = await supabase.rpc('match_tours', {
           query_embedding,
-          match_threshold: 0.25, // 0.25 threshold (can be adjusted)
+          match_threshold: 0.25,
           match_count: 8
         });
 
         if (!matchError && matches && matches.length > 0) {
           matchedTourIds = matches.map((m: any) => m.id);
           isSemanticSearch = true;
-          // Merge semantic keywords for highlighting/context
-          if (searchCriteria.keywords.length === 0) {
-            searchCriteria.keywords = ["ทัวร์ที่ตรงกับความต้องการของคุณ"];
-          }
         }
       } catch (err) {
         console.error("Semantic search failed:", err);
@@ -185,33 +176,62 @@ Rules for extraction:
 
     let tours: any[] = [];
     
-    // Only fetch tours if it's NOT a custom F.I.T. request
     if (!isFitRequest) {
       let query = supabase.from('Tour').select('*, departures:TourDeparture(*)');
+      
+      if (searchCriteria.keywords.length > 0) {
+        const keywordQuery = searchCriteria.keywords.map(k => `title.ilike.%${k}%,highlight.ilike.%${k}%`).join(",");
+        query = query.or(keywordQuery);
+      }
+      
+      if (searchCriteria.source) query = query.eq('source', searchCriteria.source);
+      if (searchCriteria.airline) query = query.ilike('airline', `%${searchCriteria.airline}%`);
+      if (searchCriteria.isFire) query = query.eq('isFire', true);
 
-        "march": ["มี.ค.", "มีนา", "mar"],
-        "april": ["เม.ย.", "เมษา", "สงกรานต์", "apr"],
-        "may": ["พ.ค.", "พฤษภา", "may"],
-        "june": ["มิ.ย.", "มิถุนา", "jun"],
-        "july": ["ก.ค.", "กรกฎา", "jul"],
-        "august": ["ส.ค.", "สิงหา", "aug"],
-        "september": ["ก.ย.", "กันยา", "sep"],
-        "october": ["ต.ค.", "ตุลา", "oct"],
-        "november": ["พ.ย.", "พฤศจิกา", "nov"],
-        "december": ["ธ.ค.", "ธันวา", "dec", "ปีใหม่"]
-      };
+      // Fetch a larger pool to shuffle
+      query = query.order('createdAt', { ascending: false }).limit(60);
+
+      const { data: rawTours, error } = await query;
+      tours = rawTours || [];
+
+      // Re-order by semantic similarity if RAG was used
+      if (isSemanticSearch && matchedTourIds.length > 0) {
+        tours.sort((a, b) => matchedTourIds.indexOf(a.id) - matchedTourIds.indexOf(b.id));
+      } else {
+        // Randomly shuffle to give older wholesale tours visibility
+        tours = tours.sort(() => 0.5 - Math.random());
+      }
+
+      // Local Filters
+      if (searchCriteria.maxPrice && tours.length > 0) {
+        tours = tours.filter(tour => tour.price <= searchCriteria.maxPrice!);
+      }
       
-      const aliases = monthMap[targetMonth] || [targetMonth];
-      
-      tours = tours.filter(tour => {
-        const textToSearch = (tour.periodText || "") + " " + (tour.departures?.map((d:any)=>d.dateText).join(" ") || "");
-        return aliases.some(alias => textToSearch.toLowerCase().includes(alias));
-      });
+      if (searchCriteria.month) {
+        const targetMonth = searchCriteria.month.toLowerCase();
+        const monthMap: Record<string, string[]> = {
+          "january": ["ม.ค.", "มกรา", "jan"],
+          "february": ["ก.พ.", "กุมภา", "feb"],
+          "march": ["มี.ค.", "มีนา", "mar"],
+          "april": ["เม.ย.", "เมษา", "สงกรานต์", "apr"],
+          "may": ["พ.ค.", "พฤษภา", "may"],
+          "june": ["มิ.ย.", "มิถุนา", "jun"],
+          "july": ["ก.ค.", "กรกฎา", "jul"],
+          "august": ["ส.ค.", "สิงหา", "aug"],
+          "september": ["ก.ย.", "กันยา", "sep"],
+          "october": ["ต.ค.", "ตุลา", "oct"],
+          "november": ["พ.ย.", "พฤศจิกา", "nov"],
+          "december": ["ธ.ค.", "ธันวา", "dec", "ปีใหม่"]
+        };
+        const aliases = monthMap[targetMonth] || [targetMonth];
+        tours = tours.filter(tour => {
+          const textToSearch = (tour.periodText || "") + " " + (tour.departures?.map((d:any)=>d.dateText).join(" ") || "");
+          return aliases.some(alias => textToSearch.toLowerCase().includes(alias));
+        });
+      }
+
+      tours = tours.slice(0, 4);
     }
-
-    // Return max 4 for UI
-    tours = tours.slice(0, 4);
-    } // End of !isFitRequest block
 
     let customItinerary = null;
     if (isOpenAIAvailable && openai && isFitRequest) {
@@ -229,7 +249,7 @@ Rules for extraction:
           ]
         });
         let content = fitResponse.choices[0].message.content || "null";
-        content = content.replace(/```json/g, "").replace(/```/g, "").trim();
+        content = content.replace(/```json/gi, "").replace(/```/g, "").trim();
         customItinerary = JSON.parse(content);
       } catch (e) {
         console.error("FIT Generation Error:", e);
