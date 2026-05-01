@@ -199,8 +199,8 @@ export default function Header() {
             🔥 ทัวร์ไฟไหม้
           </Link>
           
-          <Link href="/ai-planner" className="px-4 py-2 text-orange-500 hover:text-orange-600 font-bold transition-colors flex items-center gap-1">
-            ✨ AI ออกแบบทริป
+          <Link href="/ai-planner" className="bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white px-5 py-2 rounded-full font-bold transition-all shadow-md hover:shadow-lg flex items-center gap-2 transform hover:-translate-y-0.5 ml-2">
+            ✨ AI จัดทริปส่วนตัว
           </Link>
         </div>
 
