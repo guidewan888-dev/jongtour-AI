@@ -116,12 +116,10 @@ async function TourDetailsContent({ params }: { params: { id: string } }) {
                   className={`flex items-center justify-center gap-2 px-4 py-2 rounded-md font-bold text-xs transition-colors shrink-0 ${
                     tour.pdfUrl 
                       ? "bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100" 
-                      : "bg-gray-100 text-gray-400 border border-gray-200 cursor-not-allowed"
+                      : "bg-gray-100 text-gray-400 border border-gray-200 cursor-default"
                   }`}
                   title={tour.pdfUrl ? "ดาวน์โหลดโปรแกรมทัวร์ (PDF)" : "ไม่มีไฟล์ PDF สำหรับโปรแกรมนี้"}
-                  onClick={(e) => {
-                    if (!tour.pdfUrl) e.preventDefault();
-                  }}
+                  style={{ pointerEvents: tour.pdfUrl ? "auto" : "none" }}
                 >
                   <FileText className="w-4 h-4" />
                   ดาวน์โหลดโปรแกรมทัวร์
