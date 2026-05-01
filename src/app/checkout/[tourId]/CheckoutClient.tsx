@@ -17,9 +17,14 @@ export default function CheckoutClient({ tour, departures }: { tour: any, depart
   const [singleRooms, setSingleRooms] = useState(0);
   const [paymentType, setPaymentType] = useState('full'); // 'full' or 'deposit'
   
-  // Extra Services (quantity instead of boolean)
-  const [disneylandQty, setDisneylandQty] = useState(0);
-  const [insuranceQty, setInsuranceQty] = useState(0);
+  // Extra Services
+  const availableExtras = [
+    { id: 'disneyland', name: 'บัตรเข้าสวนสนุก Disneyland (รวมรถรับส่ง)', desc: 'สนุกสุดเหวี่ยงกับเครื่องเล่นระดับโลก พร้อมรถรับส่งจากโรงแรม', price: 2500 },
+    { id: 'insurance', name: 'ประกันภัยการเดินทางแบบพรีเมียม (ครอบคลุมโควิด-19)', desc: 'คุ้มครองค่ารักษาพยาบาลสูงสุด 2 ล้านบาท', price: 500 }
+  ];
+  
+  const [selectedExtras, setSelectedExtras] = useState<{id: string, qty: number}[]>([]);
+  const [isAddingExtra, setIsAddingExtra] = useState(false);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -37,7 +42,11 @@ export default function CheckoutClient({ tour, departures }: { tour: any, depart
   
   const basePrice = (adults * pricePerPax) + (children * childPrice);
   const singleSupplement = singleRooms * singleRoomPrice;
-  const extrasTotal = (disneylandQty * disneylandPrice) + (insuranceQty * insurancePrice);
+  
+  const extrasTotal = selectedExtras.reduce((sum, extra) => {
+    const service = availableExtras.find(e => e.id === extra.id);
+    return sum + (service ? service.price * extra.qty : 0);
+  }, 0);
   
   const totalPrice = basePrice + singleSupplement + extrasTotal;
   const totalDeposit = (totalPax * depositPrice) + extrasTotal; // deposit + extras paid upfront usually
@@ -115,36 +124,103 @@ export default function CheckoutClient({ tour, departures }: { tour: any, depart
           </div>
 
           <div className="bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-gray-100">
-            <h2 className="text-2xl font-bold text-gray-800 mb-2">บริการเสริมพิเศษ (Extra Services)</h2>
-            <p className="text-gray-500 mb-6 text-sm">เพิ่มความสะดวกสบายให้การเดินทางของคุณ (สามารถเลือกจำนวนที่ต้องการได้)</p>
-            
-            <div className="space-y-4">
-              <div className={`flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 border rounded-xl transition-colors ${disneylandQty > 0 ? 'border-orange-500 bg-orange-50' : 'border-gray-200 hover:border-orange-300'}`}>
-                <div className="flex-1">
-                  <div className="font-bold text-gray-800">บัตรเข้าสวนสนุก Disneyland (รวมรถรับส่ง)</div>
-                  <div className="text-sm text-gray-500 mt-1">สนุกสุดเหวี่ยงกับเครื่องเล่นระดับโลก พร้อมรถรับส่งจากโรงแรม</div>
-                  <div className="font-bold text-orange-600 mt-2">+{disneylandPrice.toLocaleString()} ฿ / ท่าน</div>
-                </div>
-                <div className="flex items-center justify-between sm:justify-end w-full sm:w-auto border border-gray-300 bg-white rounded-xl overflow-hidden shrink-0 h-12">
-                  <button type="button" onClick={() => setDisneylandQty(Math.max(0, disneylandQty - 1))} className="w-12 h-full bg-gray-50 flex items-center justify-center font-bold text-gray-600 hover:bg-gray-200">-</button>
-                  <span className="font-bold w-12 text-center">{disneylandQty}</span>
-                  <button type="button" onClick={() => setDisneylandQty(Math.min(totalPax, disneylandQty + 1))} className="w-12 h-full bg-gray-50 flex items-center justify-center font-bold text-gray-600 hover:bg-gray-200">+</button>
-                </div>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
+              <div>
+                <h2 className="text-2xl font-bold text-gray-800">บริการเสริมพิเศษ (Extra Services)</h2>
+                <p className="text-gray-500 text-sm mt-1">เพิ่มความสะดวกสบายให้การเดินทางของคุณ</p>
               </div>
-
-              <div className={`flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 border rounded-xl transition-colors ${insuranceQty > 0 ? 'border-orange-500 bg-orange-50' : 'border-gray-200 hover:border-orange-300'}`}>
-                <div className="flex-1">
-                  <div className="font-bold text-gray-800">ประกันภัยการเดินทางแบบพรีเมียม (ครอบคลุมโควิด-19)</div>
-                  <div className="text-sm text-gray-500 mt-1">คุ้มครองค่ารักษาพยาบาลสูงสุด 2 ล้านบาท</div>
-                  <div className="font-bold text-orange-600 mt-2">+{insurancePrice.toLocaleString()} ฿ / ท่าน</div>
-                </div>
-                <div className="flex items-center justify-between sm:justify-end w-full sm:w-auto border border-gray-300 bg-white rounded-xl overflow-hidden shrink-0 h-12">
-                  <button type="button" onClick={() => setInsuranceQty(Math.max(0, insuranceQty - 1))} className="w-12 h-full bg-gray-50 flex items-center justify-center font-bold text-gray-600 hover:bg-gray-200">-</button>
-                  <span className="font-bold w-12 text-center">{insuranceQty}</span>
-                  <button type="button" onClick={() => setInsuranceQty(Math.min(totalPax, insuranceQty + 1))} className="w-12 h-full bg-gray-50 flex items-center justify-center font-bold text-gray-600 hover:bg-gray-200">+</button>
-                </div>
-              </div>
+              <button 
+                type="button" 
+                onClick={() => setIsAddingExtra(true)} 
+                className="flex items-center justify-center gap-1 text-orange-600 font-bold hover:text-orange-700 bg-orange-50 px-4 py-2 rounded-xl text-sm transition-colors border border-orange-100 shrink-0"
+              >
+                <Plus className="w-4 h-4" /> เพิ่มบริการเสริม
+              </button>
             </div>
+            
+            {selectedExtras.length === 0 && !isAddingExtra ? (
+              <div className="border-2 border-dashed border-gray-200 rounded-2xl p-8 text-center bg-gray-50/50">
+                <div className="text-gray-400 mb-2">ยังไม่มีบริการเสริมที่เลือก</div>
+                <button type="button" onClick={() => setIsAddingExtra(true)} className="text-orange-600 font-bold hover:underline text-sm">
+                  คลิกเพื่อเลือกบริการเสริมเพิ่มเติม
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {selectedExtras.map((extra, index) => {
+                  const service = availableExtras.find(e => e.id === extra.id);
+                  if (!service) return null;
+                  
+                  return (
+                    <div key={extra.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 border border-orange-200 bg-orange-50/30 rounded-xl relative">
+                      <button 
+                        type="button" 
+                        onClick={() => setSelectedExtras(selectedExtras.filter(e => e.id !== extra.id))}
+                        className="absolute -top-2 -right-2 w-6 h-6 bg-red-100 text-red-600 rounded-full flex items-center justify-center text-xs font-bold hover:bg-red-200"
+                        title="ลบรายการ"
+                      >
+                        ✕
+                      </button>
+                      <div className="flex-1 pr-4">
+                        <div className="font-bold text-gray-800">{service.name}</div>
+                        <div className="text-xs text-gray-500 mt-1">{service.desc}</div>
+                        <div className="font-bold text-orange-600 mt-2">+{service.price.toLocaleString()} ฿ / ท่าน</div>
+                      </div>
+                      <div className="flex items-center justify-between sm:justify-end w-full sm:w-auto border border-gray-300 bg-white rounded-xl overflow-hidden shrink-0 h-12">
+                        <button type="button" onClick={() => {
+                          const newExtras = [...selectedExtras];
+                          if (newExtras[index].qty > 1) {
+                            newExtras[index].qty -= 1;
+                            setSelectedExtras(newExtras);
+                          } else {
+                            setSelectedExtras(selectedExtras.filter(e => e.id !== extra.id));
+                          }
+                        }} className="w-12 h-full bg-gray-50 flex items-center justify-center font-bold text-gray-600 hover:bg-gray-200">-</button>
+                        <span className="font-bold w-12 text-center">{extra.qty}</span>
+                        <button type="button" onClick={() => {
+                          const newExtras = [...selectedExtras];
+                          newExtras[index].qty = Math.min(totalPax, newExtras[index].qty + 1);
+                          setSelectedExtras(newExtras);
+                        }} className="w-12 h-full bg-gray-50 flex items-center justify-center font-bold text-gray-600 hover:bg-gray-200">+</button>
+                      </div>
+                    </div>
+                  );
+                })}
+
+                {isAddingExtra && (
+                  <div className="p-5 border border-gray-200 bg-gray-50 rounded-xl animate-in fade-in zoom-in-95 duration-200">
+                    <h3 className="font-bold text-gray-800 mb-3">เลือกรายการที่ต้องการเพิ่ม:</h3>
+                    <select 
+                      className="w-full border border-gray-300 rounded-xl py-3 px-4 outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 mb-3"
+                      onChange={(e) => {
+                        if (e.target.value) {
+                          if (!selectedExtras.find(ext => ext.id === e.target.value)) {
+                            setSelectedExtras([...selectedExtras, { id: e.target.value, qty: 1 }]);
+                          }
+                          setIsAddingExtra(false);
+                        }
+                      }}
+                      defaultValue=""
+                    >
+                      <option value="" disabled>-- กรุณาเลือกบริการเสริม --</option>
+                      {availableExtras.map(service => {
+                        const isAlreadySelected = selectedExtras.some(e => e.id === service.id);
+                        return (
+                          <option key={service.id} value={service.id} disabled={isAlreadySelected}>
+                            {service.name} (+{service.price.toLocaleString()} ฿) {isAlreadySelected ? '(เลือกแล้ว)' : ''}
+                          </option>
+                        );
+                      })}
+                    </select>
+                    <div className="flex justify-end">
+                      <button type="button" onClick={() => setIsAddingExtra(false)} className="text-gray-500 text-sm font-medium hover:text-gray-700 hover:underline">
+                        ยกเลิก
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           <div className="bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-gray-100">
@@ -227,21 +303,19 @@ export default function CheckoutClient({ tour, departures }: { tour: any, depart
                   <span>{singleSupplement.toLocaleString()} ฿</span>
                 </div>
               )}
-              {(disneylandQty > 0 || insuranceQty > 0) && (
+              {selectedExtras.length > 0 && (
                 <div className="pt-2 mt-2 border-t border-dashed border-gray-200">
                   <p className="font-bold text-gray-700 mb-2">บริการเสริม:</p>
-                  {disneylandQty > 0 && (
-                    <div className="flex justify-between text-gray-500 pl-2 mb-1">
-                      <span>บัตร Disneyland (x{disneylandQty})</span>
-                      <span>{(disneylandQty * disneylandPrice).toLocaleString()} ฿</span>
-                    </div>
-                  )}
-                  {insuranceQty > 0 && (
-                    <div className="flex justify-between text-gray-500 pl-2">
-                      <span>ประกันการเดินทาง (x{insuranceQty})</span>
-                      <span>{(insuranceQty * insurancePrice).toLocaleString()} ฿</span>
-                    </div>
-                  )}
+                  {selectedExtras.map(extra => {
+                    const service = availableExtras.find(e => e.id === extra.id);
+                    if (!service) return null;
+                    return (
+                      <div key={extra.id} className="flex justify-between text-gray-500 pl-2 mb-1">
+                        <span className="truncate pr-2">{service.name.split(' (')[0]} (x{extra.qty})</span>
+                        <span className="shrink-0">{(extra.qty * service.price).toLocaleString()} ฿</span>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
               
