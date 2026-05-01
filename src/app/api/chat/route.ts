@@ -1,14 +1,14 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import OpenAI from "openai";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(request: Request) {
-  // Initialize Gemini at runtime to ensure latest environment variables are used
-  const geminiApiKey = process.env.GEMINI_API_KEY;
-  const isGeminiAvailable = !!geminiApiKey;
-  const genAI = isGeminiAvailable ? new GoogleGenerativeAI(geminiApiKey) : null;
+  // Initialize OpenAI at runtime to ensure latest environment variables are used
+  const openaiApiKey = process.env.OPENAI_API_KEY;
+  const isOpenAIAvailable = !!openaiApiKey;
+  const openai = isOpenAIAvailable ? new OpenAI({ apiKey: openaiApiKey }) : null;
 
   try {
     const { message } = await request.json();
@@ -21,39 +21,40 @@ export async function POST(request: Request) {
       isFire: false,
     };
 
-    let geminiFailed = false;
+    let aiFailed = false;
 
-    if (isGeminiAvailable && genAI) {
+    if (isOpenAIAvailable && openai) {
       try {
-        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
-        const prompt = `
-You are an intelligent travel agent parsing user travel queries.
-Extract the travel intent from this user message: "${userMessage}"
-
-Return ONLY a valid JSON object with these exact keys:
+        const response = await openai.chat.completions.create({
+          model: "gpt-4o-mini",
+          response_format: { type: "json_object" },
+          messages: [
+            {
+              role: "system",
+              content: `You are an intelligent travel agent parsing user travel queries.
+Extract the travel intent from the user message.
+Return ONLY a JSON object with these exact keys:
 - "keywords": array of strings. Include destination countries, cities, or continents in THAI language (e.g., ["ญี่ปุ่น", "ยุโรป", "หน้าหนาว", "ฮอกไกโด"]). Leave empty if none found. Do NOT include generic words like "ทัวร์" or "ไปเที่ยว".
 - "maxPrice": number or null. Extract any maximum budget mentioned. Convert shorthand like "3 หมื่น" to 30000.
-- "isFire": boolean. true if the user is looking for last-minute deals (e.g., "ไฟไหม้", "โปรไฟไหม้").
-
-DO NOT wrap the response in markdown blocks like \`\`\`json. Return JUST the raw JSON string.
-`;
-        const result = await model.generateContent(prompt);
-        let text = result.response.text().trim();
-        // Fallback cleanup in case model returns markdown block
-        text = text.replace(/^```json\s*/, '').replace(/\s*```$/, '');
+- "isFire": boolean. true if the user is looking for last-minute deals (e.g., "ไฟไหม้", "โปรไฟไหม้").`
+            },
+            { role: "user", content: userMessage }
+          ]
+        });
         
+        const text = response.choices[0].message.content || "{}";
         const parsed = JSON.parse(text);
         if (parsed.keywords && Array.isArray(parsed.keywords)) searchCriteria.keywords = parsed.keywords;
         if (typeof parsed.maxPrice === "number") searchCriteria.maxPrice = parsed.maxPrice;
         if (parsed.isFire === true) searchCriteria.isFire = true;
       } catch (e) {
-        console.error("Failed to parse Gemini intent:", e);
-        geminiFailed = true;
+        console.error("Failed to parse OpenAI intent:", e);
+        aiFailed = true;
       }
     } 
     
-    if (!isGeminiAvailable || !genAI || geminiFailed) {
-      // Fallback Keyword Logic if no Gemini Key or if API throws 429 Limit Error
+    if (!isOpenAIAvailable || !openai || aiFailed) {
+      // Fallback Keyword Logic if no OpenAI Key or if API throws error
       const lower = userMessage.toLowerCase();
       // Comprehensive fallback list if Gemini is offline
       const commonDestinations = [
@@ -127,14 +128,16 @@ DO NOT wrap the response in markdown blocks like \`\`\`json. Return JUST the raw
     // 3. Generate natural response
     let aiReply = "";
 
-    if (isGeminiAvailable && genAI && !geminiFailed) {
+    if (isOpenAIAvailable && openai && !aiFailed) {
       try {
-        const replyModel = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
         const tourTitles = tours.length > 0 ? tours.map(t => `- ${t.title} (ราคาเริ่มต้น ${t.price} บาท)`).join("\n") : "ไม่มีทัวร์ที่ตรงสเปก";
         
-        const replyPrompt = `
-You are จองทัวร์ AI (Jongtour AI), a friendly, enthusiastic, and professional Thai travel agent. Always refer to yourself as "จองทัวร์ AI".
-The user said: "${userMessage}"
+        const response = await openai.chat.completions.create({
+          model: "gpt-4o-mini",
+          messages: [
+            {
+              role: "system",
+              content: `You are จองทัวร์ AI (Jongtour AI), a friendly, enthusiastic, and professional Thai travel agent. Always refer to yourself as "จองทัวร์ AI".
 You searched the database and found ${tours.length} tours:
 ${tourTitles}
 
@@ -143,16 +146,19 @@ CRITICAL RULES:
 2. If the user asks about ANYTHING unrelated (politics, coding, general knowledge, cooking, etc.), politely decline to answer and steer the conversation back to travel (e.g., "ผมคือ จองทัวร์ AI ตอบได้เฉพาะเรื่องท่องเที่ยวนะครับ 😅 สนใจไปเที่ยวประเทศไหนบอกได้เลยครับ!").
 3. If tours > 0: Excitedly present the found tours. Tell them to check the cards below.
 4. If tours = 0: Apologize politely, suggest they adjust their budget or destination.
-Use emojis naturally. DO NOT use markdown bold/italic formatting to keep it clean for the chat UI.
-        `;
-        const replyResult = await replyModel.generateContent(replyPrompt);
-        aiReply = replyResult.response.text().trim();
+Use emojis naturally. DO NOT use markdown bold/italic formatting to keep it clean for the chat UI.`
+            },
+            { role: "user", content: userMessage }
+          ]
+        });
+        
+        aiReply = response.choices[0].message.content?.trim() || "";
       } catch (e) {
-        console.error("Gemini reply generation failed", e);
+        console.error("OpenAI reply generation failed", e);
       }
     }
 
-    // Fallback if Gemini is not available or failed
+    // Fallback if AI is not available or failed
     if (!aiReply) {
       if (searchCriteria.keywords.length === 0 && !searchCriteria.isFire && !searchCriteria.maxPrice) {
         // If no keywords matched, check if it's a general greeting or travel request
