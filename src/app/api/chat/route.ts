@@ -3,10 +3,12 @@ import { createClient } from "@supabase/supabase-js";
 import { createClient as createServerClient } from "@/utils/supabase/server";
 import { cookies } from "next/headers";
 import OpenAI from "openai";
+import { type NextRequest } from "next/server";
 
+export const maxDuration = 60; // Increase max execution time to 60s for slow AI responses
 export const dynamic = "force-dynamic";
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   // Initialize OpenAI at runtime to ensure latest environment variables are used
   const openaiApiKey = process.env.OPENAI_API_KEY;
   const isOpenAIAvailable = !!openaiApiKey;
@@ -181,63 +183,12 @@ Rules for extraction:
       }
     }
 
-    let query = supabase.from('Tour').select('*, departures:TourDeparture(*)');
-
-    if (searchCriteria.isFire) {
-      query = query.or('title.ilike.*ไฟไหม้*,title.ilike.*โปรไฟไหม้*');
-    }
-
-    if (searchCriteria.keywords.length > 0 && !isSemanticSearch) {
-      const strictCountries = ["ยุโรป", "europe", "จีน", "china", "ญี่ปุ่น", "japan", "เกาหลี", "korea", "ไต้หวัน", "taiwan", "ฮ่องกง", "hong kong"];
-      
-      const orConditions = searchCriteria.keywords.map(kw => {
-        if (strictCountries.includes(kw.toLowerCase())) {
-          return `destination.ilike.*${kw}*`;
-        }
-        return `destination.ilike.*${kw}*,title.ilike.*${kw}*`;
-      });
-      
-      query = query.or(orConditions.join(','));
-    }
-
-    // Apply semantic search results if available
-    if (isSemanticSearch && matchedTourIds.length > 0) {
-      query = query.in('id', matchedTourIds);
-    }
-
-    if (searchCriteria.source) {
-      query = query.eq('source', searchCriteria.source);
-    }
+    let tours: any[] = [];
     
-    if (searchCriteria.days) {
-      query = query.eq('days', searchCriteria.days);
-    }
-    
-    if (searchCriteria.airline) {
-      query = query.ilike('airline', `%${searchCriteria.airline}%`);
-    }
+    // Only fetch tours if it's NOT a custom F.I.T. request
+    if (!isFitRequest) {
+      let query = supabase.from('Tour').select('*, departures:TourDeparture(*)');
 
-    // Always fetch some to sort
-    query = query.order('createdAt', { ascending: false }).limit(30);
-
-    const { data: rawTours, error } = await query;
-    let tours = rawTours || [];
-
-    // Re-order by semantic similarity if RAG was used
-    if (isSemanticSearch && matchedTourIds.length > 0) {
-      tours.sort((a, b) => matchedTourIds.indexOf(a.id) - matchedTourIds.indexOf(b.id));
-    }
-
-    // Local Filters
-    if (searchCriteria.maxPrice && tours.length > 0) {
-      tours = tours.filter(tour => tour.price <= searchCriteria.maxPrice!);
-    }
-
-    if (searchCriteria.month && tours.length > 0) {
-      const targetMonth = searchCriteria.month.toLowerCase();
-      const monthMap: Record<string, string[]> = {
-        "january": ["ม.ค.", "มกรา", "jan"],
-        "february": ["ก.พ.", "กุมภา", "feb"],
         "march": ["มี.ค.", "มีนา", "mar"],
         "april": ["เม.ย.", "เมษา", "สงกรานต์", "apr"],
         "may": ["พ.ค.", "พฤษภา", "may"],
@@ -260,6 +211,7 @@ Rules for extraction:
 
     // Return max 4 for UI
     tours = tours.slice(0, 4);
+    } // End of !isFitRequest block
 
     let customItinerary = null;
     if (isOpenAIAvailable && openai && isFitRequest) {
@@ -276,7 +228,9 @@ Rules for extraction:
             { role: "user", content: userMessage }
           ]
         });
-        customItinerary = JSON.parse(fitResponse.choices[0].message.content || "null");
+        let content = fitResponse.choices[0].message.content || "null";
+        content = content.replace(/```json/g, "").replace(/```/g, "").trim();
+        customItinerary = JSON.parse(content);
       } catch (e) {
         console.error("FIT Generation Error:", e);
       }
