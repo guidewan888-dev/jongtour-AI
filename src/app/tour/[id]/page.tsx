@@ -300,8 +300,16 @@ async function TourDetailsContent({ params }: { params: { id: string } }) {
                 </a>
               </div>
               
-              <div className="text-gray-700 leading-relaxed whitespace-pre-line text-sm max-h-[350px] overflow-y-auto pr-3 custom-scrollbar bg-gray-50/50 p-4 rounded-md border border-gray-50">
-                {tour.description || "สัมผัสประสบการณ์การเดินทางที่เหนือกว่า พร้อมไกด์ผู้เชี่ยวชาญดูแลตลอดการเดินทาง พักสบาย เดินทางสะดวก คุ้มค่าทุกวินาที"}
+              <div className="text-gray-700 leading-relaxed text-sm max-h-[350px] overflow-y-auto pr-3 custom-scrollbar bg-gray-50/50 p-4 rounded-md border border-gray-50">
+                {tour.description ? (
+                  tour.description.includes('<') && tour.description.includes('>') ? (
+                    <div dangerouslySetInnerHTML={{ __html: tour.description }} className="text-gray-700 [&>p]:mb-3 [&>ul]:list-disc [&>ul]:pl-5 [&>ol]:list-decimal [&>ol]:pl-5 [&>h1]:text-xl [&>h1]:font-bold [&>h1]:mb-2 [&>h2]:text-lg [&>h2]:font-bold [&>h2]:mb-2 [&>h3]:text-base [&>h3]:font-bold [&>h3]:mb-1 [&>strong]:font-bold" />
+                  ) : (
+                    <div className="whitespace-pre-line">{tour.description}</div>
+                  )
+                ) : (
+                  "สัมผัสประสบการณ์การเดินทางที่เหนือกว่า พร้อมไกด์ผู้เชี่ยวชาญดูแลตลอดการเดินทาง พักสบาย เดินทางสะดวก คุ้มค่าทุกวินาที"
+                )}
               </div>
             </div>
             
@@ -318,12 +326,12 @@ async function TourDetailsContent({ params }: { params: { id: string } }) {
               </h2>
               <div className="w-full aspect-[1/1.4] md:aspect-auto md:h-[800px] rounded-lg overflow-hidden border border-gray-300 bg-gray-50">
                 <iframe 
-                  src={`${tour.pdfUrl}#toolbar=0&navpanes=0&scrollbar=0`} 
+                  src={`https://docs.google.com/gview?url=${encodeURIComponent(tour.pdfUrl)}&embedded=true`} 
                   className="w-full h-full border-none"
                   title="Tour Program PDF"
                   loading="lazy"
                 >
-                  <p>เบราว์เซอร์ของคุณไม่รองรับการแสดงผล PDF กรุณา <a href={tour.pdfUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">ดาวน์โหลดไฟล์</a> แทน</p>
+                  <p>เบราว์เซอร์ของคุณไม่รองรับการแสดงผล PDF หรือถูกบล็อกโดยเซิร์ฟเวอร์ กรุณา <a href={tour.pdfUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">คลิกที่นี่เพื่อเปิดไฟล์ PDF</a> แทน</p>
                 </iframe>
               </div>
             </div>
