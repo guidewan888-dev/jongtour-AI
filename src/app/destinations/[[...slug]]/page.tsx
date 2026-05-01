@@ -304,7 +304,7 @@ export default async function DestinationPage({ params }: { params: { slug?: str
                   if (!wsTours || wsTours.length === 0) return null;
                   
                   // หา Country สำหรับส่งไป ?dest= 
-                  const destParam = slug.length > 0 ? node.name.replace(/^[^\(]*\(/, '').replace(/\)/, '').toUpperCase().trim() : '';
+                  const destParam = slug.length > 0 && node.keywords && node.keywords.length > 0 ? node.keywords[0].toUpperCase() : '';
 
                   return (
                     <div key={wsKey} className="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-gray-100">
