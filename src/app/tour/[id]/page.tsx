@@ -102,7 +102,7 @@ async function TourDetailsContent({ params }: { params: { id: string } }) {
           <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mb-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 pb-4 border-b border-gray-100">
               <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-                <Info className="w-5 h-5 text-orange-600" /> รายละเอียดแพ็กเกจ
+                <Info className="w-5 h-5 text-orange-600" /> ไฮไลท์แพ็กเกจ (Highlights)
               </h2>
               <a 
                 href="#"
