@@ -37,11 +37,11 @@ export default function AiSearchBar() {
   };
 
   return (
-    <div className="w-full max-w-3xl relative shadow-[0_8px_30px_rgb(249,115,22,0.15)] rounded-full hover:shadow-[0_8px_30px_rgb(249,115,22,0.25)] transition-all duration-500 bg-white group">
-      <form onSubmit={handleSubmit} className="flex items-center rounded-full border-2 border-gray-100 hover:border-orange-100 bg-white overflow-hidden px-4 py-3 md:py-4 transition-all">
+    <div className="w-full max-w-4xl relative shadow-[0_8px_30px_rgb(249,115,22,0.15)] rounded-full hover:shadow-[0_8px_30px_rgb(249,115,22,0.25)] transition-all duration-500 bg-white group">
+      <form onSubmit={handleSubmit} className="flex items-center rounded-full border-2 border-gray-100 hover:border-orange-100 bg-white overflow-hidden px-4 py-4 md:py-5 transition-all">
         
         {/* ไอคอนประกายดาวซ้ายสุด */}
-        <div className="w-10 h-10 flex items-center justify-center shrink-0">
+        <div className="w-12 h-12 flex items-center justify-center shrink-0">
           <Sparkles className="w-6 h-6 text-orange-500" />
         </div>
         
@@ -50,7 +50,7 @@ export default function AiSearchBar() {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder={isListening ? "กำลังฟังสิ่งที่คุณพูด..." : "อยากไปไหน พิมพ์เลย... เช่น ญี่ปุ่น 5 วัน งบ 3 หมื่น ช่วงปีใหม่"}
-          className={`w-full bg-transparent outline-none px-2 text-[16px] md:text-[18px] font-medium transition-colors ${
+          className={`w-full bg-transparent outline-none px-2 text-[18px] md:text-[20px] font-medium transition-colors ${
             isListening ? "text-orange-600 placeholder-orange-400" : "text-gray-800 placeholder-gray-400"
           }`}
           disabled={isAnalyzingImage}
@@ -76,8 +76,8 @@ export default function AiSearchBar() {
           </button>
 
           {/* ปุ่ม Submit (ลูกศรขวา แบบ ChatGPT) */}
-          <button type="submit" className="ml-1 w-10 h-10 rounded-full bg-gradient-to-br from-orange-500 to-red-600 text-white flex items-center justify-center shadow-md hover:shadow-lg hover:scale-105 transition-all">
-            <ArrowRight className="w-5 h-5" strokeWidth={2.5} />
+          <button type="submit" className="ml-2 w-12 h-12 rounded-full bg-gradient-to-br from-orange-500 to-red-600 text-white flex items-center justify-center shadow-md hover:shadow-lg hover:scale-105 transition-all">
+            <ArrowRight className="w-6 h-6" strokeWidth={2.5} />
           </button>
         </div>
       </form>

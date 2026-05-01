@@ -46,17 +46,8 @@ export default async function Home() {
       <div className="w-full max-w-5xl flex flex-col items-center justify-center space-y-6 mt-0 -translate-y-8">
 
         {/* AI Search Bar */}
-        <AiSearchBar />
-
-        {/* AI F.I.T. Banner CTA */}
-        <div className="w-full max-w-4xl bg-gradient-to-r from-orange-500 to-amber-500 rounded-3xl p-6 md:p-8 text-white shadow-xl flex flex-col md:flex-row items-center justify-between gap-6 transform hover:scale-[1.01] transition-transform mt-8">
-          <div className="text-center md:text-left">
-            <h2 className="text-2xl md:text-3xl font-bold mb-2">✨ ให้ AI จัดทริปส่วนตัวให้คุณ</h2>
-            <p className="text-white/90 text-sm md:text-base">พิมพ์บอกสิ่งที่คุณต้องการ AI จะจัดแผน คำนวณราคา และสร้างโบรชัวร์ PDF ให้ภายใน 10 วินาที</p>
-          </div>
-          <Link href="/ai-planner" className="bg-white text-orange-600 px-8 py-3 rounded-full font-bold shadow-lg hover:shadow-xl hover:scale-105 transition-all whitespace-nowrap">
-            ทดลองใช้ฟรี
-          </Link>
+        <div className="w-full mt-4 md:mt-8">
+          <AiSearchBar />
         </div>
 
         {/* Shortcuts */}

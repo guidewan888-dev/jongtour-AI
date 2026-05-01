@@ -221,9 +221,13 @@ __CHIPS__["question 1", "question 2", "question 3"]`;
             console.error("Stream error", e);
           }
         } else {
-          // If no tool calls, just stream the initial text response
+          // If no tool calls, simulate streaming the initial text response to ensure UI updates smoothly
           if (initialMessage.content) {
-            controller.enqueue(encoder.encode(initialMessage.content));
+            const chunkSize = 5;
+            for (let i = 0; i < initialMessage.content.length; i += chunkSize) {
+              controller.enqueue(encoder.encode(initialMessage.content.slice(i, i + chunkSize)));
+              await new Promise(r => setTimeout(r, 10));
+            }
           }
         }
         controller.close();
