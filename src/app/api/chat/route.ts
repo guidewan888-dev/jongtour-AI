@@ -122,16 +122,15 @@ __CHIPS__["question 1", "question 2", "question 3"]`;
           if (args.destination) {
             query = query.or(`title.ilike.%${args.destination}%,highlight.ilike.%${args.destination}%,destination.ilike.%${args.destination}%`);
           }
+          if (args.maxPrice) {
+            query = query.lte('price', args.maxPrice);
+          }
           if (args.isLastMinute) query = query.eq('isFire', true);
           query = query.order('createdAt', { ascending: false }).limit(60);
 
           const { data: rawTours } = await query;
           tours = rawTours || [];
           tours = tours.sort(() => 0.5 - Math.random());
-
-          if (args.maxPrice) {
-            tours = tours.filter(tour => tour.price <= args.maxPrice);
-          }
           if (args.month) {
             const m = args.month.toLowerCase();
             const map: any = { 
