@@ -223,3 +223,27 @@ model HotelPriceCache {
   
   @@index([city, hotelStars])
 }
+
+model ActivityPriceCache {
+  id                  Int      @id @default(autoincrement())
+  provider            String   // e.g., "VIATOR_MOCK", "TIQETS"
+  providerProductId   String?
+  destinationCountry  String
+  destinationCity     String?
+  productName         String
+  category            String   // tour, attraction, ticket, day_trip
+  durationText        String?
+  priceFromAmount     Float
+  currency            String   @default("THB")
+  adultPrice          Float?
+  childPrice          Float?
+  rating              Float?
+  reviewCount         Int?
+  imageUrl            String?
+  bookingUrl          String?
+  fetchedAt           DateTime @default(now())
+  expiresAt           DateTime
+  note                String?
+
+  @@index([destinationCountry, category])
+}
