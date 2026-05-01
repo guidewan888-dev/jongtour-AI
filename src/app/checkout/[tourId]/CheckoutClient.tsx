@@ -83,6 +83,12 @@ export default function CheckoutClient({ tour, departures }: { tour: any, depart
     }}>
       <input type="hidden" name="tourId" value={tour.id} />
       <input type="hidden" name="pax" value={totalPax} />
+      <input type="hidden" name="adults" value={adults} />
+      <input type="hidden" name="children" value={children} />
+      <input type="hidden" name="singleRooms" value={singleRooms} />
+      <input type="hidden" name="paymentType" value={effectivePaymentType} />
+      <input type="hidden" name="totalPrice" value={totalPrice} />
+      <input type="hidden" name="totalDeposit" value={totalDeposit} />
       
       <div className="flex flex-col lg:flex-row gap-8">
         

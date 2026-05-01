@@ -26,6 +26,13 @@ export async function submitCheckout(formData: FormData) {
   const tourId = formData.get("tourId") as string;
   const departureId = formData.get("departureId") as string;
   const pax = parseInt(formData.get("pax") as string) || 1;
+  const adults = parseInt(formData.get("adults") as string) || 1;
+  const children = parseInt(formData.get("children") as string) || 0;
+  const singleRooms = parseInt(formData.get("singleRooms") as string) || 0;
+  const paymentType = formData.get("paymentType") as string || "full";
+  const totalPrice = parseFloat(formData.get("totalPrice") as string) || 0;
+  const depositAmount = parseFloat(formData.get("totalDeposit") as string) || 0;
+  
   const firstName = formData.get("firstName") as string;
   const lastName = formData.get("lastName") as string;
   const phone = formData.get("phone") as string;
@@ -34,10 +41,10 @@ export async function submitCheckout(formData: FormData) {
     throw new Error("Please select a departure date");
   }
 
-  // Fetch departure to get price
+  // Fetch departure to check if it exists
   const { data: departure } = await supabase
     .from('TourDeparture')
-    .select('price')
+    .select('id')
     .eq('id', departureId)
     .single();
 
@@ -45,8 +52,6 @@ export async function submitCheckout(formData: FormData) {
     throw new Error("Departure not found");
   }
 
-  const totalPrice = departure.price * pax;
-  
   // Create booking
   const { data: booking, error: bookingError } = await supabase
     .from('Booking')
@@ -57,7 +62,12 @@ export async function submitCheckout(formData: FormData) {
       totalPrice,
       contactName: `${firstName} ${lastName}`,
       contactPhone: phone,
-      pax
+      pax,
+      adults,
+      children,
+      singleRooms,
+      paymentType,
+      depositAmount: paymentType === 'deposit' ? depositAmount : null
     })
     .select()
     .single();

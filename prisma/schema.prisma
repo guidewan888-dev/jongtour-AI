@@ -78,6 +78,14 @@ model Booking {
   departureId   String
   status        BookingStatus @default(PENDING)
   totalPrice    Float
+  contactName   String?
+  contactPhone  String?
+  pax           Int           @default(1)
+  adults        Int           @default(1)
+  children      Int           @default(0)
+  singleRooms   Int           @default(0)
+  paymentType   String        @default("full")
+  depositAmount Float?
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
 
