@@ -46,12 +46,12 @@ export default async function Home() {
       <div className="w-full max-w-5xl flex flex-col items-center justify-center space-y-6 mt-0 -translate-y-8">
 
         {/* AI Search Bar */}
-        <div className="w-full mt-4 md:mt-8">
+        <div className="w-full mt-4 md:mt-10 flex justify-center px-4">
           <AiSearchBar />
         </div>
 
         {/* Shortcuts */}
-        <div className="flex flex-wrap justify-center gap-4 pt-4 w-full max-w-4xl">
+        <div className="flex flex-wrap justify-center gap-4 md:gap-6 pt-6 w-full max-w-4xl px-4">
           <ImageShortcutButton imgSrc="/images/wholesales/download.png" label="Let's Go Group" href="/wholesale/letsgo" fallbackIcon="🗺️" />
           <ImageShortcutButton imgSrc="/images/wholesales/download.jfif" label="GO 365 Travel" href="/wholesale/go365" fallbackIcon="✈️" />
           <ImageShortcutButton imgSrc="/images/wholesales/CH7.jpg" label="Check In Group" href="/wholesale/checkingroup" fallbackIcon="🌍" />
@@ -97,7 +97,7 @@ export default async function Home() {
 
 function ShortcutButton({ icon, label, href }: { icon: string; label: string; href: string }) {
   return (
-    <Link href={href} className="flex flex-col items-center justify-center p-3 bg-white hover:bg-orange-50/50 rounded-2xl w-20 h-20 md:w-24 md:h-24 transition-all border-2 border-gray-100 hover:border-orange-200 shadow-sm hover:shadow-md group">
+    <Link href={href} className="flex flex-col items-center justify-center p-3 bg-white hover:bg-orange-50/50 rounded-2xl w-24 h-24 md:w-28 md:h-28 transition-all border-2 border-gray-100 hover:border-orange-200 shadow-sm hover:shadow-md group">
       <span className="text-2xl mb-1 group-hover:scale-110 transition-transform">
         {icon}
       </span>
@@ -110,8 +110,8 @@ function ShortcutButton({ icon, label, href }: { icon: string; label: string; hr
 
 function ImageShortcutButton({ imgSrc, label, href, fallbackIcon }: { imgSrc: string; label: string; href: string; fallbackIcon: string }) {
   return (
-    <Link href={href} className="flex flex-col items-center justify-center p-3 bg-white hover:bg-orange-50/50 rounded-2xl w-20 h-20 md:w-24 md:h-24 transition-all border-2 border-gray-100 hover:border-orange-200 shadow-sm hover:shadow-md group">
-      <div className="w-10 h-10 md:w-12 md:h-12 mb-1 flex items-center justify-center overflow-hidden">
+    <Link href={href} className="flex flex-col items-center justify-center p-3 bg-white hover:bg-orange-50/50 rounded-2xl w-24 h-24 md:w-28 md:h-28 transition-all border-2 border-gray-100 hover:border-orange-200 shadow-sm hover:shadow-md group">
+      <div className="w-12 h-12 md:w-14 md:h-14 mb-1 flex items-center justify-center overflow-hidden">
         <img 
           src={imgSrc} 
           alt={label} 
