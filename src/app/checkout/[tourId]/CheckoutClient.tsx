@@ -17,9 +17,9 @@ export default function CheckoutClient({ tour, departures }: { tour: any, depart
   const [singleRooms, setSingleRooms] = useState(0);
   const [paymentType, setPaymentType] = useState('full'); // 'full' or 'deposit'
   
-  // Extra Services
-  const [addDisneyland, setAddDisneyland] = useState(false);
-  const [addInsurance, setAddInsurance] = useState(false);
+  // Extra Services (quantity instead of boolean)
+  const [disneylandQty, setDisneylandQty] = useState(0);
+  const [insuranceQty, setInsuranceQty] = useState(0);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -37,7 +37,7 @@ export default function CheckoutClient({ tour, departures }: { tour: any, depart
   
   const basePrice = (adults * pricePerPax) + (children * childPrice);
   const singleSupplement = singleRooms * singleRoomPrice;
-  const extrasTotal = (addDisneyland ? totalPax * disneylandPrice : 0) + (addInsurance ? totalPax * insurancePrice : 0);
+  const extrasTotal = (disneylandQty * disneylandPrice) + (insuranceQty * insurancePrice);
   
   const totalPrice = basePrice + singleSupplement + extrasTotal;
   const totalDeposit = (totalPax * depositPrice) + extrasTotal; // deposit + extras paid upfront usually
@@ -116,30 +116,34 @@ export default function CheckoutClient({ tour, departures }: { tour: any, depart
 
           <div className="bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-gray-100">
             <h2 className="text-2xl font-bold text-gray-800 mb-2">บริการเสริมพิเศษ (Extra Services)</h2>
-            <p className="text-gray-500 mb-6 text-sm">เพิ่มความสะดวกสบายให้การเดินทางของคุณ</p>
+            <p className="text-gray-500 mb-6 text-sm">เพิ่มความสะดวกสบายให้การเดินทางของคุณ (สามารถเลือกจำนวนที่ต้องการได้)</p>
             
             <div className="space-y-4">
-              <label className={`flex items-start gap-4 p-4 border rounded-xl cursor-pointer transition-colors ${addDisneyland ? 'border-orange-500 bg-orange-50' : 'border-gray-200 hover:border-orange-300'}`}>
-                <div className="mt-1">
-                  <input type="checkbox" checked={addDisneyland} onChange={(e) => setAddDisneyland(e.target.checked)} className="w-5 h-5 text-orange-600 rounded focus:ring-orange-500" />
-                </div>
+              <div className={`flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 border rounded-xl transition-colors ${disneylandQty > 0 ? 'border-orange-500 bg-orange-50' : 'border-gray-200 hover:border-orange-300'}`}>
                 <div className="flex-1">
                   <div className="font-bold text-gray-800">บัตรเข้าสวนสนุก Disneyland (รวมรถรับส่ง)</div>
                   <div className="text-sm text-gray-500 mt-1">สนุกสุดเหวี่ยงกับเครื่องเล่นระดับโลก พร้อมรถรับส่งจากโรงแรม</div>
+                  <div className="font-bold text-orange-600 mt-2">+{disneylandPrice.toLocaleString()} ฿ / ท่าน</div>
                 </div>
-                <div className="font-bold text-orange-600">+{disneylandPrice.toLocaleString()} ฿</div>
-              </label>
+                <div className="flex items-center justify-between sm:justify-end w-full sm:w-auto border border-gray-300 bg-white rounded-xl overflow-hidden shrink-0 h-12">
+                  <button type="button" onClick={() => setDisneylandQty(Math.max(0, disneylandQty - 1))} className="w-12 h-full bg-gray-50 flex items-center justify-center font-bold text-gray-600 hover:bg-gray-200">-</button>
+                  <span className="font-bold w-12 text-center">{disneylandQty}</span>
+                  <button type="button" onClick={() => setDisneylandQty(Math.min(totalPax, disneylandQty + 1))} className="w-12 h-full bg-gray-50 flex items-center justify-center font-bold text-gray-600 hover:bg-gray-200">+</button>
+                </div>
+              </div>
 
-              <label className={`flex items-start gap-4 p-4 border rounded-xl cursor-pointer transition-colors ${addInsurance ? 'border-orange-500 bg-orange-50' : 'border-gray-200 hover:border-orange-300'}`}>
-                <div className="mt-1">
-                  <input type="checkbox" checked={addInsurance} onChange={(e) => setAddInsurance(e.target.checked)} className="w-5 h-5 text-orange-600 rounded focus:ring-orange-500" />
-                </div>
+              <div className={`flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 border rounded-xl transition-colors ${insuranceQty > 0 ? 'border-orange-500 bg-orange-50' : 'border-gray-200 hover:border-orange-300'}`}>
                 <div className="flex-1">
                   <div className="font-bold text-gray-800">ประกันภัยการเดินทางแบบพรีเมียม (ครอบคลุมโควิด-19)</div>
                   <div className="text-sm text-gray-500 mt-1">คุ้มครองค่ารักษาพยาบาลสูงสุด 2 ล้านบาท</div>
+                  <div className="font-bold text-orange-600 mt-2">+{insurancePrice.toLocaleString()} ฿ / ท่าน</div>
                 </div>
-                <div className="font-bold text-orange-600">+{insurancePrice.toLocaleString()} ฿</div>
-              </label>
+                <div className="flex items-center justify-between sm:justify-end w-full sm:w-auto border border-gray-300 bg-white rounded-xl overflow-hidden shrink-0 h-12">
+                  <button type="button" onClick={() => setInsuranceQty(Math.max(0, insuranceQty - 1))} className="w-12 h-full bg-gray-50 flex items-center justify-center font-bold text-gray-600 hover:bg-gray-200">-</button>
+                  <span className="font-bold w-12 text-center">{insuranceQty}</span>
+                  <button type="button" onClick={() => setInsuranceQty(Math.min(totalPax, insuranceQty + 1))} className="w-12 h-full bg-gray-50 flex items-center justify-center font-bold text-gray-600 hover:bg-gray-200">+</button>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -223,19 +227,19 @@ export default function CheckoutClient({ tour, departures }: { tour: any, depart
                   <span>{singleSupplement.toLocaleString()} ฿</span>
                 </div>
               )}
-              {(addDisneyland || addInsurance) && (
+              {(disneylandQty > 0 || insuranceQty > 0) && (
                 <div className="pt-2 mt-2 border-t border-dashed border-gray-200">
                   <p className="font-bold text-gray-700 mb-2">บริการเสริม:</p>
-                  {addDisneyland && (
-                    <div className="flex justify-between text-gray-500 pl-2">
-                      <span>บัตร Disneyland (x{totalPax})</span>
-                      <span>{(totalPax * disneylandPrice).toLocaleString()} ฿</span>
+                  {disneylandQty > 0 && (
+                    <div className="flex justify-between text-gray-500 pl-2 mb-1">
+                      <span>บัตร Disneyland (x{disneylandQty})</span>
+                      <span>{(disneylandQty * disneylandPrice).toLocaleString()} ฿</span>
                     </div>
                   )}
-                  {addInsurance && (
+                  {insuranceQty > 0 && (
                     <div className="flex justify-between text-gray-500 pl-2">
-                      <span>ประกันการเดินทาง (x{totalPax})</span>
-                      <span>{(totalPax * insurancePrice).toLocaleString()} ฿</span>
+                      <span>ประกันการเดินทาง (x{insuranceQty})</span>
+                      <span>{(insuranceQty * insurancePrice).toLocaleString()} ฿</span>
                     </div>
                   )}
                 </div>
