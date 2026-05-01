@@ -142,51 +142,114 @@ export default function InteractiveItinerary({ itinerary }: { itinerary: any }) 
   return (
     <div className="w-full max-w-[900px] mx-auto mt-4 bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm flex flex-col">
       
-      {/* Promotional Banner Header */}
-      <div className="relative w-full h-[250px] sm:h-[300px] overflow-hidden group">
-        {/* Background Image */}
-        <img 
-          src={itinerary.coverImagePrompt 
-            ? `https://image.pollinations.ai/prompt/${encodeURIComponent(itinerary.coverImagePrompt + ", travel photography, beautiful scenery, 4k, hyperrealistic")}?width=1200&height=400&nologo=true`
-            : "https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=1200&q=80"}
-          alt="Destination Cover"
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-          crossOrigin="anonymous"
-        />
-        {/* Gradient Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/10"></div>
-        
-        {/* Banner Content */}
-        <div className="absolute inset-0 p-6 flex flex-col justify-end">
-          <div className="flex items-end justify-between gap-4">
-            <div className="flex-1">
-              {/* Marketing Headline */}
-              {itinerary.marketingHeadline && (
-                <div className="inline-block bg-orange-500 text-white text-xs sm:text-sm font-bold px-3 py-1 rounded-full mb-3 shadow-lg">
-                  🔥 {itinerary.marketingHeadline}
-                </div>
-              )}
-              {/* Title */}
-              <h2 className="text-2xl sm:text-3xl font-bold text-white mb-2 leading-tight drop-shadow-md outline-none focus:bg-white/10 rounded px-1 -mx-1" contentEditable suppressContentEditableWarning>
-                {itinerary.title}
-              </h2>
-              {/* Airline Badge */}
-              {localAirline && (
-                <div className="flex items-center gap-2 mt-2 bg-white/10 backdrop-blur-md w-max px-3 py-1.5 rounded-lg border border-white/20 shadow-sm">
-                  <span className="text-white text-xs">เดินทางกับ</span>
-                  <img 
-                    src={`https://images.kiwi.com/airlines/64/${localAirline}.png`} 
-                    alt={localAirline}
-                    className="h-5 bg-white rounded-sm px-1"
-                    crossOrigin="anonymous"
-                  />
-                </div>
-              )}
+      {/* Promotional Banner Header - ULTRA PREMIUM COLLAGE */}
+      <div className="relative min-h-[420px] w-full bg-gradient-to-br from-orange-50 to-rose-50 overflow-hidden no-print border-b border-gray-100">
+        {/* Decorative CSS Background Blobs */}
+        <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-gradient-to-br from-orange-200/40 to-yellow-200/40 rounded-full mix-blend-multiply filter blur-3xl opacity-70 -translate-y-1/4 translate-x-1/4"></div>
+        <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-gradient-to-tr from-blue-200/40 to-emerald-200/40 rounded-full mix-blend-multiply filter blur-3xl opacity-70 translate-y-1/4 -translate-x-1/4"></div>
+
+        {/* Polaroid Collage (Right side on Desktop) */}
+        <div className="absolute top-8 right-12 hidden md:block w-1/2 h-full pointer-events-none">
+          {/* Day 1 Image (Background Left) */}
+          {days[0]?.imagePrompt && (
+            <div className="absolute top-32 right-72 w-48 h-40 bg-white p-2 pb-8 shadow-xl rounded-sm transform -rotate-6 z-10 transition-transform duration-500 hover:rotate-0 hover:z-40">
+              <img 
+                src={`https://image.pollinations.ai/prompt/${encodeURIComponent(days[0].imagePrompt)}?width=400&height=300&nologo=true`} 
+                alt="Day 1" className="w-full h-full object-cover" crossOrigin="anonymous"
+              />
             </div>
+          )}
+          
+          {/* Day 2 Image (Background Right) */}
+          {days[1]?.imagePrompt && (
+            <div className="absolute top-48 right-0 w-48 h-40 bg-white p-2 pb-8 shadow-xl rounded-sm transform rotate-12 z-20 transition-transform duration-500 hover:rotate-0 hover:z-40">
+              <img 
+                src={`https://image.pollinations.ai/prompt/${encodeURIComponent(days[1].imagePrompt)}?width=400&height=300&nologo=true`} 
+                alt="Day 2" className="w-full h-full object-cover" crossOrigin="anonymous"
+              />
+            </div>
+          )}
+
+          {/* Main Cover (Foreground Center) */}
+          <div className="absolute top-4 right-20 w-72 h-48 bg-white p-2 pb-10 shadow-2xl rounded-sm transform rotate-3 z-30 transition-transform duration-500 hover:-rotate-2 hover:scale-105">
+            <img 
+              src={`https://image.pollinations.ai/prompt/${encodeURIComponent(itinerary.coverImagePrompt || "Beautiful tourist attraction")}?width=600&height=400&nologo=true`} 
+              alt="Main Cover" className="w-full h-full object-cover" crossOrigin="anonymous"
+            />
+            <div className="absolute bottom-2 left-0 right-0 text-center text-xs text-gray-400 font-medium">Amazing Trip</div>
+          </div>
+          
+          {/* Floating Sparkles SVG */}
+          <svg className="absolute top-10 right-80 w-8 h-8 text-yellow-400 animate-pulse" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+        </div>
+
+        {/* Mobile Background (Fallback) */}
+        <div className="md:hidden absolute inset-0 opacity-20">
+          <img 
+            src={`https://image.pollinations.ai/prompt/${encodeURIComponent(itinerary.coverImagePrompt || "Beautiful tourist attraction")}?width=800&height=800&nologo=true`} 
+            alt="Tour Cover" className="w-full h-full object-cover" crossOrigin="anonymous"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-gray-900 to-transparent"></div>
+        </div>
+
+        {/* Content Left Side */}
+        <div className="relative z-40 p-6 md:p-10 md:w-3/5 h-full flex flex-col justify-center">
+          {/* Ribbon Badge */}
+          <div className="inline-flex bg-gradient-to-r from-red-600 to-orange-500 text-white text-xs font-bold px-4 py-1.5 rounded-r-full shadow-md mb-6 -ml-6 md:-ml-10 items-center gap-1 w-max">
+            <span>🔥</span> แผนการเดินทางส่วนตัว (F.I.T.)
+          </div>
+
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2 leading-tight drop-shadow-sm outline-none focus:bg-white/50 focus:ring-2 focus:ring-orange-200 rounded px-2 -mx-2" contentEditable suppressContentEditableWarning>
+            {itinerary.marketingHeadline}
+          </h1>
+          <h2 className="text-lg md:text-xl text-orange-600 font-bold mb-5 drop-shadow-sm outline-none focus:bg-white/50 focus:ring-2 focus:ring-orange-200 rounded px-2 -mx-2" contentEditable suppressContentEditableWarning>
+            {itinerary.title}
+          </h2>
+
+          {/* Highlights Glassmorphism Card */}
+          {(itinerary.highlights?.length > 0) ? (
+            <div className="bg-white/60 backdrop-blur-md border border-white/80 shadow-sm rounded-xl p-4 mb-5 inline-block w-max max-w-full">
+               <h3 className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-2 flex items-center gap-1">✨ Tour Highlights</h3>
+               <ul className="space-y-1.5">
+                 {itinerary.highlights.map((hl: string, i: number) => (
+                   <li key={i} className="flex items-center gap-2 text-sm text-gray-800 font-medium">
+                      <span className="text-green-500">✔️</span> {hl}
+                   </li>
+                 ))}
+               </ul>
+            </div>
+          ) : (
+            <div className="mb-4"></div> /* Spacer if no highlights */
+          )}
+
+          {/* Badges Row */}
+          <div className="flex flex-wrap items-center gap-3">
+            {/* Duration Badge */}
+            <div className="bg-gray-900 text-white text-xs font-bold px-3 py-2 rounded-lg flex items-center gap-1.5 shadow-sm">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              {itinerary.durationText || `${days.length} วัน ${days.length - 1} คืน`}
+            </div>
+
+            {/* Airline Badge */}
+            {localAirline && (
+              <div className="bg-white text-gray-800 text-xs font-bold px-3 py-2 rounded-lg border border-gray-200 flex items-center gap-2 shadow-sm cursor-pointer hover:bg-gray-50 transition-colors" onClick={() => {
+                const el = document.getElementById('airline-select');
+                if (el) el.focus();
+              }}>
+                <span className="text-gray-500">เดินทางกับ</span>
+                <img 
+                  src={`https://images.kiwi.com/airlines/64/${localAirline}.png`} 
+                  alt={localAirline}
+                  className="h-4 object-contain"
+                  crossOrigin="anonymous"
+                />
+              </div>
+            )}
+            
             {/* Price Badge */}
-            <div className="shrink-0 text-right">
-              <div className="text-white/90 text-xs mb-1 drop-shadow-sm">ราคาประเมินเริ่มต้น</div>
-              <div className="bg-white text-orange-600 font-bold rounded-xl px-4 py-2 shadow-xl border-b-4 border-orange-200 outline-none focus:ring-2 focus:ring-orange-500" contentEditable suppressContentEditableWarning>
+            <div className="ml-auto flex flex-col items-end">
+              <div className="text-gray-500 text-[10px] font-bold mb-0.5 uppercase tracking-wider">ราคาประเมินเริ่มต้น</div>
+              <div className="bg-orange-500 text-white font-bold rounded-lg px-4 py-1.5 shadow-md border border-orange-400 outline-none focus:ring-2 focus:ring-orange-300" contentEditable suppressContentEditableWarning>
                 {itinerary.estimatedPrice}
               </div>
             </div>
@@ -387,6 +450,7 @@ export default function InteractiveItinerary({ itinerary }: { itinerary: any }) 
         <div>
            <label className="block text-sm font-bold text-gray-800 mb-2">✈️ เลือกสายการบิน (เพื่อโชว์โลโก้บนแผน)</label>
            <select 
+             id="airline-select"
              value={localAirline}
              onChange={e => setLocalAirline(e.target.value)}
              className="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-orange-500 bg-white"

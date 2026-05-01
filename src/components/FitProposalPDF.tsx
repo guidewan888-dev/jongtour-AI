@@ -17,49 +17,84 @@ export const FitProposalPDF = React.forwardRef<HTMLDivElement, { itinerary: any 
         left: '-10000px'
       }}
     >
-      {/* Cover Banner */}
-      <div style={{ position: 'relative', width: '100%', height: '350px', marginBottom: '40px', borderRadius: '16px', overflow: 'hidden' }}>
-        <img 
-          src={itinerary.coverImagePrompt 
-            ? `https://image.pollinations.ai/prompt/${encodeURIComponent(itinerary.coverImagePrompt + ", travel photography, beautiful scenery, 4k, hyperrealistic")}?width=1200&height=500&nologo=true`
-            : "https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=1200&q=80"}
-          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-          alt="Cover"
-          crossOrigin="anonymous"
-        />
-        {/* Dark Gradient Overlay equivalent for PDF */}
-        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.5) 40%, rgba(0,0,0,0.1) 100%)' }}></div>
+      {/* Ultra-Premium Cover Banner */}
+      <div style={{ position: 'relative', width: '100%', height: '400px', marginBottom: '40px', borderRadius: '16px', overflow: 'hidden', backgroundColor: '#fff5f5', borderBottom: '1px solid #fee2e2' }}>
+        {/* Background Gradient */}
+        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'linear-gradient(135deg, #fff7ed 0%, #ffe4e6 100%)' }}></div>
         
-        {/* Banner Text */}
-        <div style={{ position: 'absolute', bottom: '30px', left: '30px', right: '30px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', color: 'white' }}>
-          <div style={{ flex: 1, paddingRight: '20px' }}>
-            {itinerary.marketingHeadline && (
-              <div style={{ display: 'inline-block', backgroundColor: '#f97316', color: 'white', padding: '6px 16px', borderRadius: '20px', fontSize: '14px', fontWeight: 'bold', marginBottom: '15px' }}>
-                🔥 {itinerary.marketingHeadline}
+        {/* Left Side Content */}
+        <div style={{ position: 'absolute', top: '40px', left: '40px', width: '50%', zIndex: 10 }}>
+          {itinerary.marketingHeadline && (
+            <div style={{ display: 'inline-flex', alignItems: 'center', backgroundColor: '#ea580c', color: 'white', padding: '6px 16px', borderRadius: '20px', fontSize: '12px', fontWeight: 'bold', marginBottom: '20px' }}>
+              🔥 {itinerary.marketingHeadline}
+            </div>
+          )}
+          
+          <h1 style={{ fontSize: '32px', margin: '0 0 10px 0', lineHeight: '1.2', color: '#111827' }}>
+            {itinerary.title}
+          </h1>
+
+          {/* Highlights */}
+          {itinerary.highlights?.length > 0 && (
+            <div style={{ backgroundColor: 'rgba(255,255,255,0.8)', border: '1px solid #fbcfe8', padding: '15px', borderRadius: '12px', marginTop: '20px' }}>
+               <h3 style={{ fontSize: '11px', fontWeight: 'bold', color: '#6b7280', textTransform: 'uppercase', marginBottom: '10px' }}>✨ Tour Highlights</h3>
+               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                 {itinerary.highlights.map((hl: string, i: number) => (
+                   <div key={i} style={{ fontSize: '14px', color: '#1f2937', fontWeight: 'bold' }}>
+                      <span style={{ color: '#22c55e', marginRight: '6px' }}>✔️</span> {hl}
+                   </div>
+                 ))}
+               </div>
+            </div>
+          )}
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginTop: '25px' }}>
+            {itinerary.durationText && (
+              <div style={{ backgroundColor: '#111827', color: 'white', padding: '8px 12px', borderRadius: '8px', fontSize: '12px', fontWeight: 'bold' }}>
+                {itinerary.durationText}
               </div>
             )}
-            <h1 style={{ fontSize: '38px', margin: '0 0 10px 0', lineHeight: '1.2', textShadow: '0 2px 4px rgba(0,0,0,0.5)' }}>
-              ✨ {itinerary.title}
-            </h1>
             {itinerary.airlineCode && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '15px', backgroundColor: 'rgba(255,255,255,0.15)', padding: '8px 16px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.3)', width: 'fit-content' }}>
-                <span style={{ fontSize: '14px' }}>เดินทางกับ</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: 'white', border: '1px solid #e5e7eb', padding: '6px 12px', borderRadius: '8px' }}>
+                <span style={{ fontSize: '12px', color: '#6b7280' }}>เดินทางกับ</span>
                 <img 
                   src={`https://images.kiwi.com/airlines/64/${itinerary.airlineCode}.png`} 
                   alt={itinerary.airlineCode}
-                  style={{ height: '24px', backgroundColor: 'white', padding: '2px', borderRadius: '4px' }}
+                  style={{ height: '16px' }}
                   crossOrigin="anonymous"
                 />
               </div>
             )}
           </div>
-          
-          <div style={{ textAlign: 'right' }}>
-            <div style={{ fontSize: '14px', opacity: 0.9, marginBottom: '5px', textShadow: '0 1px 2px rgba(0,0,0,0.5)' }}>ราคาประเมินเริ่มต้น</div>
-            <div style={{ backgroundColor: 'white', color: '#ea580c', padding: '10px 20px', borderRadius: '12px', fontSize: '24px', fontWeight: 'bold', borderBottom: '4px solid #fed7aa', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.3)' }}>
-              {itinerary.estimatedPrice}
+        </div>
+
+        {/* Right Side Polaroid Collage */}
+        <div style={{ position: 'absolute', top: '20px', right: '40px', width: '350px', height: '100%' }}>
+          {/* Day 1 Photo */}
+          {itinerary.days?.[0]?.imagePrompt && (
+            <div style={{ position: 'absolute', top: '100px', left: '-50px', width: '180px', height: '150px', backgroundColor: 'white', padding: '8px 8px 30px 8px', borderRadius: '4px', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)', transform: 'rotate(-5deg)', zIndex: 1 }}>
+              <img src={`https://image.pollinations.ai/prompt/${encodeURIComponent(itinerary.days[0].imagePrompt)}?width=400&height=300&nologo=true`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} crossOrigin="anonymous"/>
             </div>
+          )}
+          {/* Day 2 Photo */}
+          {itinerary.days?.[1]?.imagePrompt && (
+            <div style={{ position: 'absolute', top: '160px', right: '20px', width: '180px', height: '150px', backgroundColor: 'white', padding: '8px 8px 30px 8px', borderRadius: '4px', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)', transform: 'rotate(10deg)', zIndex: 2 }}>
+              <img src={`https://image.pollinations.ai/prompt/${encodeURIComponent(itinerary.days[1].imagePrompt)}?width=400&height=300&nologo=true`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} crossOrigin="anonymous"/>
+            </div>
+          )}
+          {/* Main Cover */}
+          <div style={{ position: 'absolute', top: '20px', left: '30px', width: '250px', height: '180px', backgroundColor: 'white', padding: '8px 8px 35px 8px', borderRadius: '4px', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.15)', transform: 'rotate(3deg)', zIndex: 3 }}>
+            <img src={itinerary.coverImagePrompt ? `https://image.pollinations.ai/prompt/${encodeURIComponent(itinerary.coverImagePrompt)}?width=600&height=400&nologo=true` : "https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=600&q=80"} style={{ width: '100%', height: '100%', objectFit: 'cover' }} crossOrigin="anonymous"/>
+            <div style={{ position: 'absolute', bottom: '10px', width: '100%', textAlign: 'center', fontSize: '10px', color: '#9ca3af' }}>Amazing Trip</div>
           </div>
+        </div>
+
+        {/* Price Tag (Bottom Right) */}
+        <div style={{ position: 'absolute', bottom: '20px', right: '20px', zIndex: 10, textAlign: 'right' }}>
+           <div style={{ fontSize: '10px', color: '#6b7280', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '4px' }}>ราคาประเมินเริ่มต้น</div>
+           <div style={{ backgroundColor: '#ea580c', color: 'white', padding: '8px 20px', borderRadius: '12px', fontSize: '20px', fontWeight: 'bold', border: '1px solid #fdba74', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }}>
+             {itinerary.estimatedPrice}
+           </div>
         </div>
       </div>
 
