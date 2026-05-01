@@ -43,6 +43,7 @@ model Tour {
   pdfUrl         String?         // URL for PDF download
   itinerary      Json?           // Array of day-by-day itinerary
   flights        Json?           // Array of flight details
+  embedding      Unsupported("vector(1536)")? // OpenAI Embeddings for Vector Search
   
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt

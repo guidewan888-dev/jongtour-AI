@@ -410,3 +410,8 @@ Require stack:
  ✓ Compiled in 119ms (516 modules)
  ✓ Compiled in 150ms (516 modules)
  ✓ Compiled in 147ms (516 modules)
+ ✓ Compiled in 1088ms (515 modules)
+<w> [webpack.cache.PackFileCacheStrategy] Restoring pack from C:\Users\uSeR\jongtour\.next\cache\webpack\client-development.pack.gz failed: TypeError: Cannot read properties of undefined (reading 'hasStartTime')
+ ✓ Compiled in 196ms (515 modules)
+ ✓ Compiled in 131ms (515 modules)
+ ✓ Compiled in 129ms (515 modules)

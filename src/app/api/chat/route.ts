@@ -127,13 +127,46 @@ Return ONLY a JSON object with these exact keys:
     const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || "sb_publishable_SRwNSJ89mInda5FcuB1W2w_9IEJlSOI";
     const supabase = createClient(supabaseUrl, supabaseKey);
 
+    let matchedTourIds: string[] = [];
+    let isSemanticSearch = false;
+
+    // Perform Semantic Search (RAG) if OpenAI is available and query is somewhat descriptive
+    if (openai && userMessage.length > 5) {
+      try {
+        const embedResponse = await openai.embeddings.create({
+          model: "text-embedding-3-small",
+          input: userMessage.replace(/\n/g, " "),
+          encoding_format: "float",
+        });
+
+        const query_embedding = embedResponse.data[0].embedding;
+
+        const { data: matches, error: matchError } = await supabase.rpc('match_tours', {
+          query_embedding,
+          match_threshold: 0.25, // 0.25 threshold (can be adjusted)
+          match_count: 8
+        });
+
+        if (!matchError && matches && matches.length > 0) {
+          matchedTourIds = matches.map((m: any) => m.id);
+          isSemanticSearch = true;
+          // Merge semantic keywords for highlighting/context
+          if (searchCriteria.keywords.length === 0) {
+            searchCriteria.keywords = ["ทัวร์ที่ตรงกับความต้องการของคุณ"];
+          }
+        }
+      } catch (err) {
+        console.error("Semantic search failed:", err);
+      }
+    }
+
     let query = supabase.from('Tour').select('*, departures:TourDeparture(*)');
 
     if (searchCriteria.isFire) {
       query = query.or('title.ilike.*ไฟไหม้*,title.ilike.*โปรไฟไหม้*');
     }
 
-    if (searchCriteria.keywords.length > 0) {
+    if (searchCriteria.keywords.length > 0 && !isSemanticSearch) {
       const strictCountries = ["ยุโรป", "europe", "จีน", "china", "ญี่ปุ่น", "japan", "เกาหลี", "korea", "ไต้หวัน", "taiwan", "ฮ่องกง", "hong kong"];
       
       const orConditions = searchCriteria.keywords.map(kw => {
@@ -144,6 +177,11 @@ Return ONLY a JSON object with these exact keys:
       });
       
       query = query.or(orConditions.join(','));
+    }
+
+    // Apply semantic search results if available
+    if (isSemanticSearch && matchedTourIds.length > 0) {
+      query = query.in('id', matchedTourIds);
     }
 
     if (searchCriteria.source) {
@@ -163,6 +201,11 @@ Return ONLY a JSON object with these exact keys:
 
     const { data: rawTours, error } = await query;
     let tours = rawTours || [];
+
+    // Re-order by semantic similarity if RAG was used
+    if (isSemanticSearch && matchedTourIds.length > 0) {
+      tours.sort((a, b) => matchedTourIds.indexOf(a.id) - matchedTourIds.indexOf(b.id));
+    }
 
     // Local Filters
     if (searchCriteria.maxPrice && tours.length > 0) {
