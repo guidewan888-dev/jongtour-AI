@@ -6,9 +6,79 @@ import { FitProposalPDF } from "./FitProposalPDF";
 import { useRef } from "react";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
+import dynamic from "next/dynamic";
+
+const MapRoute = dynamic(() => import("./MapRoute"), { ssr: false });
 
 export default function InteractiveItinerary({ itinerary }: { itinerary: any }) {
   const [days, setDays] = useState(itinerary?.days || []);
+  const [editingDayIndex, setEditingDayIndex] = useState<number | null>(null);
+  const [editPrompt, setEditPrompt] = useState("");
+  const [isRegenerating, setIsRegenerating] = useState(false);
+
+  const handleRegenerateDay = async (index: number) => {
+    if (!editPrompt.trim()) return;
+    setIsRegenerating(true);
+    try {
+      const country = itinerary.country || itinerary.title;
+      const res = await fetch("/api/chat/regenerate-day", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ country, dayObject: days[index], instruction: editPrompt })
+      });
+      const data = await res.json();
+      if (data.success && data.newDay) {
+        const newDays = [...days];
+        newDays[index] = data.newDay;
+        setDays(newDays);
+        setEditingDayIndex(null);
+        setEditPrompt("");
+      } else {
+        alert("ขออภัย ไม่สามารถปรับแก้ได้ในขณะนี้");
+      }
+    } catch (err) {
+      alert("เกิดข้อผิดพลาดในการเชื่อมต่อ AI");
+    } finally {
+      setIsRegenerating(false);
+    }
+  };
+
+  const [showLeadForm, setShowLeadForm] = useState(false);
+  const [leadForm, setLeadForm] = useState({ name: "", phone: "", email: "", pax: "2" });
+  const [isSubmittingLead, setIsSubmittingLead] = useState(false);
+  const [leadSuccess, setLeadSuccess] = useState(false);
+
+  const submitLead = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmittingLead(true);
+    try {
+      const country = itinerary.country || itinerary.title; 
+      const res = await fetch("/api/fit-request/save", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...leadForm,
+          durationDays: days.length,
+          country,
+          itinerary: { ...itinerary, days }
+        })
+      });
+      if (res.ok) {
+        setLeadSuccess(true);
+        setTimeout(() => {
+          setShowLeadForm(false);
+          setLeadSuccess(false);
+          setLeadForm({ name: "", phone: "", email: "", pax: "2" });
+        }, 3000);
+      } else {
+        alert("เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง");
+      }
+    } catch (err) {
+      alert("เกิดข้อผิดพลาดในการส่งข้อมูล");
+    } finally {
+      setIsSubmittingLead(false);
+    }
+  };
 
   const moveDay = (index: number, direction: 'up' | 'down') => {
     if (direction === 'up' && index > 0) {
@@ -149,12 +219,36 @@ export default function InteractiveItinerary({ itinerary }: { itinerary: any }) 
                 
                 {/* Tour Program */}
                 <td className="py-4 px-4 align-top max-w-[350px]">
-                  <h3 className="font-bold text-gray-800 text-sm mb-1 outline-none focus:bg-orange-50 focus:ring-2 focus:ring-orange-200 rounded px-1 -mx-1" contentEditable suppressContentEditableWarning>
-                    {d.title}
-                  </h3>
-                  <p className="text-gray-600 text-[13px] leading-relaxed outline-none focus:bg-orange-50 focus:ring-2 focus:ring-orange-200 rounded px-1 -mx-1 whitespace-pre-line mb-3" contentEditable suppressContentEditableWarning>
-                    {d.detail}
-                  </p>
+                  {editingDayIndex === index ? (
+                    <div className="bg-blue-50 border border-blue-200 p-3 rounded-lg animate-in fade-in zoom-in-95">
+                      <div className="text-xs font-bold text-blue-600 mb-2">🤖 แจ้ง AI เปลี่ยนสถานที่ของวันนี้</div>
+                      <input 
+                        type="text" 
+                        autoFocus
+                        placeholder="เช่น ขอเปลี่ยนไปเที่ยวดิสนีย์แลนด์, ขอไม่เข้าวัด"
+                        value={editPrompt}
+                        onChange={(e) => setEditPrompt(e.target.value)}
+                        className="w-full text-sm px-3 py-2 border border-blue-200 rounded outline-none focus:ring-2 focus:ring-blue-400 mb-2"
+                        onKeyDown={(e) => { if(e.key === 'Enter') handleRegenerateDay(index); }}
+                      />
+                      <div className="flex gap-2 justify-end">
+                        <button onClick={() => setEditingDayIndex(null)} className="text-xs text-gray-500 hover:underline">ยกเลิก</button>
+                        <button onClick={() => handleRegenerateDay(index)} disabled={isRegenerating || !editPrompt.trim()} className="bg-blue-500 hover:bg-blue-600 disabled:bg-blue-300 text-white text-xs font-bold px-3 py-1.5 rounded flex items-center gap-1">
+                          {isRegenerating && <Loader2 className="w-3 h-3 animate-spin" />}
+                          เปลี่ยนแผน
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <h3 className="font-bold text-gray-800 text-sm mb-1 outline-none focus:bg-orange-50 focus:ring-2 focus:ring-orange-200 rounded px-1 -mx-1" contentEditable suppressContentEditableWarning>
+                        {d.title}
+                      </h3>
+                      <p className="text-gray-600 text-[13px] leading-relaxed outline-none focus:bg-orange-50 focus:ring-2 focus:ring-orange-200 rounded px-1 -mx-1 whitespace-pre-line mb-3" contentEditable suppressContentEditableWarning>
+                        {d.detail}
+                      </p>
+                    </>
+                  )}
                 </td>
 
                 {/* Meals */}
@@ -215,6 +309,9 @@ export default function InteractiveItinerary({ itinerary }: { itinerary: any }) 
                     <button onClick={() => moveDay(index, 'down')} disabled={index === days.length - 1} className="p-1 text-gray-400 hover:text-orange-500 hover:bg-orange-50 rounded disabled:opacity-30">
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>
                     </button>
+                    <button onClick={() => {setEditingDayIndex(index); setEditPrompt("");}} className="p-1 text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded mt-1" title="เปลี่ยนสถานที่ (ใช้ AI)">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+                    </button>
                   </div>
                 </td>
               </tr>
@@ -273,6 +370,14 @@ export default function InteractiveItinerary({ itinerary }: { itinerary: any }) 
         </div>
       )}
 
+      {/* Map Route */}
+      {days.some((d: any) => d.coordinates) && (
+        <div className="px-6 py-4 bg-gray-50 border-t border-gray-200">
+          <h4 className="font-bold text-gray-800 mb-2">🗺️ แผนที่เส้นทางการเดินทาง</h4>
+          <MapRoute days={days} />
+        </div>
+      )}
+
       {/* Footer / Export */}
       <div className="p-4 bg-gray-100 border-t border-gray-200 no-print flex justify-between items-center px-6">
         <p className="text-gray-500 text-xs">Generated by Jongtour AI</p>
@@ -283,10 +388,63 @@ export default function InteractiveItinerary({ itinerary }: { itinerary: any }) 
           </button>
           <button onClick={handleGeneratePDF} disabled={isGeneratingPDF} className="bg-orange-500 hover:bg-orange-600 disabled:bg-gray-400 disabled:cursor-not-allowed text-white px-6 py-2 rounded-lg text-sm font-bold shadow-sm flex items-center gap-2 transition-colors">
             {isGeneratingPDF ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
-            {isGeneratingPDF ? "กำลังโหลดรูปภาพและสร้าง PDF..." : "ดาวน์โหลด PDF เสนอราคา"}
+            {isGeneratingPDF ? "สร้าง PDF..." : "ดาวน์โหลด PDF"}
+          </button>
+          <button onClick={() => setShowLeadForm(true)} className="bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded-lg text-sm font-bold shadow-sm flex items-center gap-2 transition-colors">
+            <CheckCircle2 className="w-4 h-4" />
+            สนใจจองทริปนี้
           </button>
         </div>
       </div>
+
+      {/* Lead Generation Modal */}
+      {showLeadForm && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl p-6 md:p-8 max-w-md w-full shadow-2xl relative">
+            <button onClick={() => setShowLeadForm(false)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600">
+              <X className="w-6 h-6" />
+            </button>
+            
+            {leadSuccess ? (
+              <div className="text-center py-8">
+                <div className="w-16 h-16 bg-green-100 text-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <CheckCircle2 className="w-8 h-8" />
+                </div>
+                <h3 className="text-xl font-bold text-gray-800 mb-2">ส่งข้อมูลสำเร็จ!</h3>
+                <p className="text-gray-500">เจ้าหน้าที่จะติดต่อกลับเพื่อเสนอราคาอย่างเป็นทางการโดยเร็วที่สุดครับ</p>
+              </div>
+            ) : (
+              <>
+                <h3 className="text-xl font-bold text-gray-800 mb-2">📝 สนใจจองทริปส่วนตัวนี้</h3>
+                <p className="text-sm text-gray-500 mb-6">กรอกข้อมูลเพื่อให้เจ้าหน้าที่ประเมินราคาและยืนยันการเดินทาง</p>
+                
+                <form onSubmit={submitLead} className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">ชื่อ-นามสกุล *</label>
+                    <input type="text" required value={leadForm.name} onChange={e => setLeadForm({...leadForm, name: e.target.value})} className="w-full border border-gray-300 rounded-lg px-4 py-2 outline-none focus:ring-2 focus:ring-orange-500" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">เบอร์โทรศัพท์ *</label>
+                    <input type="tel" required value={leadForm.phone} onChange={e => setLeadForm({...leadForm, phone: e.target.value})} className="w-full border border-gray-300 rounded-lg px-4 py-2 outline-none focus:ring-2 focus:ring-orange-500" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">อีเมล</label>
+                    <input type="email" value={leadForm.email} onChange={e => setLeadForm({...leadForm, email: e.target.value})} className="w-full border border-gray-300 rounded-lg px-4 py-2 outline-none focus:ring-2 focus:ring-orange-500" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">จำนวนผู้เดินทาง (ท่าน) *</label>
+                    <input type="number" min="1" required value={leadForm.pax} onChange={e => setLeadForm({...leadForm, pax: e.target.value})} className="w-full border border-gray-300 rounded-lg px-4 py-2 outline-none focus:ring-2 focus:ring-orange-500" />
+                  </div>
+                  
+                  <button type="submit" disabled={isSubmittingLead} className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 rounded-lg mt-4 transition-colors disabled:bg-gray-400">
+                    {isSubmittingLead ? "กำลังส่งข้อมูล..." : "ให้เจ้าหน้าที่ติดต่อกลับ"}
+                  </button>
+                </form>
+              </>
+            )}
+          </div>
+        </div>
+      )}
 
       <FitProposalPDF ref={pdfRef} itinerary={{...itinerary, days}} />
     </div>

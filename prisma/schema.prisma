@@ -194,6 +194,8 @@ model FitRequest {
   includeInsurance Boolean @default(true)
   hotelStars      Int      @default(3)
   
+  itinerary       Json?    // Stores the generated F.I.T. JSON
+  
   status          String   @default("PENDING")
   createdAt       DateTime @default(now())
 }
