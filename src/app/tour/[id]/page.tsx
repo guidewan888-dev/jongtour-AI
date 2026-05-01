@@ -3,7 +3,7 @@ import { MapPin, Calendar, Clock, FileText, ChevronRight, Info } from "lucide-re
 import { notFound } from "next/navigation";
 import DeparturesTable from "./DeparturesTable";
 import BookingWidget from "./BookingWidget";
-import { destinationConfig } from "@/lib/destinations";
+import { destinationConfig, findPathByKeyword, getDestinationData } from "@/lib/destinations";
 
 export const dynamic = "force-dynamic";
 
@@ -33,6 +33,9 @@ async function TourDetailsContent({ params }: { params: { id: string } }) {
     ? Math.min(...(tour.departures || []).map((d: any) => d.price)) 
     : tour.price;
 
+  const destPath = findPathByKeyword(tour.destination || "");
+  const { breadcrumbs } = destPath ? getDestinationData(destPath) : { breadcrumbs: [] };
+
   const wholesaleMap: Record<string, { slug: string, name: string, logo: string }> = {
     "API_ZEGO": { slug: "letsgo", name: "Let's Go Group", logo: "/images/wholesales/download.png" },
     "API_GO365": { slug: "go365", name: "GO 365 Travel", logo: "/images/wholesales/download.jfif" },
@@ -44,12 +47,29 @@ async function TourDetailsContent({ params }: { params: { id: string } }) {
     <main className="min-h-screen bg-[#f8f9fa] pb-20 pt-4">
       
       {/* Breadcrumb */}
-      <div className="max-w-7xl mx-auto px-4 mb-4 text-sm text-gray-500 flex items-center gap-2">
+      <div className="max-w-[1440px] mx-auto px-4 mb-4 text-sm text-gray-500 flex flex-wrap items-center gap-2">
         <Link href="/" className="hover:text-orange-600 transition-colors">หน้าหลัก</Link>
-        <ChevronRight className="w-4 h-4" />
-        <Link href={`/destinations/${(tour.destination || "").toLowerCase()}`} className="hover:text-orange-600 transition-colors">{tour.destination}</Link>
-        <ChevronRight className="w-4 h-4" />
-        <span className="text-gray-800 font-medium truncate">{tour.title}</span>
+        <ChevronRight className="w-4 h-4 shrink-0" />
+        
+        {breadcrumbs.length > 1 ? (
+          // ถ้าหา breadcrumbs เจอ
+          breadcrumbs.slice(1).map((crumb, idx) => (
+            <div key={crumb.url} className="flex items-center gap-2">
+              <Link href={crumb.url} className="hover:text-orange-600 transition-colors">
+                {crumb.name}
+              </Link>
+              <ChevronRight className="w-4 h-4 shrink-0" />
+            </div>
+          ))
+        ) : (
+          // ถ้าหาไม่เจอ ให้ fallback
+          <div className="flex items-center gap-2">
+            <span className="text-gray-500">{tour.destination || "ไม่ระบุ"}</span>
+            <ChevronRight className="w-4 h-4 shrink-0" />
+          </div>
+        )}
+        
+        <span className="text-gray-800 font-medium truncate max-w-[200px] sm:max-w-md lg:max-w-xl">{tour.title}</span>
       </div>
 
       <div className="max-w-[1440px] mx-auto px-4 flex flex-col xl:flex-row gap-6">
