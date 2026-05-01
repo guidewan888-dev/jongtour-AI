@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 import OpenAI from "openai";
-import { getEstimatedFlightPrice } from "@/services/flightPricing";
-import { getEstimatedHotelPrice } from "@/services/hotelPricing";
-import { getEstimatedActivityPrice } from "@/services/activityPricing";
+import { calculateFitPrice } from "@/services/pricingEngine";
 
 const prisma = new PrismaClient();
 export const maxDuration = 60;
@@ -100,24 +98,20 @@ export async function POST(req: NextRequest) {
       `;
     }
 
-    // Fetch Flight Baseline Price from Cache Service
-    let flightData = { price: 25000, source: 'DEFAULT' };
-    if (serviceType === "FULL_SERVICE" || includeFlights) {
-      flightData = await getEstimatedFlightPrice(country, start, end);
-    }
-
-    // Fetch Hotel Baseline Price from Cache Service
-    let hotelData = { totalCost: 0, source: 'DEFAULT' };
-    if (serviceType === "FULL_SERVICE" || includeHotels) {
-      hotelData = await getEstimatedHotelPrice(country, Number(hotelStars) || 3, durationDays, Number(pax) || 1);
-    }
-    const hotelCostPerPax = Math.round(hotelData.totalCost / Math.max(1, Number(pax) || 1));
-
-    // Fetch Activity Baseline Price from Cache Service
-    let activityData = { totalCost: 0, source: 'DEFAULT' };
-    // Assuming activities are included in FULL_SERVICE or A_LA_CARTE without explicit exclusion
-    activityData = await getEstimatedActivityPrice(country, durationDays, Number(pax) || 1);
-    const activityCostPerPax = Math.round(activityData.totalCost / Math.max(1, Number(pax) || 1));
+    const isFullService = serviceType === "FULL_SERVICE";
+    const pricingData = await calculateFitPrice({
+      country,
+      pax: Number(pax) || 1,
+      durationDays,
+      hotelStars: Number(hotelStars) || 3,
+      includeFlights: isFullService || includeFlights,
+      includeHotels: isFullService || includeHotels,
+      includeTransport: isFullService || includeTransport,
+      includeGuide: isFullService || includeGuide,
+      includeInsurance: isFullService || includeInsurance,
+    });
+    
+    console.log("[Pricing Engine] Cost Breakdown:", JSON.stringify(pricingData.breakdownPerPax, null, 2));
 
     const systemPrompt = `คุณคือผู้เชี่ยวชาญด้านการจัดทริปทัวร์ส่วนตัว (F.I.T. Tour Expert)
 หน้าที่ของคุณคือออกแบบโปรแกรมการเดินทาง (Itinerary) ตามข้อมูลที่ลูกค้าให้มา
@@ -133,8 +127,8 @@ ${inclusionDetails}
 
 กฎการสร้าง JSON:
 1. "title": ตั้งชื่อทริปให้น่าสนใจ (ภาษาไทย)
-2. "estimatedPrice": ให้ประเมินราคารวมทั้งหมดตามบริการที่รวมไว้ (เป็นเงินบาท เช่น "45,000 THB/ท่าน") พร้อมวงเล็บต่อท้ายว่า "(ราคาโดยประมาณจากระบบอ้างอิง)"
-**สำคัญมาก: ทัวร์ส่วนตัว (Private Tour) มีต้นทุนการจัดการที่สูงกว่าปกติ ให้คุณคำนวณราคาต้นทุนประเมินของคุณ (อ้างอิงต้นทุนตั๋วเครื่องบินไป-กลับ ประมาณ ${flightData.price.toLocaleString()} THB/ท่าน, ค่าโรงแรมประมาณ ${hotelCostPerPax.toLocaleString()} THB/ท่าน, และค่ากิจกรรม/ตั๋วเข้าชมสถานที่ประมาณ ${activityCostPerPax.toLocaleString()} THB/ท่าน) แล้วคูณด้วย 1.2 (บวกเพิ่ม 20%) เสมอ เพื่อให้สะท้อนราคาขายจริง**
+2. "estimatedPrice": ให้ประเมินราคารวมทั้งหมดตามบริการที่รวมไว้ เป็นเงินบาท โดยให้บังคับใช้ราคาขายจริงที่คำนวณมาแล้วคือ "${pricingData.sellingPricePerPax.toLocaleString()} THB/ท่าน" เท่านั้น (ห้ามประเมินเองเด็ดขาด) พร้อมวงเล็บต่อท้ายว่า "(ราคาโดยประมาณจากระบบอ้างอิง)"
+**สำคัญมาก: ทัวร์ส่วนตัว (Private Tour) มีต้นทุนการจัดการที่สูงกว่าปกติ ราคา ${pricingData.sellingPricePerPax.toLocaleString()} THB/ท่าน นี้ได้รวมค่าตั๋ว ค่าโรงแรม ค่าอาหาร ค่ารถ ค่าไกด์ และบวกกำไร 20% เรียบร้อยแล้ว ให้ใช้ตัวเลขนี้ในการเสนอราคาเลย**
 3. "days": สร้างแผนการเดินทางแบบรายวันให้ครบ ${durationDays} วัน 
 4. "inclusions": สรุปรายการที่รวมในราคา (ภาษาไทย) แบบสั้นๆ เช่น ["ตั๋วเครื่องบินไป-กลับ", "โรงแรม 3 ดาว", ...]
 5. "exclusions": คุณต้องใส่ข้อความฮาร์ดโค้ดเหล่านี้ลงไปเป๊ะๆ:
