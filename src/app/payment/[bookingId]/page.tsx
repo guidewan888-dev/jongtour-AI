@@ -44,18 +44,23 @@ export default async function PaymentPage({
   let paymentTitle = "ชำระเงินเต็มจำนวน";
   let paymentSubtitle = "ยอดชำระทั้งหมด (Total Amount)";
   
-  // Real logic can calculate deposit if needed, but for now we just take the full amount
-  // assuming deposit is not dynamic right now
+  if (booking.paymentType === 'deposit' && booking.depositAmount) {
+    totalAmount = booking.depositAmount;
+    paymentTitle = "ชำระเงินมัดจำ";
+    paymentSubtitle = "ยอดมัดจำที่ต้องชำระ (Deposit Amount)";
+  }
 
   async function handlePayment() {
     "use server";
     const cookieStore = await cookies();
     const supabaseServer = createClient(cookieStore);
     
-    // Mark as FULL_PAID
+    // Mark as DEPOSIT_PAID or FULL_PAID depending on the chosen type
+    const newStatus = booking.paymentType === 'deposit' ? 'DEPOSIT_PAID' : 'FULL_PAID';
+    
     await supabaseServer
       .from('Booking')
-      .update({ status: 'FULL_PAID' })
+      .update({ status: newStatus })
       .eq('id', bookingId);
 
     // Also record a payment

@@ -240,13 +240,13 @@ export default async function BookingDetailsPage({ params }: { params: { id: str
             <div className="flex flex-col md:flex-row justify-between items-center gap-6 bg-gray-50 rounded-xl p-6">
               
               {booking.status === 'PENDING' && (() => {
-                const depositAmount = (booking.travelers?.length || 1) * 5000; // สมมติมัดจำท่านละ 5,000 บาท
+                const amountToPay = booking.paymentType === 'deposit' ? (booking.depositAmount || booking.totalPrice) : booking.totalPrice;
                 
                 return (
                   <div className="w-full flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                     <div>
-                      <p className="text-gray-500 font-medium mb-1">ยอดชำระสุทธิ (Total Price)</p>
-                      <p className="text-3xl font-bold text-gray-900 mb-2">฿ {booking.totalPrice.toLocaleString()}</p>
+                      <p className="text-gray-500 font-medium mb-1">ยอดชำระที่ต้องดำเนินการ</p>
+                      <p className="text-3xl font-bold text-gray-900 mb-2">฿ {amountToPay.toLocaleString()}</p>
                       <p className="text-sm text-red-500 font-medium flex items-center gap-1">
                         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                         กรุณาชำระเงินเพื่อยืนยันที่นั่งก่อนทัวร์เต็ม!
@@ -254,75 +254,64 @@ export default async function BookingDetailsPage({ params }: { params: { id: str
                     </div>
                     
                     <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
-                      <div className="bg-white border-2 border-blue-100 rounded-xl p-4 flex flex-col justify-center shadow-sm">
-                        <p className="text-xs text-gray-500 mb-1 text-center font-bold">แบ่งจ่ายบางส่วน</p>
-                        <Link 
-                          href={`/payment/${booking.id}?type=deposit`} 
-                          className="w-full bg-white border-2 border-[#5392f9] text-[#5392f9] px-6 py-2.5 rounded-lg font-bold text-base hover:bg-blue-50 transition-colors text-center whitespace-nowrap"
-                        >
-                          ชำระมัดจำ (฿ {depositAmount.toLocaleString()})
-                        </Link>
-                      </div>
-                      
-                      <div className="bg-blue-50 border-2 border-blue-200 rounded-xl p-4 flex flex-col justify-center shadow-sm relative">
-                        <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-green-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap">
-                          แนะนำ
-                        </div>
-                        <p className="text-xs text-blue-600 mb-1 text-center font-bold">จ่ายทีเดียวจบ</p>
-                        <Link 
-                          href={`/payment/${booking.id}?type=full`} 
-                          className="w-full bg-[#5392f9] text-white px-6 py-2.5 rounded-lg font-bold text-base hover:bg-blue-600 transition-colors text-center shadow-md shadow-blue-500/20 whitespace-nowrap"
-                        >
-                          ชำระเต็มจำนวน (฿ {booking.totalPrice.toLocaleString()})
-                        </Link>
-                      </div>
+                      <Link 
+                        href={`/payment/${booking.id}`} 
+                        className="w-full bg-[#5392f9] text-white px-8 py-3.5 rounded-xl font-bold text-lg hover:bg-blue-600 transition-colors text-center shadow-md shadow-blue-500/20 whitespace-nowrap"
+                      >
+                        ดำเนินการชำระเงิน
+                      </Link>
                     </div>
                   </div>
                 );
               })()}
 
-              {booking.status === 'DEPOSIT_PAID' && (
-                <>
-                  <div className="flex-1 w-full flex justify-between md:justify-start md:gap-12 border-b md:border-b-0 md:border-r border-gray-200 pb-4 md:pb-0 md:pr-12">
-                    <div>
-                      <p className="text-gray-500 font-medium text-sm mb-1">ยอดรวมทั้งหมด</p>
-                      <p className="text-lg font-bold text-gray-700">฿ {booking.totalPrice.toLocaleString()}</p>
-                    </div>
-                    <div>
-                      <p className="text-gray-500 font-medium text-sm mb-1">ชำระมัดจำแล้ว</p>
-                      <p className="text-lg font-bold text-green-600">฿ 10,000</p>
-                    </div>
-                  </div>
-                  <div className="flex flex-col gap-3 w-full md:w-auto md:pl-6">
-                    <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-2 md:gap-6">
+              {booking.status === 'DEPOSIT_PAID' && (() => {
+                const depositPaid = booking.depositAmount || 0;
+                const outstanding = booking.totalPrice - depositPaid;
+                const dueDate = new Date(new Date(booking.departure.startDate).getTime() - 30 * 24 * 60 * 60 * 1000);
+                
+                return (
+                  <>
+                    <div className="flex-1 w-full flex justify-between md:justify-start md:gap-12 border-b md:border-b-0 md:border-r border-gray-200 pb-4 md:pb-0 md:pr-12">
                       <div>
-                        <p className="text-purple-600 font-bold mb-1">ยอดคงเหลือที่ต้องชำระ</p>
-                        <p className="text-3xl font-bold text-[#5392f9]">฿ {(booking.totalPrice - 10000).toLocaleString()}</p>
-                        {/* Calculate due date automatically (e.g. 20 days before departure) */}
-                        <p className="text-xs text-gray-500 mt-1 font-medium flex items-center gap-1">
-                          <svg className="w-3.5 h-3.5 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                          </svg>
-                          ครบกำหนดชำระ: <span className="text-red-500">
-                            {new Date(new Date(booking.departure.startDate).getTime() - 20 * 24 * 60 * 60 * 1000).toLocaleDateString('th-TH')}
-                          </span>
-                        </p>
+                        <p className="text-gray-500 font-medium text-sm mb-1">ยอดรวมทั้งหมด</p>
+                        <p className="text-lg font-bold text-gray-700">฿ {booking.totalPrice.toLocaleString()}</p>
+                      </div>
+                      <div>
+                        <p className="text-gray-500 font-medium text-sm mb-1">ชำระมัดจำแล้ว</p>
+                        <p className="text-lg font-bold text-green-600">฿ {depositPaid.toLocaleString()}</p>
                       </div>
                     </div>
-                    <div className="flex flex-col sm:flex-row gap-2 mt-2">
-                      <Link href={`/payment/${booking.id}`} className="flex-1 bg-purple-600 text-white px-6 py-3 rounded-xl font-bold text-base hover:bg-purple-700 transition-colors text-center shadow-lg shadow-purple-500/30 whitespace-nowrap">
-                        ชำระเงินส่วนที่เหลือ
-                      </Link>
-                      <Link href={`/user/document-preview?doc=invoice&bookingId=${booking.id}`} className="flex-1 bg-white border-2 border-purple-200 text-purple-700 px-4 py-3 rounded-xl font-bold text-base hover:bg-purple-50 transition-colors flex items-center justify-center gap-2 whitespace-nowrap">
-                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                        </svg>
-                        โหลด Invoice
-                      </Link>
+                    <div className="flex flex-col gap-3 w-full md:w-auto md:pl-6">
+                      <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-2 md:gap-6">
+                        <div>
+                          <p className="text-purple-600 font-bold mb-1">ยอดคงเหลือที่ต้องชำระ</p>
+                          <p className="text-3xl font-bold text-[#5392f9]">฿ {outstanding.toLocaleString()}</p>
+                          <p className="text-xs text-gray-500 mt-1 font-medium flex items-center gap-1">
+                            <svg className="w-3.5 h-3.5 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            ครบกำหนดชำระ: <span className="text-red-500">
+                              {dueDate.toLocaleDateString('th-TH')}
+                            </span>
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex flex-col sm:flex-row gap-2 mt-2">
+                        <Link href={`/payment/${booking.id}?type=full_remaining`} className="flex-1 bg-purple-600 text-white px-6 py-3 rounded-xl font-bold text-base hover:bg-purple-700 transition-colors text-center shadow-lg shadow-purple-500/30 whitespace-nowrap">
+                          ชำระเงินส่วนที่เหลือ
+                        </Link>
+                        <Link href={`/user/document-preview?doc=invoice&bookingId=${booking.id}`} className="flex-1 bg-white border-2 border-purple-200 text-purple-700 px-4 py-3 rounded-xl font-bold text-base hover:bg-purple-50 transition-colors flex items-center justify-center gap-2 whitespace-nowrap">
+                          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                          </svg>
+                          โหลด Invoice
+                        </Link>
+                      </div>
                     </div>
-                  </div>
-                </>
-              )}
+                  </>
+                );
+              })()}
 
               {(booking.status === 'AWAITING_CONFIRMATION') && (
                 <div className="flex flex-col md:flex-row justify-between items-center gap-4 w-full">
