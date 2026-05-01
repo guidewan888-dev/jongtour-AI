@@ -12,6 +12,7 @@ const config = {
 
 // Create a new LINE client
 const client = new line.messagingApi.MessagingApiClient(config);
+const blobClient = new line.messagingApi.MessagingApiBlobClient(config);
 
 export async function POST(request: Request) {
   try {
@@ -51,7 +52,7 @@ export async function POST(request: Request) {
             userMessage = event.message.text;
           } else if (event.message.type === 'audio') {
             // Fetch audio from LINE
-            const stream = await client.getMessageContent(event.message.id);
+            const stream = await blobClient.getMessageContent(event.message.id);
             const chunks = [];
             for await (const chunk of stream) chunks.push(chunk);
             const buffer = Buffer.concat(chunks);
@@ -59,7 +60,7 @@ export async function POST(request: Request) {
             userMessage = await transcribeAudio(buffer);
           } else if (event.message.type === 'image') {
             // Fetch image from LINE
-            const stream = await client.getMessageContent(event.message.id);
+            const stream = await blobClient.getMessageContent(event.message.id);
             const chunks = [];
             for await (const chunk of stream) chunks.push(chunk);
             const buffer = Buffer.concat(chunks);
