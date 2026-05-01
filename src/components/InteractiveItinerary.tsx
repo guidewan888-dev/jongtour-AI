@@ -27,7 +27,7 @@ export default function InteractiveItinerary({ itinerary }: { itinerary: any }) 
   if (!itinerary) return null;
 
   return (
-    <div className="w-full max-w-[900px] mx-auto mt-4 bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm flex flex-col font-sans">
+    <div className="w-full max-w-[900px] mx-auto mt-4 bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm flex flex-col">
       
       {/* Header */}
       <div className="bg-gradient-to-r from-orange-500 to-orange-600 p-6 text-white text-center">
@@ -72,18 +72,6 @@ export default function InteractiveItinerary({ itinerary }: { itinerary: any }) 
                   <p className="text-gray-600 text-[13px] leading-relaxed outline-none focus:bg-orange-50 focus:ring-2 focus:ring-orange-200 rounded px-1 -mx-1 whitespace-pre-line mb-3" contentEditable suppressContentEditableWarning>
                     {d.detail}
                   </p>
-                  
-                  {/* Dynamic Destination Image */}
-                  {d.imagePrompt && (
-                    <div className="w-full mt-2 rounded-lg overflow-hidden border border-gray-100 shadow-sm relative bg-gray-100 min-h-[140px]">
-                      <img 
-                        src={`https://image.pollinations.ai/prompt/${encodeURIComponent(d.imagePrompt + " high quality travel photography bright sunny day")}?width=600&height=300&nologo=true`} 
-                        alt={d.title}
-                        className="w-full h-[140px] object-cover hover:scale-105 transition-transform duration-700"
-                        loading="lazy"
-                      />
-                    </div>
-                  )}
                 </td>
 
                 {/* Meals */}

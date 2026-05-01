@@ -17,7 +17,7 @@ export default function CustomTourPage() {
     phone: "",
     pax: 2,
     startDate: "",
-    endDate: "",
+    durationDays: 5,
     country: "",
     cities: "",
     includeFlights: true,
@@ -38,10 +38,15 @@ export default function CustomTourPage() {
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    if (!formData.startDate || !formData.endDate || !formData.country) {
+    if (!formData.startDate || !formData.country) {
       alert("กรุณากรอกวันที่เดินทางและประเทศที่ต้องการไปให้ครบถ้วน");
       return;
     }
+
+    const start = new Date(formData.startDate);
+    const end = new Date(start);
+    end.setDate(start.getDate() + Number(formData.durationDays) - 1);
+    const endDate = end.toISOString().split('T')[0];
 
     setIsLoading(true);
     setItineraryResult(null);
@@ -50,7 +55,7 @@ export default function CustomTourPage() {
       const res = await fetch("/api/fit-request", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...formData, serviceType })
+        body: JSON.stringify({ ...formData, endDate, serviceType })
       });
       const data = await res.json();
       if (data.itinerary) {
@@ -149,15 +154,15 @@ export default function CustomTourPage() {
 
             {/* Dates & Pax */}
             <div className="space-y-4">
-              <h3 className="font-bold text-gray-800 flex items-center gap-2"><Calendar className="w-5 h-5 text-orange-500"/> 2. วันเดินทางและจำนวนคน</h3>
+              <h3 className="font-bold text-gray-800 flex items-center gap-2"><Calendar className="w-5 h-5 text-orange-500"/> 2. วันเดินทาง จำนวนวัน และจำนวนคน</h3>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">วันเดินทางไป</label>
                   <input required name="startDate" value={formData.startDate} onChange={handleChange} type="date" className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 focus:border-orange-500 focus:bg-white outline-none transition-colors" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">วันเดินทางกลับ</label>
-                  <input required name="endDate" value={formData.endDate} onChange={handleChange} type="date" className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 focus:border-orange-500 focus:bg-white outline-none transition-colors" />
+                  <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-1">จำนวนวัน (วัน)</label>
+                  <input required name="durationDays" value={formData.durationDays} onChange={handleChange} type="number" min="1" className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 focus:border-orange-500 focus:bg-white outline-none transition-colors" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-1"><Users className="w-4 h-4"/> จำนวนผู้เดินทาง (คน)</label>
