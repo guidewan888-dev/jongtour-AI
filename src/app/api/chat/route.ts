@@ -19,6 +19,7 @@ export async function POST(request: Request) {
       keywords: [] as string[],
       maxPrice: null as number | null,
       isFire: false,
+      source: null as string | null,
     };
 
     let aiFailed = false;
@@ -36,7 +37,8 @@ Extract the travel intent from the latest user message, taking into account the 
 Return ONLY a JSON object with these exact keys:
 - "keywords": array of strings. Include destination countries, cities, or continents in THAI language (e.g., ["ญี่ปุ่น", "ยุโรป", "หน้าหนาว", "ฮอกไกโด"]). Leave empty if none found. Do NOT include generic words like "ทัวร์" or "ไปเที่ยว".
 - "maxPrice": number or null. Extract any maximum budget mentioned. Convert shorthand like "3 หมื่น" to 30000.
-- "isFire": boolean. true if the user is looking for last-minute deals (e.g., "ไฟไหม้", "โปรไฟไหม้").`
+- "isFire": boolean. true if the user is looking for last-minute deals (e.g., "ไฟไหม้", "โปรไฟไหม้").
+- "wholesale": string or null. Extract wholesale tour company names if mentioned (e.g. "Let's go", "Check in", "Go 365", "Tour Factory").`
             },
             ...(chatHistory.slice(-6).map((m: any) => ({ 
               role: m.role === 'ai' ? 'assistant' : 'user', 
@@ -51,6 +53,14 @@ Return ONLY a JSON object with these exact keys:
         if (parsed.keywords && Array.isArray(parsed.keywords)) searchCriteria.keywords = parsed.keywords;
         if (typeof parsed.maxPrice === "number") searchCriteria.maxPrice = parsed.maxPrice;
         if (parsed.isFire === true) searchCriteria.isFire = true;
+        
+        if (parsed.wholesale) {
+          const w = parsed.wholesale.toLowerCase();
+          if (w.includes("let") || w.includes("lego")) searchCriteria.source = "API_ZEGO";
+          else if (w.includes("check")) searchCriteria.source = "CHECKIN";
+          else if (w.includes("365")) searchCriteria.source = "API_GO365";
+          else if (w.includes("factory")) searchCriteria.source = "TOUR_FACTORY";
+        }
       } catch (e) {
         console.error("Failed to parse OpenAI intent:", e);
         aiFailed = true;
@@ -115,6 +125,10 @@ Return ONLY a JSON object with these exact keys:
       query = query.or(orConditions.join(','));
     }
 
+    if (searchCriteria.source) {
+      query = query.eq('source', searchCriteria.source);
+    }
+
     // Always fetch some to sort
     query = query.order('createdAt', { ascending: false }).limit(20);
 
@@ -141,15 +155,15 @@ Return ONLY a JSON object with these exact keys:
           messages: [
             {
               role: "system",
-              content: `You are จองทัวร์ AI (Jongtour AI), a friendly, enthusiastic, and professional Thai travel agent. Always refer to yourself as "จองทัวร์ AI".
+              content: `You are จองทัวร์ AI (Jongtour AI), an incredibly enthusiastic, persuasive, and funny Thai travel agent! Your goal is to make the user excited to book tours. Use humor, excitement, and a bit of friendly Thai slang. Always refer to yourself as "จองทัวร์ AI".
 You searched the database based on the latest query and found ${tours.length} tours:
 ${tourTitles}
 
 CRITICAL RULES:
-1. You MUST ONLY talk about travel, tours, destinations, and Jongtour services. 
-2. If the user asks about ANYTHING unrelated (politics, coding, general knowledge, cooking, etc.), politely decline to answer and steer the conversation back to travel (e.g., "ผมคือ จองทัวร์ AI ตอบได้เฉพาะเรื่องท่องเที่ยวนะครับ 😅 สนใจไปเที่ยวประเทศไหนบอกได้เลยครับ!").
-3. If tours > 0: Excitedly present the found tours. Tell them to check the cards below.
-4. If tours = 0: Apologize politely, suggest they adjust their budget or destination.
+1. You MUST ONLY talk about travel, tours, destinations, and Jongtour services. (Note: Let's Go, Check In Tour, GO 365, and Tour Factory are our trusted wholesale partners, so talking about them is allowed!).
+2. If the user asks about ANYTHING unrelated (politics, coding, general knowledge, cooking, etc.), politely decline to answer and steer the conversation back to travel (e.g., "ผมคือ จองทัวร์ AI ตอบได้เฉพาะเรื่องท่องเที่ยวนะครับ 😅 แต่อยากไปเที่ยวไหนบอกได้เลย!").
+3. If tours > 0: Excitedly and persuasively present the found tours. Tell them to check the cards below. Make it sound like a deal they can't miss!
+4. If tours = 0: Apologize playfully, suggest they adjust their budget or destination.
 Use emojis naturally. DO NOT use markdown bold/italic formatting to keep it clean for the chat UI.`
             },
             ...(chatHistory.slice(-6).map((m: any) => ({ 
