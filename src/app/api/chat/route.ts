@@ -1,60 +1,148 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { GoogleGenerativeAI } from "@google/generative-ai";
+
+// Initialize Gemini if API key is provided
+const geminiApiKey = process.env.GEMINI_API_KEY;
+const isGeminiAvailable = !!geminiApiKey;
+const genAI = isGeminiAvailable ? new GoogleGenerativeAI(geminiApiKey) : null;
 
 export async function POST(request: Request) {
   try {
     const { message } = await request.json();
-    const userMessage = message.toLowerCase();
+    const userMessage = message.trim();
 
-    // 1. จำลอง AI ค้นหาคีย์เวิร์ดเพื่อดึงข้อมูลจาก Database
-    let destinationFilter = "";
-    
-    if (userMessage.includes("ญี่ปุ่น") || userMessage.includes("japan")) destinationFilter = "Japan";
-    else if (userMessage.includes("เกาหลี") || userMessage.includes("korea")) destinationFilter = "South Korea";
-    else if (userMessage.includes("ยุโรป") || userMessage.includes("europe")) destinationFilter = "Europe";
-    else if (userMessage.includes("ไต้หวัน") || userMessage.includes("taiwan")) destinationFilter = "Taiwan";
+    // Default criteria
+    const searchCriteria = {
+      keywords: [] as string[],
+      maxPrice: null as number | null,
+      isFire: false,
+    };
 
-    // 2. ดึงข้อมูลจาก Supabase Database (ถ้ามีคีย์เวิร์ด)
+    if (isGeminiAvailable && genAI) {
+      try {
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+        const prompt = `
+You are an intelligent travel agent parsing user travel queries.
+Extract the travel intent from this user message: "${userMessage}"
+
+Return ONLY a valid JSON object with these exact keys:
+- "keywords": array of strings. Include destination countries, cities, or continents in THAI language (e.g., ["ญี่ปุ่น", "ยุโรป", "หน้าหนาว", "ฮอกไกโด"]). Leave empty if none found. Do NOT include generic words like "ทัวร์" or "ไปเที่ยว".
+- "maxPrice": number or null. Extract any maximum budget mentioned. Convert shorthand like "3 หมื่น" to 30000.
+- "isFire": boolean. true if the user is looking for last-minute deals (e.g., "ไฟไหม้", "โปรไฟไหม้").
+
+DO NOT wrap the response in markdown blocks like \`\`\`json. Return JUST the raw JSON string.
+`;
+        const result = await model.generateContent(prompt);
+        let text = result.response.text().trim();
+        // Fallback cleanup in case model returns markdown block
+        text = text.replace(/^```json\s*/, '').replace(/\s*```$/, '');
+        
+        const parsed = JSON.parse(text);
+        if (parsed.keywords && Array.isArray(parsed.keywords)) searchCriteria.keywords = parsed.keywords;
+        if (typeof parsed.maxPrice === "number") searchCriteria.maxPrice = parsed.maxPrice;
+        if (parsed.isFire === true) searchCriteria.isFire = true;
+      } catch (e) {
+        console.error("Failed to parse Gemini intent:", e);
+      }
+    } else {
+      // Fallback Keyword Logic if no Gemini Key
+      const lower = userMessage.toLowerCase();
+      if (lower.includes("ญี่ปุ่น") || lower.includes("japan")) searchCriteria.keywords.push("ญี่ปุ่น");
+      if (lower.includes("เกาหลี") || lower.includes("korea")) searchCriteria.keywords.push("เกาหลี");
+      if (lower.includes("ยุโรป") || lower.includes("europe")) searchCriteria.keywords.push("ยุโรป");
+      if (lower.includes("ไต้หวัน") || lower.includes("taiwan")) searchCriteria.keywords.push("ไต้หวัน");
+      if (lower.includes("ฮ่องกง") || lower.includes("hong kong")) searchCriteria.keywords.push("ฮ่องกง");
+      if (lower.includes("จีน") || lower.includes("china")) searchCriteria.keywords.push("จีน");
+      if (lower.includes("ไฟไหม้")) searchCriteria.isFire = true;
+      
+      // Simple price extraction fallback
+      const priceMatch = lower.match(/งบ\s*(\d+)\s*(หมื่น|พัน)?/);
+      if (priceMatch) {
+        let num = parseInt(priceMatch[1]);
+        if (priceMatch[2] === "หมื่น") num *= 10000;
+        if (priceMatch[2] === "พัน") num *= 1000;
+        searchCriteria.maxPrice = num;
+      }
+    }
+
+    // 2. Query Supabase
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://qterfftaebnoawnzkfgu.supabase.co";
     const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || "sb_publishable_SRwNSJ89mInda5FcuB1W2w_9IEJlSOI";
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    let tours: any[] = [];
-    if (destinationFilter) {
-      const { data } = await supabase
-        .from('Tour')
-        .select('*')
-        .eq('destination', destinationFilter)
-        .limit(3);
-      if (data) tours = data;
-    } else if (userMessage.includes("แนะนำ") || userMessage.includes("ทัวร์ไหนดี")) {
-      // ดึงทัวร์แนะนำแบบสุ่ม
-      const { data } = await supabase
-        .from('Tour')
-        .select('*')
-        .limit(3);
-      if (data) tours = data;
+    let query = supabase.from('Tour').select('*, departures:TourDeparture(*)');
+
+    if (searchCriteria.isFire) {
+      query = query.or('title.ilike.*ไฟไหม้*,title.ilike.*โปรไฟไหม้*');
     }
 
-    // 3. จำลองข้อความตอบกลับของ AI (Generative Text)
-    let aiReply = "สวัสดีครับ ผม Jongtour AI 😊 ยินดีที่ได้ให้บริการครับ\nคุณอยากไปเที่ยวประเทศไหน เดินทางช่วงเดือนอะไร หรือมีงบประมาณในใจเท่าไหร่ พิมพ์บอกผมได้เลยครับ!";
-    
-    if (tours.length > 0) {
-      aiReply = `ว้าว! การไปเที่ยว **${destinationFilter || 'ทัวร์ยอดฮิต'}** เป็นไอเดียที่ยอดเยี่ยมมากครับ! 🎒✨\n\nผมได้ทำการสแกนแพ็กเกจทั้งหมดในระบบและพบทัวร์ที่ตรงกับความต้องการของคุณครับ ลองดูแพ็กเกจที่ผมคัดมาให้ด้านล่างนี้นะครับ หากสนใจตัวไหนเป็นพิเศษสามารถกดเข้าไปดูรายละเอียดหรือจองได้ทันทีครับ`;
-    } else if (userMessage.length > 5 && !userMessage.includes("สวัสดี")) {
-      aiReply = "ผมกำลังพยายามหาแพ็กเกจที่ตรงกับความต้องการของคุณอยู่ครับ แต่ดูเหมือนว่าตอนนี้อาจจะยังไม่มีแพ็กเกจที่ตรงแบบ 100% ลองเปลี่ยนเป็น 'แนะนำทัวร์ยุโรป' หรือ 'ทัวร์ญี่ปุ่น' ดูไหมครับ? 😊";
+    if (searchCriteria.keywords.length > 0) {
+      const orConditions = searchCriteria.keywords.map(kw => `destination.ilike.*${kw}*,title.ilike.*${kw}*`);
+      query = query.or(orConditions.join(','));
     }
 
-    // 4. รอสัก 1.5 วินาทีเพื่อความสมจริงเหมือน AI กำลังคิด
-    await new Promise((resolve) => setTimeout(resolve, 1500));
+    // Always fetch some to sort
+    query = query.order('createdAt', { ascending: false }).limit(20);
+
+    const { data: rawTours, error } = await query;
+    let tours = rawTours || [];
+
+    // Local Max Price Filter
+    if (searchCriteria.maxPrice && tours.length > 0) {
+      tours = tours.filter(tour => tour.price <= searchCriteria.maxPrice!);
+    }
+
+    // Return max 4 for UI
+    tours = tours.slice(0, 4);
+
+    // 3. Generate natural response
+    let aiReply = "";
+
+    if (isGeminiAvailable && genAI) {
+      try {
+        const replyModel = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+        const tourTitles = tours.length > 0 ? tours.map(t => `- ${t.title} (ราคาเริ่มต้น ${t.price} บาท)`).join("\n") : "ไม่มีทัวร์ที่ตรงสเปก";
+        
+        const replyPrompt = `
+You are Jongtour AI, a friendly, enthusiastic, and professional Thai travel agent. 
+The user said: "${userMessage}"
+You searched the database and found ${tours.length} tours:
+${tourTitles}
+
+Write an engaging, helpful response (1-2 short paragraphs) in Thai.
+- If tours > 0: Excitedly present the found tours. Tell them to check the cards below.
+- If tours = 0: Apologize politely, suggest they adjust their budget or destination.
+Use emojis naturally. DO NOT use markdown bold/italic formatting to keep it clean for the chat UI.
+        `;
+        const replyResult = await replyModel.generateContent(replyPrompt);
+        aiReply = replyResult.response.text().trim();
+      } catch (e) {
+        console.error("Gemini reply generation failed", e);
+      }
+    }
+
+    // Fallback if Gemini is not available or failed
+    if (!aiReply) {
+      if (tours.length > 0) {
+        const destName = searchCriteria.keywords.length > 0 ? searchCriteria.keywords.join(" และ ") : "ทัวร์น่าสนใจ";
+        aiReply = `พบแล้วครับ! 🎉 ผมคัดแพ็กเกจ ${destName} ที่ตรงกับความต้องการของคุณมาให้ ${tours.length} รายการ${searchCriteria.maxPrice ? ` ในงบไม่เกิน ${searchCriteria.maxPrice.toLocaleString()} บาท` : ''} ลองเลือกดูรายละเอียดด้านล่างได้เลยครับ 👇`;
+      } else {
+        if (searchCriteria.keywords.length > 0) {
+          aiReply = `ต้องขออภัยด้วยครับ ตอนนี้ยังไม่มีแพ็กเกจทัวร์ ${searchCriteria.keywords.join(", ")} ${searchCriteria.maxPrice ? `ในงบ ${searchCriteria.maxPrice.toLocaleString()} บาท ` : ''}ที่เปิดรับจองในช่วงนี้ ลองเปลี่ยนจุดหมายหรือเพิ่มงบดูไหมครับ? 😊`;
+        } else {
+          aiReply = "สวัสดีครับ ผม Jongtour AI 😊 คุณอยากไปเที่ยวประเทศไหน ช่วงเดือนอะไร หรือมีงบประมาณในใจเท่าไหร่ พิมพ์บอกผมได้เลยครับ!";
+        }
+      }
+    }
 
     return NextResponse.json({
       reply: aiReply,
-      tours: tours // ส่งข้อมูลทัวร์จาก Database กลับไปแสดงผลเป็น Card
+      tours: tours
     });
 
   } catch (error) {
     console.error("Chat API Error:", error);
-    return NextResponse.json({ reply: "ขออภัยครับ ระบบ AI ขัดข้องชั่วคราว โปรดลองใหม่อีกครั้ง" }, { status: 500 });
+    return NextResponse.json({ reply: "ขออภัยครับ ระบบ AI ขัดข้องชั่วคราว โปรดลองใหม่อีกครั้ง 😅" }, { status: 500 });
   }
 }
