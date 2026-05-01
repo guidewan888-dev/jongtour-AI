@@ -91,33 +91,39 @@ async function TourDetailsContent({ params }: { params: { id: string } }) {
             </div>
           </div>
 
-          {/* Tour Image */}
-          <div className="bg-white p-2 rounded-lg shadow-sm border border-gray-200 mb-6">
-            <img 
-              src={tour.imageUrl || "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e"} 
-              alt={tour.title} 
-              className="w-full h-auto max-h-[500px] object-contain rounded bg-gray-50"
-            />
-          </div>
-          
-          {/* Overview & Download PDF */}
-          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mb-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 pb-4 border-b border-gray-100">
-              <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-                <Info className="w-5 h-5 text-orange-600" /> ไฮไลท์แพ็กเกจ (Highlights)
-              </h2>
-              <a 
-                href="#"
-                className="flex items-center gap-2 bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 px-4 py-2 rounded-md font-bold text-sm transition-colors" 
-                title="ดาวน์โหลด PDF (ระบบจะใส่หัวกระดาษบริษัทให้อัตโนมัติ)"
-              >
-                <FileText className="w-4 h-4" />
-                ดาวน์โหลดโปรแกรมทัวร์
-              </a>
+          {/* Tour Image & Highlights (Side by Side) */}
+          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mb-6 flex flex-col md:flex-row gap-6 items-start">
+            
+            {/* Left: Tour Image */}
+            <div className="w-full md:w-[280px] shrink-0">
+              <img 
+                src={tour.imageUrl || "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e"} 
+                alt={tour.title} 
+                className="w-full h-auto aspect-auto object-contain rounded border border-gray-100 shadow-sm bg-gray-50"
+              />
             </div>
-            <p className="text-gray-700 leading-relaxed whitespace-pre-line text-sm md:text-base">
-              {tour.description || "สัมผัสประสบการณ์การเดินทางที่เหนือกว่า พร้อมไกด์ผู้เชี่ยวชาญดูแลตลอดการเดินทาง พักสบาย เดินทางสะดวก คุ้มค่าทุกวินาที"}
-            </p>
+            
+            {/* Right: Overview & Download PDF */}
+            <div className="flex-1 min-w-0 w-full flex flex-col">
+              <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 mb-4 pb-4 border-b border-gray-100">
+                <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2 shrink-0">
+                  <Info className="w-5 h-5 text-orange-600" /> ไฮไลท์แพ็กเกจ
+                </h2>
+                <a 
+                  href="#"
+                  className="flex items-center justify-center gap-2 bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 px-4 py-2 rounded-md font-bold text-xs transition-colors shrink-0" 
+                  title="ดาวน์โหลด PDF (ระบบจะใส่หัวกระดาษบริษัทให้อัตโนมัติ)"
+                >
+                  <FileText className="w-4 h-4" />
+                  ดาวน์โหลดโปรแกรมทัวร์
+                </a>
+              </div>
+              
+              <div className="text-gray-700 leading-relaxed whitespace-pre-line text-sm max-h-[350px] overflow-y-auto pr-3 custom-scrollbar bg-gray-50/50 p-4 rounded-md border border-gray-50">
+                {tour.description || "สัมผัสประสบการณ์การเดินทางที่เหนือกว่า พร้อมไกด์ผู้เชี่ยวชาญดูแลตลอดการเดินทาง พักสบาย เดินทางสะดวก คุ้มค่าทุกวินาที"}
+              </div>
+            </div>
+            
           </div>
 
           {/* Departures Table (Client Component) */}
