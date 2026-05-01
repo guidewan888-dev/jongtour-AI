@@ -120,7 +120,7 @@ __CHIPS__["question 1", "question 2", "question 3"]`;
           let query = supabase.from('Tour').select('*, departures:TourDeparture(*)');
           
           if (args.destination) {
-            query = query.or(`title.ilike.%${args.destination}%,highlight.ilike.%${args.destination}%,destination.ilike.%${args.destination}%`);
+            query = query.or(`title.ilike.%${args.destination}%,description.ilike.%${args.destination}%,destination.ilike.%${args.destination}%`);
           }
           if (args.maxPrice) {
             query = query.lte('price', args.maxPrice);
