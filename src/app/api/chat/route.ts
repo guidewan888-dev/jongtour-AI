@@ -202,7 +202,8 @@ __CHIPS__["question 1", "question 2", "question 3"]`;
         // Send data block first for the UI to render cards
         if (customItinerary) {
           controller.enqueue(encoder.encode(`__DATA__${JSON.stringify({ type: 'custom_itinerary', itinerary: customItinerary })}__DATA__\n`));
-        } else if (tours.length > 0) {
+        } else {
+          // Always send tours_data (even if empty) to satisfy the frontend parser which expects __DATA__ block before rendering text
           controller.enqueue(encoder.encode(`__DATA__${JSON.stringify({ type: 'tours_data', tours })}__DATA__\n`));
         }
 
