@@ -29,6 +29,13 @@ export default async function AdminDashboard() {
     console.error("Supabase fetch error:", error);
   }
 
+  // Fetch real sync logs
+  const { data: syncLogsData } = await supabase
+    .from('ApiSyncLog')
+    .select('*')
+    .order('createdAt', { ascending: false })
+    .limit(5);
+
   const liveBookings = bookingsData || [];
 
   const activeBookings = liveBookings
@@ -123,10 +130,10 @@ export default async function AdminDashboard() {
         />
         <StatCard 
           title="สถานะ API Sync ล่าสุด" 
-          value="Success" 
-          subtitle="ซิงค์ข้อมูลเมื่อ 15 นาทีที่แล้ว" 
+          value={syncLogsData && syncLogsData.length > 0 ? (syncLogsData[0].status === 'SUCCESS' ? 'Success' : 'Failed') : "No Data"} 
+          subtitle={syncLogsData && syncLogsData.length > 0 ? `ซิงค์ข้อมูลล่าสุดเมื่อ ${new Date(syncLogsData[0].createdAt).toLocaleTimeString('th-TH', { timeZone: 'Asia/Bangkok' })} น.` : "ยังไม่มีข้อมูลซิงค์"} 
           icon={RefreshCcw} 
-          color="bg-emerald-500" 
+          color={syncLogsData && syncLogsData.length > 0 && syncLogsData[0].status === 'SUCCESS' ? "bg-emerald-500" : "bg-red-500"} 
         />
       </div>
 
@@ -179,31 +186,17 @@ export default async function AdminDashboard() {
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 h-[500px] overflow-y-auto custom-scrollbar">
           <h3 className="text-lg font-bold text-gray-800 mb-6 sticky top-0 bg-white pb-2 border-b border-gray-50">ความเคลื่อนไหวล่าสุด (System Logs)</h3>
           <div className="space-y-6">
-            <LogItem 
-              time="10:45 น." 
-              text="ระบบสร้าง Invoice อัตโนมัติและส่งอีเมลให้ลูกค้า (BK-240399) สำเร็จ" 
-              type="success"
-            />
-            <LogItem 
-              time="09:30 น." 
-              text="แอดมิน (Super Admin) อนุมัติการชำระเงิน (BK-12345678)" 
-              type="info"
-            />
-            <LogItem 
-              time="08:15 น." 
-              text="Zego API Sync พบทัวร์ใหม่ 5 รายการ และอัปเดตราคา 12 รายการ" 
-              type="sync"
-            />
-            <LogItem 
-              time="08:00 น." 
-              text="Go365 API Sync สำเร็จ ไม่มีรายการเปลี่ยนแปลง" 
-              type="sync"
-            />
-            <LogItem 
-              time="เมื่อวาน 18:00 น." 
-              text="ออกใบนัดหมายให้ลูกค้ากรุ๊ปทัวร์เกาหลี โซล (BK-240405) จำนวน 15 ท่านเรียบร้อย" 
-              type="success"
-            />
+            {syncLogsData && syncLogsData.map((log: any) => (
+              <LogItem 
+                key={log.id}
+                time={`${new Date(log.createdAt).toLocaleTimeString('th-TH', { timeZone: 'Asia/Bangkok' })} น.`} 
+                text={`${log.providerName} Sync: ${log.status === 'SUCCESS' ? `อัปเดต ${log.recordsUpdated} รายการ` : `Error: ${log.errorMessage}`}`} 
+                type={log.status === 'SUCCESS' ? "sync" : "failed"}
+              />
+            ))}
+            {(!syncLogsData || syncLogsData.length === 0) && (
+               <p className="text-gray-400 text-sm">ยังไม่มีข้อมูลการซิงค์</p>
+            )}
           </div>
         </div>
 
@@ -271,6 +264,7 @@ function LogItem({ time, text, type }: { time: string, text: string, type: strin
   const getDotColor = () => {
     if (type === 'success') return 'bg-green-500';
     if (type === 'sync') return 'bg-blue-500';
+    if (type === 'failed') return 'bg-red-500';
     return 'bg-gray-400';
   }
 

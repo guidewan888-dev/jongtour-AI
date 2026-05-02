@@ -235,7 +235,7 @@ export default async function WholesaleLastMinutePage({ params, searchParams }: 
                           const firstDate = new Date(sorted[0].startDate);
                           const lastDate = new Date(sorted[sorted.length - 1].startDate);
                           
-                          const formatMonth = (d: Date) => d.toLocaleDateString("th-TH", { month: "short", year: "2-digit" });
+                          const formatMonth = (d: Date) => d.toLocaleDateString("th-TH", { month: "short", year: "numeric" });
                           const m1 = formatMonth(firstDate);
                           const m2 = formatMonth(lastDate);
                           

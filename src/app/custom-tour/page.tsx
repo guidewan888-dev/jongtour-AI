@@ -1,53 +1,75 @@
 "use client";
 
-import React, { useState, FormEvent } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { ArrowLeft, CheckCircle2, Plane, Hotel, Utensils, Bus, UserCheck, ShieldCheck, Map, Calendar, Users, Send, Loader2 } from "lucide-react";
+import { ArrowLeft, Sparkles, Send, Loader2, Bot, MapPin, Calendar, Compass, User, SlidersHorizontal, ChevronDown } from "lucide-react";
 import InteractiveItinerary from "@/components/InteractiveItinerary";
 
-export default function CustomTourPage() {
-  const [serviceType, setServiceType] = useState<"FULL_SERVICE" | "A_LA_CARTE">("FULL_SERVICE");
-  const [isLoading, setIsLoading] = useState(false);
-  const [itineraryResult, setItineraryResult] = useState<any>(null);
+const SUGGESTIONS = [
+  "ไปเที่ยวโอซาก้า เกียวโต 5 วัน 4 คืน ช่วงใบไม้เปลี่ยนสี เน้นกินเนื้อย่างและช้อปปิ้ง นอนโรงแรม 4 ดาว",
+  "ทริปสวิสเซอร์แลนด์ 7 วัน ไปกับครอบครัว 4 คน นั่งรถไฟชมวิวและขึ้นยอดเขาจุงเฟรา ขอแบบ Full Service",
+  "เที่ยวไต้หวัน 4 วัน 3 คืน เน้นไหว้พระขอพรและกินสตรีทฟู้ด ขอราคาประหยัด นอนโรงแรม 3 ดาว"
+];
 
-  // Form State
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    phone: "",
+const LOADING_STEPS = [
+  "กำลังเชื่อมต่อระบบ AI Travel Engine...",
+  "กำลังวิเคราะห์ความต้องการและสถานที่ปลายทาง...",
+  "กำลังค้นหาเที่ยวบินที่ดีที่สุด...",
+  "กำลังคัดกรองโรงแรมและที่พัก...",
+  "คำนวณระยะทางและจัดสรรเส้นทางที่เหมาะสม...",
+  "ร้อยเรียงเรื่องราวและสร้างแผนการเดินทาง...",
+  "กำลังประเมินราคาและออกเอกสาร..."
+];
+
+export default function CustomTourPage() {
+  const [prompt, setPrompt] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [loadingStep, setLoadingStep] = useState(0);
+  const [itineraryResult, setItineraryResult] = useState<any>(null);
+  const [showAdvanced, setShowAdvanced] = useState(false);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Advanced Options state (optional overrides)
+  const [advancedData, setAdvancedData] = useState({
+    serviceType: "FULL_SERVICE",
     pax: 2,
-    startDate: "",
-    durationDays: 5,
-    country: "",
-    cities: "",
-    includeFlights: true,
-    includeHotels: true,
-    includeMeals: true,
-    includeTransport: true,
-    includeGuide: true,
-    includeInsurance: true,
     hotelStars: 3,
+    durationDays: 3,
   });
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value, type, checked } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: type === "checkbox" ? checked : value
-    }));
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (isLoading) {
+      interval = setInterval(() => {
+        setLoadingStep((prev) => (prev < LOADING_STEPS.length - 1 ? prev + 1 : prev));
+      }, 2500);
+    } else {
+      setLoadingStep(0);
+    }
+    return () => clearInterval(interval);
+  }, [isLoading]);
+
+  const handleTextareaInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setPrompt(e.target.value);
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+      textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 200)}px`;
+    }
   };
 
-  const handleSubmit = async (e: FormEvent) => {
+  const handleSuggestionClick = (text: string) => {
+    setPrompt(text);
+    if (textareaRef.current) {
+      textareaRef.current.focus();
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.startDate || !formData.country) {
-      alert("กรุณากรอกวันที่เดินทางและประเทศที่ต้องการไปให้ครบถ้วน");
+    if (!prompt.trim()) {
+      alert("กรุณาบอกเราหน่อยครับว่าอยากไปเที่ยวที่ไหน?");
       return;
     }
-
-    const start = new Date(formData.startDate);
-    const end = new Date(start);
-    end.setDate(start.getDate() + Number(formData.durationDays) - 1);
-    const endDate = end.toISOString().split('T')[0];
 
     setIsLoading(true);
     setItineraryResult(null);
@@ -56,13 +78,16 @@ export default function CustomTourPage() {
       const res = await fetch("/api/fit-request", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...formData, endDate, serviceType })
+        body: JSON.stringify({ 
+          prompt,
+          ...advancedData
+        })
       });
       const data = await res.json();
       if (data.itinerary) {
         setItineraryResult(data.itinerary);
       } else {
-        alert("เกิดข้อผิดพลาดในการสร้างแผนการเดินทาง");
+        alert("เกิดข้อผิดพลาดในการสร้างแผนการเดินทาง: " + (data.error || "Unknown Error"));
       }
     } catch (err) {
       console.error(err);
@@ -73,205 +98,193 @@ export default function CustomTourPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20">
+    <div className="min-h-screen bg-gray-50 text-gray-800 selection:bg-orange-200 font-sans relative overflow-x-hidden">
+      
+      {/* Dynamic Background Effects */}
+      <div className="fixed inset-0 pointer-events-none z-0">
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-orange-300/30 rounded-full blur-[120px] opacity-70"></div>
+        <div className="absolute bottom-0 right-0 w-[600px] h-[600px] bg-blue-200/40 rounded-full blur-[150px] opacity-70"></div>
+        {/* Grid Pattern */}
+        <div className="absolute inset-0 bg-[url('/grid.svg')] bg-center [mask-image:linear-gradient(180deg,white,rgba(255,255,255,0))] opacity-10"></div>
+      </div>
+
       {/* Header */}
-      <div className="bg-white border-b border-gray-200 sticky top-0 z-40">
-        <div className="max-w-3xl mx-auto px-4 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Link href="/ai-planner" className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-600 transition-colors">
-              <ArrowLeft className="w-5 h-5" />
-            </Link>
-            <div>
-              <h1 className="font-bold text-gray-800 text-lg">จัดทริปส่วนตัว (F.I.T)</h1>
-              <p className="text-xs text-gray-500">กรอกข้อมูลให้เราออกแบบทริปในฝันให้คุณ</p>
+      <div className="relative z-40 border-b border-gray-200/50 backdrop-blur-md bg-white/60">
+        <div className="max-w-4xl mx-auto px-6 h-16 flex items-center justify-between">
+          <Link href="/ai-planner" className="flex items-center gap-2 text-gray-500 hover:text-gray-900 transition-colors group">
+            <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center group-hover:bg-gray-200 transition-colors border border-gray-200">
+              <ArrowLeft className="w-4 h-4" />
             </div>
+            <span className="text-sm font-medium tracking-wide">กลับไปหน้าหลัก</span>
+          </Link>
+          <div className="flex items-center gap-2">
+            <Sparkles className="w-4 h-4 text-orange-500" />
+            <span className="text-sm font-bold bg-clip-text text-transparent bg-gradient-to-r from-orange-500 to-amber-500 uppercase tracking-widest">
+              Jongtour AI
+            </span>
           </div>
         </div>
       </div>
 
-      <div className="max-w-3xl mx-auto px-4 py-6">
+      <div className="relative z-10 max-w-4xl mx-auto px-4 py-12 md:py-20 flex flex-col items-center">
         
-        {/* Toggle Service Type */}
-        <div className="flex bg-gray-200 p-1 rounded-xl mb-8">
-          <button 
-            onClick={() => setServiceType("FULL_SERVICE")}
-            className={`flex-1 py-3 text-sm font-bold rounded-lg transition-all ${serviceType === "FULL_SERVICE" ? 'bg-white text-orange-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
-          >
-            ทัวร์จัดเต็ม (Full Service)
-          </button>
-          <button 
-            onClick={() => setServiceType("A_LA_CARTE")}
-            className={`flex-1 py-3 text-sm font-bold rounded-lg transition-all ${serviceType === "A_LA_CARTE" ? 'bg-white text-orange-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
-          >
-            เลือกบริการเอง (A La Carte)
-          </button>
-        </div>
-
         {/* Results View */}
-        {itineraryResult && (
-          <div className="mb-8">
-            <div className="bg-green-50 border border-green-200 text-green-800 rounded-2xl p-6 mb-6">
-              <h2 className="font-bold text-lg mb-2 flex items-center gap-2">
-                <CheckCircle2 className="w-6 h-6 text-green-600" /> ข้อมูลของคุณถูกส่งให้ทีมงานเรียบร้อยแล้ว!
+        {itineraryResult ? (
+          <div className="w-full animate-in slide-in-from-bottom-10 fade-in duration-700">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
+                <Bot className="w-8 h-8 text-orange-500" /> 
+                แผนการเดินทางสุดพิเศษของคุณ
               </h2>
-              <p className="text-sm">เซลส์ของเราจะติดต่อกลับไปโดยเร็วที่สุด ระหว่างนี้ เชิญดูแผนการเดินทางเบื้องต้นที่ AI จัดเตรียมไว้ให้ครับ</p>
+              <button onClick={() => setItineraryResult(null)} className="px-4 py-2 bg-white hover:bg-gray-50 rounded-full text-sm font-medium text-gray-700 transition-colors flex items-center gap-2 border border-gray-200 shadow-sm">
+                <Sparkles className="w-4 h-4 text-orange-400"/> ปรับแต่งใหม่
+              </button>
             </div>
-            <InteractiveItinerary itinerary={itineraryResult} />
-            <button onClick={() => setItineraryResult(null)} className="mt-6 w-full py-4 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-bold transition-colors">
-              แก้ไขข้อมูล / จัดทริปใหม่
-            </button>
-          </div>
-        )}
-
-        {/* Loading View */}
-        {isLoading && (
-          <div className="bg-white rounded-3xl p-12 text-center shadow-sm border border-gray-100 flex flex-col items-center">
-            <Loader2 className="w-12 h-12 text-orange-500 animate-spin mb-4" />
-            <h2 className="text-xl font-bold text-gray-800 mb-2">AI กำลังจัดตารางเที่ยวเบื้องต้นให้คุณ...</h2>
-            <p className="text-gray-500">กำลังคำนวณระยะทาง หาราคา และร้อยเรียงสถานที่ท่องเที่ยว...</p>
-          </div>
-        )}
-
-        {/* Form View */}
-        {!itineraryResult && !isLoading && (
-          <form onSubmit={handleSubmit} className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 space-y-6">
             
-            {/* Destination */}
-            <div className="space-y-4">
-              <h3 className="font-bold text-gray-800 flex items-center gap-2"><Map className="w-5 h-5 text-orange-500"/> 1. สถานที่ที่ต้องการเดินทาง</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">ประเทศ</label>
-                  <input required name="country" value={formData.country} onChange={handleChange} type="text" placeholder="เช่น ญี่ปุ่น, สวิสเซอร์แลนด์" className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 focus:border-orange-500 focus:bg-white outline-none transition-colors" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">เมืองที่อยากไป (ถ้ามี)</label>
-                  <input name="cities" value={formData.cities} onChange={handleChange} type="text" placeholder="เช่น โตเกียว, ฟูจิ, โอซาก้า" className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 focus:border-orange-500 focus:bg-white outline-none transition-colors" />
+            <div className="bg-white rounded-2xl overflow-hidden shadow-xl border border-gray-100 ring-1 ring-black/5">
+              <InteractiveItinerary itinerary={itineraryResult} />
+            </div>
+          </div>
+        ) : isLoading ? (
+          /* Loading State */
+          <div className="w-full max-w-2xl mx-auto mt-20 flex flex-col items-center justify-center text-center space-y-8 animate-in fade-in duration-500">
+            <div className="relative">
+              {/* Outer pulsing ring */}
+              <div className="absolute -inset-4 bg-orange-100 rounded-full blur-xl animate-pulse"></div>
+              {/* Inner scanning ring */}
+              <div className="w-24 h-24 rounded-full border border-orange-200 flex items-center justify-center relative overflow-hidden bg-white shadow-lg">
+                <div className="absolute inset-0 bg-gradient-to-t from-orange-200 to-transparent animate-[spin_2s_linear_infinite] opacity-50"></div>
+                <div className="bg-white w-20 h-20 rounded-full absolute inset-2 flex items-center justify-center z-10 shadow-inner">
+                  <Bot className="w-8 h-8 text-orange-500 animate-pulse" />
                 </div>
               </div>
             </div>
-
-            <hr className="border-gray-100" />
-
-            {/* Dates & Pax */}
-            <div className="space-y-4">
-              <h3 className="font-bold text-gray-800 flex items-center gap-2"><Calendar className="w-5 h-5 text-orange-500"/> 2. วันเดินทาง จำนวนวัน และจำนวนคน</h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">วันเดินทางไป</label>
-                  <input required name="startDate" value={formData.startDate} onChange={handleChange} type="date" className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 focus:border-orange-500 focus:bg-white outline-none transition-colors" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-1">จำนวนวัน (วัน)</label>
-                  <input required name="durationDays" value={formData.durationDays} onChange={handleChange} type="number" min="1" className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 focus:border-orange-500 focus:bg-white outline-none transition-colors" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-1"><Users className="w-4 h-4"/> จำนวนผู้เดินทาง (คน)</label>
-                  <input required name="pax" value={formData.pax} onChange={handleChange} type="number" min="1" className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 focus:border-orange-500 focus:bg-white outline-none transition-colors" />
-                </div>
+            
+            <div>
+              <h3 className="text-2xl font-bold text-gray-900 mb-2 tracking-wide">AI กำลังทำงาน...</h3>
+              <div className="h-6 overflow-hidden relative w-full flex justify-center">
+                <p 
+                  key={loadingStep} 
+                  className="text-orange-600 text-sm font-medium animate-in slide-in-from-bottom-4 fade-in duration-300 absolute"
+                >
+                  {LOADING_STEPS[loadingStep]}
+                </p>
               </div>
             </div>
 
-            <hr className="border-gray-100" />
+            {/* Progress Bar */}
+            <div className="w-64 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-gradient-to-r from-orange-400 to-amber-400 rounded-full transition-all duration-500 ease-out"
+                style={{ width: `${Math.max(5, (loadingStep / (LOADING_STEPS.length - 1)) * 100)}%` }}
+              ></div>
+            </div>
+          </div>
+        ) : (
+          /* Input View */
+          <div className="w-full max-w-3xl mx-auto flex flex-col items-center mt-10 animate-in fade-in slide-in-from-bottom-8 duration-700">
+            <div className="w-16 h-16 bg-gradient-to-br from-orange-400 to-amber-300 rounded-2xl flex items-center justify-center mb-6 shadow-lg shadow-orange-500/20 transform -rotate-6">
+               <Bot className="w-8 h-8 text-white transform rotate-6" />
+            </div>
+            
+            <h1 className="text-3xl md:text-5xl font-bold text-gray-900 text-center mb-4 tracking-tight leading-tight">
+              ให้ AI จัดทริปในฝันให้คุณ
+            </h1>
+            <p className="text-gray-500 text-center text-lg mb-12 max-w-xl">
+              บอกสิ่งที่คุณต้องการ เช่น ประเทศที่อยากไป จำนวนวัน สไตล์การเที่ยว และโรงแรม แล้วให้ AI ออกแบบทริปส่วนตัวให้คุณใน 30 วินาที
+            </p>
 
-            {/* Hotel Preferences */}
-            <div className="space-y-4">
-              <h3 className="font-bold text-gray-800 flex items-center gap-2"><Hotel className="w-5 h-5 text-orange-500"/> 3. ระดับโรงแรมที่ต้องการ</h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <label className={`flex items-center gap-3 p-4 border rounded-xl cursor-pointer transition-colors ${formData.hotelStars === 3 ? 'border-orange-500 bg-orange-50' : 'border-gray-200 hover:border-orange-300'}`}>
-                  <input type="radio" name="hotelStars" value={3} checked={Number(formData.hotelStars) === 3} onChange={handleChange} className="w-5 h-5 accent-orange-500 rounded-full" />
-                  <div>
-                    <span className="block font-bold text-gray-800">3 ดาว</span>
-                    <span className="text-xs text-gray-500">มาตรฐาน สะอาด คุ้มค่า</span>
+            <form onSubmit={handleSubmit} className="w-full relative group">
+              <div className="absolute -inset-1 bg-gradient-to-r from-orange-400 to-amber-300 rounded-3xl blur-md opacity-20 group-hover:opacity-40 transition duration-1000 group-hover:duration-200"></div>
+              
+              <div className="relative bg-white/80 backdrop-blur-xl border border-gray-200/60 rounded-3xl p-2 md:p-3 shadow-2xl shadow-gray-200/50 flex flex-col focus-within:bg-white focus-within:border-orange-300/50 transition-all">
+                <textarea
+                  ref={textareaRef}
+                  value={prompt}
+                  onChange={handleTextareaInput}
+                  placeholder="ลองพิมพ์บอกเรา เช่น อยากไปเที่ยวญี่ปุ่น 5 วัน เน้นกินเนื้อย่างและช้อปปิ้ง นอนโรงแรม 4 ดาว..."
+                  className="w-full bg-transparent text-gray-900 placeholder-gray-400 text-lg md:text-xl p-4 md:p-6 outline-none resize-none min-h-[120px] overflow-hidden font-medium"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      handleSubmit(e);
+                    }
+                  }}
+                />
+                
+                <div className="flex items-center justify-between px-4 pb-2 pt-2 border-t border-gray-100 mt-2">
+                  <button 
+                    type="button" 
+                    onClick={() => setShowAdvanced(!showAdvanced)}
+                    className="text-xs text-gray-500 hover:text-orange-600 font-medium flex items-center gap-1.5 transition-colors"
+                  >
+                    <SlidersHorizontal className="w-3.5 h-3.5" />
+                    การตั้งค่าเพิ่มเติม (Advanced)
+                    <ChevronDown className={`w-3.5 h-3.5 transition-transform ${showAdvanced ? 'rotate-180' : ''}`} />
+                  </button>
+                  
+                  <button 
+                    type="submit"
+                    disabled={!prompt.trim()}
+                    className="bg-orange-500 hover:bg-orange-600 disabled:bg-gray-300 disabled:text-gray-500 text-white p-3 rounded-xl flex items-center gap-2 font-bold transition-all transform hover:scale-105 active:scale-95 shadow-md shadow-orange-500/20"
+                  >
+                    <span className="hidden md:inline pl-2">สร้างแผนเดินทาง</span>
+                    <Send className="w-5 h-5" />
+                  </button>
+                </div>
+
+                {/* Advanced Options Drawer */}
+                <div className={`overflow-hidden transition-all duration-300 ease-in-out ${showAdvanced ? 'max-h-96 opacity-100 mt-4' : 'max-h-0 opacity-0'}`}>
+                  <div className="bg-gray-50 rounded-2xl p-4 md:p-6 border border-gray-100 grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <label className="text-gray-500 text-xs mb-1.5 block uppercase tracking-wider font-bold">บริการที่ต้องการ</label>
+                      <select 
+                        value={advancedData.serviceType}
+                        onChange={(e) => setAdvancedData({...advancedData, serviceType: e.target.value})}
+                        className="w-full bg-white border border-gray-200 rounded-lg p-2.5 text-gray-800 outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-colors appearance-none shadow-sm"
+                      >
+                        <option value="FULL_SERVICE">ทัวร์จัดเต็ม (Full Service)</option>
+                        <option value="A_LA_CARTE">เลือกบริการเอง (A La Carte)</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="text-gray-500 text-xs mb-1.5 block uppercase tracking-wider font-bold">ระดับโรงแรมบังคับ</label>
+                      <select 
+                        value={advancedData.hotelStars}
+                        onChange={(e) => setAdvancedData({...advancedData, hotelStars: Number(e.target.value)})}
+                        className="w-full bg-white border border-gray-200 rounded-lg p-2.5 text-gray-800 outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-colors appearance-none shadow-sm"
+                      >
+                        <option value={3}>3 ดาว (มาตรฐาน)</option>
+                        <option value={4}>4 ดาว (พรีเมียม)</option>
+                        <option value={5}>5 ดาว (หรูหรา)</option>
+                      </select>
+                    </div>
                   </div>
-                </label>
-                <label className={`flex items-center gap-3 p-4 border rounded-xl cursor-pointer transition-colors ${formData.hotelStars === 4 ? 'border-orange-500 bg-orange-50' : 'border-gray-200 hover:border-orange-300'}`}>
-                  <input type="radio" name="hotelStars" value={4} checked={Number(formData.hotelStars) === 4} onChange={handleChange} className="w-5 h-5 accent-orange-500 rounded-full" />
-                  <div>
-                    <span className="block font-bold text-gray-800">4 ดาว</span>
-                    <span className="text-xs text-gray-500">หรูหรา สะดวกสบาย</span>
-                  </div>
-                </label>
-                <label className={`flex items-center gap-3 p-4 border rounded-xl cursor-pointer transition-colors ${formData.hotelStars === 5 ? 'border-orange-500 bg-orange-50' : 'border-gray-200 hover:border-orange-300'}`}>
-                  <input type="radio" name="hotelStars" value={5} checked={Number(formData.hotelStars) === 5} onChange={handleChange} className="w-5 h-5 accent-orange-500 rounded-full" />
-                  <div>
-                    <span className="block font-bold text-gray-800">5 ดาว</span>
-                    <span className="text-xs text-gray-500">ระดับพรีเมียม บริการยอดเยี่ยม</span>
-                  </div>
-                </label>
+                </div>
+
+              </div>
+            </form>
+
+            {/* Suggestions */}
+            <div className="mt-12 w-full max-w-3xl">
+              <p className="text-xs text-gray-400 mb-4 font-bold uppercase tracking-widest text-center">ลองพิมพ์ตัวอย่างเหล่านี้</p>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                {SUGGESTIONS.map((text, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => handleSuggestionClick(text)}
+                    className="bg-white hover:bg-orange-50 border border-gray-200 hover:border-orange-200 p-4 rounded-2xl text-left text-sm text-gray-600 hover:text-orange-700 transition-all shadow-sm group"
+                  >
+                    <span className="line-clamp-3 leading-relaxed">{text}</span>
+                    <div className="mt-2 text-orange-500 opacity-0 group-hover:opacity-100 transition-opacity text-xs font-bold flex items-center gap-1">
+                      เลือก <ArrowLeft className="w-3 h-3 rotate-180" />
+                    </div>
+                  </button>
+                ))}
               </div>
             </div>
 
-            <hr className="border-gray-100" />
-
-            {/* A La Carte Options */}
-            {serviceType === "A_LA_CARTE" ? (
-              <div className="space-y-4">
-                <h3 className="font-bold text-gray-800">4. เลือกบริการที่ต้องการรวมในแพ็กเกจ</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <label className="flex items-center gap-3 p-4 border border-gray-200 rounded-xl cursor-pointer hover:border-orange-500 transition-colors">
-                    <input type="checkbox" name="includeFlights" checked={formData.includeFlights} onChange={handleChange} className="w-5 h-5 accent-orange-500 rounded" />
-                    <span className="flex items-center gap-2 text-sm font-medium text-gray-700"><Plane className="w-4 h-4 text-gray-400"/> ตั๋วเครื่องบินไป-กลับ</span>
-                  </label>
-                  <label className="flex items-center gap-3 p-4 border border-gray-200 rounded-xl cursor-pointer hover:border-orange-500 transition-colors">
-                    <input type="checkbox" name="includeHotels" checked={formData.includeHotels} onChange={handleChange} className="w-5 h-5 accent-orange-500 rounded" />
-                    <span className="flex items-center gap-2 text-sm font-medium text-gray-700"><Hotel className="w-4 h-4 text-gray-400"/> โรงแรมระดับ 3-4 ดาว</span>
-                  </label>
-                  <label className="flex items-center gap-3 p-4 border border-gray-200 rounded-xl cursor-pointer hover:border-orange-500 transition-colors">
-                    <input type="checkbox" name="includeMeals" checked={formData.includeMeals} onChange={handleChange} className="w-5 h-5 accent-orange-500 rounded" />
-                    <span className="flex items-center gap-2 text-sm font-medium text-gray-700"><Utensils className="w-4 h-4 text-gray-400"/> อาหารครบทุกมื้อ</span>
-                  </label>
-                  <label className="flex items-center gap-3 p-4 border border-gray-200 rounded-xl cursor-pointer hover:border-orange-500 transition-colors">
-                    <input type="checkbox" name="includeTransport" checked={formData.includeTransport} onChange={handleChange} className="w-5 h-5 accent-orange-500 rounded" />
-                    <span className="flex items-center gap-2 text-sm font-medium text-gray-700"><Bus className="w-4 h-4 text-gray-400"/> รถบัส/รถตู้ พร้อมคนขับ</span>
-                  </label>
-                  <label className="flex items-center gap-3 p-4 border border-gray-200 rounded-xl cursor-pointer hover:border-orange-500 transition-colors">
-                    <input type="checkbox" name="includeGuide" checked={formData.includeGuide} onChange={handleChange} className="w-5 h-5 accent-orange-500 rounded" />
-                    <span className="flex items-center gap-2 text-sm font-medium text-gray-700"><UserCheck className="w-4 h-4 text-gray-400"/> หัวหน้าทัวร์ไทยดูแลตลอดทริป</span>
-                  </label>
-                  <label className="flex items-center gap-3 p-4 border border-gray-200 rounded-xl cursor-pointer hover:border-orange-500 transition-colors">
-                    <input type="checkbox" name="includeInsurance" checked={formData.includeInsurance} onChange={handleChange} className="w-5 h-5 accent-orange-500 rounded" />
-                    <span className="flex items-center gap-2 text-sm font-medium text-gray-700"><ShieldCheck className="w-4 h-4 text-gray-400"/> ประกันการเดินทาง</span>
-                  </label>
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                <h3 className="font-bold text-gray-800">4. บริการที่รวมในแพ็กเกจ (จัดเต็มครบวงจร)</h3>
-                <div className="bg-orange-50 border border-orange-100 rounded-xl p-5 text-sm text-gray-700 space-y-2">
-                  <p className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-orange-500" /> ตั๋วเครื่องบินไป-กลับ ชั้นประหยัด</p>
-                  <p className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-orange-500" /> โรงแรมที่พักระดับ 3-4 ดาว</p>
-                  <p className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-orange-500" /> อาหารตามโปรแกรม</p>
-                  <p className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-orange-500" /> รถโค้ชหรือรถตู้ปรับอากาศ พร้อมคนขับชำนาญทาง</p>
-                  <p className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-orange-500" /> หัวหน้าทัวร์คนไทย ดูแลตลอดการเดินทาง</p>
-                  <p className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-orange-500" /> ประกันอุบัติเหตุระหว่างการเดินทาง</p>
-                </div>
-              </div>
-            )}
-
-            <hr className="border-gray-100" />
-
-            {/* Contact Details */}
-            <div className="space-y-4">
-              <h3 className="font-bold text-gray-800">5. ข้อมูลติดต่อผู้จอง</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">ชื่อ-นามสกุล</label>
-                  <input required name="name" value={formData.name} onChange={handleChange} type="text" placeholder="ชื่อผู้ติดต่อ" className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 focus:border-orange-500 focus:bg-white outline-none transition-colors" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">เบอร์โทรศัพท์ หรือ LINE ID</label>
-                  <input required name="phone" value={formData.phone} onChange={handleChange} type="text" placeholder="เพื่อให้เซลส์ติดต่อกลับ" className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 focus:border-orange-500 focus:bg-white outline-none transition-colors" />
-                </div>
-              </div>
-            </div>
-
-            <button type="submit" className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold text-lg py-4 rounded-xl flex items-center justify-center gap-2 transition-colors shadow-sm">
-              <Send className="w-5 h-5" /> ส่งให้ AI จัดทริปเลย!
-            </button>
-            <p className="text-center text-xs text-gray-400 mt-4">ไม่มีค่าใช้จ่ายในการขอใบเสนอราคา</p>
-
-          </form>
+          </div>
         )}
       </div>
     </div>
