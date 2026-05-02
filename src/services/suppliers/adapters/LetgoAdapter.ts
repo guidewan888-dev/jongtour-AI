@@ -28,7 +28,8 @@ export class LetgoAdapter implements SupplierAdapter {
 
   async getTours(): Promise<RawTour[]> {
     const rawData = await this.fetchApi('/programtours');
-    const toursData = Array.isArray(rawData) ? rawData : (rawData.data || []);
+    // Zego API returns { Data: [...], Count: ... }
+    const toursData = Array.isArray(rawData) ? rawData : (rawData.Data || rawData.data || []);
     
     return toursData.map((t: any) => ({
       externalId: t.ProductID.toString(),

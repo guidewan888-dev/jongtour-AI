@@ -140,7 +140,14 @@ export class SyncManager {
               .update({
                 title: normalized.title,
                 destination: normalized.destination,
+                durationDays: normalized.durationDays,
                 price: normalized.price,
+                imageUrl: normalized.imageUrl,
+                description: normalized.description,
+                airlineCode: normalized.airlineCode,
+                pdfUrl: normalized.pdfUrl,
+                itinerary: normalized.itinerary,
+                flights: normalized.flights,
                 updatedAt: new Date().toISOString()
               })
               .eq('id', existingTour.id);
