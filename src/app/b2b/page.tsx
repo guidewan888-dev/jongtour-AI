@@ -1,24 +1,50 @@
 import { Package, Users, Receipt, TrendingUp, Building2, CalendarDays } from 'lucide-react';
+import { createClient } from '@/utils/supabase/server';
+import { cookies } from 'next/headers';
+import { prisma } from '@/lib/prisma'; // Assumes this is available
 
 export const dynamic = 'force-dynamic';
 
 export default async function B2BDashboardPage() {
+  const cookieStore = await cookies();
+  const supabase = createClient(cookieStore);
+  const { data: { user } } = await supabase.auth.getUser();
+
+  let dbUser = null;
+  let company = null;
+  let tourCount = 0;
   
-  // For MVP, we will use mock data to represent what the dashboard will look like.
-  // In a real scenario, we would query the database here.
+  if (user) {
+    dbUser = await prisma.user.findUnique({
+      where: { id: user.id },
+      include: { company: true }
+    });
+    
+    if (dbUser?.company) {
+      company = dbUser.company;
+      if (company.type === 'SUPPLIER') {
+        tourCount = await prisma.tour.count({
+          where: { supplierId: company.id }
+        });
+      } else {
+        tourCount = await prisma.tour.count(); // Agent sees all tours
+      }
+    }
+  }
+
   const stats = [
-    { label: "Total Bookings", value: "1,248", change: "+12%", icon: <Receipt className="text-blue-500" /> },
-    { label: "Active Tours", value: "142", change: "+4%", icon: <Package className="text-indigo-500" /> },
-    { label: "B2B Agents", value: "84", change: "+18%", icon: <Users className="text-emerald-500" /> },
-    { label: "Total Revenue (THB)", value: "฿4.2M", change: "+24%", icon: <TrendingUp className="text-amber-500" /> },
+    { label: "Total Bookings", value: "0", change: "0%", icon: <Receipt className="text-blue-500" /> },
+    { label: company?.type === 'SUPPLIER' ? "My Tours" : "Available Tours", value: tourCount.toString(), change: "-", icon: <Package className="text-indigo-500" /> },
+    { label: "Status", value: company?.type || "AGENT", change: "Active", icon: <Building2 className="text-emerald-500" /> },
+    { label: "Credit Limit (THB)", value: `฿${(company?.creditLimit || 0).toLocaleString()}`, change: "-", icon: <TrendingUp className="text-amber-500" /> },
   ];
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight text-slate-800">Dashboard</h2>
-          <p className="text-sm text-slate-500">Welcome to Jongtour B2B Tour Management Platform.</p>
+          <h2 className="text-2xl font-bold tracking-tight text-slate-800">Welcome, {dbUser?.name || 'Partner'}</h2>
+          <p className="text-sm text-slate-500">{company?.name || 'Jongtour B2B Portal'}</p>
         </div>
         <div className="flex items-center gap-2">
           <select className="bg-white border border-slate-200 text-sm rounded-md px-3 py-2 text-slate-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
