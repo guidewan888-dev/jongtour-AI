@@ -1,6 +1,6 @@
 import { SupplierAdapter } from './SupplierAdapter';
 import { Normalizer } from './Normalizer';
-import { PrismaClient } from '@prisma/client';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
 // Simple factory pattern concept
 export class AdapterFactory {
@@ -18,10 +18,12 @@ export class AdapterFactory {
 }
 
 export class SyncManager {
-  private db: PrismaClient;
+  private supabase: SupabaseClient;
 
   constructor() {
-    this.db = new PrismaClient(); // Using local instance for background job stability
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://qterfftaebnoawnzkfgu.supabase.co';
+    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+    this.supabase = createClient(supabaseUrl, supabaseKey);
   }
 
   /**
@@ -50,13 +52,20 @@ export class SyncManager {
     console.log(`[SyncManager] Starting full sync for ${supplierId}`);
     
     // 1. Create a Sync Log
-    const syncLog = await this.db.apiSyncLog.create({
-      data: {
+    const { data: syncLog, error: logError } = await this.supabase
+      .from('ApiSyncLog')
+      .insert({
         supplierId,
         type: 'FULL_SYNC',
         status: 'RUNNING',
-      }
-    });
+      })
+      .select()
+      .single();
+
+    if (logError || !syncLog) {
+      console.error("[SyncManager] Failed to create sync log", logError);
+      throw new Error("Could not initialize sync log");
+    }
 
     try {
       const adapter = AdapterFactory.getAdapter(supplierId);
@@ -68,86 +77,94 @@ export class SyncManager {
       for (const raw of rawTours) {
         try {
           // 3. Save Raw Data as audit trail and fallback
-          await this.db.tourRawData.upsert({
-            where: {
-              supplierId_externalTourId: {
-                supplierId,
-                externalTourId: raw.externalId
-              }
-            },
-            update: { rawPayload: raw.payload, syncStatus: 'PROCESSED' },
-            create: {
+          const { error: rawError } = await this.supabase
+            .from('TourRawData')
+            .upsert({
               supplierId,
               externalTourId: raw.externalId,
               rawPayload: raw.payload,
-              syncStatus: 'PROCESSED'
-            }
-          });
+              syncStatus: 'PROCESSED',
+              updatedAt: new Date().toISOString()
+            }, { onConflict: 'supplierId, externalTourId' });
+
+          if (rawError) throw rawError;
 
           // 4. Normalize Data
           const normalized = Normalizer.mapTour(supplierId, raw);
 
           // 5. Upsert to main Tour table
-          // Note: using providerId as the external reference mapping field
-          const tour = await this.db.tour.findFirst({
-            where: { supplierId, providerId: raw.externalId }
-          });
+          const { data: existingTour } = await this.supabase
+            .from('Tour')
+            .select('id')
+            .eq('supplierId', supplierId)
+            .eq('providerId', raw.externalId)
+            .single();
 
-          if (tour) {
-            await this.db.tour.update({
-              where: { id: tour.id },
-              data: {
+          if (existingTour) {
+            await this.supabase
+              .from('Tour')
+              .update({
                 title: normalized.title,
                 destination: normalized.destination,
                 price: normalized.price,
-                // ... other updatable fields
-              }
-            });
+                updatedAt: new Date().toISOString()
+              })
+              .eq('id', existingTour.id);
           } else {
-            await this.db.tour.create({
-              data: {
-                source: 'API_ZEGO', // Needs dynamic mapping based on supplier
-                ...normalized
-              }
-            });
+            await this.supabase
+              .from('Tour')
+              .insert({
+                source: 'API_ZEGO',
+                providerId: raw.externalId,
+                supplierId: supplierId,
+                title: normalized.title,
+                destination: normalized.destination,
+                durationDays: normalized.durationDays,
+                price: normalized.price,
+                imageUrl: normalized.imageUrl,
+                description: normalized.description,
+                airlineCode: normalized.airlineCode,
+                pdfUrl: normalized.pdfUrl,
+                itinerary: normalized.itinerary,
+                flights: normalized.flights,
+              });
           }
 
           successCount++;
         } catch (itemError) {
           console.error(`Failed to process tour ${raw.externalId}: `, itemError);
           // Update raw data status
-          await this.db.tourRawData.updateMany({
-            where: { supplierId, externalTourId: raw.externalId },
-            data: { syncStatus: 'FAILED' }
-          });
+          await this.supabase
+            .from('TourRawData')
+            .update({ syncStatus: 'FAILED', updatedAt: new Date().toISOString() })
+            .eq('supplierId', supplierId)
+            .eq('externalTourId', raw.externalId);
         }
       }
 
       // 6. Complete Log
-      await this.db.apiSyncLog.update({
-        where: { id: syncLog.id },
-        data: {
+      await this.supabase
+        .from('ApiSyncLog')
+        .update({
           status: 'SUCCESS',
           recordsAdded: successCount
-        }
-      });
+        })
+        .eq('id', syncLog.id);
 
       console.log(`[SyncManager] Successfully synced ${successCount} tours for ${supplierId}`);
     } catch (error: any) {
       console.error(`[SyncManager] Critical failure for ${supplierId}: `, error);
       
       // Update Log to FAILED
-      await this.db.apiSyncLog.update({
-        where: { id: syncLog.id },
-        data: {
+      await this.supabase
+        .from('ApiSyncLog')
+        .update({
           status: 'FAILED',
           errorMessage: error.message || 'Unknown error'
-        }
-      });
+        })
+        .eq('id', syncLog.id);
 
       // TODO: Trigger Notification to Admin (LINE/Email)
-    } finally {
-      await this.db.$disconnect();
     }
   }
 }

@@ -46,13 +46,18 @@ export async function POST(request: Request) {
 
 export async function GET() {
   try {
-    const { PrismaClient } = await import('@prisma/client');
-    const db = new PrismaClient();
-    const logs = await db.apiSyncLog.findMany({
-      orderBy: { createdAt: 'desc' },
-      take: 20
-    });
-    await db.$disconnect();
+    const { createClient } = await import('@supabase/supabase-js');
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://qterfftaebnoawnzkfgu.supabase.co';
+    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    const { data: logs, error } = await supabase
+      .from('ApiSyncLog')
+      .select('*')
+      .order('createdAt', { ascending: false })
+      .limit(20);
+
+    if (error) throw error;
     
     return NextResponse.json({ success: true, logs });
   } catch (error: any) {
