@@ -35,7 +35,21 @@ export default function ApiSyncStatusPage() {
         if (zegoLog) {
           const date = new Date(zegoLog.createdAt);
           setLastSyncZego(`${date.toLocaleDateString('th-TH')} ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')} น.`);
-          setZegoCount(zegoLog.recordsAdded || 0); // Assuming recordsAdded tracks total or latest batch
+          setZegoCount(zegoLog.recordsAdded || 0);
+        }
+
+        const go365Log = data.logs.find((l: any) => l.supplierId === 'SUP_GO365' && l.status === 'SUCCESS');
+        if (go365Log) {
+          const date = new Date(go365Log.createdAt);
+          setLastSyncGo365(`${date.toLocaleDateString('th-TH')} ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')} น.`);
+          setGo365Count(go365Log.recordsAdded || 0);
+        }
+
+        const checkinLog = data.logs.find((l: any) => l.supplierId === 'SUP_CHECKIN' && l.status === 'SUCCESS');
+        if (checkinLog) {
+          const date = new Date(checkinLog.createdAt);
+          setLastSyncCheckIn(`${date.toLocaleDateString('th-TH')} ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')} น.`);
+          setCheckInCount(checkinLog.recordsAdded || 0);
         }
       }
     } catch (error) {
@@ -49,10 +63,26 @@ export default function ApiSyncStatusPage() {
     fetchLogs();
   }, []);
 
-  const handleForceSync = async () => {
+  const handleForceSyncGo365 = async () => {
     setIsSyncingGo365(true);
-    // Placeholder for Go365
-    setTimeout(() => setIsSyncingGo365(false), 1000);
+    try {
+      const res = await fetch('/api/admin/sync', { 
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ supplierId: 'SUP_GO365' }) 
+      });
+      const data = await res.json();
+      if (data.success) {
+        await fetchLogs();
+      } else {
+        alert("Sync failed: " + data.message);
+      }
+    } catch (e) {
+      console.error(e);
+      alert("Network error during sync");
+    } finally {
+      setIsSyncingGo365(false);
+    }
   };
 
   const handleForceSyncZego = async () => {
@@ -80,7 +110,24 @@ export default function ApiSyncStatusPage() {
 
   const handleForceSyncCheckIn = async () => {
     setIsSyncingCheckIn(true);
-    setTimeout(() => setIsSyncingCheckIn(false), 1000);
+    try {
+      const res = await fetch('/api/admin/sync', { 
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ supplierId: 'SUP_CHECKIN' }) 
+      });
+      const data = await res.json();
+      if (data.success) {
+        await fetchLogs();
+      } else {
+        alert("Sync failed: " + data.message);
+      }
+    } catch (e) {
+      console.error(e);
+      alert("Network error during sync");
+    } finally {
+      setIsSyncingCheckIn(false);
+    }
   };
 
   const handleForceSyncTourFactory = async () => {
@@ -115,7 +162,8 @@ export default function ApiSyncStatusPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         
         {/* Go365 Card */}
-        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden opacity-60">
+        <div className="bg-white rounded-2xl border border-blue-200 shadow-md overflow-hidden relative">
+          <div className="absolute top-0 left-0 w-full h-1 bg-blue-500"></div>
           <div className="p-6 border-b border-gray-100 flex justify-between items-start">
             <div className="flex items-center gap-4">
               <div className="w-14 h-14 bg-blue-600 rounded-2xl flex items-center justify-center text-white font-bold text-xl shadow-inner shadow-blue-800/50">
@@ -123,20 +171,36 @@ export default function ApiSyncStatusPage() {
               </div>
               <div>
                 <h3 className="font-bold text-xl text-gray-900">Go365 API</h3>
-                <p className="text-sm text-gray-500">Coming Soon</p>
+                <p className="text-sm text-gray-500">Active API Adapter</p>
               </div>
             </div>
-            <div className="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1.5 border border-gray-200">
-              <Clock className="w-3.5 h-3.5" /> Pending
+            <div className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1.5 border border-green-200">
+              <CheckCircle2 className="w-3.5 h-3.5" /> Online
             </div>
           </div>
           
-          <div className="p-6 bg-gray-50/50">
+          <div className="p-6 bg-blue-50/30">
+            <div className="grid grid-cols-2 gap-4 mb-6">
+              <div className="bg-white p-4 rounded-xl border border-blue-100 shadow-sm">
+                <p className="text-xs text-blue-500 font-bold flex items-center gap-1.5"><ArrowDownToLine className="w-4 h-4" /> ซิงค์ล่าสุด (Tours)</p>
+                <p className="text-lg font-bold text-gray-900 mt-1">{go365Count.toLocaleString()} <span className="text-xs font-normal text-gray-500">รายการ</span></p>
+              </div>
+              <div className="bg-white p-4 rounded-xl border border-blue-100 shadow-sm">
+                <p className="text-xs text-blue-500 font-bold flex items-center gap-1.5"><Clock className="w-4 h-4" /> เวลาอัปเดตล่าสุด</p>
+                <p className="text-sm font-bold text-blue-700 mt-2">{lastSyncGo365}</p>
+              </div>
+            </div>
+            
             <button 
-              disabled={true}
-              className="w-full py-3 bg-gray-100 text-gray-500 border border-gray-200 rounded-xl font-bold flex items-center justify-center gap-2 cursor-not-allowed"
+              onClick={handleForceSyncGo365}
+              disabled={isSyncingGo365}
+              className="w-full py-3 bg-blue-600 text-white hover:bg-blue-700 border border-blue-700 rounded-xl font-bold flex items-center justify-center gap-2 transition-colors disabled:opacity-70 shadow-sm"
             >
-              <RefreshCcw className="w-5 h-5" /> สั่งซิงค์ข้อมูล (รอดำเนินการ Phase 2)
+              {isSyncingGo365 ? (
+                <><RefreshCcw className="w-5 h-5 animate-spin" /> กำลังดูดข้อมูลจาก Go365...</>
+              ) : (
+                <><RefreshCcw className="w-5 h-5" /> สั่งซิงค์ข้อมูล (Manual Sync)</>
+              )}
             </button>
           </div>
         </div>
@@ -178,6 +242,50 @@ export default function ApiSyncStatusPage() {
             >
               {isSyncingZego ? (
                 <><RefreshCcw className="w-5 h-5 animate-spin" /> กำลังดูดข้อมูลจาก Let's Go...</>
+              ) : (
+                <><RefreshCcw className="w-5 h-5" /> สั่งซิงค์ข้อมูล (Manual Sync)</>
+              )}
+            </button>
+          </div>
+        </div>
+
+        {/* CheckIn Card */}
+        <div className="bg-white rounded-2xl border border-teal-200 shadow-md overflow-hidden relative mt-6 lg:mt-0">
+          <div className="absolute top-0 left-0 w-full h-1 bg-teal-500"></div>
+          <div className="p-6 border-b border-gray-100 flex justify-between items-start">
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 bg-teal-600 rounded-2xl flex items-center justify-center text-white font-bold text-xl shadow-inner shadow-teal-800/50">
+                CI
+              </div>
+              <div>
+                <h3 className="font-bold text-xl text-gray-900">Check In Group</h3>
+                <p className="text-sm text-gray-500">Active API Adapter</p>
+              </div>
+            </div>
+            <div className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1.5 border border-green-200">
+              <CheckCircle2 className="w-3.5 h-3.5" /> Online
+            </div>
+          </div>
+          
+          <div className="p-6 bg-teal-50/30">
+            <div className="grid grid-cols-2 gap-4 mb-6">
+              <div className="bg-white p-4 rounded-xl border border-teal-100 shadow-sm">
+                <p className="text-xs text-teal-500 font-bold flex items-center gap-1.5"><ArrowDownToLine className="w-4 h-4" /> ซิงค์ล่าสุด (Tours)</p>
+                <p className="text-lg font-bold text-gray-900 mt-1">{checkInCount.toLocaleString()} <span className="text-xs font-normal text-gray-500">รายการ</span></p>
+              </div>
+              <div className="bg-white p-4 rounded-xl border border-teal-100 shadow-sm">
+                <p className="text-xs text-teal-500 font-bold flex items-center gap-1.5"><Clock className="w-4 h-4" /> เวลาอัปเดตล่าสุด</p>
+                <p className="text-sm font-bold text-teal-700 mt-2">{lastSyncCheckIn}</p>
+              </div>
+            </div>
+            
+            <button 
+              onClick={handleForceSyncCheckIn}
+              disabled={isSyncingCheckIn}
+              className="w-full py-3 bg-teal-600 text-white hover:bg-teal-700 border border-teal-700 rounded-xl font-bold flex items-center justify-center gap-2 transition-colors disabled:opacity-70 shadow-sm"
+            >
+              {isSyncingCheckIn ? (
+                <><RefreshCcw className="w-5 h-5 animate-spin" /> กำลังดูดข้อมูลจาก Check In...</>
               ) : (
                 <><RefreshCcw className="w-5 h-5" /> สั่งซิงค์ข้อมูล (Manual Sync)</>
               )}
