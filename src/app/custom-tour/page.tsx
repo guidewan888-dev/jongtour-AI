@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { ArrowLeft, Sparkles, Send, Loader2, Bot, MapPin, Calendar, Compass, User, SlidersHorizontal, ChevronDown } from "lucide-react";
+import { ArrowLeft, Sparkles, Send, Loader2, Bot, MapPin, Calendar, Compass, User, SlidersHorizontal, ChevronDown, Mic, MicOff } from "lucide-react";
 import InteractiveItinerary from "@/components/InteractiveItinerary";
 
 const SUGGESTIONS = [
@@ -27,6 +27,7 @@ export default function CustomTourPage() {
   const [loadingStep, setLoadingStep] = useState(0);
   const [itineraryResult, setItineraryResult] = useState<any>(null);
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const [isListening, setIsListening] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Advanced Options state (optional overrides)
@@ -37,6 +38,48 @@ export default function CustomTourPage() {
     durationDays: 3,
     airlinePreference: "lowcost",
   });
+
+  const startListening = () => {
+    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+      alert("เบราว์เซอร์ของคุณไม่รองรับการสั่งงานด้วยเสียง กรุณาใช้ Chrome หรือ Edge เวอร์ชั่นใหม่ครับ");
+      return;
+    }
+    
+    // @ts-ignore
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'th-TH';
+    recognition.interimResults = true;
+    recognition.continuous = false;
+
+    recognition.onstart = () => {
+      setIsListening(true);
+      setPrompt("");
+    };
+
+    recognition.onresult = (event: any) => {
+      const transcript = Array.from(event.results)
+        .map((result: any) => result[0])
+        .map((result: any) => result.transcript)
+        .join('');
+      setPrompt(transcript);
+      if (textareaRef.current) {
+        textareaRef.current.style.height = 'auto';
+        textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 200)}px`;
+      }
+    };
+
+    recognition.onerror = (event: any) => {
+      console.error("Speech recognition error", event.error);
+      setIsListening(false);
+    };
+
+    recognition.onend = () => {
+      setIsListening(false);
+    };
+
+    recognition.start();
+  };
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -192,26 +235,36 @@ export default function CustomTourPage() {
               ให้ AI จัดทริปในฝันให้คุณ
             </h1>
             <p className="text-gray-500 text-center text-lg mb-12 max-w-xl">
-              บอกสิ่งที่คุณต้องการ เช่น ประเทศที่อยากไป จำนวนวัน สไตล์การเที่ยว และโรงแรม แล้วให้ AI ออกแบบทริปส่วนตัวให้คุณใน 30 วินาที
+              บอกสิ่งที่คุณต้องการ หรือแค่ <strong className="text-orange-500">กดไมค์แล้วพูด</strong> ให้ AI ออกแบบทริปส่วนตัวให้คุณใน 30 วินาที
             </p>
 
             <form onSubmit={handleSubmit} className="w-full relative group">
               <div className="absolute -inset-1 bg-gradient-to-r from-orange-400 to-amber-300 rounded-3xl blur-md opacity-20 group-hover:opacity-40 transition duration-1000 group-hover:duration-200"></div>
               
-              <div className="relative bg-white/80 backdrop-blur-xl border border-gray-200/60 rounded-3xl p-2 md:p-3 shadow-2xl shadow-gray-200/50 flex flex-col focus-within:bg-white focus-within:border-orange-300/50 transition-all">
-                <textarea
-                  ref={textareaRef}
-                  value={prompt}
-                  onChange={handleTextareaInput}
-                  placeholder="ลองพิมพ์บอกเรา เช่น อยากไปเที่ยวญี่ปุ่น 5 วัน เน้นกินเนื้อย่างและช้อปปิ้ง นอนโรงแรม 4 ดาว..."
-                  className="w-full bg-transparent text-gray-900 placeholder-gray-400 text-lg md:text-xl p-4 md:p-6 outline-none resize-none min-h-[120px] overflow-hidden font-medium"
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                      e.preventDefault();
-                      handleSubmit(e);
-                    }
-                  }}
-                />
+              <div className={`relative bg-white/80 backdrop-blur-xl border ${isListening ? 'border-orange-400 ring-4 ring-orange-100' : 'border-gray-200/60'} rounded-3xl p-2 md:p-3 shadow-2xl shadow-gray-200/50 flex flex-col transition-all`}>
+                <div className="relative">
+                  <textarea
+                    ref={textareaRef}
+                    value={prompt}
+                    onChange={handleTextareaInput}
+                    placeholder="พิมพ์บอกเรา เช่น อยากไปญี่ปุ่น 5 วัน หรือกดปุ่มไมค์เพื่อพูด..."
+                    className="w-full bg-transparent text-gray-900 placeholder-gray-400 text-lg md:text-xl p-4 md:p-6 pr-16 outline-none resize-none min-h-[120px] overflow-hidden font-medium"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        handleSubmit(e);
+                      }
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={startListening}
+                    className={`absolute right-4 bottom-4 p-3 rounded-full transition-all flex items-center justify-center ${isListening ? 'bg-red-500 text-white animate-pulse shadow-lg shadow-red-500/40' : 'bg-gray-100 text-gray-500 hover:bg-orange-100 hover:text-orange-600'}`}
+                    title="สั่งงานด้วยเสียง"
+                  >
+                    {isListening ? <Mic className="w-6 h-6" /> : <Mic className="w-6 h-6" />}
+                  </button>
+                </div>
                 
                 <div className="flex items-center justify-between px-4 pb-2 pt-2 border-t border-gray-100 mt-2">
                   <button 

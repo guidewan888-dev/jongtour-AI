@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { CheckCircle2, XCircle, Check, X, Star, Download, Loader2, Sparkles } from "lucide-react";
+import { CheckCircle2, XCircle, Check, X, Star, Download, Loader2, Sparkles, MessageCircle, Share2, CloudSun, Send } from "lucide-react";
 import { FitProposalPDF } from "./FitProposalPDF";
 import { useRef } from "react";
 import html2canvas from "html2canvas";
@@ -22,6 +22,125 @@ export default function InteractiveItinerary({ itinerary }: { itinerary: any }) 
   const [estimatedPrice, setEstimatedPrice] = useState(itinerary?.estimatedPrice || "");
   const [isCalculatingPrice, setIsCalculatingPrice] = useState(false);
   const [isRegeneratingFullPlan, setIsRegeneratingFullPlan] = useState(false);
+
+  // New states for God-Tier features
+  const [isBuddyOpen, setIsBuddyOpen] = useState(false);
+  const [buddyMessages, setBuddyMessages] = useState<{role: string, content: string}[]>([
+    { role: "assistant", content: "สวัสดีครับ! ผมคือ Jongtour Buddy ประจำทริปนี้ มีอะไรให้ผมแนะนำหรือสงสัยเกี่ยวกับทริปนี้ ถามได้เลยครับ! 🎒✨" }
+  ]);
+  const [buddyInput, setBuddyInput] = useState("");
+  const [isBuddyLoading, setIsBuddyLoading] = useState(false);
+  const [coverImage, setCoverImage] = useState<string | null>(null);
+  const [weather, setWeather] = useState<{temp: number, desc: string} | null>(null);
+  const shareCardRef = useRef<HTMLDivElement>(null);
+  const [isGeneratingShare, setIsGeneratingShare] = useState(false);
+
+  useEffect(() => {
+    // Fetch Wikipedia Cover Image
+    const fetchCoverImage = async () => {
+      if (!itinerary?.country) return;
+      try {
+        const country = itinerary.country;
+        const urlEn = `https://en.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(country)}&prop=pageimages&format=json&pithumbsize=1000&origin=*`;
+        const resEn = await fetch(urlEn);
+        const dataEn = await resEn.json();
+        const pagesEn = dataEn.query.pages;
+        const pageIdEn = Object.keys(pagesEn)[0];
+        if (pageIdEn !== "-1" && pagesEn[pageIdEn].thumbnail) {
+          setCoverImage(pagesEn[pageIdEn].thumbnail.source);
+        } else {
+          const urlTh = `https://th.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(country)}&prop=pageimages&format=json&pithumbsize=1000&origin=*`;
+          const resTh = await fetch(urlTh);
+          const dataTh = await resTh.json();
+          const pagesTh = dataTh.query.pages;
+          const pageIdTh = Object.keys(pagesTh)[0];
+          if (pageIdTh !== "-1" && pagesTh[pageIdTh].thumbnail) {
+            setCoverImage(pagesTh[pageIdTh].thumbnail.source);
+          }
+        }
+      } catch (err) {
+        console.error("Cover image fetch error", err);
+      }
+    };
+
+    // Fetch Open-Meteo Weather
+    const fetchWeather = async () => {
+      if (!itinerary?.country) return;
+      try {
+        const geoRes = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(itinerary.country)}&count=1&language=th&format=json`);
+        const geoData = await geoRes.json();
+        if (geoData.results && geoData.results.length > 0) {
+          const { latitude, longitude } = geoData.results[0];
+          const weatherRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true`);
+          const weatherData = await weatherRes.json();
+          if (weatherData.current_weather) {
+            setWeather({
+              temp: Math.round(weatherData.current_weather.temperature),
+              desc: "อุณหภูมิปัจจุบัน"
+            });
+          }
+        }
+      } catch (err) {
+        console.error("Weather fetch error", err);
+      }
+    };
+
+    fetchCoverImage();
+    fetchWeather();
+  }, [itinerary?.country]);
+
+  const handleBuddySubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!buddyInput.trim() || isBuddyLoading) return;
+    
+    const userMsg = buddyInput.trim();
+    setBuddyInput("");
+    setBuddyMessages(prev => [...prev, { role: "user", content: userMsg }]);
+    setIsBuddyLoading(true);
+
+    try {
+      const res = await fetch("/api/chat/buddy", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          itinerary: { ...itinerary, days },
+          message: userMsg,
+          chatHistory: buddyMessages.map(m => ({ role: m.role, content: m.content }))
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setBuddyMessages(prev => [...prev, { role: "assistant", content: data.reply }]);
+      } else {
+        setBuddyMessages(prev => [...prev, { role: "assistant", content: "ขออภัยครับ ระบบขัดข้อง 😅" }]);
+      }
+    } catch (err) {
+      setBuddyMessages(prev => [...prev, { role: "assistant", content: "การเชื่อมต่อขัดข้องครับ 😅" }]);
+    } finally {
+      setIsBuddyLoading(false);
+    }
+  };
+
+  const handleShareLine = async () => {
+    if (!shareCardRef.current) return;
+    setIsGeneratingShare(true);
+    try {
+      shareCardRef.current.style.display = 'block';
+      const canvas = await html2canvas(shareCardRef.current, { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
+      shareCardRef.current.style.display = 'none';
+      
+      const imgData = canvas.toDataURL("image/jpeg", 0.9);
+      const link = document.createElement('a');
+      link.download = `Jongtour_FIT_${itinerary.country || 'Trip'}.jpg`;
+      link.href = imgData;
+      link.click();
+    } catch (err) {
+      console.error("Share generation failed:", err);
+      alert("เกิดข้อผิดพลาดในการสร้างรูปภาพ");
+    } finally {
+      setIsGeneratingShare(false);
+    }
+  };
 
   useEffect(() => {
     if (itinerary) {
@@ -280,6 +399,12 @@ export default function InteractiveItinerary({ itinerary }: { itinerary: any }) 
       
       {/* Promotional Banner Header - Flight Info Centric */}
       <div className="relative min-h-[420px] w-full bg-gradient-to-br from-orange-50 to-rose-50 overflow-hidden no-print border-b border-gray-100 flex flex-col md:flex-row">
+        {coverImage && (
+          <div className="absolute inset-0 z-0">
+            <div className="absolute inset-0 bg-gradient-to-r from-white/95 via-white/80 to-white/60 md:to-white/20 z-10"></div>
+            <img src={coverImage} alt="Destination Cover" className="w-full h-full object-cover" crossOrigin="anonymous" />
+          </div>
+        )}
         {/* Decorative CSS Background Blobs */}
         <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-gradient-to-br from-orange-200/40 to-yellow-200/40 rounded-full mix-blend-multiply filter blur-3xl opacity-70 -translate-y-1/4 translate-x-1/4"></div>
         <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-gradient-to-tr from-blue-200/40 to-emerald-200/40 rounded-full mix-blend-multiply filter blur-3xl opacity-70 translate-y-1/4 -translate-x-1/4"></div>
@@ -353,6 +478,14 @@ export default function InteractiveItinerary({ itinerary }: { itinerary: any }) 
               </div>
               <button className="px-2 py-1 hover:bg-gray-100 rounded text-gray-500 no-print" onClick={() => setHotelStars(Math.min(5, hotelStars + 1))}>+</button>
             </div>
+
+            {/* Weather Badge */}
+            {weather && (
+              <div className="bg-blue-50 border border-blue-100 text-blue-800 text-xs font-bold px-2 py-1 rounded-lg flex items-center gap-1.5 shadow-sm">
+                <CloudSun className="w-4 h-4 text-blue-500" />
+                {weather.temp}°C
+              </div>
+            )}
           </div>
           
           {/* Regenerate AI Plan Button */}
@@ -684,6 +817,10 @@ export default function InteractiveItinerary({ itinerary }: { itinerary: any }) 
       <div className="p-4 bg-gray-100 border-t border-gray-200 no-print flex justify-between items-center px-6">
         <p className="text-gray-500 text-xs">Generated by Jongtour AI</p>
         <div className="flex gap-2">
+          <button onClick={handleShareLine} disabled={isGeneratingShare} className="bg-white hover:bg-blue-50 text-blue-600 border border-blue-200 px-4 py-2 rounded-lg text-sm font-bold shadow-sm flex items-center gap-2 transition-colors">
+            {isGeneratingShare ? <Loader2 className="w-4 h-4 animate-spin" /> : <Share2 className="w-4 h-4" />}
+            {isGeneratingShare ? "กำลังสร้างรูปภาพ..." : "เซฟรูปแชร์เพื่อน"}
+          </button>
           <button onClick={() => window.print()} className="bg-white hover:bg-gray-50 text-gray-700 border border-gray-300 px-4 py-2 rounded-lg text-sm font-bold shadow-sm flex items-center gap-2 transition-colors">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v8H6z"/></svg>
             พิมพ์
@@ -785,6 +922,97 @@ export default function InteractiveItinerary({ itinerary }: { itinerary: any }) 
       )}
 
       <FitProposalPDF ref={pdfRef} itinerary={{...itinerary, days, airlineCode: localAirline, recommendedFlight, estimatedPrice}} />
+
+      {/* Travel Buddy FAB */}
+      <div className="fixed bottom-6 right-6 z-50 no-print flex flex-col items-end">
+        {isBuddyOpen && (
+          <div className="bg-white w-80 rounded-2xl shadow-2xl border border-gray-200 mb-4 overflow-hidden flex flex-col animate-in fade-in slide-in-from-bottom-4">
+            <div className="bg-gradient-to-r from-orange-500 to-amber-500 p-3 text-white flex items-center justify-between">
+              <div className="flex items-center gap-2 font-bold text-sm">
+                <MessageCircle className="w-4 h-4" /> Jongtour Buddy
+              </div>
+              <button onClick={() => setIsBuddyOpen(false)} className="hover:bg-white/20 p-1 rounded-lg transition-colors">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="h-80 overflow-y-auto p-4 bg-orange-50/50 space-y-3 flex flex-col">
+              {buddyMessages.map((msg, i) => (
+                <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                  <div className={`max-w-[85%] text-sm rounded-2xl px-3 py-2 ${msg.role === 'user' ? 'bg-orange-500 text-white rounded-tr-sm' : 'bg-white text-gray-800 border border-gray-100 shadow-sm rounded-tl-sm'}`}>
+                    {msg.content}
+                  </div>
+                </div>
+              ))}
+              {isBuddyLoading && (
+                <div className="flex justify-start">
+                  <div className="bg-white text-gray-800 border border-gray-100 shadow-sm rounded-2xl rounded-tl-sm px-3 py-2 text-sm flex gap-1 items-center">
+                    <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce"></span>
+                    <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{animationDelay: '150ms'}}></span>
+                    <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{animationDelay: '300ms'}}></span>
+                  </div>
+                </div>
+              )}
+            </div>
+            <form onSubmit={handleBuddySubmit} className="p-3 bg-white border-t border-gray-100 flex gap-2">
+              <input type="text" value={buddyInput} onChange={e => setBuddyInput(e.target.value)} placeholder="ถามได้เลย เช่น วันแรกมีเนื้อย่างไหม?" className="flex-1 bg-gray-100 text-sm rounded-full px-4 py-2 outline-none focus:ring-2 focus:ring-orange-400" />
+              <button type="submit" disabled={isBuddyLoading || !buddyInput.trim()} className="bg-orange-500 hover:bg-orange-600 disabled:bg-gray-300 text-white w-9 h-9 rounded-full flex items-center justify-center transition-colors">
+                <Send className="w-4 h-4" />
+              </button>
+            </form>
+          </div>
+        )}
+        <button onClick={() => setIsBuddyOpen(!isBuddyOpen)} className="w-14 h-14 bg-gradient-to-r from-orange-500 to-amber-500 rounded-full shadow-lg flex items-center justify-center text-white hover:scale-105 transition-transform hover:shadow-orange-500/50">
+          <MessageCircle className="w-6 h-6" />
+        </button>
+      </div>
+
+      {/* Hidden Social Share Card */}
+      <div ref={shareCardRef} className="hidden w-[400px] bg-white text-gray-800 font-sans p-6 relative overflow-hidden" style={{ display: 'none' }}>
+        <div className="absolute top-0 right-0 w-[300px] h-[300px] bg-orange-100 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/2"></div>
+        <div className="absolute bottom-0 left-0 w-[300px] h-[300px] bg-blue-50 rounded-full blur-[80px] translate-y-1/2 -translate-x-1/2"></div>
+        
+        <div className="relative z-10">
+          <div className="flex items-center gap-2 mb-6">
+             <Sparkles className="w-5 h-5 text-orange-500" />
+             <span className="text-sm font-black bg-clip-text text-transparent bg-gradient-to-r from-orange-500 to-amber-500 uppercase tracking-widest">JONGTOUR AI</span>
+          </div>
+
+          {coverImage && (
+            <img src={coverImage} alt="Cover" crossOrigin="anonymous" className="w-full h-48 object-cover rounded-xl mb-4 shadow-sm" />
+          )}
+
+          <h1 className="text-xl font-bold text-gray-900 leading-tight mb-1">{itinerary.marketingHeadline}</h1>
+          <h2 className="text-sm font-bold text-orange-600 mb-4">{itinerary.title}</h2>
+
+          <div className="flex gap-2 mb-4">
+             <div className="bg-white/80 px-3 py-1.5 rounded-lg text-xs font-bold text-gray-700 shadow-sm border border-gray-100">{days.length} วัน</div>
+             <div className="bg-white/80 px-3 py-1.5 rounded-lg text-xs font-bold text-gray-700 shadow-sm border border-gray-100">👥 {pax} ท่าน</div>
+             <div className="bg-white/80 px-3 py-1.5 rounded-lg text-xs font-bold text-gray-700 flex items-center gap-0.5 shadow-sm border border-gray-100">
+               {[...Array(hotelStars)].map((_, i) => <Star key={i} className="w-3 h-3 fill-orange-400 text-orange-400" />)}
+             </div>
+          </div>
+
+          <div className="bg-gradient-to-r from-orange-500 to-amber-500 rounded-xl p-4 mb-4 text-white shadow-md">
+             <div className="text-[10px] text-orange-100 font-bold uppercase mb-1">ราคาประเมินเริ่มต้น</div>
+             <div className="text-2xl font-bold">{estimatedPrice}</div>
+          </div>
+
+          <div className="space-y-2 mb-6 bg-white/60 p-4 rounded-xl border border-gray-100 backdrop-blur-sm">
+            {days.slice(0, 5).map((d: any) => (
+               <div key={d.day} className="flex gap-3 text-sm border-b border-gray-100/50 pb-2 last:border-0 last:pb-0">
+                 <div className="font-bold text-orange-500 min-w-[30px]">D{d.day}</div>
+                 <div className="text-gray-700 line-clamp-1">{d.title}</div>
+               </div>
+            ))}
+            {days.length > 5 && <div className="text-xs text-gray-400 italic text-center pt-2">...และอื่นๆ รวม {days.length} วัน</div>}
+          </div>
+
+          <div className="border-t border-gray-100 pt-4 text-center">
+             <p className="text-[10px] font-bold text-gray-400">วางแผนและประเมินราคาโดย Jongtour AI</p>
+             <p className="text-[9px] text-gray-300 mt-0.5">https://jongtour.com</p>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
