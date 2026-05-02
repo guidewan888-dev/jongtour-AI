@@ -17,6 +17,24 @@ export default function InteractiveItinerary({ itinerary }: { itinerary: any }) 
   const [editingDayIndex, setEditingDayIndex] = useState<number | null>(null);
   const [editPrompt, setEditPrompt] = useState("");
   const [isRegenerating, setIsRegenerating] = useState(false);
+  const [pax, setPax] = useState(2);
+
+  const addDay = () => {
+    const newDayNum = days.length + 1;
+    setDays([...days, {
+      day: newDayNum,
+      title: "วันที่ว่าง (แก้ไขหรือกด AI ด้านขวาเพื่อสร้างแผน)",
+      detail: "รอการเพิ่มสถานที่และรายละเอียด...",
+      meals: { breakfast: false, lunch: false, dinner: false },
+      hotel: "-",
+    }]);
+  };
+
+  const removeDay = () => {
+    if (days.length > 1) {
+      setDays(days.slice(0, -1));
+    }
+  };
 
   const [recommendedFlight, setRecommendedFlight] = useState<any>(itinerary?.recommendedFlight || null);
   const [editingFlight, setEditingFlight] = useState(false);
@@ -91,6 +109,7 @@ export default function InteractiveItinerary({ itinerary }: { itinerary: any }) 
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...leadForm,
+          pax: pax.toString(),
           durationDays: days.length,
           country,
           preferredAirline: localAirline,
@@ -212,9 +231,22 @@ export default function InteractiveItinerary({ itinerary }: { itinerary: any }) 
           {/* Badges Row */}
           <div className="flex flex-wrap items-center gap-3 mt-auto">
             {/* Duration Badge */}
-            <div className="bg-gray-900 text-white text-xs font-bold px-3 py-2 rounded-lg flex items-center gap-1.5 shadow-sm">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-              {itinerary.durationText || `${days.length} วัน ${days.length - 1} คืน`}
+            <div className="bg-gray-900 text-white text-xs font-bold px-1 py-1 rounded-lg flex items-center shadow-sm">
+              <button className="px-2 py-1 hover:bg-white/20 rounded no-print" onClick={removeDay}>-</button>
+              <div className="flex items-center gap-1.5 px-2">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                {days.length} วัน {days.length > 1 ? days.length - 1 : 0} คืน
+              </div>
+              <button className="px-2 py-1 hover:bg-white/20 rounded no-print" onClick={addDay}>+</button>
+            </div>
+
+            {/* Pax Badge */}
+            <div className="bg-white border border-gray-200 text-gray-800 text-xs font-bold px-1 py-1 rounded-lg flex items-center shadow-sm">
+              <button className="px-2 py-1 hover:bg-gray-100 rounded text-gray-500 no-print" onClick={() => setPax(Math.max(1, pax - 1))}>-</button>
+              <div className="flex items-center gap-1.5 px-2">
+                👥 {pax} ท่าน
+              </div>
+              <button className="px-2 py-1 hover:bg-gray-100 rounded text-gray-500 no-print" onClick={() => setPax(pax + 1)}>+</button>
             </div>
 
             {/* Price Badge */}
@@ -585,7 +617,7 @@ export default function InteractiveItinerary({ itinerary }: { itinerary: any }) 
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">จำนวนผู้เดินทาง (ท่าน) *</label>
-                    <input type="number" min="1" required value={leadForm.pax} onChange={e => setLeadForm({...leadForm, pax: e.target.value})} className="w-full border border-gray-300 rounded-lg px-4 py-2 outline-none focus:ring-2 focus:ring-orange-500" />
+                    <input type="number" min="1" required value={pax} onChange={e => setPax(parseInt(e.target.value) || 1)} className="w-full border border-gray-300 rounded-lg px-4 py-2 outline-none focus:ring-2 focus:ring-orange-500" />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">โฮลเซลล์ที่ต้องการให้เสนอราคา</label>
