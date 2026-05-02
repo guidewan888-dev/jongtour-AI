@@ -40,8 +40,8 @@ export async function POST(req: NextRequest) {
     let airlinePreference: "lowcost" | "fullservice" = "lowcost";
     let airlineCode = body.airlineCode || "";
 
-    // AI Natural Language Extraction if prompt is provided
-    if (prompt) {
+    // AI Natural Language Extraction if prompt is provided and NOT a preview
+    if (prompt && !body.isPreview) {
       const extractPrompt = `
       คุณเป็น AI แยกข้อมูลการท่องเที่ยว (Travel Entity Extractor)
       จากข้อความความต้องการของลูกค้าต่อไปนี้ ให้ดึงข้อมูลออกมาเป็น JSON
@@ -73,16 +73,16 @@ export async function POST(req: NextRequest) {
       if (extracted.airlinePreference === "fullservice") {
         airlinePreference = "fullservice";
       }
-      
-      if (!startDate) {
-        const tomorrow = new Date();
-        tomorrow.setDate(tomorrow.getDate() + 30); // Default to 1 month from now
-        startDate = tomorrow.toISOString().split('T')[0];
-      }
     } else {
-      // Normal form processing
-      pax = Number(pax) || 1;
+      // Normal form processing or preview regeneration
+      pax = Number(pax) || 2;
       hotelStars = Number(hotelStars) || 3;
+    }
+
+    if (!startDate) {
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 30); // Default to 1 month from now
+      startDate = tomorrow.toISOString().split('T')[0];
     }
 
     // Calculate dates
