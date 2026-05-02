@@ -91,7 +91,7 @@ export async function middleware(req: NextRequest) {
   }
 
   // Authentication Guards
-  if ((isAdminPath || isB2bPath || isTourCmsPath) && !user) {
+  if ((isAdminPath || isB2bPath || isTourCmsPath) && !isAuthPath && !user) {
     // Not logged in -> Redirect to login
     url.pathname = '/auth/login';
     return NextResponse.redirect(url);
@@ -106,32 +106,35 @@ export async function middleware(req: NextRequest) {
   }
 
   // Subdomain Rewrites
-  if (isAdminSubdomain && !url.pathname.startsWith('/admin')) {
-    url.pathname = `/admin${url.pathname === '/' ? '' : url.pathname}`;
-    return NextResponse.rewrite(url);
-  }
+  // Only rewrite if it's not an auth path
+  if (!isAuthPath) {
+    if (isAdminSubdomain && !url.pathname.startsWith('/admin')) {
+      url.pathname = `/admin${url.pathname === '/' ? '' : url.pathname}`;
+      return NextResponse.rewrite(url);
+    }
 
-  if (!isAdminSubdomain && !isBookingSubdomain && url.pathname.startsWith('/admin')) {
-    url.hostname = `admin.${hostname.replace('www.', '')}`;
-    url.pathname = url.pathname.replace(/^\/admin/, '') || '/';
-    return NextResponse.redirect(url);
-  }
+    if (!isAdminSubdomain && !isBookingSubdomain && !isTourSubdomain && url.pathname.startsWith('/admin')) {
+      url.hostname = `admin.${hostname.replace('www.', '')}`;
+      url.pathname = url.pathname.replace(/^\/admin/, '') || '/';
+      return NextResponse.redirect(url);
+    }
 
-  if (isBookingSubdomain && !url.pathname.startsWith('/b2b')) {
-    url.pathname = `/b2b${url.pathname === '/' ? '' : url.pathname}`;
-    return NextResponse.rewrite(url);
-  }
+    if (isBookingSubdomain && !url.pathname.startsWith('/b2b')) {
+      url.pathname = `/b2b${url.pathname === '/' ? '' : url.pathname}`;
+      return NextResponse.rewrite(url);
+    }
 
-  if (isTourSubdomain && !url.pathname.startsWith('/tour-cms')) {
-    url.pathname = `/tour-cms${url.pathname === '/' ? '' : url.pathname}`;
-    return NextResponse.rewrite(url);
-  }
+    if (isTourSubdomain && !url.pathname.startsWith('/tour-cms')) {
+      url.pathname = `/tour-cms${url.pathname === '/' ? '' : url.pathname}`;
+      return NextResponse.rewrite(url);
+    }
 
-  // Rewrite for Agent Subdomain (White-label B2B2C Portal)
-  // e.g. ktc.jongtour.com/tours -> rewrites to /agent/ktc/tours
-  if (isAgentSubdomain && !url.pathname.startsWith('/agent')) {
-    url.pathname = `/agent/${subdomain}${url.pathname === '/' ? '' : url.pathname}`;
-    return NextResponse.rewrite(url);
+    // Rewrite for Agent Subdomain (White-label B2B2C Portal)
+    // e.g. ktc.jongtour.com/tours -> rewrites to /agent/ktc/tours
+    if (isAgentSubdomain && !url.pathname.startsWith('/agent')) {
+      url.pathname = `/agent/${subdomain}${url.pathname === '/' ? '' : url.pathname}`;
+      return NextResponse.rewrite(url);
+    }
   }
 
   return response;
