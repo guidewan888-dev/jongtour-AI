@@ -94,6 +94,12 @@ export async function calculateFitPrice(options: PricingOptions) {
   let cacheCostPerPax = 0;
   let recommendedHotel = undefined;
 
+  if (includeHotels) {
+    const hotelData = await getEstimatedHotelPrice(country, hotelStars, durationDays, pax, start);
+    hotelCostPerPax = hotelData.totalCost / pax;
+    recommendedHotel = hotelData.recommendedHotel;
+  }
+
   if (referenceTourPrice && referenceTourPrice > 0) {
     // If we have a reference wholesale tour, use its price as the base for flight, hotel, and activities.
     // The fixedCost (van/guide) will be added on top to convert it from a 30-pax wholesale tour to a private tour.
@@ -105,12 +111,6 @@ export async function calculateFitPrice(options: PricingOptions) {
       end.setDate(end.getDate() + durationDays);
       const flightData = await getEstimatedFlightPrice(country, start, end, airlineCode || airlinePreference);
       flightCostPerPax = flightData.price;
-    }
-
-    if (includeHotels) {
-      const hotelData = await getEstimatedHotelPrice(country, hotelStars, durationDays, pax, start);
-      hotelCostPerPax = hotelData.totalCost / pax;
-      recommendedHotel = hotelData.recommendedHotel;
     }
 
     // Activities (Assume always included if this is a tour)
