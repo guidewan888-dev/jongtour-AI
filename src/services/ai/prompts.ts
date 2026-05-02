@@ -147,7 +147,7 @@ requested_supplier_name:
 ${requestedSupplierName}
 
 final_tour_results:
-${JSON.stringify(tours.map((t: any) => ({ id: t.id, title: t.title, source: t.source, providerId: t.providerId })))}
+${JSON.stringify(tours.map((t: any) => ({ id: t.id, title: t.title, supplier_id: t.source, providerId: t.providerId })))}
 
 AI_RESPONSE_TO_VALIDATE:
 ${finalOutputText}
