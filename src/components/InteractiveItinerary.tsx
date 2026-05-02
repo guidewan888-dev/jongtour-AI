@@ -275,6 +275,14 @@ export default function InteractiveItinerary({ itinerary }: { itinerary: any }) 
 
         {/* Content Left Side */}
         <div className="relative z-40 p-6 md:p-10 md:w-3/5 h-full flex flex-col justify-center">
+          {/* Jongtour AI Logo */}
+          <div className="flex items-center gap-2 mb-4">
+            <Sparkles className="w-5 h-5 text-orange-500" />
+            <span className="text-sm font-bold bg-clip-text text-transparent bg-gradient-to-r from-orange-500 to-amber-500 uppercase tracking-widest">
+              Jongtour AI
+            </span>
+          </div>
+
           {/* Ribbon Badge */}
           <div className="inline-flex bg-gradient-to-r from-red-600 to-orange-500 text-white text-xs font-bold px-4 py-1.5 rounded-r-full shadow-md mb-6 -ml-6 md:-ml-10 items-center gap-1 w-max">
             <span>🔥</span> แผนการเดินทางส่วนตัว (F.I.T.)
@@ -334,17 +342,6 @@ export default function InteractiveItinerary({ itinerary }: { itinerary: any }) 
               </div>
               <button className="px-2 py-1 hover:bg-gray-100 rounded text-gray-500 no-print" onClick={() => setHotelStars(Math.min(5, hotelStars + 1))}>+</button>
             </div>
-
-            {/* Price Badge */}
-            <div className="ml-auto flex flex-col items-start md:items-end">
-              <div className="text-gray-500 text-[10px] font-bold mb-0.5 uppercase tracking-wider flex items-center gap-1.5">
-                ราคาประเมินเริ่มต้น
-                {isCalculatingPrice && <Loader2 className="w-3 h-3 animate-spin text-orange-500" />}
-              </div>
-              <div key={estimatedPrice} className="bg-orange-500 text-white font-bold rounded-lg px-4 py-1.5 shadow-md border border-orange-400 outline-none focus:ring-2 focus:ring-orange-300 transition-colors" contentEditable suppressContentEditableWarning>
-                {estimatedPrice}
-              </div>
-            </div>
           </div>
           
           {/* Regenerate AI Plan Button */}
@@ -360,8 +357,19 @@ export default function InteractiveItinerary({ itinerary }: { itinerary: any }) 
           </div>
         </div>
 
-        {/* Right Side - Flight Info (replaces images) */}
-        <div className="relative z-40 p-6 md:p-10 md:w-2/5 flex flex-col justify-center items-center md:items-end">
+        {/* Right Side - Flight Info & Price */}
+        <div className="relative z-40 p-6 md:p-10 md:w-2/5 flex flex-col justify-center items-center md:items-end gap-6">
+          
+          {/* Price Badge Moved to Right Side */}
+          <div className="w-full max-w-sm bg-white/90 backdrop-blur-md shadow-lg rounded-2xl p-5 border border-orange-100 flex flex-col items-center md:items-end transform transition hover:scale-105">
+            <div className="text-gray-500 text-xs font-bold mb-1.5 uppercase tracking-wider flex items-center gap-1.5">
+              ราคาประเมินเริ่มต้น
+              {isCalculatingPrice && <Loader2 className="w-3.5 h-3.5 animate-spin text-orange-500" />}
+            </div>
+            <div key={estimatedPrice} className="bg-gradient-to-r from-orange-500 to-amber-500 text-white text-xl md:text-2xl font-black rounded-xl px-6 py-2 shadow-md outline-none focus:ring-2 focus:ring-orange-300 transition-colors w-full text-center md:text-right" contentEditable suppressContentEditableWarning>
+              {estimatedPrice}
+            </div>
+          </div>
           {recommendedFlight ? (
             <div className="bg-white/90 backdrop-blur-md shadow-xl rounded-2xl p-6 w-full max-w-sm border border-gray-100 transform transition hover:scale-105 relative group">
               {/* Edit Button */}
