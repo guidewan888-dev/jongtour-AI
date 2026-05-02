@@ -5,6 +5,12 @@ import { cookies } from "next/headers";
 import OpenAI from "openai";
 import { type NextRequest } from "next/server";
 import { calculateFitPrice } from "@/services/pricingEngine";
+import { getSystemPrompt } from "@/services/ai/prompts";
+import { extractIntent } from "@/services/ai/intentExtractor";
+import { searchTours, formatTourSummary } from "@/services/ai/tourSearchService";
+import { runQualityChecker } from "@/services/ai/qualityChecker";
+import { processUserImage, getSearchAgentPrompt } from "@/services/ai/ocrExtractor";
+import { tools } from "@/services/ai/toolsConfig";
 
 export const maxDuration = 60; // Increase Vercel timeout for slow AI generation
 export const dynamic = "force-dynamic";
@@ -35,72 +41,88 @@ export async function POST(request: NextRequest) {
     const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || "sb_publishable_SRwNSJ89mInda5FcuB1W2w_9IEJlSOI";
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    const tools: OpenAI.Chat.Completions.ChatCompletionTool[] = [
-      {
-        type: "function",
-        function: {
-          name: "search_wholesale_tours",
-          description: "Search for ready-made wholesale tours in the database. Use when user asks for standard packages, specific countries, or budgets.",
-          parameters: {
-            type: "object",
-            properties: {
-              destination: { type: "string", description: "Target country or city in Thai (e.g., 'ญี่ปุ่น', 'สวิส', 'โอซาก้า'). Leave empty if not specified." },
-              maxPrice: { type: "number", description: "Maximum budget per pax in THB" },
-              isLastMinute: { type: "boolean", description: "True if user wants fire sale tours ('โปรไฟไหม้')" },
-              month: { type: "string", description: "Month name in English (e.g. 'April', 'December')" },
-            }
-          }
-        }
-      },
-      {
-        type: "function",
-        function: {
-          name: "calculate_fit_price",
-          description: "Calculate exact pricing and generate a custom private tour itinerary (F.I.T / กรุ๊ปเหมา / จัดทริป). Use ONLY when user explicitly wants a private or customized trip.",
-          parameters: {
-            type: "object",
-            properties: {
-              country: { type: "string", description: "Target country (e.g. 'ญี่ปุ่น')" },
-              pax: { type: "number", description: "Number of travelers" },
-              durationDays: { type: "number", description: "Duration in days" }
-            },
-            required: ["country", "pax", "durationDays"]
-          }
-        }
-      }
-    ];
-
-    const systemPromptContent = `You are จองทัวร์ AI (Jongtour AI), an incredibly enthusiastic and persuasive Thai travel agent. Your goal is to make the user excited to book tours. Use humor, excitement, and a bit of friendly Thai slang. Always refer to yourself as "จองทัวร์ AI".
-The user is named "${userName}". Greet them naturally!
-
-CRITICAL RULES:
-1. If the user asks for a tour package, CALL the 'search_wholesale_tours' tool.
-2. If the user asks for a private tour (จัดทริป, ไปกันเอง, กรุ๊ปเหมา), CALL the 'calculate_fit_price' tool.
-3. If the user asks about ANYTHING unrelated to travel, politely decline to answer.
-4. When you get tool results, enthusiastically present the tours or custom itinerary. DO NOT list day-by-day details of FIT in text, just hype the price and tell them to check the card.
-5. If search_wholesale_tours returns tours, tell the user to check the interactive cards below. Highlight the best ones.
-6. Suggest exactly 3 short follow-up questions at the end in this format:
-__CHIPS__["question 1", "question 2", "question 3"]`;
-
-    const messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
-      { role: "system", content: systemPromptContent },
-      ...(chatHistory.slice(-6).map((m: any) => ({ role: m.role === 'ai' ? 'assistant' : 'user', content: m.content })) as OpenAI.Chat.Completions.ChatCompletionMessageParam[]),
-    ];
-
-    if (userImage) {
-      messages.push({ role: "user", content: [
-        { type: "text", text: userMessage || "ช่วยวิเคราะห์รูปโปรแกรมทัวร์นี้หน่อยครับ และเทียบกับของบริษัทให้ที" },
-        { type: "image_url", image_url: { url: userImage } }
-      ]});
-    } else {
-      messages.push({ role: "user", content: userMessage });
+    // STEP 1: Intent Extraction (Supplier Alias Matching)
+    const { extracted: intentExtracted, shouldReturnEarly, earlyReturnMessage } = await extractIntent(openai, userMessage);
+    
+    if (shouldReturnEarly) {
+      return NextResponse.json({ reply: earlyReturnMessage, tours: [] });
     }
 
+    // Prepare Messages History
+    const messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
+      { role: "system", content: getSystemPrompt() },
+      ...(chatHistory.slice(-6).filter((m: any) => !(m.role === 'ai' && (m.content.includes("ไม่สามารถ") || m.content.includes("ขอโทษครับ")))).map((m: any) => {
+        let content = m.content;
+        if (m.role === 'ai' && m.tours && m.tours.length > 0) {
+          const toursContext = m.tours.map((t:any) => {
+            const deps = t.departures ? t.departures.filter((d: any) => new Date(d.startDate) >= new Date()).sort((a: any, b: any) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime()).slice(0, 5).map((d: any) => `${new Date(d.startDate).toLocaleDateString('th-TH', { day: 'numeric', month: 'short' })} ถึง ${new Date(d.endDate).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' })} (ว่าง ${d.availableSeats} ที่)`).join(', ') : 'ไม่มีข้อมูล';
+            return `[รหัส: ${t.code}, ชื่อ: ${t.title}, วันเดินทางที่ว่าง: ${deps}]`;
+          }).join('\n');
+          content += `\n\n[System Note: The following tours were shown to the user in this message:\n${toursContext}]`;
+        }
+        return { role: m.role === 'ai' ? 'assistant' : 'user', content };
+      }) as OpenAI.Chat.Completions.ChatCompletionMessageParam[]),
+    ];
+
+    let processedUserMessage = userMessage;
+    let forceTool = false;
+    let extractedDataForSearch: any = null;
+
+    // STEP 2: OCR Vision processing (if image is uploaded)
+    if (userImage) {
+      forceTool = true;
+      try {
+        extractedDataForSearch = await processUserImage(openai, userImage);
+        if (extractedDataForSearch) {
+          const dest = extractedDataForSearch.destinations?.find((d: any) => d.confidence >= 0.75)?.name;
+          const code = extractedDataForSearch.tour_code?.confidence >= 0.75 ? extractedDataForSearch.tour_code.value : null;
+          const price = extractedDataForSearch.prices?.find((p: any) => p.confidence >= 0.75)?.amount;
+          const deps = (extractedDataForSearch.dates?.departure_dates || []).filter((d: any) => d.confidence >= 0.75).map((d: any) => `${d.start_date || ''} ถึง ${d.end_date || ''}`).join(", ");
+          const air = extractedDataForSearch.airline?.confidence >= 0.75 ? extractedDataForSearch.airline.value : null;
+
+          if (extractedDataForSearch.should_ask_user || (!dest && !code) || !deps) {
+             let fallbackQuestion = extractedDataForSearch.question_to_user;
+             if (!fallbackQuestion) {
+                if (!dest && !deps) fallbackQuestion = "ต้องการไปประเทศหรือเมืองไหน และเดินทางช่วงวันไหนครับ?";
+                else if (!dest) fallbackQuestion = "ต้องการไปประเทศหรือเมืองไหนครับ?";
+                else if (!deps) fallbackQuestion = "ต้องการเดินทางช่วงวันไหนครับ?";
+                else fallbackQuestion = "มีข้อมูลไม่เพียงพอ รบกวนพิมพ์บอกเพิ่มเติมหน่อยครับ";
+             }
+             processedUserMessage = `[System Note: ข้อมูลจากรูปภาพไม่เพียงพอ (ห้ามเดาเด็ดขาด) ให้คุณตอบกลับลูกค้าด้วยคำถามนี้เท่านั้น: "${fallbackQuestion}"]`;
+             forceTool = false;
+          } else {
+             let extractedText = `จุดหมายปลายทาง: ${dest || 'ไม่ระบุ'}\nรหัสทัวร์: ${code || 'ไม่ระบุ'}\nราคาประมาณ: ${price || 'ไม่ระบุ'}\nวันเดินทาง: ${deps || 'ไม่ระบุ'}\nสายการบิน: ${air || 'ไม่ระบุ'}`;
+             const userIntent = userMessage ? `\nและมีข้อความเพิ่มเติม: "${userMessage}"` : "";
+             processedUserMessage = `ผู้ใช้ค้นหาแพ็กเกจทัวร์ด้วยข้อมูลที่สกัดมาได้ดังนี้:\n${extractedText}${userIntent}\n\nช่วยเรียกใช้เครื่องมือค้นหา และอธิบายโปรแกรมที่เจอให้ฟังอย่างน่าสนใจ 1 โปรแกรมครับ`;
+          }
+        } else {
+           processedUserMessage = `[System Note: OCR Vision Failed or Returned Empty. Reply to the user that the image could not be read clearly and ask them to provide more details about the tour they are looking for.]`;
+           forceTool = false;
+        }
+      } catch (e) {
+        console.error("OCR Error", e);
+        processedUserMessage = `[System Note: OCR Vision Encountered an Error. Reply to the user that there was a technical error reading the image and ask them to type the tour details instead.]`;
+        forceTool = false;
+      }
+    } else {
+      if (intentExtracted) {
+        messages.push({
+          role: "system",
+          content: `คุณคือ AI Search Agent สำหรับระบบค้นหาทัวร์
+search_intent: ${JSON.stringify(intentExtracted)}
+
+ถ้า search_intent.supplier_filter_required = true คุณต้องดึงข้อมูลผ่าน search_tours โดยบังคับใช้ strict_filters.supplier_id เสมอ ห้ามแสดง Supplier อื่นเด็ดขาด`
+        });
+      }
+    }
+
+    messages.push({ role: "user", content: processedUserMessage });
+
     const initialResponse = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+      model: "gpt-4o-mini", 
       messages,
       tools,
-      tool_choice: "auto",
+      tool_choice: forceTool ? { type: "function", function: { name: "search_tours" } } : "auto",
     });
 
     const initialMessage = initialResponse.choices[0].message;
@@ -115,77 +137,64 @@ __CHIPS__["question 1", "question 2", "question 3"]`;
       for (const toolCall of initialMessage.tool_calls) {
         if (toolCall.type !== "function") continue;
         
-        if (toolCall.function.name === "search_wholesale_tours") {
+        if (toolCall.function.name === "search_tours") {
           const args = JSON.parse(toolCall.function.arguments);
-          let query = supabase.from('Tour').select('*, departures:TourDeparture(*)');
+          if (userImage) args.userImage = true;
           
-          if (args.isLastMinute) {
-            const today = new Date();
-            const next30Days = new Date();
-            next30Days.setDate(today.getDate() + 30);
-            query = supabase.from('Tour').select('*, departures:TourDeparture!inner(*)').gte('departures.startDate', today.toISOString()).lte('departures.startDate', next30Days.toISOString());
-          }
-
-          if (args.destination) {
-            query = query.or(`title.ilike.%${args.destination}%,description.ilike.%${args.destination}%,destination.ilike.%${args.destination}%`);
-          }
-          if (args.maxPrice) {
-            query = query.lte('price', args.maxPrice);
-          }
-          query = query.order('createdAt', { ascending: false }).limit(60);
-
-          const { data: rawTours } = await query;
-          tours = rawTours || [];
-          tours = tours.sort(() => 0.5 - Math.random());
-          if (args.month) {
-            const m = args.month.toLowerCase();
-            const map: any = { 
-              "january": ["ม.ค.", "มกรา", "jan"], "february": ["ก.พ.", "กุมภา", "feb"],
-              "march": ["มี.ค.", "มีนา", "mar"], "april": ["เม.ย.", "เมษา", "สงกรานต์", "apr"],
-              "may": ["พ.ค.", "พฤษภา", "may"], "june": ["มิ.ย.", "มิถุนา", "jun"],
-              "july": ["ก.ค.", "กรกฎา", "jul"], "august": ["ส.ค.", "สิงหา", "aug"],
-              "september": ["ก.ย.", "กันยา", "sep"], "october": ["ต.ค.", "ตุลา", "oct"],
-              "november": ["พ.ย.", "พฤศจิกา", "nov"], "december": ["ธ.ค.", "ธันวา", "dec", "ปีใหม่"]
-            };
-            const aliases = map[m] || [m];
-            tours = tours.filter(tour => aliases.some((a:string) => ((tour.periodText||"")+" "+(tour.departures?.map((d:any)=>d.dateText).join(" ")||"")).toLowerCase().includes(a)));
-          }
+          const searchResult = await searchTours(supabase, args, intentExtracted);
+          tours = searchResult.tours;
           
-          tours = tours.slice(0, 4);
-
           messages.push({
             role: "tool",
             tool_call_id: toolCall.id,
             content: JSON.stringify({ 
               tours_found: tours.length, 
-              tours_summary: tours.map(t => ({ title: t.title, price: t.price, code: t.code, destination: t.destination })) 
+              STRICT_INSTRUCTION: searchResult.strictInstruction || undefined,
+              tours_summary: formatTourSummary(tours)
             })
           });
-        } else if (toolCall.function.name === "calculate_fit_price") {
+
+          // AI Search Agent (Only for image uploads)
+          if (userImage && extractedDataForSearch) {
+             messages.push({ role: "system", content: getSearchAgentPrompt(extractedDataForSearch) });
+             const secondRes = await openai.chat.completions.create({ model: "gpt-4o-mini", messages, tools, tool_choice: "auto" });
+             const secondMsg = secondRes.choices[0].message;
+             if (secondMsg.tool_calls && secondMsg.tool_calls.length > 0) {
+                messages.push(secondMsg);
+                for (const tc of secondMsg.tool_calls) {
+                  if (tc.type !== "function") continue;
+                  if (tc.function.name === "get_tour_detail" || tc.function.name === "check_availability") {
+                    const tArgs = JSON.parse(tc.function.arguments);
+                    let { data: tData } = await supabase.from('Tour').select('*, departures:TourDeparture(*)').eq('code', tArgs.tourCode).single();
+                    messages.push({ role: "tool", tool_call_id: tc.id, content: JSON.stringify(tData ? { code: tData.code, title: tData.title, highlights: tData.highlights, itinerary: tData.itinerary, departures: tData.departures } : { error: "Tour not found" }) });
+                  } else {
+                    messages.push({ role: "tool", tool_call_id: tc.id, content: "{ \"status\": \"Tool executed but skipped deep logic for OCR flow\" }" });
+                  }
+                }
+             }
+          }
+        } 
+        else if (toolCall.function.name === "calculate_fit_price") {
           const args = JSON.parse(toolCall.function.arguments);
           const pricingData = await calculateFitPrice({
             country: args.country,
             pax: args.pax,
             durationDays: args.durationDays,
-            hotelStars: args.hotelStars || 3,
+            hotelStars: 3,
             includeFlights: true,
             includeHotels: true,
             includeTransport: true,
             includeGuide: true,
-            includeInsurance: true,
-          });
-
-          const fitPrompt = `You are an expert travel agent. Generate a detailed day-by-day itinerary for a private tour to ${args.country} for ${args.durationDays} days. You MUST write the entire itinerary in THAI language. Return ONLY JSON matching this format: { "title": "Trip Name", "marketingHeadline": "A catchy promotional Thai headline for this trip", "highlights": ["Highlight 1", "Highlight 2", "Highlight 3"], "durationText": "${args.durationDays} วัน ${args.durationDays - 1} คืน", "airlineCode": "2-letter IATA airline code suitable for this trip (e.g. TG, XJ, EK, SQ)", "coverImagePrompt": "A short English phrase describing a stunning wide landscape cover image for this trip", "estimatedPrice": "${pricingData.sellingPricePerPax.toLocaleString()} THB/ท่าน", "days": [{ "day": 1, "title": "Day Title", "detail": "Day details", "meals": { "breakfast": true, "lunch": false, "dinner": true }, "hotel": "Hotel Name or -", "imagePrompt": "A short English phrase describing the main attraction", "coordinates": { "lat": 13.7563, "lng": 100.5018 } }] }`;
-          
-          const fitRes = await openai.chat.completions.create({
-            model: "gpt-4o-mini",
-            response_format: { type: "json_object" },
-            messages: [{ role: "system", content: fitPrompt }]
+            includeInsurance: true
           });
           
-          let content = fitRes.choices[0].message.content || "null";
-          content = content.replace(/```json/gi, "").replace(/```/g, "").trim();
-          customItinerary = JSON.parse(content);
+          customItinerary = {
+            id: `fit-${Date.now()}`,
+            title: `Private Tour ${args.country} ${args.durationDays} Days`,
+            price: pricingData.sellingPricePerPax,
+            destination: args.country,
+            itineraryData: pricingData
+          };
 
           messages.push({
             role: "tool",
@@ -198,42 +207,67 @@ __CHIPS__["question 1", "question 2", "question 3"]`;
             })
           });
         }
+        else {
+          // Mock generic tools
+          messages.push({
+            role: "tool",
+            tool_call_id: toolCall.id,
+            content: JSON.stringify({ success: true, message: "Tool executed successfully" })
+          });
+        }
       }
     }
 
     const encoder = new TextEncoder();
     const stream = new ReadableStream({
       async start(controller) {
-        // Send data block first for the UI to render cards
         if (customItinerary) {
           controller.enqueue(encoder.encode(`__DATA__${JSON.stringify({ type: 'custom_itinerary', itinerary: customItinerary })}__DATA__\n`));
         } else {
-          // Always send tours_data (even if empty) to satisfy the frontend parser which expects __DATA__ block before rendering text
           controller.enqueue(encoder.encode(`__DATA__${JSON.stringify({ type: 'tours_data', tours })}__DATA__\n`));
         }
 
         if (shouldStreamSecondPass) {
-          const streamResponse = await openai.chat.completions.create({
-            model: "gpt-4o-mini",
-            messages,
-            stream: true,
-          });
-          try {
-            for await (const chunk of streamResponse) {
-              const text = chunk.choices[0]?.delta?.content || "";
-              if (text) controller.enqueue(encoder.encode(text));
+          if (intentExtracted?.supplier_filter_required && intentExtracted?.matched_supplier?.supplier_id) {
+            // Quality Checker Pipeline (No Stream, buffer and validate)
+            const fullResponse = await openai.chat.completions.create({
+              model: "gpt-4o-mini",
+              messages,
+              stream: false,
+            });
+            let finalOutputText = fullResponse.choices[0]?.message?.content || "";
+            
+            finalOutputText = await runQualityChecker(
+              openai,
+              intentExtracted.matched_supplier.supplier_id,
+              intentExtracted.matched_supplier.canonical_name || "",
+              tours,
+              finalOutputText
+            );
+
+            const lines = finalOutputText.split('\n');
+            for (const line of lines) {
+              controller.enqueue(encoder.encode(line + '\n'));
+              await new Promise(r => setTimeout(r, 20)); // Fake streaming
             }
-          } catch (e) {
-            console.error("Stream error", e);
+          } else {
+             // Normal Streaming
+             const secondResponse = await openai.chat.completions.create({
+               model: "gpt-4o-mini",
+               messages,
+               stream: true,
+             });
+             for await (const chunk of secondResponse) {
+               const text = chunk.choices[0]?.delta?.content || "";
+               if (text) {
+                 controller.enqueue(encoder.encode(text));
+               }
+             }
           }
         } else {
-          // If no tool calls, simulate streaming the initial text response to ensure UI updates smoothly
-          if (initialMessage.content) {
-            const chunkSize = 5;
-            for (let i = 0; i < initialMessage.content.length; i += chunkSize) {
-              controller.enqueue(encoder.encode(initialMessage.content.slice(i, i + chunkSize)));
-              await new Promise(r => setTimeout(r, 10));
-            }
+          const lines = (initialMessage.content || "").split('\n');
+          for (const line of lines) {
+            controller.enqueue(encoder.encode(line + '\n'));
           }
         }
         controller.close();
@@ -241,15 +275,11 @@ __CHIPS__["question 1", "question 2", "question 3"]`;
     });
 
     return new Response(stream, {
-      headers: {
-        'Content-Type': 'text/event-stream',
-        'Cache-Control': 'no-cache',
-        'Connection': 'keep-alive',
-      },
+      headers: { 'Content-Type': 'text/plain; charset=utf-8' },
     });
 
   } catch (error) {
-    console.error("AI Chat Error:", error);
-    return NextResponse.json({ reply: "ขออภัย ระบบขัดข้อง 😅", tours: [] }, { status: 500 });
+    console.error("Chat API Error:", error);
+    return NextResponse.json({ reply: "เกิดข้อผิดพลาดในการประมวลผล", tours: [] }, { status: 500 });
   }
 }

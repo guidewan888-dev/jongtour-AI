@@ -198,7 +198,8 @@ function AIPlannerContent() {
       // Map messages to a simpler format for the backend (excluding base64 images from history to save payload size, only send text history, BUT send current image)
       const chatHistory = messages.map(m => ({
         role: m.role,
-        content: m.text
+        content: m.text,
+        tours: m.tours
       }));
 
       // Call API
@@ -412,10 +413,19 @@ function AIPlannerContent() {
           <Link href="/custom-tour" className="px-4 py-2 bg-orange-50 border border-orange-200 hover:border-orange-500 text-orange-600 rounded-full text-sm font-bold whitespace-nowrap transition-colors shadow-sm">
             🚐 จัดทริปส่วนตัว (F.I.T)
           </Link>
-          <button onClick={() => handleSuggestion("อยากไปญี่ปุ่น มีงบ 4 หมื่น ไปไหนได้บ้าง?")} className="px-4 py-2 bg-gray-50 border border-gray-200 hover:border-orange-300 text-gray-600 hover:text-orange-600 rounded-full text-sm font-medium whitespace-nowrap transition-colors">
-            🌸 อยากไปญี่ปุ่น งบ 4 หมื่น
+          <button onClick={() => handleSuggestion("ทริปฮันนีมูน สวิสเซอร์แลนด์ 7 วัน แบบสุดโรแมนติก โรงแรม 5 ดาว")} className="px-4 py-2 bg-gray-50 border border-gray-200 hover:border-orange-300 text-gray-600 hover:text-orange-600 rounded-full text-sm font-medium whitespace-nowrap transition-colors">
+            💍 ทริปฮันนีมูนยุโรป
           </button>
-          <button onClick={() => handleSuggestion("มีทัวร์เกาหลีใต้ โปรไฟล์ไหม้ไหมช่วงนี้")} className="px-4 py-2 bg-gray-50 border border-gray-200 hover:border-orange-300 text-gray-600 hover:text-orange-600 rounded-full text-sm font-medium whitespace-nowrap transition-colors">
+          <button onClick={() => handleSuggestion("พาพ่อแม่และเด็กเล็กเที่ยวโตเกียว 5 วัน เน้นเดินทางสบาย ไม่เหนื่อย")} className="px-4 py-2 bg-gray-50 border border-gray-200 hover:border-orange-300 text-gray-600 hover:text-orange-600 rounded-full text-sm font-medium whitespace-nowrap transition-colors">
+            👨‍👩‍👧 พาครอบครัวเที่ยวญี่ปุ่น
+          </button>
+          <button onClick={() => handleSuggestion("อยากตะลุยชิมสตรีทฟู้ดและช้อปปิ้งที่โอซาก้า 4 วัน ขอโรงแรมย่านนัมบะ")} className="px-4 py-2 bg-gray-50 border border-gray-200 hover:border-orange-300 text-gray-600 hover:text-orange-600 rounded-full text-sm font-medium whitespace-nowrap transition-colors">
+            🛍️ ช้อปปิ้งโอซาก้า
+          </button>
+          <button onClick={() => handleSuggestion("อยากไปญี่ปุ่น มีงบ 4 หมื่น ไปไหนได้บ้าง?")} className="px-4 py-2 bg-gray-50 border border-gray-200 hover:border-orange-300 text-gray-600 hover:text-orange-600 rounded-full text-sm font-medium whitespace-nowrap transition-colors">
+            🌸 ญี่ปุ่น งบ 4 หมื่น
+          </button>
+          <button onClick={() => handleSuggestion("มีทัวร์ไฟไหม้เกาหลีใต้ไหมช่วงนี้")} className="px-4 py-2 bg-gray-50 border border-gray-200 hover:border-orange-300 text-gray-600 hover:text-orange-600 rounded-full text-sm font-medium whitespace-nowrap transition-colors">
             🔥 โปรไฟไหม้เกาหลี
           </button>
         </div>

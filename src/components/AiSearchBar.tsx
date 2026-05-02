@@ -37,8 +37,8 @@ export default function AiSearchBar() {
   };
 
   return (
-    <div className="w-full max-w-4xl relative shadow-[0_8px_30px_rgb(249,115,22,0.15)] rounded-full hover:shadow-[0_8px_30px_rgb(249,115,22,0.25)] transition-all duration-500 bg-white group">
-      <form onSubmit={handleSubmit} className="flex items-center rounded-full border-2 border-gray-100 hover:border-orange-100 bg-white overflow-hidden px-4 py-4 md:py-5 transition-all">
+    <div className="w-full max-w-4xl relative flex flex-col items-center group">
+      <form onSubmit={handleSubmit} className="w-full flex items-center rounded-full border-2 border-gray-100 hover:border-orange-100 bg-white overflow-hidden px-4 py-4 md:py-5 transition-all shadow-[0_8px_30px_rgb(249,115,22,0.15)] hover:shadow-[0_8px_30px_rgb(249,115,22,0.25)]">
         
         {/* ไอคอนประกายดาวซ้ายสุด */}
         <div className="w-12 h-12 flex items-center justify-center shrink-0">
@@ -81,6 +81,22 @@ export default function AiSearchBar() {
           </button>
         </div>
       </form>
+
+      {/* Suggested Quick Prompts */}
+      <div className="flex flex-wrap justify-center gap-2 mt-3 px-2 pb-1">
+        <button type="button" onClick={() => { setQuery("ทริปฮันนีมูนยุโรป 7 วัน แบบโรแมนติก โรงแรม 5 ดาว"); setTimeout(() => router.push(`/ai-planner?q=ทริปฮันนีมูนยุโรป 7 วัน แบบโรแมนติก โรงแรม 5 ดาว`), 100); }} className="text-xs text-gray-500 hover:text-orange-600 bg-gray-50 hover:bg-orange-50 border border-gray-100 hover:border-orange-200 px-3 py-1.5 rounded-full transition-colors flex items-center gap-1 shadow-sm">
+          💍 ฮันนีมูนยุโรป
+        </button>
+        <button type="button" onClick={() => { setQuery("พาครอบครัวเที่ยวญี่ปุ่น 5 วัน เดินทางสบาย ไม่เหนื่อย"); setTimeout(() => router.push(`/ai-planner?q=พาครอบครัวเที่ยวญี่ปุ่น 5 วัน เดินทางสบาย ไม่เหนื่อย`), 100); }} className="text-xs text-gray-500 hover:text-orange-600 bg-gray-50 hover:bg-orange-50 border border-gray-100 hover:border-orange-200 px-3 py-1.5 rounded-full transition-colors flex items-center gap-1 shadow-sm">
+          👨‍👩‍👧 พาครอบครัวเที่ยวญี่ปุ่น
+        </button>
+        <button type="button" onClick={() => { setQuery("ตะลุยช้อปปิ้งโอซาก้า 4 วัน ขอโรงแรมย่านนัมบะ"); setTimeout(() => router.push(`/ai-planner?q=ตะลุยช้อปปิ้งโอซาก้า 4 วัน ขอโรงแรมย่านนัมบะ`), 100); }} className="text-xs text-gray-500 hover:text-orange-600 bg-gray-50 hover:bg-orange-50 border border-gray-100 hover:border-orange-200 px-3 py-1.5 rounded-full transition-colors flex items-center gap-1 shadow-sm">
+          🛍️ ช้อปปิ้งโอซาก้า
+        </button>
+        <button type="button" onClick={() => { setQuery("โปรทัวร์ไฟไหม้เกาหลีใต้ ราคาประหยัด"); setTimeout(() => router.push(`/ai-planner?q=โปรทัวร์ไฟไหม้เกาหลีใต้ ราคาประหยัด`), 100); }} className="text-xs text-gray-500 hover:text-orange-600 bg-gray-50 hover:bg-orange-50 border border-gray-100 hover:border-orange-200 px-3 py-1.5 rounded-full transition-colors flex items-center gap-1 shadow-sm">
+          🔥 โปรไฟไหม้
+        </button>
+      </div>
     </div>
   );
 }

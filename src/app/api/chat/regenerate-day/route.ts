@@ -23,6 +23,7 @@ Format:
   "detail": "New Day details",
   "meals": { "breakfast": true, "lunch": false, "dinner": true },
   "hotel": "ระบุชื่อโรงแรมที่มีอยู่จริงและสมจริง ตรงกับเมืองที่ไป (เช่น Hilton, Marriott) ห้ามระบุแค่ชื่อประเทศ",
+  "hotelHighlight": "คำอธิบายจุดเด่นของโรงแรม 1 ประโยคสั้นๆ เพื่อจูงใจลูกค้า (เช่น เดิน 1 นาทีถึงสถานีรถไฟ)",
   "hotelImageUrl": "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&q=80",
   "imagePrompt": "A short English phrase describing the main attraction",
   "coordinates": { "lat": 13.7563, "lng": 100.5018 }

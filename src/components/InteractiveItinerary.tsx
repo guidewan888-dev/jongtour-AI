@@ -404,7 +404,7 @@ export default function InteractiveItinerary({ itinerary }: { itinerary: any }) 
 
   return (
     <>
-    <div ref={pdfRef} className="w-full max-w-[900px] mx-auto mt-4 bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm flex flex-col">
+    <div ref={pdfRef} className="w-full max-w-[900px] mx-auto bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-xl flex flex-col">
       
       {/* Promotional Banner Header - Flight Info Centric */}
       <div className="relative min-h-[420px] w-full bg-gradient-to-br from-orange-50 to-rose-50 overflow-hidden no-print border-b border-gray-100 flex flex-col md:flex-row">
@@ -733,6 +733,11 @@ export default function InteractiveItinerary({ itinerary }: { itinerary: any }) 
                     <p className="text-[13px] font-bold text-orange-600 outline-none focus:bg-orange-50 focus:ring-2 focus:ring-orange-200 rounded px-1" contentEditable suppressContentEditableWarning>
                       {d.hotel || "-"}
                     </p>
+                    {d.hotelHighlight && (
+                      <span className="text-[11px] text-gray-500 font-medium leading-tight max-w-[150px] inline-block mb-1">
+                        {d.hotelHighlight}
+                      </span>
+                    )}
                     {d.hotelImageUrl && d.hotelImageUrl !== "null" && (
                       <button 
                         onClick={() => toggleHotelImage(index)}

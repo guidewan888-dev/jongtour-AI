@@ -6,9 +6,12 @@ import { ArrowLeft, Sparkles, Send, Loader2, Bot, MapPin, Calendar, Compass, Use
 import InteractiveItinerary from "@/components/InteractiveItinerary";
 
 const SUGGESTIONS = [
-  "ไปเที่ยวโอซาก้า เกียวโต 5 วัน 4 คืน ช่วงใบไม้เปลี่ยนสี เน้นกินเนื้อย่างและช้อปปิ้ง นอนโรงแรม 4 ดาว",
-  "ทริปสวิสเซอร์แลนด์ 7 วัน ไปกับครอบครัว 4 คน นั่งรถไฟชมวิวและขึ้นยอดเขาจุงเฟรา ขอแบบ Full Service",
-  "เที่ยวไต้หวัน 4 วัน 3 คืน เน้นไหว้พระขอพรและกินสตรีทฟู้ด ขอราคาประหยัด นอนโรงแรม 3 ดาว"
+  "พาพ่อแม่และเด็กเล็กเที่ยวโตเกียว 5 วัน เน้นเดินทางสะดวก ไม่เหนื่อย ขอโรงแรมสไตล์ครอบครัว",
+  "ทริปฮันนีมูน สวิสเซอร์แลนด์ 7 วัน ขอแบบสุดโรแมนติก นั่งรถไฟชมวิว นอนโรงแรมหรู 5 ดาว",
+  "ไปตะลุยชิมสตรีทฟู้ดและช้อปปิ้งที่โอซาก้า 4 วัน 3 คืน ขอโรงแรมใจกลางย่านนัมบะ",
+  "เที่ยวเกียวโต 4 วัน เน้นไหว้พระ ขอพร ถ่ายรูปชุดกิมิโน และอยากพักเรียวกังแบบดั้งเดิม",
+  "ตามรอยซีรีส์ที่โซล 5 วัน ขอคาเฟ่สวยๆ ช้อปปิ้งย่านเมียงดง นอนโรงแรมดีไซน์เก๋ๆ",
+  "ดานัง-ฮอยอัน 4 วัน ไปกับแก๊งเพื่อน เน้นประหยัด คุ้มค่า และได้รูปสวยๆ คาเฟ่ชิคๆ"
 ];
 
 const LOADING_STEPS = [
@@ -185,7 +188,7 @@ export default function CustomTourPage() {
               </button>
             </div>
             
-            <div className="bg-white rounded-2xl overflow-hidden shadow-xl border border-gray-100 ring-1 ring-black/5">
+            <div className="w-full">
               <InteractiveItinerary itinerary={itineraryResult} />
             </div>
           </div>

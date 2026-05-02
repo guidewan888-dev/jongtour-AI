@@ -243,9 +243,17 @@ ${referenceTourItinerary}
 คำแนะนำ: คุณสามารถใช้ข้อมูลสถานที่ท่องเที่ยว, โรงแรม, หรือกิจกรรม จากทัวร์ต้นแบบมาเป็นไอเดียในการจัดทริปให้ลูกค้าได้ เพื่อความสมจริงและเฉพาะเจาะจงมากขึ้น แต่ปรับจำนวนวันให้ตรงกับที่ลูกค้าขอ (${finalDurationDays} วัน)
 ` : ""}
 
-ข้อมูลโรงแรม:
-- บังคับให้คิดชื่อโรงแรมที่มีอยู่จริงและสมจริง ตรงกับระดับ ${hotelStars} ดาว ในแต่ละเมือง/ประเทศปลายทางของวันนั้นๆ ลงใน field "hotel" (เช่น "Hilton Tokyo", "Swissôtel Geneva", "Marriott") ห้ามใส่แค่ชื่อประเทศสั้นๆ เด็ดขาด!
-- บังคับคืนค่า hotelImageUrl ใน JSON ของวันนั้นๆ เป็น "https://images.unsplash.com/photo-1542314831-c6a4d1409b1c?w=800&q=80" หรือ "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&q=80" เพื่อให้มีรูปภาพแสดงเสมอ
+ข้อมูลโรงแรมที่ระบบเตรียมไว้ให้ (Available Hotels Cache):
+${pricingData.availableHotels && pricingData.availableHotels.length > 0 
+  ? pricingData.availableHotels.map((h: any) => `- ชื่อ: ${h.name} | สไตล์: ${h.theme} | จุดเด่น: ${h.highlight} | ภาพ: ${h.imageUrl}`).join("\n") 
+  : "- (ไม่มีข้อมูลจาก Cache ให้สุ่มชื่อโรงแรมที่มีอยู่จริงตามระดับ " + hotelStars + " ดาว)"}
+
+คำสั่งการเลือกโรงแรม (Context-Aware Hotel Selection):
+- วิเคราะห์ความต้องการลูกค้า (Context/Theme) จากข้อมูลที่ให้มา เช่น เป็นทริปครอบครัว, ฮันนีมูน, สายช้อปปิ้ง, หรือประหยัด
+- **บังคับเลือก** โรงแรม 1 แห่งจากรายชื่อ "Available Hotels Cache" ด้านบนที่ตรงกับสไตล์ลูกค้ามากที่สุด (เว้นแต่ไม่มีข้อมูล ค่อยคิดชื่อเอง)
+- ห้ามปล่อยว่าง "hotel" (ยกเว้นวันกลับ)
+- บังคับคืนค่า URL จาก Cache ลงใน "hotelImageUrl"
+- บังคับใส่จุดเด่นที่ช่วยให้ทริปนี้น่าสนใจลงใน "hotelHighlight"
 
 กฎการสร้าง JSON:
 1. "title": ตั้งชื่อทริปให้น่าสนใจ (ภาษาไทย)
@@ -287,8 +295,9 @@ IMPORTANT: "exclusions" MUST BE EXACTLY this array:
       "title": "string",
       "detail": "string",
       "meals": {"breakfast": boolean,"lunch": boolean,"dinner": boolean},
-      "hotel": "string (ชื่อโรงแรมที่มีอยู่จริง ห้ามใส่แค่ชื่อประเทศ ห้ามปล่อยว่างยกเว้นวันกลับ)",
-      "hotelImageUrl": "string (บังคับใส่ URL รูปโรงแรมจาก Unsplash เสมอ ห้ามเป็น null)",
+      "hotel": "string (ชื่อโรงแรมจาก Cache หรือคิดเองที่มีอยู่จริง ห้ามปล่อยว่างยกเว้นวันกลับ)",
+      "hotelHighlight": "string (คำอธิบายจุดเด่นของโรงแรม 1 ประโยคสั้นๆ เพื่อจูงใจลูกค้า เช่น เดิน 1 นาทีถึงสถานีรถไฟ)",
+      "hotelImageUrl": "string (บังคับใส่ URL รูปโรงแรมจาก Cache เสมอ)",
       "imagePrompt": "string (A short ENGLISH phrase describing the main tourist attraction of this day, optimized for AI image generation.)"
     }
   ],

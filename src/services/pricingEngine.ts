@@ -92,12 +92,12 @@ export async function calculateFitPrice(options: PricingOptions) {
   let hotelCostPerPax = 0;
   let activityCostPerPax = 0;
   let cacheCostPerPax = 0;
-  let recommendedHotel = undefined;
+  let availableHotels = undefined;
 
   if (includeHotels) {
     const hotelData = await getEstimatedHotelPrice(country, hotelStars, durationDays, pax, start);
     hotelCostPerPax = hotelData.totalCost / pax;
-    recommendedHotel = hotelData.recommendedHotel;
+    availableHotels = hotelData.availableHotels;
   }
 
   if (referenceTourPrice && referenceTourPrice > 0) {
@@ -145,6 +145,6 @@ export async function calculateFitPrice(options: PricingOptions) {
       },
       totalCost: totalCostPerPax
     },
-    recommendedHotel
+    availableHotels
   };
 }
