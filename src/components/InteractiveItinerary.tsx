@@ -23,6 +23,17 @@ export default function InteractiveItinerary({ itinerary }: { itinerary: any }) 
   const [isCalculatingPrice, setIsCalculatingPrice] = useState(false);
   const [isRegeneratingFullPlan, setIsRegeneratingFullPlan] = useState(false);
 
+  useEffect(() => {
+    if (itinerary) {
+      setDays(itinerary.days || []);
+      setLocalAirline(itinerary.airlineCode || itinerary.recommendedFlight?.airlineCode || "");
+      if (itinerary.pax) setPax(itinerary.pax);
+      if (itinerary.hotelStars) setHotelStars(itinerary.hotelStars);
+      if (itinerary.estimatedPrice) setEstimatedPrice(itinerary.estimatedPrice);
+      if (itinerary.recommendedFlight) setRecommendedFlight(itinerary.recommendedFlight);
+    }
+  }, [itinerary]);
+
   const handleRegenerateFullPlan = async () => {
     setIsRegeneratingFullPlan(true);
     try {
@@ -361,12 +372,12 @@ export default function InteractiveItinerary({ itinerary }: { itinerary: any }) 
         <div className="relative z-40 p-6 md:p-10 md:w-2/5 flex flex-col justify-center items-center md:items-end gap-6">
           
           {/* Price Badge Moved to Right Side */}
-          <div className="w-full max-w-sm bg-white/90 backdrop-blur-md shadow-md rounded-xl p-4 border border-orange-100 flex flex-col items-center md:items-end transform transition hover:scale-105">
-            <div className="text-gray-500 text-[10px] font-bold mb-1 uppercase tracking-wider flex items-center gap-1.5">
+          <div className="w-full max-w-sm bg-white/90 backdrop-blur-md shadow-md rounded-xl p-4 border border-orange-100 flex flex-col items-center transform transition hover:scale-105">
+            <div className="text-gray-500 text-[10px] font-bold mb-1 uppercase tracking-wider flex items-center justify-center gap-1.5 w-full">
               ราคาประเมินเริ่มต้น
               {isCalculatingPrice && <Loader2 className="w-3 h-3 animate-spin text-orange-500" />}
             </div>
-            <div key={estimatedPrice} className="bg-gradient-to-r from-orange-500 to-amber-500 text-white text-lg md:text-xl font-bold rounded-lg px-4 py-1.5 shadow-sm outline-none focus:ring-2 focus:ring-orange-300 transition-colors text-center md:text-right" contentEditable suppressContentEditableWarning>
+            <div key={estimatedPrice} className="w-full bg-gradient-to-r from-orange-500 to-amber-500 text-white text-lg md:text-xl font-bold rounded-lg px-4 py-1.5 shadow-sm outline-none focus:ring-2 focus:ring-orange-300 transition-colors text-center" contentEditable suppressContentEditableWarning>
               {estimatedPrice}
             </div>
           </div>
