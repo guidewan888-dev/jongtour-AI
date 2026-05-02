@@ -130,10 +130,10 @@ export default async function AdminDashboard() {
         />
         <StatCard 
           title="สถานะ API Sync ล่าสุด" 
-          value={syncLogsData && syncLogsData.length > 0 ? (syncLogsData[0].status === 'SUCCESS' ? 'Success' : 'Failed') : "No Data"} 
+          value={syncLogsData && syncLogsData.length > 0 ? (syncLogsData[0].status === 'SUCCESS' ? 'Success' : syncLogsData[0].status === 'RUNNING' ? 'Running' : 'Failed') : "No Data"} 
           subtitle={syncLogsData && syncLogsData.length > 0 ? `ซิงค์ข้อมูลล่าสุดเมื่อ ${new Date(syncLogsData[0].createdAt).toLocaleTimeString('th-TH', { timeZone: 'Asia/Bangkok' })} น.` : "ยังไม่มีข้อมูลซิงค์"} 
           icon={RefreshCcw} 
-          color={syncLogsData && syncLogsData.length > 0 && syncLogsData[0].status === 'SUCCESS' ? "bg-emerald-500" : "bg-red-500"} 
+          color={syncLogsData && syncLogsData.length > 0 ? (syncLogsData[0].status === 'SUCCESS' ? "bg-emerald-500" : syncLogsData[0].status === 'RUNNING' ? "bg-blue-500" : "bg-red-500") : "bg-gray-500"} 
         />
       </div>
 
@@ -186,14 +186,30 @@ export default async function AdminDashboard() {
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 h-[500px] overflow-y-auto custom-scrollbar">
           <h3 className="text-lg font-bold text-gray-800 mb-6 sticky top-0 bg-white pb-2 border-b border-gray-50">ความเคลื่อนไหวล่าสุด (System Logs)</h3>
           <div className="space-y-6">
-            {syncLogsData && syncLogsData.map((log: any) => (
-              <LogItem 
-                key={log.id}
-                time={`${new Date(log.createdAt).toLocaleTimeString('th-TH', { timeZone: 'Asia/Bangkok' })} น.`} 
-                text={`${log.providerName} Sync: ${log.status === 'SUCCESS' ? `อัปเดต ${log.recordsUpdated} รายการ` : `Error: ${log.errorMessage}`}`} 
-                type={log.status === 'SUCCESS' ? "sync" : "failed"}
-              />
-            ))}
+            {syncLogsData && syncLogsData.map((log: any) => {
+              const supplierName = log.supplierId === 'SUP_LETGO' ? "Let's Go" : log.supplierId === 'SUP_TOURFACTORY' ? "Tour Factory" : log.supplierId === 'SUP_CHECKIN' ? "Check In" : log.supplierId;
+              let logText = "";
+              let logType = "";
+              if (log.status === 'SUCCESS') {
+                logText = `ซิงค์ทัวร์สำเร็จ ${log.recordsAdded || 0} รายการ`;
+                logType = "sync";
+              } else if (log.status === 'RUNNING') {
+                logText = "กำลังซิงค์ข้อมูล...";
+                logType = "running";
+              } else {
+                logText = `ล้มเหลว: ${log.errorMessage || 'Timeout / Unknown Error'}`;
+                logType = "failed";
+              }
+
+              return (
+                <LogItem 
+                  key={log.id}
+                  time={`${new Date(log.createdAt).toLocaleTimeString('th-TH', { timeZone: 'Asia/Bangkok' })} น.`} 
+                  text={`${supplierName} Sync: ${logText}`} 
+                  type={logType}
+                />
+              );
+            })}
             {(!syncLogsData || syncLogsData.length === 0) && (
                <p className="text-gray-400 text-sm">ยังไม่มีข้อมูลการซิงค์</p>
             )}
@@ -263,7 +279,8 @@ function BookingRow({ id, customer, tour, amount, statusText, color, actionUrl, 
 function LogItem({ time, text, type }: { time: string, text: string, type: string }) {
   const getDotColor = () => {
     if (type === 'success') return 'bg-green-500';
-    if (type === 'sync') return 'bg-blue-500';
+    if (type === 'sync') return 'bg-emerald-500';
+    if (type === 'running') return 'bg-blue-500 animate-pulse';
     if (type === 'failed') return 'bg-red-500';
     return 'bg-gray-400';
   }
