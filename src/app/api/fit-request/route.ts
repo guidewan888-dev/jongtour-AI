@@ -249,7 +249,8 @@ ${pricingData.recommendedHotel ? `
 - บังคับคืนค่า hotelImageUrl ใน JSON ของวันนั้นๆ เป็น "${pricingData.recommendedHotel.imageUrl}"
 ` : `
 ข้อมูลโรงแรม:
-- กรุณาสุ่มชื่อโรงแรมที่สมจริงให้ตรงกับประเทศและเมืองที่ระบุ ลงใน field "hotel" ของแผนการเดินทางทุกวัน
+- บังคับให้คิดชื่อโรงแรมที่มีอยู่จริงและสมจริง ตรงกับระดับ ${hotelStars} ดาว ในเมือง/ประเทศปลายทาง ลงใน field "hotel" (เช่น "Hilton Tokyo", "Swissôtel Geneva", "Marriott") ห้ามใส่แค่ชื่อประเทศสั้นๆ เด็ดขาด!
+- บังคับคืนค่า hotelImageUrl ใน JSON ของวันนั้นๆ เป็น "https://images.unsplash.com/photo-1542314831-c6a4d1409b1c?w=800&q=80" หรือ "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&q=80" เพื่อให้มีรูปภาพแสดงเสมอ
 `}
 
 กฎการสร้าง JSON:
