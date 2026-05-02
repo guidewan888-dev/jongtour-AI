@@ -30,21 +30,24 @@ export default function ApiSyncStatusPage() {
         // Update stats from logs
         const zegoLog = data.logs.find((l: any) => l.supplierId === 'SUP_LETGO' && l.status === 'SUCCESS');
         if (zegoLog) {
-          const date = new Date(zegoLog.createdAt);
+          const dateStr = zegoLog.createdAt.endsWith('Z') ? zegoLog.createdAt : `${zegoLog.createdAt}Z`;
+          const date = new Date(dateStr);
           setLastSyncZego(`${date.toLocaleDateString('th-TH')} ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')} น.`);
           setZegoCount(zegoLog.recordsAdded || 0);
         }
 
         const tfLog = data.logs.find((l: any) => l.supplierId === 'SUP_TOURFACTORY' && l.status === 'SUCCESS');
         if (tfLog) {
-          const date = new Date(tfLog.createdAt);
+          const dateStr = tfLog.createdAt.endsWith('Z') ? tfLog.createdAt : `${tfLog.createdAt}Z`;
+          const date = new Date(dateStr);
           setLastSyncTourFactory(`${date.toLocaleDateString('th-TH')} ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')} น.`);
           setTourFactoryCount(tfLog.recordsAdded || 0);
         }
 
         const checkinLog = data.logs.find((l: any) => l.supplierId === 'SUP_CHECKIN' && l.status === 'SUCCESS');
         if (checkinLog) {
-          const date = new Date(checkinLog.createdAt);
+          const dateStr = checkinLog.createdAt.endsWith('Z') ? checkinLog.createdAt : `${checkinLog.createdAt}Z`;
+          const date = new Date(dateStr);
           setLastSyncCheckIn(`${date.toLocaleDateString('th-TH')} ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')} น.`);
           setCheckInCount(checkinLog.recordsAdded || 0);
         }
@@ -129,7 +132,8 @@ export default function ApiSyncStatusPage() {
 
 
   const formatDate = (dateString: string) => {
-    const d = new Date(dateString);
+    const dStr = dateString.endsWith('Z') ? dateString : `${dateString}Z`;
+    const d = new Date(dStr);
     return `${d.toLocaleDateString('th-TH')} ${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')} น.`;
   };
 

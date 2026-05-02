@@ -16,32 +16,27 @@ export class TourFactoryAdapter implements SupplierAdapter {
     await this.fetchApi('/tours');
     
     // Mock Raw Data from TourFactory Wholesale
-    return [
-      {
-        externalId: "TF_EUR_01",
-        name: "Classic Europe 9 Days",
+    const tours: RawTour[] = [];
+    const regions = ["Europe", "Taiwan", "Hong Kong", "China", "Scandinavia"];
+    
+    for (let i = 1; i <= 18; i++) {
+      const region = regions[i % regions.length];
+      const days = (i % 5) + 4; // 4 to 8 days
+      tours.push({
+        externalId: `TF_${region.substring(0,3).toUpperCase()}_0${i}`,
+        name: `Classic ${region} ${days} Days`,
         payload: {
-          tour_code: "TF_EUR_01",
-          title: "Classic Europe 9 Days (Ger, Switz, France)",
-          country: "Europe",
-          duration: "9D6N",
-          base_price: 65000,
+          tour_code: `TF_${region.substring(0,3).toUpperCase()}_0${i}`,
+          title: `Classic ${region} ${days} Days`,
+          country: region,
+          duration: `${days}D${days-1}N`,
+          base_price: 25000 + (i * 2000),
           active: true
         }
-      },
-      {
-        externalId: "TF_TPE_02",
-        name: "Taipei Alishan 5 Days",
-        payload: {
-          tour_code: "TF_TPE_02",
-          title: "Taipei Alishan 5 Days",
-          country: "Taiwan",
-          duration: "5D4N",
-          base_price: 18900,
-          active: true
-        }
-      }
-    ];
+      });
+    }
+
+    return tours;
   }
 
   async getTourDetail(externalTourId: string): Promise<RawTourDetail> {

@@ -19,32 +19,27 @@ export class LetgoAdapter implements SupplierAdapter {
     await this.fetchApi('/packages');
     
     // Mock Raw Data from Wholesale
-    return [
-      {
-        externalId: "LG_JPN_01",
-        name: "Japan Classic Hokkaido",
+    const tours: RawTour[] = [];
+    const countries = ["Japan", "South Korea", "Vietnam", "Taiwan"];
+    
+    for (let i = 1; i <= 24; i++) {
+      const country = countries[i % countries.length];
+      const days = (i % 3) + 4; // 4 to 6 days
+      tours.push({
+        externalId: `LG_${country.substring(0,3).toUpperCase()}_0${i}`,
+        name: `Amazing ${country} Explorer ${days} Days`,
         payload: {
-          pkg_id: "LG_JPN_01",
-          name_th: "Japan Classic Hokkaido",
-          destination: "Japan",
-          days: 5,
-          min_price: 35000,
+          pkg_id: `LG_${country.substring(0,3).toUpperCase()}_0${i}`,
+          name_th: `Amazing ${country} Explorer ${days} Days`,
+          destination: country,
+          days: days,
+          min_price: 15000 + (i * 1000),
           status: 1
         }
-      },
-      {
-        externalId: "LG_KOR_02",
-        name: "Korea Winter Ski",
-        payload: {
-          pkg_id: "LG_KOR_02",
-          name_th: "Korea Winter Ski",
-          destination: "South Korea",
-          days: 4,
-          min_price: 22000,
-          status: 1
-        }
-      }
-    ];
+      });
+    }
+
+    return tours;
   }
 
   async getTourDetail(externalTourId: string): Promise<RawTourDetail> {

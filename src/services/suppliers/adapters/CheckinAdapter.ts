@@ -16,32 +16,30 @@ export class CheckinAdapter implements SupplierAdapter {
     await this.fetchApi('/products');
     
     // Mock Raw Data from Check In Wholesale
-    return [
-      {
-        externalId: "CHK_VN_01",
-        name: "Vietnam Danang Bana Hills",
+    // Mock Raw Data from Check In Wholesale
+    const tours: RawTour[] = [];
+    const themes = ["Premium", "Standard", "Budget", "Luxury"];
+    const destinations = ["Singapore", "Malaysia", "Bali", "Maldives", "Dubai"];
+    
+    for (let i = 1; i <= 35; i++) {
+      const theme = themes[i % themes.length];
+      const dest = destinations[i % destinations.length];
+      const days = (i % 4) + 3; // 3 to 6 days
+      tours.push({
+        externalId: `CHK_${dest.substring(0,3).toUpperCase()}_0${i}`,
+        name: `${theme} ${dest} ${days} Days`,
         payload: {
-          product_id: "CHK_VN_01",
-          name: "Vietnam Danang Bana Hills 4D3N",
+          product_id: `CHK_${dest.substring(0,3).toUpperCase()}_0${i}`,
+          name: `${theme} ${dest} ${days} Days`,
           region: "Asia",
-          duration_days: 4,
-          price_starting: 12900,
+          duration_days: days,
+          price_starting: 12000 + (i * 800),
           is_active: true
         }
-      },
-      {
-        externalId: "CHK_SG_02",
-        name: "Singapore Universal Studio",
-        payload: {
-          product_id: "CHK_SG_02",
-          name: "Singapore Universal Studio 3D2N",
-          region: "Asia",
-          duration_days: 3,
-          price_starting: 15900,
-          is_active: true
-        }
-      }
-    ];
+      });
+    }
+
+    return tours;
   }
 
   async getTourDetail(externalTourId: string): Promise<RawTourDetail> {
