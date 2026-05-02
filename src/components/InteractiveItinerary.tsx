@@ -210,10 +210,11 @@ export default function InteractiveItinerary({ itinerary }: { itinerary: any }) 
                 </div>
                 {localAirline && (
                   <img 
-                    src={`https://images.kiwi.com/airlines/64/${localAirline}.png`} 
+                    src={`https://images.kiwi.com/airlines/64/${localAirline.substring(0, 2).toUpperCase()}.png`} 
                     alt={localAirline}
                     className="h-8 object-contain cursor-pointer"
                     crossOrigin="anonymous"
+                    onError={(e) => { e.currentTarget.style.display = 'none'; }}
                     onClick={() => {
                       const el = document.getElementById('airline-select');
                       if (el) el.focus();
