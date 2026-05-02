@@ -23,8 +23,12 @@ export function middleware(req: NextRequest) {
   const isAdmin = hostname.startsWith('admin.');
   const isBooking = hostname.startsWith('booking.');
 
+  // Paths that should not be rewritten even on subdomains (like login, API routes)
+  const excludePaths = ['/login', '/api', '/auth', '/_next'];
+  const shouldExclude = excludePaths.some(p => url.pathname.startsWith(p));
+
   // Rewrite for Admin Subdomain
-  if (isAdmin) {
+  if (isAdmin && !shouldExclude) {
     // If the path doesn't already start with /admin, we prepend it.
     // E.g., visiting admin.jongtour.com/sync will load /admin/sync internally
     if (!url.pathname.startsWith('/admin')) {
@@ -34,7 +38,7 @@ export function middleware(req: NextRequest) {
   }
 
   // Rewrite for Booking Subdomain (B2B Agent Portal)
-  if (isBooking) {
+  if (isBooking && !shouldExclude) {
     // Assuming you will create a /booking folder in the future
     if (!url.pathname.startsWith('/booking')) {
       url.pathname = `/booking${url.pathname === '/' ? '' : url.pathname}`;
