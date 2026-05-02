@@ -42,11 +42,11 @@ export default function AuthButtons({ serverUser }: { serverUser?: any }) {
 
   return (
     <>
-      <Link href="/login" className="hidden md:flex text-gray-600 hover:text-blue-600 font-medium text-sm transition-colors items-center">
-        เข้าสู่ระบบ
+      <Link href="/auth/login" className="hidden md:flex text-gray-600 hover:text-orange-600 font-medium text-sm transition-colors items-center">
+        เข้าสู่ระบบ B2B
       </Link>
-      <Link href="/login" className="px-4 py-2 bg-white border border-blue-600 text-blue-600 rounded-lg text-sm font-medium hover:bg-blue-50 transition-colors flex items-center shadow-sm">
-        สร้างบัญชีผู้ใช้
+      <Link href="/auth/register" className="px-4 py-2 bg-white border border-orange-600 text-orange-600 rounded-lg text-sm font-medium hover:bg-orange-50 transition-colors flex items-center shadow-sm">
+        สมัครเอเจนต์
       </Link>
     </>
   );
