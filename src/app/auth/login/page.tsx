@@ -3,9 +3,6 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Loader2, Lock, Mail } from "lucide-react";
 
 export default function LoginPage() {
@@ -62,12 +59,12 @@ export default function LoginPage() {
           )}
           
           <div>
-            <Label htmlFor="email">Email address</Label>
+            <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email address</label>
             <div className="mt-1 relative rounded-md shadow-sm">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <Mail className="h-5 w-5 text-gray-400" />
               </div>
-              <Input
+              <input
                 id="email"
                 name="email"
                 type="email"
@@ -75,19 +72,19 @@ export default function LoginPage() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="pl-10 block w-full sm:text-sm"
+                className="pl-10 block w-full sm:text-sm border-gray-300 rounded-md py-2 border focus:ring-orange-500 focus:border-orange-500"
                 placeholder="admin@jongtour.com"
               />
             </div>
           </div>
 
           <div>
-            <Label htmlFor="password">Password</Label>
+            <label htmlFor="password" className="block text-sm font-medium text-gray-700">Password</label>
             <div className="mt-1 relative rounded-md shadow-sm">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <Lock className="h-5 w-5 text-gray-400" />
               </div>
-              <Input
+              <input
                 id="password"
                 name="password"
                 type="password"
@@ -95,7 +92,7 @@ export default function LoginPage() {
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="pl-10 block w-full sm:text-sm"
+                className="pl-10 block w-full sm:text-sm border-gray-300 rounded-md py-2 border focus:ring-orange-500 focus:border-orange-500"
                 placeholder="••••••••"
               />
             </div>
@@ -122,9 +119,9 @@ export default function LoginPage() {
           </div>
 
           <div>
-            <Button
+            <button
               type="submit"
-              className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-orange-600 hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500"
+              className="w-full flex justify-center items-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-orange-600 hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 disabled:bg-orange-400 disabled:cursor-not-allowed"
               disabled={isLoading}
             >
               {isLoading ? (
@@ -135,7 +132,7 @@ export default function LoginPage() {
               ) : (
                 "เข้าสู่ระบบ"
               )}
-            </Button>
+            </button>
           </div>
         </form>
       </div>

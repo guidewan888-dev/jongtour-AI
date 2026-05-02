@@ -3,9 +3,6 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Loader2, Building, User, Mail, Lock, Phone } from "lucide-react";
 
 export default function RegisterPage() {
@@ -77,85 +74,85 @@ export default function RegisterPage() {
           )}
           
           <div>
-            <Label htmlFor="companyName">ชื่อบริษัท / เอเจนซี่</Label>
+            <label htmlFor="companyName" className="block text-sm font-medium text-gray-700">ชื่อบริษัท / เอเจนซี่</label>
             <div className="mt-1 relative rounded-md shadow-sm">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <Building className="h-5 w-5 text-gray-400" />
               </div>
-              <Input
+              <input
                 id="companyName"
                 name="companyName"
                 required
                 value={formData.companyName}
                 onChange={handleChange}
-                className="pl-10"
+                className="pl-10 block w-full sm:text-sm border-gray-300 rounded-md py-2 border focus:ring-orange-500 focus:border-orange-500"
                 placeholder="บริษัท ทัวร์ดี จำกัด"
               />
             </div>
           </div>
 
           <div>
-            <Label htmlFor="name">ชื่อผู้ติดต่อหลัก</Label>
+            <label htmlFor="name" className="block text-sm font-medium text-gray-700">ชื่อผู้ติดต่อหลัก</label>
             <div className="mt-1 relative rounded-md shadow-sm">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <User className="h-5 w-5 text-gray-400" />
               </div>
-              <Input
+              <input
                 id="name"
                 name="name"
                 required
                 value={formData.name}
                 onChange={handleChange}
-                className="pl-10"
+                className="pl-10 block w-full sm:text-sm border-gray-300 rounded-md py-2 border focus:ring-orange-500 focus:border-orange-500"
                 placeholder="สมชาย ใจดี"
               />
             </div>
           </div>
 
           <div>
-            <Label htmlFor="email">อีเมล (สำหรับเข้าระบบ)</Label>
+            <label htmlFor="email" className="block text-sm font-medium text-gray-700">อีเมล (สำหรับเข้าระบบ)</label>
             <div className="mt-1 relative rounded-md shadow-sm">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <Mail className="h-5 w-5 text-gray-400" />
               </div>
-              <Input
+              <input
                 id="email"
                 name="email"
                 type="email"
                 required
                 value={formData.email}
                 onChange={handleChange}
-                className="pl-10"
+                className="pl-10 block w-full sm:text-sm border-gray-300 rounded-md py-2 border focus:ring-orange-500 focus:border-orange-500"
                 placeholder="agent@example.com"
               />
             </div>
           </div>
 
           <div>
-            <Label htmlFor="phone">เบอร์โทรศัพท์</Label>
+            <label htmlFor="phone" className="block text-sm font-medium text-gray-700">เบอร์โทรศัพท์</label>
             <div className="mt-1 relative rounded-md shadow-sm">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <Phone className="h-5 w-5 text-gray-400" />
               </div>
-              <Input
+              <input
                 id="phone"
                 name="phone"
                 required
                 value={formData.phone}
                 onChange={handleChange}
-                className="pl-10"
+                className="pl-10 block w-full sm:text-sm border-gray-300 rounded-md py-2 border focus:ring-orange-500 focus:border-orange-500"
                 placeholder="0812345678"
               />
             </div>
           </div>
 
           <div>
-            <Label htmlFor="password">รหัสผ่าน</Label>
+            <label htmlFor="password" className="block text-sm font-medium text-gray-700">รหัสผ่าน</label>
             <div className="mt-1 relative rounded-md shadow-sm">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <Lock className="h-5 w-5 text-gray-400" />
               </div>
-              <Input
+              <input
                 id="password"
                 name="password"
                 type="password"
@@ -163,35 +160,35 @@ export default function RegisterPage() {
                 minLength={6}
                 value={formData.password}
                 onChange={handleChange}
-                className="pl-10"
+                className="pl-10 block w-full sm:text-sm border-gray-300 rounded-md py-2 border focus:ring-orange-500 focus:border-orange-500"
                 placeholder="อย่างน้อย 6 ตัวอักษร"
               />
             </div>
           </div>
 
           <div>
-            <Label htmlFor="confirmPassword">ยืนยันรหัสผ่าน</Label>
+            <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">ยืนยันรหัสผ่าน</label>
             <div className="mt-1 relative rounded-md shadow-sm">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <Lock className="h-5 w-5 text-gray-400" />
               </div>
-              <Input
+              <input
                 id="confirmPassword"
                 name="confirmPassword"
                 type="password"
                 required
                 value={formData.confirmPassword}
                 onChange={handleChange}
-                className="pl-10"
+                className="pl-10 block w-full sm:text-sm border-gray-300 rounded-md py-2 border focus:ring-orange-500 focus:border-orange-500"
                 placeholder="พิมพ์รหัสผ่านอีกครั้ง"
               />
             </div>
           </div>
 
           <div className="pt-2">
-            <Button
+            <button
               type="submit"
-              className="w-full"
+              className="w-full flex justify-center items-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-orange-600 hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 disabled:bg-orange-400 disabled:cursor-not-allowed"
               disabled={isLoading}
             >
               {isLoading ? (
@@ -202,7 +199,7 @@ export default function RegisterPage() {
               ) : (
                 "สมัครบัญชี Agent"
               )}
-            </Button>
+            </button>
           </div>
           
           <div className="text-center mt-4 text-sm">
