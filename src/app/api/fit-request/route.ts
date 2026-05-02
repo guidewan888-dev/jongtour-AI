@@ -194,6 +194,7 @@ ${inclusionDetails}
 4. "estimatedPrice": ประเมินราคารวมเป็นเงินบาท โดยบังคับใช้ราคา "${pricingData.sellingPricePerPax.toLocaleString()} THB/ท่าน" เท่านั้น พร้อมวงเล็บ "(ราคาโดยประมาณจากระบบอ้างอิง)"
 5. "days": แผนการเดินทางรายวัน ${finalDurationDays} วัน 
 6. "inclusions" และ "exclusions" สรุปให้ครบถ้วน
+7. "recommendedFlight": ข้อมูลเที่ยวบินที่เหมาะสม (สมจริงที่สุด) อิงจากประเทศปลายทางและสายการบินประเภท ${airlinePreference}
 
 IMPORTANT: "exclusions" MUST BE EXACTLY this array:
   [
@@ -212,6 +213,12 @@ IMPORTANT: "exclusions" MUST BE EXACTLY this array:
   "highlights": ["string"],
   "estimatedPrice": "string",
   "hotelStars": ${hotelStars},
+  "recommendedFlight": {
+    "airline": "string (ชื่อสายการบิน เช่น Thai Airways, AirAsia X)",
+    "airlineCode": "string (IATA code 2 ตัวอักษร เช่น TG, XJ)",
+    "outbound": "string (เที่ยวบินขาไป เช่น TG676 BKK-NRT 07:35 - 15:45)",
+    "inbound": "string (เที่ยวบินขากลับ เช่น TG677 NRT-BKK 17:30 - 22:30)"
+  },
   "days": [
     {
       "day": number,

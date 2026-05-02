@@ -12,7 +12,7 @@ const MapRoute = dynamic(() => import("./MapRoute"), { ssr: false });
 
 export default function InteractiveItinerary({ itinerary }: { itinerary: any }) {
   const [days, setDays] = useState(itinerary?.days || []);
-  const [localAirline, setLocalAirline] = useState(itinerary?.airlineCode || "");
+  const [localAirline, setLocalAirline] = useState(itinerary?.airlineCode || itinerary?.recommendedFlight?.airlineCode || "");
   const [preferredWholesale, setPreferredWholesale] = useState("ไม่ระบุ (หาที่ราคาดีที่สุดให้)");
   const [editingDayIndex, setEditingDayIndex] = useState<number | null>(null);
   const [editPrompt, setEditPrompt] = useState("");
@@ -208,7 +208,7 @@ export default function InteractiveItinerary({ itinerary }: { itinerary: any }) 
 
           {/* Highlights Glassmorphism Card */}
           {(itinerary.highlights?.length > 0) ? (
-            <div className="bg-white/60 backdrop-blur-md border border-white/80 shadow-sm rounded-xl p-4 mb-5 inline-block w-max max-w-full">
+            <div className="bg-white/60 backdrop-blur-md border border-white/80 shadow-sm rounded-xl p-4 mb-4 inline-block w-max max-w-full">
                <h3 className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-2 flex items-center gap-1">✨ Tour Highlights</h3>
                <ul className="space-y-1.5">
                  {itinerary.highlights.map((hl: string, i: number) => (
@@ -219,7 +219,18 @@ export default function InteractiveItinerary({ itinerary }: { itinerary: any }) 
                </ul>
             </div>
           ) : (
-            <div className="mb-4"></div> /* Spacer if no highlights */
+            <div className="mb-2"></div> /* Spacer if no highlights */
+          )}
+
+          {/* Flight Card */}
+          {itinerary.recommendedFlight && (
+            <div className="bg-white/60 backdrop-blur-md border border-white/80 shadow-sm rounded-xl p-4 mb-5 inline-block w-full max-w-sm">
+               <h3 className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-2 flex items-center gap-1">✈️ เที่ยวบินแนะนำ ({itinerary.recommendedFlight.airline})</h3>
+               <div className="flex flex-col gap-1.5 text-xs text-gray-800 font-medium">
+                 <div className="flex items-center gap-2"><span className="text-blue-500 font-bold w-12">🛫 ขาไป:</span> {itinerary.recommendedFlight.outbound}</div>
+                 <div className="flex items-center gap-2"><span className="text-green-500 font-bold w-12">🛬 ขากลับ:</span> {itinerary.recommendedFlight.inbound}</div>
+               </div>
+            </div>
           )}
 
           {/* Badges Row */}
