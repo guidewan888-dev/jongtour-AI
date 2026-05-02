@@ -41,13 +41,13 @@ export default function ApiSettingsPage() {
       </div>
 
       <div className="space-y-8">
-        {/* Go365 API */}
+        {/* Tour Factory API */}
         <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
           <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-slate-50">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold">G3</div>
+              <div className="w-10 h-10 bg-rose-600 rounded-lg flex items-center justify-center text-white font-bold">TF</div>
               <div>
-                <h3 className="font-bold text-lg text-gray-900">ระบบ Go365</h3>
+                <h3 className="font-bold text-lg text-gray-900">ระบบ Tour Factory</h3>
                 <div className="flex items-center gap-1.5 mt-0.5 text-xs text-green-600 font-bold">
                   <span className="relative flex h-2 w-2">
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
@@ -69,7 +69,7 @@ export default function ApiSettingsPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-bold text-gray-700 mb-1.5">API Endpoint URL</label>
-                <input type="text" defaultValue="https://api.go365.com/v2/tours" className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-gray-800 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500" />
+                <input type="text" defaultValue="https://api.tourfactory.com/v2/tours" className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-gray-800 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500" />
               </div>
               <div>
                 <label className="block text-sm font-bold text-gray-700 mb-1.5">Company Code</label>
@@ -131,6 +131,56 @@ export default function ApiSettingsPage() {
               <label className="block text-sm font-bold text-gray-700 mb-1.5">Bearer Token / API Key</label>
               <div className="relative">
                 <input type="password" defaultValue="ZG_MOCK_API_KEY_987654321" className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-gray-800 font-mono focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500" />
+              </div>
+              <p className="text-xs text-gray-500 mt-1.5 flex items-center gap-1"><AlertCircle className="w-3.5 h-3.5" /> ห้ามแชร์ API Key นี้ให้บุคคลภายนอกเด็ดขาด</p>
+            </div>
+
+            <div className="pt-4 flex items-center justify-between border-t border-gray-100">
+              <button onClick={handleTest} disabled={isTesting} className="flex items-center gap-2 text-sm font-bold text-indigo-600 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 px-4 py-2 rounded-lg transition-colors">
+                <Webhook className={`w-4 h-4 ${isTesting ? 'animate-pulse' : ''}`} /> 
+                {isTesting ? 'กำลังทดสอบการเชื่อมต่อ...' : 'ทดสอบการเชื่อมต่อ (Test Connection)'}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Check In Group API */}
+        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+          <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-slate-50">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-teal-600 rounded-lg flex items-center justify-center text-white font-bold">CI</div>
+              <div>
+                <h3 className="font-bold text-lg text-gray-900">ระบบ Check In Group</h3>
+                <div className="flex items-center gap-1.5 mt-0.5 text-xs text-green-600 font-medium">
+                  <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></div>
+                  เชื่อมต่อล่าสุด: วันนี้ 08:15 น.
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <span className="px-3 py-1 bg-green-50 text-green-700 text-xs font-bold rounded-full border border-green-200">Active</span>
+              <div className="w-12 h-6 bg-green-500 rounded-full relative cursor-pointer">
+                <div className="w-4 h-4 bg-white rounded-full absolute right-1 top-1"></div>
+              </div>
+            </div>
+          </div>
+
+          <div className="p-6 space-y-5">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-1.5">API Endpoint URL</label>
+                <input type="text" defaultValue="https://api.checkingroup.com/v1/products" className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-gray-800 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500" />
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-1.5">Company Code</label>
+                <input type="text" defaultValue="JT-BKK-003" className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-gray-800 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500" />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-bold text-gray-700 mb-1.5">Bearer Token / API Key</label>
+              <div className="relative">
+                <input type="password" defaultValue="CI_MOCK_API_KEY_55555" className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-gray-800 font-mono focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500" />
               </div>
               <p className="text-xs text-gray-500 mt-1.5 flex items-center gap-1"><AlertCircle className="w-3.5 h-3.5" /> ห้ามแชร์ API Key นี้ให้บุคคลภายนอกเด็ดขาด</p>
             </div>
