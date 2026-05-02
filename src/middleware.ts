@@ -37,6 +37,14 @@ export function middleware(req: NextRequest) {
     }
   }
 
+  // If someone accesses /admin from the main domain, redirect them to the admin subdomain
+  if (!isAdmin && !isBooking && url.pathname.startsWith('/admin')) {
+    const newUrl = req.nextUrl.clone();
+    newUrl.hostname = `admin.${hostname.replace('www.', '')}`;
+    newUrl.pathname = url.pathname.replace(/^\/admin/, '') || '/';
+    return NextResponse.redirect(newUrl);
+  }
+
   // Rewrite for Booking Subdomain (B2B Agent Portal)
   if (isBooking && !shouldExclude) {
     // Assuming you will create a /booking folder in the future

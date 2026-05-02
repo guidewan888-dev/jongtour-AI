@@ -23,8 +23,12 @@ function LoginContent() {
   useEffect(() => {
     const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_IN' && session) {
-        // Safe to redirect because state is fully persisted
-        window.location.href = "/user/bookings";
+        // Redirect to admin if logging in from admin subdomain, otherwise user bookings
+        if (window.location.hostname.startsWith('admin.')) {
+          window.location.href = "/";
+        } else {
+          window.location.href = "/user/bookings";
+        }
       }
     });
 
