@@ -23,13 +23,13 @@ export default function Header() {
 
         <div className="hidden md:flex items-center gap-4">
           
-          <Link href="/" className="px-4 py-2 text-gray-600 hover:text-orange-500 font-medium transition-colors">
+          <Link href="/" className="px-2 lg:px-4 py-2 text-gray-600 hover:text-orange-500 font-medium transition-colors whitespace-nowrap">
             หน้าแรก
           </Link>
 
           {/* Mega Menu Item */}
           <div className="group py-8">
-            <button className="flex items-center gap-1 px-4 py-2 text-gray-600 group-hover:text-orange-500 font-medium transition-colors">
+            <button className="flex items-center gap-1 px-2 lg:px-4 py-2 text-gray-600 group-hover:text-orange-500 font-medium transition-colors whitespace-nowrap">
               ทัวร์ต่างประเทศ
               <ChevronDown className="w-4 h-4 group-hover:rotate-180 transition-transform duration-300" />
             </button>
@@ -160,9 +160,9 @@ export default function Header() {
             </div>
           </div>
 
-          {/* Wholesale Mega Menu */}
-          <div className="group py-8 relative">
-            <button className="flex items-center gap-1 px-4 py-2 text-gray-600 group-hover:text-blue-600 font-medium transition-colors">
+          {/* Wholesale Mega Menu - Temporarily Hidden */}
+          {/* <div className="group py-8 relative">
+            <button className="flex items-center gap-1 px-4 py-2 text-gray-600 group-hover:text-blue-600 font-medium transition-colors whitespace-nowrap">
               โฮลเซลล์ (Wholesale)
               <ChevronDown className="w-4 h-4 group-hover:rotate-180 transition-transform duration-300" />
             </button>
@@ -193,13 +193,13 @@ export default function Header() {
                 ))}
               </div>
             </div>
-          </div>
+          </div> */}
 
-          <Link href="/last-minute" className="px-4 py-2 text-rose-600 hover:text-rose-700 font-bold transition-colors flex items-center gap-1">
+          <Link href="/last-minute" className="px-2 lg:px-4 py-2 text-rose-600 hover:text-rose-700 font-bold transition-colors flex items-center gap-1 whitespace-nowrap">
             🔥 ทัวร์ไฟไหม้
           </Link>
           
-          <Link href="/ai-planner" className="bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white px-5 py-2 rounded-full font-bold transition-all shadow-md hover:shadow-lg flex items-center gap-2 transform hover:-translate-y-0.5 ml-2">
+          <Link href="/ai-planner" className="bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white px-4 lg:px-5 py-2 rounded-full font-bold transition-all shadow-md hover:shadow-lg flex items-center gap-2 transform hover:-translate-y-0.5 ml-1 lg:ml-2 whitespace-nowrap text-sm lg:text-base">
             ✨ AI จัดทริปส่วนตัว
           </Link>
         </div>
