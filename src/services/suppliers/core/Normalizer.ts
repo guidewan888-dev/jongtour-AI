@@ -21,6 +21,8 @@ export class Normalizer {
       description: rawData.payload?.description || null,
       airlineCode: rawData.payload?.airline || null,
       pdfUrl: rawData.payload?.pdf || null,
+      itinerary: rawData.payload?.itinerary || null,
+      flights: rawData.payload?.flights || null,
     };
   }
 

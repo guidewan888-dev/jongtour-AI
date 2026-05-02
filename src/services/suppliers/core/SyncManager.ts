@@ -1,7 +1,7 @@
 import { SupplierAdapter } from './SupplierAdapter';
 import { Normalizer } from './Normalizer';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
-import { v4 as uuidv4 } from 'uuid'; // Fallback if crypto isn't available
+
 
 // Simple ID generator for Prisma cuid equivalents
 const generateId = () => {
@@ -68,8 +68,7 @@ export class SyncManager {
         id: syncLogId,
         supplierId,
         type: 'FULL_SYNC',
-        status: 'RUNNING',
-        updatedAt: new Date().toISOString()
+        status: 'RUNNING'
       })
       .select()
       .single();
