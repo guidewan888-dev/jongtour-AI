@@ -53,15 +53,8 @@ export async function searchTours(
 
   let { data: rawTours } = await query;
   
-  // Fallback if destination was too specific and returned 0 rows
-  if ((!rawTours || rawTours.length === 0) && args.destination) {
-    let fallbackQuery = supabase.from('Tour').select('*, departures:TourDeparture(*)');
-    if (args.budget_max) fallbackQuery = fallbackQuery.lte('price', args.budget_max);
-    if (args.supplier_id) fallbackQuery = fallbackQuery.or(`source.eq.${args.supplier_id},providerId.ilike.%${args.supplier_id}%`);
-    fallbackQuery = fallbackQuery.order('createdAt', { ascending: false }).limit(limit);
-    const { data: fbTours } = await fallbackQuery;
-    rawTours = fbTours;
-  }
+  // Removed fallback query that drops destination filter. 
+  // It caused irrelevant tours to show up in the UI when 0 rows matched the destination.
   
   let tours = rawTours || [];
   
