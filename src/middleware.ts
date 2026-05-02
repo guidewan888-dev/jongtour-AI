@@ -73,11 +73,13 @@ export async function middleware(req: NextRequest) {
 
   const isAdminSubdomain = subdomain === 'admin';
   const isBookingSubdomain = subdomain === 'booking' || subdomain === 'b2b' || subdomain === 'agent';
-  const isAgentSubdomain = subdomain && !isAdminSubdomain && !isBookingSubdomain && subdomain !== 'www';
+  const isTourSubdomain = subdomain === 'tour';
+  const isAgentSubdomain = subdomain && !isAdminSubdomain && !isBookingSubdomain && !isTourSubdomain && subdomain !== 'www';
 
   // Check path rules
   const isAdminPath = url.pathname.startsWith('/admin') || isAdminSubdomain;
   const isB2bPath = url.pathname.startsWith('/b2b') || isBookingSubdomain;
+  const isTourCmsPath = url.pathname.startsWith('/tour-cms') || isTourSubdomain;
   const isAuthPath = url.pathname.startsWith('/auth');
 
   // Paths that should not be rewritten or blocked
@@ -89,7 +91,7 @@ export async function middleware(req: NextRequest) {
   }
 
   // Authentication Guards
-  if ((isAdminPath || isB2bPath) && !user) {
+  if ((isAdminPath || isB2bPath || isTourCmsPath) && !user) {
     // Not logged in -> Redirect to login
     url.pathname = '/auth/login';
     return NextResponse.redirect(url);
@@ -98,7 +100,7 @@ export async function middleware(req: NextRequest) {
   if (isAuthPath && user) {
     // Already logged in -> Redirect to B2B or Admin
     // Ideally we fetch role from Prisma here, but we can't use Prisma client in Edge Runtime easily.
-    // For now, redirect to /b2b as default, and the b2b/admin layouts can do the final role check.
+    // For now, redirect to /b2b as default, and the b2b/admin/tour layouts can do the final role check.
     url.pathname = '/b2b';
     return NextResponse.redirect(url);
   }
@@ -117,6 +119,11 @@ export async function middleware(req: NextRequest) {
 
   if (isBookingSubdomain && !url.pathname.startsWith('/b2b')) {
     url.pathname = `/b2b${url.pathname === '/' ? '' : url.pathname}`;
+    return NextResponse.rewrite(url);
+  }
+
+  if (isTourSubdomain && !url.pathname.startsWith('/tour-cms')) {
+    url.pathname = `/tour-cms${url.pathname === '/' ? '' : url.pathname}`;
     return NextResponse.rewrite(url);
   }
 
