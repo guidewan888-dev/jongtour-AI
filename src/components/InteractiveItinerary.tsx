@@ -18,6 +18,37 @@ export default function InteractiveItinerary({ itinerary }: { itinerary: any }) 
   const [editPrompt, setEditPrompt] = useState("");
   const [isRegenerating, setIsRegenerating] = useState(false);
 
+  const [recommendedFlight, setRecommendedFlight] = useState<any>(itinerary?.recommendedFlight || null);
+  const [editingFlight, setEditingFlight] = useState(false);
+  const [flightEditPrompt, setFlightEditPrompt] = useState("");
+  const [isRegeneratingFlight, setIsRegeneratingFlight] = useState(false);
+
+  const handleRegenerateFlight = async () => {
+    if (!flightEditPrompt.trim()) return;
+    setIsRegeneratingFlight(true);
+    try {
+      const country = itinerary.country || itinerary.title;
+      const res = await fetch("/api/chat/regenerate-flight", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ country, currentFlight: recommendedFlight, instruction: flightEditPrompt })
+      });
+      const data = await res.json();
+      if (data.success && data.newFlight) {
+        setRecommendedFlight(data.newFlight);
+        setLocalAirline(data.newFlight.airlineCode || "");
+        setEditingFlight(false);
+        setFlightEditPrompt("");
+      } else {
+        alert("ขออภัย ไม่สามารถปรับแก้เที่ยวบินได้ในขณะนี้");
+      }
+    } catch (err) {
+      alert("เกิดข้อผิดพลาดในการเชื่อมต่อ AI");
+    } finally {
+      setIsRegeneratingFlight(false);
+    }
+  };
+
   const handleRegenerateDay = async (index: number) => {
     if (!editPrompt.trim()) return;
     setIsRegenerating(true);
@@ -64,7 +95,7 @@ export default function InteractiveItinerary({ itinerary }: { itinerary: any }) 
           country,
           preferredAirline: localAirline,
           preferredWholesale,
-          itinerary: { ...itinerary, days, airlineCode: localAirline }
+          itinerary: { ...itinerary, days, airlineCode: localAirline, recommendedFlight }
         })
       });
       if (res.ok) {
@@ -198,51 +229,84 @@ export default function InteractiveItinerary({ itinerary }: { itinerary: any }) 
 
         {/* Right Side - Flight Info (replaces images) */}
         <div className="relative z-40 p-6 md:p-10 md:w-2/5 flex flex-col justify-center items-center md:items-end">
-          {itinerary.recommendedFlight ? (
-            <div className="bg-white/90 backdrop-blur-md shadow-xl rounded-2xl p-6 w-full max-w-sm border border-gray-100 transform transition hover:scale-105">
-              <div className="flex items-center justify-between mb-4 pb-4 border-b border-gray-100">
-                <div className="flex items-center gap-2">
-                  <span className="p-2 bg-blue-50 rounded-lg text-blue-500">✈️</span>
-                  <div>
-                    <h3 className="text-sm font-bold text-gray-800">เที่ยวบินแนะนำ</h3>
-                    <p className="text-xs text-gray-500">{itinerary.recommendedFlight.airline}</p>
-                  </div>
-                </div>
-                {localAirline && (
-                  <img 
-                    src={`https://images.kiwi.com/airlines/64/${localAirline.substring(0, 2).toUpperCase()}.png`} 
-                    alt={localAirline}
-                    className="h-8 object-contain cursor-pointer"
-                    crossOrigin="anonymous"
-                    onError={(e) => { e.currentTarget.style.display = 'none'; }}
-                    onClick={() => {
-                      const el = document.getElementById('airline-select');
-                      if (el) el.focus();
-                    }}
-                    title="เปลี่ยนสายการบิน"
+          {recommendedFlight ? (
+            <div className="bg-white/90 backdrop-blur-md shadow-xl rounded-2xl p-6 w-full max-w-sm border border-gray-100 transform transition hover:scale-105 relative group">
+              {/* Edit Button */}
+              <button 
+                onClick={() => { setEditingFlight(true); setFlightEditPrompt(""); }}
+                className="absolute top-2 right-2 p-1.5 bg-gray-100 text-gray-500 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity hover:bg-blue-100 hover:text-blue-600 no-print"
+                title="เปลี่ยนเที่ยวบิน (AI)"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+              </button>
+
+              {editingFlight ? (
+                <div className="bg-blue-50 border border-blue-200 p-4 rounded-xl animate-in fade-in zoom-in-95">
+                  <div className="text-xs font-bold text-blue-600 mb-2">🤖 แจ้ง AI เปลี่ยนสายการบิน/เที่ยวบิน</div>
+                  <input 
+                    type="text" 
+                    autoFocus
+                    placeholder="เช่น ขอเปลี่ยนเป็น การบินไทย, ขอไฟล์ทดึก"
+                    value={flightEditPrompt}
+                    onChange={(e) => setFlightEditPrompt(e.target.value)}
+                    className="w-full text-sm px-3 py-2 border border-blue-200 rounded outline-none focus:ring-2 focus:ring-blue-400 mb-3"
+                    onKeyDown={(e) => { if(e.key === 'Enter') handleRegenerateFlight(); }}
                   />
-                )}
-              </div>
-              
-              <div className="space-y-4">
-                <div className="bg-blue-50/50 rounded-lg p-3 border border-blue-100/50">
-                  <div className="flex items-center gap-2 text-xs font-bold text-blue-600 mb-1">
-                    🛫 เที่ยวบินขาไป
-                  </div>
-                  <div className="text-sm text-gray-800 font-medium whitespace-pre-line">
-                    {itinerary.recommendedFlight.outbound}
+                  <div className="flex gap-2 justify-end">
+                    <button onClick={() => setEditingFlight(false)} className="text-xs text-gray-500 hover:underline">ยกเลิก</button>
+                    <button onClick={handleRegenerateFlight} disabled={isRegeneratingFlight || !flightEditPrompt.trim()} className="bg-blue-500 hover:bg-blue-600 disabled:bg-blue-300 text-white text-xs font-bold px-3 py-1.5 rounded flex items-center gap-1">
+                      {isRegeneratingFlight && <Loader2 className="w-3 h-3 animate-spin" />}
+                      เปลี่ยน
+                    </button>
                   </div>
                 </div>
-                
-                <div className="bg-green-50/50 rounded-lg p-3 border border-green-100/50">
-                  <div className="flex items-center gap-2 text-xs font-bold text-green-600 mb-1">
-                    🛬 เที่ยวบินขากลับ
+              ) : (
+                <>
+                  <div className="flex items-center justify-between mb-4 pb-4 border-b border-gray-100">
+                    <div className="flex items-center gap-2">
+                      <span className="p-2 bg-blue-50 rounded-lg text-blue-500">✈️</span>
+                      <div>
+                        <h3 className="text-sm font-bold text-gray-800">เที่ยวบินแนะนำ</h3>
+                        <p className="text-xs text-gray-500">{recommendedFlight.airline}</p>
+                      </div>
+                    </div>
+                    {localAirline && (
+                      <img 
+                        src={`https://images.kiwi.com/airlines/64/${localAirline.substring(0, 2).toUpperCase()}.png`} 
+                        alt={localAirline}
+                        className="h-8 object-contain cursor-pointer"
+                        crossOrigin="anonymous"
+                        onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                        onClick={() => {
+                          const el = document.getElementById('airline-select');
+                          if (el) el.focus();
+                        }}
+                        title="เปลี่ยนสายการบิน"
+                      />
+                    )}
                   </div>
-                  <div className="text-sm text-gray-800 font-medium whitespace-pre-line">
-                    {itinerary.recommendedFlight.inbound}
+                  
+                  <div className="space-y-4">
+                    <div className="bg-blue-50/50 rounded-lg p-3 border border-blue-100/50">
+                      <div className="flex items-center gap-2 text-xs font-bold text-blue-600 mb-1">
+                        🛫 เที่ยวบินขาไป
+                      </div>
+                      <div className="text-sm text-gray-800 font-medium whitespace-pre-line" contentEditable suppressContentEditableWarning>
+                        {recommendedFlight.outbound}
+                      </div>
+                    </div>
+                    
+                    <div className="bg-green-50/50 rounded-lg p-3 border border-green-100/50">
+                      <div className="flex items-center gap-2 text-xs font-bold text-green-600 mb-1">
+                        🛬 เที่ยวบินขากลับ
+                      </div>
+                      <div className="text-sm text-gray-800 font-medium whitespace-pre-line" contentEditable suppressContentEditableWarning>
+                        {recommendedFlight.inbound}
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </div>
+                </>
+              )}
             </div>
           ) : (
             <div className="bg-white/90 backdrop-blur-md shadow-xl rounded-2xl p-6 w-full max-w-sm border border-gray-100 text-center flex flex-col items-center justify-center min-h-[200px]">
@@ -548,7 +612,7 @@ export default function InteractiveItinerary({ itinerary }: { itinerary: any }) 
         </div>
       )}
 
-      <FitProposalPDF ref={pdfRef} itinerary={{...itinerary, days, airlineCode: localAirline}} />
+      <FitProposalPDF ref={pdfRef} itinerary={{...itinerary, days, airlineCode: localAirline, recommendedFlight}} />
     </div>
   );
 }
