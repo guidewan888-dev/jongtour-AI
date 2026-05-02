@@ -293,8 +293,8 @@ IMPORTANT: "exclusions" MUST BE EXACTLY this array:
       "title": "string",
       "detail": "string",
       "meals": {"breakfast": boolean,"lunch": boolean,"dinner": boolean},
-      "hotel": "string",
-      "hotelImageUrl": "string (ถ้าไม่มีให้ใส่ null)",
+      "hotel": "string (ชื่อโรงแรมที่มีอยู่จริง ห้ามใส่แค่ชื่อประเทศ ห้ามปล่อยว่างยกเว้นวันกลับ)",
+      "hotelImageUrl": "string (บังคับใส่ URL รูปโรงแรมจาก Unsplash เสมอ ห้ามเป็น null)",
       "imagePrompt": "string (A short ENGLISH phrase describing the main tourist attraction of this day, optimized for AI image generation.)"
     }
   ],
