@@ -121,7 +121,6 @@ export class SyncManager {
             id: tourId,
             source: supplierId === 'SUP_LETGO' ? 'API_ZEGO' : (supplierId === 'SUP_TOURFACTORY' ? 'TOUR_FACTORY' : 'CHECKIN'),
             providerId: raw.externalId,
-            supplierId: supplierId,
             title: normalized.title,
             destination: normalized.destination,
             durationDays: normalized.durationDays,
