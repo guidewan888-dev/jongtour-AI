@@ -35,6 +35,7 @@ export default function CustomTourPage() {
     pax: 2,
     hotelStars: 3,
     durationDays: 3,
+    airlinePreference: "lowcost",
   });
 
   useEffect(() => {
@@ -235,7 +236,7 @@ export default function CustomTourPage() {
 
                 {/* Advanced Options Drawer */}
                 <div className={`overflow-hidden transition-all duration-300 ease-in-out ${showAdvanced ? 'max-h-96 opacity-100 mt-4' : 'max-h-0 opacity-0'}`}>
-                  <div className="bg-gray-50 rounded-2xl p-4 md:p-6 border border-gray-100 grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                  <div className="bg-gray-50 rounded-2xl p-4 md:p-6 border border-gray-100 grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                     <div>
                       <label className="text-gray-500 text-xs mb-1.5 block uppercase tracking-wider font-bold">บริการที่ต้องการ</label>
                       <select 
@@ -257,6 +258,17 @@ export default function CustomTourPage() {
                         <option value={3}>3 ดาว (มาตรฐาน)</option>
                         <option value={4}>4 ดาว (พรีเมียม)</option>
                         <option value={5}>5 ดาว (หรูหรา)</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="text-gray-500 text-xs mb-1.5 block uppercase tracking-wider font-bold">ประเภทสายการบิน</label>
+                      <select 
+                        value={advancedData.airlinePreference}
+                        onChange={(e) => setAdvancedData({...advancedData, airlinePreference: e.target.value})}
+                        className="w-full bg-white border border-gray-200 rounded-lg p-2.5 text-gray-800 outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-colors appearance-none shadow-sm"
+                      >
+                        <option value="lowcost">โลว์คอสต์ (ราคาประหยัด)</option>
+                        <option value="fullservice">ฟูลเซอร์วิส (บริการเต็มรูปแบบ)</option>
                       </select>
                     </div>
                   </div>

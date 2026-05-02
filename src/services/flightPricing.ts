@@ -18,7 +18,7 @@ const mockFlightData: Record<string, { destIata: string, price: number }> = {
   "เวียดนาม": { destIata: "HAN", price: 5500 },
 };
 
-export async function getEstimatedFlightPrice(country: string, startDate: Date, endDate: Date) {
+export async function getEstimatedFlightPrice(country: string, startDate: Date, endDate: Date, airlinePreference: "lowcost" | "fullservice" = "lowcost") {
   const originIata = "BKK";
   
   // Find a matching mock data, default to generic long-haul if not found
@@ -33,6 +33,7 @@ export async function getEstimatedFlightPrice(country: string, startDate: Date, 
       where: {
         originIata,
         destinationIata,
+        // In a real app, cache would also split by airlinePreference, but we mock it here
       },
       orderBy: { fetchedAt: 'desc' }
     });
@@ -41,8 +42,13 @@ export async function getEstimatedFlightPrice(country: string, startDate: Date, 
       const ageHours = (Date.now() - cached.fetchedAt.getTime()) / (1000 * 60 * 60);
       if (ageHours < CACHE_TTL_HOURS) {
         console.log(`[Flight Cache HIT] Using cached price for ${originIata}-${destinationIata}`);
+        
+        let cachedPrice = cached.priceAmount;
+        if (airlinePreference === "fullservice") cachedPrice *= 1.5;
+        else cachedPrice *= 0.8;
+
         return {
-          price: cached.priceAmount,
+          price: Math.round(cachedPrice),
           currency: cached.currency,
           source: 'CACHE',
           provider: cached.provider,
@@ -59,7 +65,15 @@ export async function getEstimatedFlightPrice(country: string, startDate: Date, 
     
     // Generate slight fluctuation for realism (+- 5%)
     const fluctuation = 1 + ((Math.random() * 0.1) - 0.05);
-    const newPrice = Math.round(mockInfo.price * fluctuation);
+    
+    let basePrice = mockInfo.price;
+    if (airlinePreference === "fullservice") {
+      basePrice *= 1.5;
+    } else {
+      basePrice *= 0.8;
+    }
+
+    const newPrice = Math.round(basePrice * fluctuation);
 
     // 3. Save to Cache
     const newRecord = await prisma.flightPriceCache.create({

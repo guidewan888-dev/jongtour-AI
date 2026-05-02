@@ -12,6 +12,7 @@ export interface PricingOptions {
   includeTransport: boolean;
   includeGuide: boolean;
   includeInsurance: boolean;
+  airlinePreference?: "lowcost" | "fullservice";
 }
 
 export async function calculateFitPrice(options: PricingOptions) {
@@ -25,6 +26,7 @@ export async function calculateFitPrice(options: PricingOptions) {
     includeTransport,
     includeGuide,
     includeInsurance,
+    airlinePreference,
   } = options;
 
   const pax = Math.max(1, rawPax);
@@ -80,7 +82,7 @@ export async function calculateFitPrice(options: PricingOptions) {
     start.setDate(start.getDate() + 30);
     const end = new Date(start);
     end.setDate(end.getDate() + durationDays);
-    const flightData = await getEstimatedFlightPrice(country, start, end);
+    const flightData = await getEstimatedFlightPrice(country, start, end, airlinePreference);
     flightCostPerPax = flightData.price;
   }
 

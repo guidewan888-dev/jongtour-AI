@@ -37,6 +37,7 @@ export async function POST(req: NextRequest) {
     const openai = new OpenAI({ apiKey: openaiApiKey });
 
     let finalDurationDays = 3;
+    let airlinePreference: "lowcost" | "fullservice" = "lowcost";
 
     // AI Natural Language Extraction if prompt is provided
     if (prompt) {
@@ -51,7 +52,8 @@ export async function POST(req: NextRequest) {
         "cities": "เมืองที่ไป (ถ้ามี)",
         "durationDays": "จำนวนวัน (ตัวเลขเท่านั้น, ค่าเริ่มต้น 3)",
         "pax": "จำนวนคน (ตัวเลขเท่านั้น, ค่าเริ่มต้น 2)",
-        "hotelStars": "ระดับดาวโรงแรม (3, 4, หรือ 5, ค่าเริ่มต้น 3)"
+        "hotelStars": "ระดับดาวโรงแรม (3, 4, หรือ 5, ค่าเริ่มต้น 3)",
+        "airlinePreference": "สายการบิน (lowcost หรือ fullservice, ค่าเริ่มต้น lowcost, ถ้ายุโรปให้ fullservice)"
       }
       `;
       const extractRes = await openai.chat.completions.create({
@@ -67,6 +69,9 @@ export async function POST(req: NextRequest) {
       pax = Number(extracted.pax) || 2;
       hotelStars = Number(extracted.hotelStars) || 3;
       finalDurationDays = Number(extracted.durationDays) || 3;
+      if (extracted.airlinePreference === "fullservice") {
+        airlinePreference = "fullservice";
+      }
       
       if (!startDate) {
         const tomorrow = new Date();
@@ -162,6 +167,7 @@ export async function POST(req: NextRequest) {
       includeTransport: isFullService || includeTransport,
       includeGuide: isFullService || includeGuide,
       includeInsurance: isFullService || includeInsurance,
+      airlinePreference
     });
     
     console.log("[Pricing Engine] Cost Breakdown:", JSON.stringify(pricingData.breakdownPerPax, null, 2));
