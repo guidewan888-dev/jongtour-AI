@@ -28,6 +28,8 @@ export async function GET(request: Request) {
         }
     });
 
+    let authUserId = authUser?.user?.id;
+
     if (authError) {
         // If user already exists, let's update their password so we are sure what it is
         if (authError.message.includes('already registered') || authError.message.includes('already exists')) {
@@ -35,6 +37,7 @@ export async function GET(request: Request) {
             const existingUser = existingUsers?.users?.find(u => u.email === email);
             
             if (existingUser) {
+                authUserId = existingUser.id;
                 await supabaseAdmin.auth.admin.updateUserById(existingUser.id, { password });
             }
         } else {
@@ -42,10 +45,18 @@ export async function GET(request: Request) {
         }
     }
 
+    // Check if user already exists in DB to avoid ID conflicts
+    const { data: existingDbUser } = await supabaseAdmin
+        .from('User')
+        .select('id')
+        .eq('email', email)
+        .single();
+
     // 2. Upsert Admin User in Prisma/User Table
     const { error: dbError } = await supabaseAdmin
         .from('User')
         .upsert({
+            id: existingDbUser?.id || authUserId || `admin_${Date.now()}`,
             email,
             role: 'ADMIN',
             password: 'OAUTH_USER', // Dummy password for DB, auth handled by Supabase
