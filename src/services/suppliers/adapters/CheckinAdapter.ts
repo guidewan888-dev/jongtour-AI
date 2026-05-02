@@ -2,44 +2,38 @@ import { SupplierAdapter, RawTour, RawTourDetail, RawDeparture, TourPrices, Book
 
 export class CheckinAdapter implements SupplierAdapter {
   readonly supplierId = 'SUP_CHECKIN'; // Match this in database
-  private baseUrl = 'https://api.checkingroup.example.com/v1';
+  private baseUrl = 'https://api.checkingroup.co.th/v1';
 
   // Mocking internal fetch with credential handling
   private async fetchApi(endpoint: string, options: any = {}) {
     console.log(`[CheckinAdapter] Calling API: ${this.baseUrl}${endpoint}`);
-    // Simulating delay
-    await new Promise(res => setTimeout(res, 500));
-    return { success: true, data: [] };
+    const response = await fetch(`${this.baseUrl}${endpoint}`, {
+      method: options.method || 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        ...options.headers
+      },
+      cache: 'no-store',
+      ...options
+    });
+    
+    if (!response.ok) {
+      throw new Error(`CheckIn API returned status: ${response.status}`);
+    }
+    
+    return await response.json();
   }
 
   async getTours(): Promise<RawTour[]> {
-    await this.fetchApi('/products');
+    const rawData = await this.fetchApi('/programtours');
+    const toursData = Array.isArray(rawData) ? rawData : (rawData.data || []);
     
-    // Mock Raw Data from Check In Wholesale
-    // Mock Raw Data from Check In Wholesale
-    const tours: RawTour[] = [];
-    const themes = ["Premium", "Standard", "Budget", "Luxury"];
-    const destinations = ["Singapore", "Malaysia", "Bali", "Maldives", "Dubai"];
-    
-    for (let i = 1; i <= 35; i++) {
-      const theme = themes[i % themes.length];
-      const dest = destinations[i % destinations.length];
-      const days = (i % 4) + 3; // 3 to 6 days
-      tours.push({
-        externalId: `CHK_${dest.substring(0,3).toUpperCase()}_0${i}`,
-        name: `${theme} ${dest} ${days} Days`,
-        payload: {
-          product_id: `CHK_${dest.substring(0,3).toUpperCase()}_0${i}`,
-          name: `${theme} ${dest} ${days} Days`,
-          region: "Asia",
-          duration_days: days,
-          price_starting: 12000 + (i * 800),
-          is_active: true
-        }
-      });
-    }
-
-    return tours;
+    return toursData.map((t: any) => ({
+      externalId: t.id.toString(),
+      name: t.name,
+      payload: t
+    }));
   }
 
   async getTourDetail(externalTourId: string): Promise<RawTourDetail> {

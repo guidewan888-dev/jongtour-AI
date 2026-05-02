@@ -166,6 +166,49 @@ export class SyncManager {
               });
           }
 
+          // 6. Upsert Departures
+          const departures = Normalizer.mapDepartures(supplierId, normalized.id || (existingTour ? existingTour.id : ''), raw);
+          if (departures && departures.length > 0) {
+            for (const dep of departures) {
+              const { data: existingDep } = await this.supabase
+                .from('TourDeparture')
+                .select('id')
+                .eq('id', dep.id)
+                .single();
+
+              if (existingDep) {
+                await this.supabase
+                  .from('TourDeparture')
+                  .update({
+                    startDate: dep.startDate,
+                    endDate: dep.endDate,
+                    price: dep.price,
+                    childPrice: dep.childPrice,
+                    singleRoomPrice: dep.singleRoomPrice,
+                    depositPrice: dep.depositPrice,
+                    totalSeats: dep.totalSeats,
+                    availableSeats: dep.availableSeats,
+                  })
+                  .eq('id', existingDep.id);
+              } else {
+                await this.supabase
+                  .from('TourDeparture')
+                  .insert({
+                    id: dep.id,
+                    tourId: dep.tourId,
+                    startDate: dep.startDate,
+                    endDate: dep.endDate,
+                    price: dep.price,
+                    childPrice: dep.childPrice,
+                    singleRoomPrice: dep.singleRoomPrice,
+                    depositPrice: dep.depositPrice,
+                    totalSeats: dep.totalSeats,
+                    availableSeats: dep.availableSeats,
+                  });
+              }
+            }
+          }
+
           successCount++;
         } catch (itemError) {
           console.error(`Failed to process tour ${raw.externalId}: `, itemError);

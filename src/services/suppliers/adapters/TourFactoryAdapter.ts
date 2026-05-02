@@ -2,41 +2,38 @@ import { SupplierAdapter, RawTour, RawTourDetail, RawDeparture, TourPrices, Book
 
 export class TourFactoryAdapter implements SupplierAdapter {
   readonly supplierId = 'SUP_TOURFACTORY'; // Match this in database
-  private baseUrl = 'https://api.tourfactory.example.com/v1';
+  private baseUrl = 'https://api.tourfactory.co.th/v1';
 
   // Mocking internal fetch with credential handling
   private async fetchApi(endpoint: string, options: any = {}) {
     console.log(`[TourFactoryAdapter] Calling API: ${this.baseUrl}${endpoint}`);
-    // Simulating delay
-    await new Promise(res => setTimeout(res, 500));
-    return { success: true, data: [] };
+    const response = await fetch(`${this.baseUrl}${endpoint}`, {
+      method: options.method || 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        ...options.headers
+      },
+      cache: 'no-store',
+      ...options
+    });
+    
+    if (!response.ok) {
+      throw new Error(`TourFactory API returned status: ${response.status}`);
+    }
+    
+    return await response.json();
   }
 
   async getTours(): Promise<RawTour[]> {
-    await this.fetchApi('/tours');
+    const rawData = await this.fetchApi('/programtours');
+    const toursData = Array.isArray(rawData) ? rawData : (rawData.data || []);
     
-    // Mock Raw Data from TourFactory Wholesale
-    const tours: RawTour[] = [];
-    const regions = ["Europe", "Taiwan", "Hong Kong", "China", "Scandinavia"];
-    
-    for (let i = 1; i <= 18; i++) {
-      const region = regions[i % regions.length];
-      const days = (i % 5) + 4; // 4 to 8 days
-      tours.push({
-        externalId: `TF_${region.substring(0,3).toUpperCase()}_0${i}`,
-        name: `Classic ${region} ${days} Days`,
-        payload: {
-          tour_code: `TF_${region.substring(0,3).toUpperCase()}_0${i}`,
-          title: `Classic ${region} ${days} Days`,
-          country: region,
-          duration: `${days}D${days-1}N`,
-          base_price: 25000 + (i * 2000),
-          active: true
-        }
-      });
-    }
-
-    return tours;
+    return toursData.map((t: any) => ({
+      externalId: t.id.toString(),
+      name: t.name,
+      payload: t
+    }));
   }
 
   async getTourDetail(externalTourId: string): Promise<RawTourDetail> {

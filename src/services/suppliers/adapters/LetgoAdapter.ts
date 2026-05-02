@@ -2,44 +2,39 @@ import { SupplierAdapter, RawTour, RawTourDetail, RawDeparture, TourPrices, Book
 
 export class LetgoAdapter implements SupplierAdapter {
   readonly supplierId = 'SUP_LETGO'; // Match this in database
-  private baseUrl = 'https://api.letgogroup.example.com/v1';
+  private baseUrl = 'https://www.zegoapi.com/v1.5';
+  private token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2OWYwM2JlODQzMWFmMmU0ODY5NWY0YjAiLCJpYXQiOjE3Nzc1MTg1NDN9.qbZPxA3jldUTTLsGmbdMrvv3qXnTPDiNc_9_T48zPnw';
 
   // Mocking internal fetch with credential handling
   private async fetchApi(endpoint: string, options: any = {}) {
-    // In reality: Fetch API Key from DB, decrypt, set headers
     console.log(`[LetgoAdapter] Calling API: ${this.baseUrl}${endpoint}`);
-    // Simulating delay
-    await new Promise(res => setTimeout(res, 500));
+    const response = await fetch(`${this.baseUrl}${endpoint}`, {
+      method: options.method || 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'auth-token': this.token,
+        ...options.headers
+      },
+      cache: 'no-store',
+      ...options
+    });
     
-    // Mock response
-    return { success: true, data: [] };
+    if (!response.ok) {
+      throw new Error(`Zego API returned status: ${response.status}`);
+    }
+    
+    return await response.json();
   }
 
   async getTours(): Promise<RawTour[]> {
-    await this.fetchApi('/packages');
+    const rawData = await this.fetchApi('/programtours');
+    const toursData = Array.isArray(rawData) ? rawData : (rawData.data || []);
     
-    // Mock Raw Data from Wholesale
-    const tours: RawTour[] = [];
-    const countries = ["Japan", "South Korea", "Vietnam", "Taiwan"];
-    
-    for (let i = 1; i <= 24; i++) {
-      const country = countries[i % countries.length];
-      const days = (i % 3) + 4; // 4 to 6 days
-      tours.push({
-        externalId: `LG_${country.substring(0,3).toUpperCase()}_0${i}`,
-        name: `Amazing ${country} Explorer ${days} Days`,
-        payload: {
-          pkg_id: `LG_${country.substring(0,3).toUpperCase()}_0${i}`,
-          name_th: `Amazing ${country} Explorer ${days} Days`,
-          destination: country,
-          days: days,
-          min_price: 15000 + (i * 1000),
-          status: 1
-        }
-      });
-    }
-
-    return tours;
+    return toursData.map((t: any) => ({
+      externalId: t.ProductID.toString(),
+      name: t.ProductName,
+      payload: t
+    }));
   }
 
   async getTourDetail(externalTourId: string): Promise<RawTourDetail> {
