@@ -131,7 +131,7 @@ export default function InteractiveItinerary({ itinerary }: { itinerary: any }) 
     setIsGeneratingShare(true);
     try {
       shareCardRef.current.style.display = 'block';
-      const canvas = await html2canvas(shareCardRef.current, { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
+      const canvas = await html2canvas(shareCardRef.current, { scale: 2, useCORS: true, allowTaint: true, imageTimeout: 15000, backgroundColor: '#ffffff' });
       shareCardRef.current.style.display = 'none';
       
       const imgData = canvas.toDataURL("image/jpeg", 0.9);
@@ -369,7 +369,7 @@ export default function InteractiveItinerary({ itinerary }: { itinerary: any }) 
     if (!pdfRef.current) return;
     setIsGeneratingPDF(true);
     try {
-      const canvas = await html2canvas(pdfRef.current, { scale: 2, useCORS: true });
+      const canvas = await html2canvas(pdfRef.current, { scale: 2, useCORS: true, allowTaint: true, imageTimeout: 15000 });
       const imgData = canvas.toDataURL("image/jpeg", 0.9);
       const pdf = new jsPDF("p", "mm", "a4");
       const pdfWidth = pdf.internal.pageSize.getWidth();
@@ -945,7 +945,7 @@ export default function InteractiveItinerary({ itinerary }: { itinerary: any }) 
       )}
     </div>
 
-      <FitProposalPDF ref={pdfRef} itinerary={{...itinerary, days, airlineCode: localAirline, recommendedFlight, estimatedPrice}} />
+      <FitProposalPDF ref={pdfRef} itinerary={{...itinerary, days, airlineCode: localAirline, recommendedFlight, estimatedPrice, coverImage}} />
 
       {/* Travel Buddy FAB */}
       <div className="fixed bottom-6 right-6 z-50 no-print flex flex-col items-end">

@@ -68,25 +68,9 @@ export const FitProposalPDF = React.forwardRef<HTMLDivElement, { itinerary: any 
           </div>
         </div>
 
-        {/* Right Side Polaroid Collage */}
-        <div style={{ position: 'absolute', top: '20px', right: '40px', width: '350px', height: '100%' }}>
-          {/* Day 1 Photo */}
-          {itinerary.days?.[0]?.imagePrompt && (
-            <div style={{ position: 'absolute', top: '100px', left: '-50px', width: '180px', height: '150px', backgroundColor: 'white', padding: '8px 8px 30px 8px', borderRadius: '4px', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)', transform: 'rotate(-5deg)', zIndex: 1 }}>
-              <img src={`https://image.pollinations.ai/prompt/${encodeURIComponent(itinerary.days[0].imagePrompt)}?width=400&height=300&nologo=true`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} crossOrigin="anonymous"/>
-            </div>
-          )}
-          {/* Day 2 Photo */}
-          {itinerary.days?.[1]?.imagePrompt && (
-            <div style={{ position: 'absolute', top: '160px', right: '20px', width: '180px', height: '150px', backgroundColor: 'white', padding: '8px 8px 30px 8px', borderRadius: '4px', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)', transform: 'rotate(10deg)', zIndex: 2 }}>
-              <img src={`https://image.pollinations.ai/prompt/${encodeURIComponent(itinerary.days[1].imagePrompt)}?width=400&height=300&nologo=true`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} crossOrigin="anonymous"/>
-            </div>
-          )}
-          {/* Main Cover */}
-          <div style={{ position: 'absolute', top: '20px', left: '30px', width: '250px', height: '180px', backgroundColor: 'white', padding: '8px 8px 35px 8px', borderRadius: '4px', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.15)', transform: 'rotate(3deg)', zIndex: 3 }}>
-            <img src={itinerary.coverImagePrompt ? `https://image.pollinations.ai/prompt/${encodeURIComponent(itinerary.coverImagePrompt)}?width=600&height=400&nologo=true` : "https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=600&q=80"} style={{ width: '100%', height: '100%', objectFit: 'cover' }} crossOrigin="anonymous"/>
-            <div style={{ position: 'absolute', bottom: '10px', width: '100%', textAlign: 'center', fontSize: '10px', color: '#9ca3af' }}>Amazing Trip</div>
-          </div>
+        {/* Right Side Cover Image (Clean, No Rotation) */}
+        <div style={{ position: 'absolute', top: '20px', right: '40px', width: '300px', height: '280px', borderRadius: '12px', overflow: 'hidden', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)', zIndex: 3 }}>
+          <img src={itinerary.coverImage || "https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=600&q=80"} style={{ width: '100%', height: '100%', objectFit: 'cover' }} crossOrigin="anonymous"/>
         </div>
 
         {/* Price Tag (Bottom Right) */}
@@ -114,11 +98,11 @@ export const FitProposalPDF = React.forwardRef<HTMLDivElement, { itinerary: any 
                 <div><strong>โรงแรม:</strong> {day.hotel || '-'}</div>
               </div>
 
-              {day.imagePrompt && (
+              {day.hotelImageUrl && day.hotelImageUrl !== "null" && (
                 <img 
-                  src={`https://image.pollinations.ai/prompt/${encodeURIComponent(day.imagePrompt + ", travel photography, beautiful scenery, 4k, hyperrealistic")}?width=600&height=300&nologo=true`} 
-                  alt={day.title}
-                  style={{ width: '100%', height: '200px', objectFit: 'cover', borderRadius: '12px' }}
+                  src={day.hotelImageUrl} 
+                  alt={day.hotel}
+                  style={{ width: '100%', height: '200px', objectFit: 'cover', borderRadius: '12px', marginTop: '10px' }}
                   crossOrigin="anonymous"
                 />
               )}
