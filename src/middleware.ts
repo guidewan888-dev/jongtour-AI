@@ -72,8 +72,8 @@ export async function middleware(req: NextRequest) {
   }
 
   const isAdminSubdomain = subdomain === 'admin';
-  const isBookingSubdomain = subdomain === 'booking' || subdomain === 'b2b';
-  const isAgentSubdomain = subdomain && !isAdminSubdomain && !isBookingSubdomain;
+  const isBookingSubdomain = subdomain === 'booking' || subdomain === 'b2b' || subdomain === 'agent';
+  const isAgentSubdomain = subdomain && !isAdminSubdomain && !isBookingSubdomain && subdomain !== 'www';
 
   // Check path rules
   const isAdminPath = url.pathname.startsWith('/admin') || isAdminSubdomain;
