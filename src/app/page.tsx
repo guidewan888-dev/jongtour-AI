@@ -57,6 +57,7 @@ export default async function Home() {
           <ImageShortcutButton imgSrc="/images/wholesales/CH7.jpg" label="Check In Group" href="/wholesale/checkingroup" fallbackIcon="🌍" />
           <ImageShortcutButton imgSrc="/images/wholesales/Tour-Factory.jpg" label="Tour Factory" href="/wholesale/tourfactory" fallbackIcon="🏭" />
           <ShortcutButton icon="✨" label="AI วางแผน" href="/ai-planner" />
+          <ShortcutButton icon="🤝" label="สมัครเอเจนต์" href="/auth/register" />
         </div>
 
         {/* AI Dynamic Personalized Recommendations */}
