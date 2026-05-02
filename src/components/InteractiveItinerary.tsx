@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { CheckCircle2, XCircle, Check, X, Star, Download, Loader2 } from "lucide-react";
 import { FitProposalPDF } from "./FitProposalPDF";
 import { useRef } from "react";
@@ -18,6 +18,47 @@ export default function InteractiveItinerary({ itinerary }: { itinerary: any }) 
   const [editPrompt, setEditPrompt] = useState("");
   const [isRegenerating, setIsRegenerating] = useState(false);
   const [pax, setPax] = useState(2);
+  const [estimatedPrice, setEstimatedPrice] = useState(itinerary?.estimatedPrice || "");
+  const [isCalculatingPrice, setIsCalculatingPrice] = useState(false);
+
+  useEffect(() => {
+    const fetchNewPrice = async () => {
+      setIsCalculatingPrice(true);
+      try {
+        const country = itinerary?.country || itinerary?.title || "Unknown";
+        let airlinePref = "Low-cost";
+        if (["TG", "EK", "QR", "SQ", "CX", "BR", "CI", "JX", "PG"].includes(localAirline)) {
+          airlinePref = "Full-service";
+        }
+        
+        const res = await fetch("/api/fit-request/recalculate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            durationDays: days.length,
+            pax: pax,
+            hotelStars: itinerary?.hotelStars || 3,
+            country: country,
+            airlinePreference: airlinePref
+          })
+        });
+        const data = await res.json();
+        if (data.success && data.estimatedPrice) {
+          setEstimatedPrice(data.estimatedPrice);
+        }
+      } catch (err) {
+        console.error("Price recalculation failed", err);
+      } finally {
+        setIsCalculatingPrice(false);
+      }
+    };
+
+    const timer = setTimeout(() => {
+      fetchNewPrice();
+    }, 600);
+
+    return () => clearTimeout(timer);
+  }, [days.length, pax, localAirline, itinerary?.country, itinerary?.title, itinerary?.hotelStars]);
 
   const addDay = () => {
     const newDayNum = days.length + 1;
@@ -114,7 +155,7 @@ export default function InteractiveItinerary({ itinerary }: { itinerary: any }) 
           country,
           preferredAirline: localAirline,
           preferredWholesale,
-          itinerary: { ...itinerary, days, airlineCode: localAirline, recommendedFlight }
+          itinerary: { ...itinerary, days, airlineCode: localAirline, recommendedFlight, estimatedPrice }
         })
       });
       if (res.ok) {
@@ -251,9 +292,12 @@ export default function InteractiveItinerary({ itinerary }: { itinerary: any }) 
 
             {/* Price Badge */}
             <div className="ml-auto flex flex-col items-start md:items-end">
-              <div className="text-gray-500 text-[10px] font-bold mb-0.5 uppercase tracking-wider">ราคาประเมินเริ่มต้น</div>
-              <div className="bg-orange-500 text-white font-bold rounded-lg px-4 py-1.5 shadow-md border border-orange-400 outline-none focus:ring-2 focus:ring-orange-300" contentEditable suppressContentEditableWarning>
-                {itinerary.estimatedPrice}
+              <div className="text-gray-500 text-[10px] font-bold mb-0.5 uppercase tracking-wider flex items-center gap-1.5">
+                ราคาประเมินเริ่มต้น
+                {isCalculatingPrice && <Loader2 className="w-3 h-3 animate-spin text-orange-500" />}
+              </div>
+              <div className="bg-orange-500 text-white font-bold rounded-lg px-4 py-1.5 shadow-md border border-orange-400 outline-none focus:ring-2 focus:ring-orange-300 transition-colors" contentEditable suppressContentEditableWarning>
+                {estimatedPrice}
               </div>
             </div>
           </div>
@@ -644,7 +688,7 @@ export default function InteractiveItinerary({ itinerary }: { itinerary: any }) 
         </div>
       )}
 
-      <FitProposalPDF ref={pdfRef} itinerary={{...itinerary, days, airlineCode: localAirline, recommendedFlight}} />
+      <FitProposalPDF ref={pdfRef} itinerary={{...itinerary, days, airlineCode: localAirline, recommendedFlight, estimatedPrice}} />
     </div>
   );
 }

@@ -1,0 +1,25 @@
+import { NextRequest, NextResponse } from "next/server";
+import { calculateFitPrice } from "@/services/pricingEngine";
+
+export async function POST(req: NextRequest) {
+  try {
+    const body = await req.json();
+    const { durationDays, pax, hotelStars, country, airlinePreference, startDate } = body;
+
+    const pricingData = calculateFitPrice({
+      durationDays: durationDays || 3,
+      pax: pax || 2,
+      hotelStars: hotelStars || 3,
+      country: country || "Unknown",
+      airlinePreference: airlinePreference || "Low-cost",
+      startDate: startDate || new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString() // Default to 2 months from now
+    });
+
+    const estimatedPrice = `${pricingData.sellingPricePerPax.toLocaleString()} THB/ท่าน`;
+
+    return NextResponse.json({ success: true, estimatedPrice });
+  } catch (error) {
+    console.error("Recalculate Price Error:", error);
+    return NextResponse.json({ error: "Failed to recalculate price" }, { status: 500 });
+  }
+}
