@@ -41,7 +41,9 @@ export default async function AdminLayout({ children }: { children: ReactNode })
 
   // Prevent non-admins from accessing the admin panel
   if (!finalUser || finalUser.role !== "ADMIN") {
-    redirect("/user/bookings");
+    // Redirect to main domain using absolute URL to avoid subdomain rewrite issues
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://jongtour.com";
+    redirect(`${siteUrl}/user/bookings`);
   }
 
   return (
