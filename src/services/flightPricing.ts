@@ -18,7 +18,7 @@ const mockFlightData: Record<string, { destIata: string, price: number }> = {
   "เวียดนาม": { destIata: "HAN", price: 5500 },
 };
 
-export async function getEstimatedFlightPrice(country: string, startDate: Date, endDate: Date, airlinePreference: "lowcost" | "fullservice" = "lowcost") {
+export async function getEstimatedFlightPrice(country: string, startDate: Date, endDate: Date, airlineCode: string = "lowcost") {
   const originIata = "BKK";
   
   // Find a matching mock data, default to generic long-haul if not found
@@ -32,8 +32,23 @@ export async function getEstimatedFlightPrice(country: string, startDate: Date, 
     let finalPrice = basePrice;
     
     // 1. Airline Preference
-    if (airlinePreference === "fullservice") finalPrice *= 1.5;
-    else finalPrice *= 0.8;
+    const code = airlineCode.toUpperCase();
+    if (code === "EK") finalPrice *= 1.6;
+    else if (code === "SQ") finalPrice *= 1.55;
+    else if (code === "TG") finalPrice *= 1.5;
+    else if (code === "QR") finalPrice *= 1.45;
+    else if (code === "CX") finalPrice *= 1.4;
+    else if (code === "JX") finalPrice *= 1.45;
+    else if (code === "BR") finalPrice *= 1.35;
+    else if (code === "CI") finalPrice *= 1.3;
+    else if (code === "PG") finalPrice *= 1.25;
+    else if (code === "XJ") finalPrice *= 0.85;
+    else if (code === "VZ") finalPrice *= 0.8;
+    else if (code === "SL") finalPrice *= 0.75;
+    else if (code === "FD") finalPrice *= 0.85;
+    else if (code === "FULLSERVICE") finalPrice *= 1.5;
+    else if (code === "LOWCOST") finalPrice *= 0.8;
+    else finalPrice *= 1.0;
 
     // 2. Seasonality
     const month = startDate.getMonth() + 1; // 1-12

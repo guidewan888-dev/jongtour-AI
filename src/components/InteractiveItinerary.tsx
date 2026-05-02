@@ -27,11 +27,6 @@ export default function InteractiveItinerary({ itinerary }: { itinerary: any }) 
       setIsCalculatingPrice(true);
       try {
         const country = itinerary?.country || itinerary?.title || "Unknown";
-        let airlinePref = "Low-cost";
-        if (["TG", "EK", "QR", "SQ", "CX", "BR", "CI", "JX", "PG"].includes(localAirline)) {
-          airlinePref = "Full-service";
-        }
-        
         const res = await fetch("/api/fit-request/recalculate", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -40,7 +35,7 @@ export default function InteractiveItinerary({ itinerary }: { itinerary: any }) 
             pax: pax,
             hotelStars: hotelStars,
             country: country,
-            airlinePreference: airlinePref
+            airlineCode: localAirline
           })
         });
         const data = await res.json();

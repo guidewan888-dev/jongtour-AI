@@ -4,14 +4,14 @@ import { calculateFitPrice } from "@/services/pricingEngine";
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { durationDays, pax, hotelStars, country, airlinePreference, startDate } = body;
+    const { durationDays, pax, hotelStars, country, airlineCode, startDate } = body;
 
     const pricingData = await calculateFitPrice({
       durationDays: durationDays || 3,
       pax: pax || 2,
       hotelStars: hotelStars || 3,
       country: country || "Unknown",
-      airlinePreference: airlinePreference || "Low-cost",
+      airlineCode: airlineCode || "",
       startDate: startDate || new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString(),
       includeFlights: true,
       includeHotels: true,
