@@ -166,9 +166,9 @@ export default async function EditTourCmsPage({ params }: { params: { id: string
             <CalendarDays className="w-5 h-5 text-indigo-500" />
             รอบวันเดินทาง (Departures)
           </h3>
-          <button className="text-sm text-indigo-600 font-medium hover:text-indigo-800 flex items-center gap-1">
+          <Link href={`/tour-cms/${tour.id}/departures`} className="text-sm text-indigo-600 font-medium hover:text-indigo-800 flex items-center gap-1">
             จัดการรอบเดินทาง <ExternalLink className="w-3 h-3" />
-          </button>
+          </Link>
         </div>
         <div className="p-0">
           <table className="w-full text-sm text-left">
