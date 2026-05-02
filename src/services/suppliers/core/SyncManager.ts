@@ -1,6 +1,15 @@
 import { SupplierAdapter } from './SupplierAdapter';
 import { Normalizer } from './Normalizer';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { v4 as uuidv4 } from 'uuid'; // Fallback if crypto isn't available
+
+// Simple ID generator for Prisma cuid equivalents
+const generateId = () => {
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    return crypto.randomUUID().replace(/-/g, '').substring(0, 25);
+  }
+  return 'c' + Math.random().toString(36).substring(2, 11) + Math.random().toString(36).substring(2, 11);
+};
 
 // Simple factory pattern concept
 export class AdapterFactory {
@@ -52,12 +61,15 @@ export class SyncManager {
     console.log(`[SyncManager] Starting full sync for ${supplierId}`);
     
     // 1. Create a Sync Log
+    const syncLogId = generateId();
     const { data: syncLog, error: logError } = await this.supabase
       .from('ApiSyncLog')
       .insert({
+        id: syncLogId,
         supplierId,
         type: 'FULL_SYNC',
         status: 'RUNNING',
+        updatedAt: new Date().toISOString()
       })
       .select()
       .single();
@@ -77,15 +89,38 @@ export class SyncManager {
       for (const raw of rawTours) {
         try {
           // 3. Save Raw Data as audit trail and fallback
-          const { error: rawError } = await this.supabase
+          // First check if it exists for upsert behavior with Supabase without an ID
+          const { data: existingRaw } = await this.supabase
             .from('TourRawData')
-            .upsert({
-              supplierId,
-              externalTourId: raw.externalId,
-              rawPayload: raw.payload,
-              syncStatus: 'PROCESSED',
-              updatedAt: new Date().toISOString()
-            }, { onConflict: 'supplierId, externalTourId' });
+            .select('id')
+            .eq('supplierId', supplierId)
+            .eq('externalTourId', raw.externalId)
+            .single();
+
+          let rawError;
+          if (existingRaw) {
+            const { error } = await this.supabase
+              .from('TourRawData')
+              .update({
+                rawPayload: raw.payload,
+                syncStatus: 'PROCESSED',
+                updatedAt: new Date().toISOString()
+              })
+              .eq('id', existingRaw.id);
+            rawError = error;
+          } else {
+            const { error } = await this.supabase
+              .from('TourRawData')
+              .insert({
+                id: generateId(),
+                supplierId,
+                externalTourId: raw.externalId,
+                rawPayload: raw.payload,
+                syncStatus: 'PROCESSED',
+                updatedAt: new Date().toISOString()
+              });
+            rawError = error;
+          }
 
           if (rawError) throw rawError;
 
@@ -114,7 +149,8 @@ export class SyncManager {
             await this.supabase
               .from('Tour')
               .insert({
-                source: 'API_ZEGO',
+                id: generateId(),
+                source: supplierId === 'SUP_LETGO' ? 'API_ZEGO' : (supplierId === 'SUP_TOURFACTORY' ? 'TOUR_FACTORY' : 'CHECKIN'),
                 providerId: raw.externalId,
                 supplierId: supplierId,
                 title: normalized.title,
@@ -127,6 +163,7 @@ export class SyncManager {
                 pdfUrl: normalized.pdfUrl,
                 itinerary: normalized.itinerary,
                 flights: normalized.flights,
+                updatedAt: new Date().toISOString()
               });
           }
 
