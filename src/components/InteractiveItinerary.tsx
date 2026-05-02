@@ -353,20 +353,40 @@ export default function InteractiveItinerary({ itinerary }: { itinerary: any }) 
                         <p className="text-xs text-gray-500">{recommendedFlight.airline}</p>
                       </div>
                     </div>
-                    {localAirline && (
-                      <img 
-                        src={`https://images.kiwi.com/airlines/64/${localAirline.substring(0, 2).toUpperCase()}.png`} 
-                        alt={localAirline}
-                        className="h-8 object-contain cursor-pointer"
-                        crossOrigin="anonymous"
-                        onError={(e) => { e.currentTarget.style.display = 'none'; }}
-                        onClick={() => {
-                          const el = document.getElementById('airline-select');
-                          if (el) el.focus();
-                        }}
-                        title="เปลี่ยนสายการบิน"
-                      />
-                    )}
+                    <div className="relative flex items-center justify-center min-w-[40px] min-h-[32px] cursor-pointer">
+                      {localAirline ? (
+                        <img 
+                          src={`https://images.kiwi.com/airlines/64/${localAirline.substring(0, 2).toUpperCase()}.png`} 
+                          alt={localAirline}
+                          className="h-8 object-contain"
+                          crossOrigin="anonymous"
+                          onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                        />
+                      ) : (
+                        <span className="text-[10px] bg-gray-100 text-gray-500 px-2 py-1 rounded">สายการบิน</span>
+                      )}
+                      <select 
+                        value={localAirline}
+                        onChange={e => setLocalAirline(e.target.value)}
+                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                        title="คลิกเพื่อเปลี่ยนสายการบิน"
+                      >
+                         <option value="">-- เลือกสายการบิน --</option>
+                         <option value="TG">Thai Airways (TG)</option>
+                         <option value="XJ">Thai AirAsia X (XJ)</option>
+                         <option value="VZ">Thai Vietjet (VZ)</option>
+                         <option value="EK">Emirates (EK)</option>
+                         <option value="QR">Qatar Airways (QR)</option>
+                         <option value="SQ">Singapore Airlines (SQ)</option>
+                         <option value="CX">Cathay Pacific (CX)</option>
+                         <option value="BR">EVA Air (BR)</option>
+                         <option value="CI">China Airlines (CI)</option>
+                         <option value="JX">STARLUX Airlines (JX)</option>
+                         <option value="PG">Bangkok Airways (PG)</option>
+                         <option value="FD">Thai AirAsia (FD)</option>
+                         <option value="SL">Thai Lion Air (SL)</option>
+                      </select>
+                    </div>
                   </div>
                   
                   <div className="space-y-4">
