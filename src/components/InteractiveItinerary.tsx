@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { CheckCircle2, XCircle, Check, X, Star, Download, Loader2, Sparkles, MessageCircle, Share2, CloudSun, Send } from "lucide-react";
-import { FitProposalPDF } from "./FitProposalPDF";
-import { useRef } from "react";
+import { useState, useEffect, useRef } from "react";
+import { 
+  Loader2, Share2, Download, CloudSun, Sparkles, MapPin, CheckCircle2, 
+  MessageCircle, X, Send, XCircle, ChevronDown, ChevronUp, Star, Check 
+} from "lucide-react";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import dynamic from "next/dynamic";
@@ -401,7 +402,7 @@ export default function InteractiveItinerary({ itinerary }: { itinerary: any }) 
 
   return (
     <>
-    <div className="w-full max-w-[900px] mx-auto mt-4 bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm flex flex-col">
+    <div ref={pdfRef} className="w-full max-w-[900px] mx-auto mt-4 bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm flex flex-col">
       
       {/* Promotional Banner Header - Flight Info Centric */}
       <div className="relative min-h-[420px] w-full bg-gradient-to-br from-orange-50 to-rose-50 overflow-hidden no-print border-b border-gray-100 flex flex-col md:flex-row">
@@ -944,8 +945,6 @@ export default function InteractiveItinerary({ itinerary }: { itinerary: any }) 
         </div>
       )}
     </div>
-
-      <FitProposalPDF ref={pdfRef} itinerary={{...itinerary, days, airlineCode: localAirline, recommendedFlight, estimatedPrice, coverImage}} />
 
       {/* Travel Buddy FAB */}
       <div className="fixed bottom-6 right-6 z-50 no-print flex flex-col items-end">
