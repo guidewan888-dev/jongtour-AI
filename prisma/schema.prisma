@@ -14,11 +14,15 @@ model Company {
   type        CompanyType @default(AGENT)
   creditLimit Float       @default(0)
   balance     Float       @default(0)
+  subdomain   String?     @unique
+  logoUrl     String?
+  themeColor  String?
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
 
   users       User[]
   tours       Tour[]      @relation("SupplierTours")
+  bookings    Booking[]   @relation("AgentBookings")
 }
 
 enum CompanyType {
@@ -106,6 +110,7 @@ model Booking {
   id            String        @id @default(cuid())
   userId        String
   departureId   String
+  agentId       String?
   status        BookingStatus @default(PENDING)
   totalPrice    Float
   contactName   String?
@@ -121,6 +126,7 @@ model Booking {
 
   user          User          @relation(fields: [userId], references: [id])
   departure     TourDeparture @relation(fields: [departureId], references: [id])
+  agent         Company?      @relation("AgentBookings", fields: [agentId], references: [id])
   travelers     Traveler[]
   payments      Payment[]
 }

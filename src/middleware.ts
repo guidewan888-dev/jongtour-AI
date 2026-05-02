@@ -53,9 +53,27 @@ export async function middleware(req: NextRequest) {
   // Refresh session if expired
   const { data: { user } } = await supabase.auth.getUser();
 
-  // Extract subdomain (e.g., admin.jongtour.com -> admin)
-  const isAdminSubdomain = hostname.startsWith('admin.');
-  const isBookingSubdomain = hostname.startsWith('booking.');
+  // Extract subdomain (e.g., ktc.jongtour.com -> ktc)
+  const hostParts = hostname.replace('www.', '').split(':'); // remove port if exists
+  const hostNameOnly = hostParts[0];
+  
+  let subdomain = null;
+  // Handle localhost (e.g., ktc.localhost)
+  if (hostNameOnly.endsWith('localhost')) {
+    const parts = hostNameOnly.split('.');
+    if (parts.length > 1) subdomain = parts[0];
+  } else {
+    // Handle production (e.g., ktc.jongtour.com)
+    // Assume jongtour.com is the root domain
+    const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'jongtour.com';
+    if (hostNameOnly.endsWith(`.${rootDomain}`)) {
+      subdomain = hostNameOnly.replace(`.${rootDomain}`, '');
+    }
+  }
+
+  const isAdminSubdomain = subdomain === 'admin';
+  const isBookingSubdomain = subdomain === 'booking' || subdomain === 'b2b';
+  const isAgentSubdomain = subdomain && !isAdminSubdomain && !isBookingSubdomain;
 
   // Check path rules
   const isAdminPath = url.pathname.startsWith('/admin') || isAdminSubdomain;
@@ -99,6 +117,13 @@ export async function middleware(req: NextRequest) {
 
   if (isBookingSubdomain && !url.pathname.startsWith('/b2b')) {
     url.pathname = `/b2b${url.pathname === '/' ? '' : url.pathname}`;
+    return NextResponse.rewrite(url);
+  }
+
+  // Rewrite for Agent Subdomain (White-label B2B2C Portal)
+  // e.g. ktc.jongtour.com/tours -> rewrites to /agent/ktc/tours
+  if (isAgentSubdomain && !url.pathname.startsWith('/agent')) {
+    url.pathname = `/agent/${subdomain}${url.pathname === '/' ? '' : url.pathname}`;
     return NextResponse.rewrite(url);
   }
 
