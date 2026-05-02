@@ -20,6 +20,14 @@ export default function ApiSyncStatusPage() {
   const [logs, setLogs] = useState<any[]>([]);
   const [loadingLogs, setLoadingLogs] = useState(true);
 
+  // Settings states
+  const [autoSyncSettings, setAutoSyncSettings] = useState({
+    SUP_LETGO: true,
+    SUP_TOURFACTORY: true,
+    SUP_CHECKIN: true,
+  });
+  const [isSavingSettings, setIsSavingSettings] = useState(false);
+
   const fetchLogs = async () => {
     try {
       const res = await fetch('/api/admin/sync');
@@ -59,8 +67,49 @@ export default function ApiSyncStatusPage() {
     }
   };
 
+  const fetchSettings = async () => {
+    try {
+      const res = await fetch('/api/admin/sync/settings');
+      const data = await res.json();
+      if (data.success && data.settings) {
+        setAutoSyncSettings(data.settings);
+      }
+    } catch (error) {
+      console.error("Failed to fetch settings", error);
+    }
+  };
+
+  const toggleAutoSync = async (supplierId: string, currentStatus: boolean) => {
+    setIsSavingSettings(true);
+    const newStatus = !currentStatus;
+    
+    // Optimistic update
+    setAutoSyncSettings(prev => ({ ...prev, [supplierId]: newStatus }));
+    
+    try {
+      const res = await fetch('/api/admin/sync/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ supplierId, isActive: newStatus })
+      });
+      const data = await res.json();
+      if (!data.success) {
+        // Revert on failure
+        setAutoSyncSettings(prev => ({ ...prev, [supplierId]: currentStatus }));
+        alert("Failed to save setting: " + data.message);
+      }
+    } catch (e) {
+      // Revert on error
+      setAutoSyncSettings(prev => ({ ...prev, [supplierId]: currentStatus }));
+      alert("Network error while saving settings");
+    } finally {
+      setIsSavingSettings(false);
+    }
+  };
+
   useEffect(() => {
     fetchLogs();
+    fetchSettings();
   }, []);
 
   const handleForceSyncTourFactory = async () => {
@@ -171,8 +220,22 @@ export default function ApiSyncStatusPage() {
                 <p className="text-sm text-gray-500">Active API Adapter</p>
               </div>
             </div>
-            <div className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1.5 border border-green-200">
-              <CheckCircle2 className="w-3.5 h-3.5" /> Online
+            <div className="flex flex-col items-end gap-2">
+              <div className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1.5 border border-green-200">
+                <CheckCircle2 className="w-3.5 h-3.5" /> Online
+              </div>
+              <button 
+                onClick={() => toggleAutoSync('SUP_TOURFACTORY', autoSyncSettings.SUP_TOURFACTORY)}
+                disabled={isSavingSettings}
+                className={`text-xs px-2.5 py-1 rounded-lg border font-semibold flex items-center gap-1.5 transition-colors ${
+                  autoSyncSettings.SUP_TOURFACTORY 
+                    ? 'bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100' 
+                    : 'bg-gray-100 text-gray-500 border-gray-200 hover:bg-gray-200'
+                }`}
+              >
+                <div className={`w-2 h-2 rounded-full ${autoSyncSettings.SUP_TOURFACTORY ? 'bg-rose-500 animate-pulse' : 'bg-gray-400'}`}></div>
+                {autoSyncSettings.SUP_TOURFACTORY ? 'Auto-Sync: ON (ทุกชม.)' : 'Auto-Sync: OFF (หยุดชั่วคราว)'}
+              </button>
             </div>
           </div>
           
@@ -215,8 +278,22 @@ export default function ApiSyncStatusPage() {
                 <p className="text-sm text-gray-500">Active API Adapter</p>
               </div>
             </div>
-            <div className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1.5 border border-green-200">
-              <CheckCircle2 className="w-3.5 h-3.5" /> Online
+            <div className="flex flex-col items-end gap-2">
+              <div className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1.5 border border-green-200">
+                <CheckCircle2 className="w-3.5 h-3.5" /> Online
+              </div>
+              <button 
+                onClick={() => toggleAutoSync('SUP_LETGO', autoSyncSettings.SUP_LETGO)}
+                disabled={isSavingSettings}
+                className={`text-xs px-2.5 py-1 rounded-lg border font-semibold flex items-center gap-1.5 transition-colors ${
+                  autoSyncSettings.SUP_LETGO 
+                    ? 'bg-indigo-50 text-indigo-700 border-indigo-200 hover:bg-indigo-100' 
+                    : 'bg-gray-100 text-gray-500 border-gray-200 hover:bg-gray-200'
+                }`}
+              >
+                <div className={`w-2 h-2 rounded-full ${autoSyncSettings.SUP_LETGO ? 'bg-indigo-500 animate-pulse' : 'bg-gray-400'}`}></div>
+                {autoSyncSettings.SUP_LETGO ? 'Auto-Sync: ON (ทุกชม.)' : 'Auto-Sync: OFF (หยุดชั่วคราว)'}
+              </button>
             </div>
           </div>
           
@@ -259,8 +336,22 @@ export default function ApiSyncStatusPage() {
                 <p className="text-sm text-gray-500">Active API Adapter</p>
               </div>
             </div>
-            <div className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1.5 border border-green-200">
-              <CheckCircle2 className="w-3.5 h-3.5" /> Online
+            <div className="flex flex-col items-end gap-2">
+              <div className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1.5 border border-green-200">
+                <CheckCircle2 className="w-3.5 h-3.5" /> Online
+              </div>
+              <button 
+                onClick={() => toggleAutoSync('SUP_CHECKIN', autoSyncSettings.SUP_CHECKIN)}
+                disabled={isSavingSettings}
+                className={`text-xs px-2.5 py-1 rounded-lg border font-semibold flex items-center gap-1.5 transition-colors ${
+                  autoSyncSettings.SUP_CHECKIN 
+                    ? 'bg-teal-50 text-teal-700 border-teal-200 hover:bg-teal-100' 
+                    : 'bg-gray-100 text-gray-500 border-gray-200 hover:bg-gray-200'
+                }`}
+              >
+                <div className={`w-2 h-2 rounded-full ${autoSyncSettings.SUP_CHECKIN ? 'bg-teal-500 animate-pulse' : 'bg-gray-400'}`}></div>
+                {autoSyncSettings.SUP_CHECKIN ? 'Auto-Sync: ON (ทุกชม.)' : 'Auto-Sync: OFF (หยุดชั่วคราว)'}
+              </button>
             </div>
           </div>
           
