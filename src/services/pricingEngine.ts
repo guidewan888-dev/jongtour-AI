@@ -15,6 +15,7 @@ export interface PricingOptions {
   airlinePreference?: "lowcost" | "fullservice"; // Deprecated
   airlineCode?: string;
   startDate?: Date; // Add startDate
+  referenceTourPrice?: number; // From Tour API (Wholesale Base)
 }
 
 export async function calculateFitPrice(options: PricingOptions) {
@@ -31,6 +32,7 @@ export async function calculateFitPrice(options: PricingOptions) {
     airlinePreference,
     airlineCode,
     startDate,
+    referenceTourPrice,
   } = options;
 
   const pax = Math.max(1, rawPax);
@@ -85,26 +87,36 @@ export async function calculateFitPrice(options: PricingOptions) {
 
   const variableCostPerPax = mealTotalPerPax + insurancePerPax + visaPerPax;
 
-  // 4. Cache Costs (Flights, Hotels, Activities)
+  // 4. Cache Costs (Flights, Hotels, Activities) OR Wholesale Reference Price
   let flightCostPerPax = 0;
-  if (includeFlights) {
-    const end = new Date(start);
-    end.setDate(end.getDate() + durationDays);
-    const flightData = await getEstimatedFlightPrice(country, start, end, airlineCode || airlinePreference);
-    flightCostPerPax = flightData.price;
-  }
-
   let hotelCostPerPax = 0;
-  if (includeHotels) {
-    const hotelData = await getEstimatedHotelPrice(country, hotelStars, durationDays, pax, start);
-    hotelCostPerPax = hotelData.totalCost / pax;
+  let activityCostPerPax = 0;
+  let cacheCostPerPax = 0;
+
+  if (referenceTourPrice && referenceTourPrice > 0) {
+    // If we have a reference wholesale tour, use its price as the base for flight, hotel, and activities.
+    // The fixedCost (van/guide) will be added on top to convert it from a 30-pax wholesale tour to a private tour.
+    cacheCostPerPax = referenceTourPrice;
+  } else {
+    // Normal fallback dynamic calculation
+    if (includeFlights) {
+      const end = new Date(start);
+      end.setDate(end.getDate() + durationDays);
+      const flightData = await getEstimatedFlightPrice(country, start, end, airlineCode || airlinePreference);
+      flightCostPerPax = flightData.price;
+    }
+
+    if (includeHotels) {
+      const hotelData = await getEstimatedHotelPrice(country, hotelStars, durationDays, pax, start);
+      hotelCostPerPax = hotelData.totalCost / pax;
+    }
+
+    // Activities (Assume always included if this is a tour)
+    const activityData = await getEstimatedActivityPrice(country, durationDays, pax);
+    activityCostPerPax = activityData.totalCost / pax;
+
+    cacheCostPerPax = flightCostPerPax + hotelCostPerPax + activityCostPerPax;
   }
-
-  // Activities (Assume always included if this is a tour)
-  const activityData = await getEstimatedActivityPrice(country, durationDays, pax);
-  const activityCostPerPax = activityData.totalCost / pax;
-
-  const cacheCostPerPax = flightCostPerPax + hotelCostPerPax + activityCostPerPax;
 
   // 5. Grand Total & Markup
   const totalCostPerPax = fixedCostPerPax + variableCostPerPax + cacheCostPerPax;

@@ -1,9 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 import OpenAI from "openai";
+import { createClient } from "@supabase/supabase-js";
 import { calculateFitPrice } from "@/services/pricingEngine";
 
 const prisma = new PrismaClient();
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://qterfftaebnoawnzkfgu.supabase.co";
+const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || "";
+const supabase = createClient(supabaseUrl, supabaseKey);
 export const maxDuration = 60;
 export const dynamic = "force-dynamic";
 
@@ -159,6 +164,43 @@ export async function POST(req: NextRequest) {
       `;
     }
 
+    // ----------------------------------------------------
+    // RAG: Vector Search for Reference Tour
+    // ----------------------------------------------------
+    let referenceTourTitle = "";
+    let referenceTourItinerary = "";
+    let referenceTourPrice = 0;
+
+    try {
+      const searchQuery = `${country} ${cities || ''} ${prompt || ''}`.trim();
+      const embedResponse = await openai.embeddings.create({
+        model: "text-embedding-3-small",
+        input: searchQuery,
+        encoding_format: "float",
+      });
+      const query_embedding = embedResponse.data[0].embedding;
+
+      const { data: matches, error: matchError } = await supabase.rpc('match_tours', {
+        query_embedding,
+        match_threshold: 0.25,
+        match_count: 3
+      });
+
+      if (!matchError && matches && matches.length > 0) {
+        // Find the first match that has itinerary data
+        const bestMatch = matches.find((m: any) => m.itinerary && m.price > 0);
+        if (bestMatch) {
+          referenceTourTitle = bestMatch.title;
+          referenceTourPrice = bestMatch.price;
+          referenceTourItinerary = JSON.stringify(bestMatch.itinerary, null, 2);
+          console.log(`[RAG] Found reference tour: ${referenceTourTitle} (Price: ${referenceTourPrice})`);
+        }
+      }
+    } catch (ragError) {
+      console.error("[RAG] Failed to fetch reference tour:", ragError);
+    }
+    // ----------------------------------------------------
+
     const isFullService = serviceType === "FULL_SERVICE";
     const pricingData = await calculateFitPrice({
       country,
@@ -172,7 +214,8 @@ export async function POST(req: NextRequest) {
       includeInsurance: isFullService || includeInsurance,
       airlinePreference,
       airlineCode,
-      startDate: start
+      startDate: start,
+      referenceTourPrice: referenceTourPrice > 0 ? referenceTourPrice : undefined
     });
     
     console.log("[Pricing Engine] Cost Breakdown:", JSON.stringify(pricingData.breakdownPerPax, null, 2));
@@ -190,6 +233,15 @@ export async function POST(req: NextRequest) {
 ${prompt ? `ความต้องการพิเศษเพิ่มเติมจากลูกค้า: "${prompt}"` : ""}
 
 ${inclusionDetails}
+
+${referenceTourItinerary ? `
+ข้อมูลทัวร์ต้นแบบจากระบบ (Reference API Tour):
+- ชื่อแพ็กเกจทัวร์ต้นแบบ: ${referenceTourTitle}
+- แผนการเดินทางต้นแบบ (Itinerary JSON):
+${referenceTourItinerary}
+
+คำแนะนำ: คุณสามารถใช้ข้อมูลสถานที่ท่องเที่ยว, โรงแรม, หรือกิจกรรม จากทัวร์ต้นแบบมาเป็นไอเดียในการจัดทริปให้ลูกค้าได้ เพื่อความสมจริงและเฉพาะเจาะจงมากขึ้น แต่ปรับจำนวนวันให้ตรงกับที่ลูกค้าขอ (${finalDurationDays} วัน)
+` : ""}
 
 กฎการสร้าง JSON:
 1. "title": ตั้งชื่อทริปให้น่าสนใจ (ภาษาไทย)
