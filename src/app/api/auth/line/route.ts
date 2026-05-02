@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 
+export const dynamic = 'force-dynamic';
 export async function GET(request: Request) {
   const forwardedHost = request.headers.get('x-forwarded-host');
   let origin = forwardedHost ? `https://${forwardedHost}` : (process.env.NEXT_PUBLIC_SITE_URL || 'https://jongtour.com');
