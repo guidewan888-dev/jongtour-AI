@@ -83,161 +83,92 @@ export class SyncManager {
       
       // 2. Fetch with Retry Logic
       const rawTours = await this.withRetry(() => adapter.getTours());
-      let successCount = 0;
+
+      // 3. Pre-fetch existing records to map IDs for fast upserting
+      const { data: existingTours } = await this.supabase
+        .from('Tour')
+        .select('id, providerId')
+        .eq('supplierId', supplierId);
+      const existingTourMap = new Map((existingTours || []).map(t => [t.providerId, t.id]));
+
+      const { data: existingRaw } = await this.supabase
+        .from('TourRawData')
+        .select('id, externalTourId')
+        .eq('supplierId', supplierId);
+      const existingRawMap = new Map((existingRaw || []).map(r => [r.externalTourId, r.id]));
+
+      // 4. Prepare data arrays
+      const rawDataToUpsert: any[] = [];
+      const toursToUpsert: any[] = [];
+      const departuresToUpsert: any[] = [];
 
       for (const raw of rawTours) {
         try {
-          // 3. Save Raw Data as audit trail and fallback
-          // First check if it exists for upsert behavior with Supabase without an ID
-          const { data: existingRaw } = await this.supabase
-            .from('TourRawData')
-            .select('id')
-            .eq('supplierId', supplierId)
-            .eq('externalTourId', raw.externalId)
-            .single();
+          const rawId = existingRawMap.get(raw.externalId) || generateId();
+          rawDataToUpsert.push({
+            id: rawId,
+            supplierId,
+            externalTourId: raw.externalId,
+            rawPayload: raw.payload,
+            syncStatus: 'PROCESSED',
+            updatedAt: new Date().toISOString()
+          });
 
-          let rawError;
-          if (existingRaw) {
-            const { error } = await this.supabase
-              .from('TourRawData')
-              .update({
-                rawPayload: raw.payload,
-                syncStatus: 'PROCESSED',
-                updatedAt: new Date().toISOString()
-              })
-              .eq('id', existingRaw.id);
-            rawError = error;
-          } else {
-            const { error } = await this.supabase
-              .from('TourRawData')
-              .insert({
-                id: generateId(),
-                supplierId,
-                externalTourId: raw.externalId,
-                rawPayload: raw.payload,
-                syncStatus: 'PROCESSED',
-                updatedAt: new Date().toISOString()
-              });
-            rawError = error;
-          }
-
-          if (rawError) throw rawError;
-
-          // 4. Normalize Data
+          const tourId = existingTourMap.get(raw.externalId) || generateId();
           const normalized = Normalizer.mapTour(supplierId, raw);
+          
+          toursToUpsert.push({
+            id: tourId,
+            source: supplierId === 'SUP_LETGO' ? 'API_ZEGO' : (supplierId === 'SUP_TOURFACTORY' ? 'TOUR_FACTORY' : 'CHECKIN'),
+            providerId: raw.externalId,
+            supplierId: supplierId,
+            title: normalized.title,
+            destination: normalized.destination,
+            durationDays: normalized.durationDays,
+            price: normalized.price,
+            imageUrl: normalized.imageUrl,
+            description: normalized.description,
+            airlineCode: normalized.airlineCode,
+            pdfUrl: normalized.pdfUrl,
+            itinerary: normalized.itinerary,
+            flights: normalized.flights,
+            updatedAt: new Date().toISOString()
+          });
 
-          // 5. Upsert to main Tour table
-          const { data: existingTour } = await this.supabase
-            .from('Tour')
-            .select('id')
-            .eq('supplierId', supplierId)
-            .eq('providerId', raw.externalId)
-            .single();
-
-          if (existingTour) {
-            await this.supabase
-              .from('Tour')
-              .update({
-                title: normalized.title,
-                destination: normalized.destination,
-                durationDays: normalized.durationDays,
-                price: normalized.price,
-                imageUrl: normalized.imageUrl,
-                description: normalized.description,
-                airlineCode: normalized.airlineCode,
-                pdfUrl: normalized.pdfUrl,
-                itinerary: normalized.itinerary,
-                flights: normalized.flights,
-                updatedAt: new Date().toISOString()
-              })
-              .eq('id', existingTour.id);
-          } else {
-            await this.supabase
-              .from('Tour')
-              .insert({
-                id: generateId(),
-                source: supplierId === 'SUP_LETGO' ? 'API_ZEGO' : (supplierId === 'SUP_TOURFACTORY' ? 'TOUR_FACTORY' : 'CHECKIN'),
-                providerId: raw.externalId,
-                supplierId: supplierId,
-                title: normalized.title,
-                destination: normalized.destination,
-                durationDays: normalized.durationDays,
-                price: normalized.price,
-                imageUrl: normalized.imageUrl,
-                description: normalized.description,
-                airlineCode: normalized.airlineCode,
-                pdfUrl: normalized.pdfUrl,
-                itinerary: normalized.itinerary,
-                flights: normalized.flights,
-                updatedAt: new Date().toISOString()
-              });
+          const deps = Normalizer.mapDepartures(supplierId, tourId, raw);
+          if (deps && deps.length > 0) {
+            departuresToUpsert.push(...deps);
           }
-
-          // 6. Upsert Departures
-          const departures = Normalizer.mapDepartures(supplierId, normalized.id || (existingTour ? existingTour.id : ''), raw);
-          if (departures && departures.length > 0) {
-            for (const dep of departures) {
-              const { data: existingDep } = await this.supabase
-                .from('TourDeparture')
-                .select('id')
-                .eq('id', dep.id)
-                .single();
-
-              if (existingDep) {
-                await this.supabase
-                  .from('TourDeparture')
-                  .update({
-                    startDate: dep.startDate,
-                    endDate: dep.endDate,
-                    price: dep.price,
-                    childPrice: dep.childPrice,
-                    singleRoomPrice: dep.singleRoomPrice,
-                    depositPrice: dep.depositPrice,
-                    totalSeats: dep.totalSeats,
-                    availableSeats: dep.availableSeats,
-                  })
-                  .eq('id', existingDep.id);
-              } else {
-                await this.supabase
-                  .from('TourDeparture')
-                  .insert({
-                    id: dep.id,
-                    tourId: dep.tourId,
-                    startDate: dep.startDate,
-                    endDate: dep.endDate,
-                    price: dep.price,
-                    childPrice: dep.childPrice,
-                    singleRoomPrice: dep.singleRoomPrice,
-                    depositPrice: dep.depositPrice,
-                    totalSeats: dep.totalSeats,
-                    availableSeats: dep.availableSeats,
-                  });
-              }
-            }
-          }
-
-          successCount++;
         } catch (itemError) {
-          console.error(`Failed to process tour ${raw.externalId}: `, itemError);
-          // Update raw data status
-          await this.supabase
-            .from('TourRawData')
-            .update({ syncStatus: 'FAILED', updatedAt: new Date().toISOString() })
-            .eq('supplierId', supplierId)
-            .eq('externalTourId', raw.externalId);
+          console.error(`Failed to map tour ${raw.externalId}: `, itemError);
         }
       }
+
+      // 5. Bulk Upsert execution (in chunks of 100 to prevent payload too large errors)
+      const batchSize = 100;
+      
+      const upsertChunks = async (table: string, data: any[]) => {
+        for (let i = 0; i < data.length; i += batchSize) {
+          const chunk = data.slice(i, i + batchSize);
+          const { error } = await this.supabase.from(table).upsert(chunk);
+          if (error) throw new Error(`Bulk upsert failed on ${table}: ${error.message}`);
+        }
+      };
+
+      await upsertChunks('TourRawData', rawDataToUpsert);
+      await upsertChunks('Tour', toursToUpsert);
+      await upsertChunks('TourDeparture', departuresToUpsert);
 
       // 6. Complete Log
       await this.supabase
         .from('ApiSyncLog')
         .update({
           status: 'SUCCESS',
-          recordsAdded: successCount
+          recordsAdded: toursToUpsert.length
         })
         .eq('id', syncLog.id);
 
-      console.log(`[SyncManager] Successfully synced ${successCount} tours for ${supplierId}`);
+      console.log(`[SyncManager] Successfully synced ${toursToUpsert.length} tours for ${supplierId}`);
     } catch (error: any) {
       console.error(`[SyncManager] Critical failure for ${supplierId}: `, error);
       
