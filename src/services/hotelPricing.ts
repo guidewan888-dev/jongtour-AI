@@ -23,10 +23,25 @@ const regionMultiplier: Record<string, number> = {
 
 // Real Hotel Data Mock
 const realHotelsMock: Record<string, Record<number, {name: string, imageUrl: string}>> = {
-  "ญี่ปุ่น": {
+  "โอซาก้า": {
+    3: { name: "Sotetsu Fresa Inn Osaka-Namba", imageUrl: "https://images.unsplash.com/photo-1590447158019-883d815f8bc1?w=800&q=80" },
+    4: { name: "Cross Hotel Osaka", imageUrl: "https://images.unsplash.com/photo-1542314831-c6a4d1409b1c?w=800&q=80" },
+    5: { name: "Swissotel Nankai Osaka", imageUrl: "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&q=80" }
+  },
+  "เกียวโต": {
+    3: { name: "Hotel Resol Kyoto", imageUrl: "https://images.unsplash.com/photo-1590447158019-883d815f8bc1?w=800&q=80" },
+    4: { name: "Kyoto Granbell Hotel", imageUrl: "https://images.unsplash.com/photo-1542314831-c6a4d1409b1c?w=800&q=80" },
+    5: { name: "The Ritz-Carlton, Kyoto", imageUrl: "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&q=80" }
+  },
+  "โตเกียว": {
     3: { name: "APA Hotel Shinjuku Kabukicho Tower", imageUrl: "https://images.unsplash.com/photo-1590447158019-883d815f8bc1?w=800&q=80" },
     4: { name: "Hotel Gracery Shinjuku (Godzilla Hotel)", imageUrl: "https://images.unsplash.com/photo-1542314831-c6a4d1409b1c?w=800&q=80" },
     5: { name: "The Ritz-Carlton, Tokyo", imageUrl: "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&q=80" }
+  },
+  "ญี่ปุ่น": {
+    3: { name: "Standard Hotel Japan", imageUrl: "https://images.unsplash.com/photo-1590447158019-883d815f8bc1?w=800&q=80" },
+    4: { name: "Premium Hotel Japan", imageUrl: "https://images.unsplash.com/photo-1542314831-c6a4d1409b1c?w=800&q=80" },
+    5: { name: "Luxury Hotel Japan", imageUrl: "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&q=80" }
   },
   "เกาหลี": {
     3: { name: "Ibis Styles Ambassador Seoul Myeongdong", imageUrl: "https://images.unsplash.com/photo-1555854877-bab0e564b8d5?w=800&q=80" },

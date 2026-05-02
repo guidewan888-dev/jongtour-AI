@@ -927,7 +927,7 @@ export default function InteractiveItinerary({ itinerary }: { itinerary: any }) 
                       className="w-full border border-gray-300 rounded-lg px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-orange-500 bg-white"
                     >
                        <option value="ไม่ระบุ (หาที่ราคาดีที่สุดให้)">ไม่ระบุ (หาที่ราคาดีที่สุดให้)</option>
-                       <option value="Let's Go Group">Let's Go Group</option>
+                       <option value="Let's Go Group">Let&apos;s Go Group</option>
                        <option value="GO 365 Travel">GO 365 Travel</option>
                        <option value="Check In Group">Check In Group</option>
                        <option value="Tour Factory">Tour Factory</option>

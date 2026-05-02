@@ -89,7 +89,7 @@ export default async function ReviewsPage() {
                     <span className="text-xs text-gray-400">{review.createdAt.toLocaleDateString('th-TH')}</span>
                   </div>
                   <p className="text-gray-700 text-sm leading-relaxed">
-                    "{review.content}"
+                    &quot;{review.content}&quot;
                   </p>
                   
                   <div className="mt-4 flex gap-2">
