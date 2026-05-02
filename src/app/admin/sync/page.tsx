@@ -4,9 +4,9 @@ import { useState, useEffect } from "react";
 import { RefreshCcw, CheckCircle2, AlertTriangle, AlertCircle, Clock, Database, Globe, Zap, ArrowDownToLine, ArrowUpFromLine } from "lucide-react";
 
 export default function ApiSyncStatusPage() {
-  const [isSyncingGo365, setIsSyncingGo365] = useState(false);
-  const [lastSyncGo365, setLastSyncGo365] = useState("วันนี้ 08:00 น.");
-  const [go365Count, setGo365Count] = useState(1420);
+  const [isSyncingTourFactory, setIsSyncingTourFactory] = useState(false);
+  const [lastSyncTourFactory, setLastSyncTourFactory] = useState("-");
+  const [tourFactoryCount, setTourFactoryCount] = useState(0);
 
   const [isSyncingZego, setIsSyncingZego] = useState(false);
   const [lastSyncZego, setLastSyncZego] = useState("-");
@@ -16,9 +16,6 @@ export default function ApiSyncStatusPage() {
   const [lastSyncCheckIn, setLastSyncCheckIn] = useState("-");
   const [checkInCount, setCheckInCount] = useState(0);
 
-  const [isSyncingTourFactory, setIsSyncingTourFactory] = useState(false);
-  const [lastSyncTourFactory, setLastSyncTourFactory] = useState("-");
-  const [tourFactoryCount, setTourFactoryCount] = useState(0);
 
   const [logs, setLogs] = useState<any[]>([]);
   const [loadingLogs, setLoadingLogs] = useState(true);
@@ -38,11 +35,11 @@ export default function ApiSyncStatusPage() {
           setZegoCount(zegoLog.recordsAdded || 0);
         }
 
-        const go365Log = data.logs.find((l: any) => l.supplierId === 'SUP_GO365' && l.status === 'SUCCESS');
-        if (go365Log) {
-          const date = new Date(go365Log.createdAt);
-          setLastSyncGo365(`${date.toLocaleDateString('th-TH')} ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')} น.`);
-          setGo365Count(go365Log.recordsAdded || 0);
+        const tfLog = data.logs.find((l: any) => l.supplierId === 'SUP_TOURFACTORY' && l.status === 'SUCCESS');
+        if (tfLog) {
+          const date = new Date(tfLog.createdAt);
+          setLastSyncTourFactory(`${date.toLocaleDateString('th-TH')} ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')} น.`);
+          setTourFactoryCount(tfLog.recordsAdded || 0);
         }
 
         const checkinLog = data.logs.find((l: any) => l.supplierId === 'SUP_CHECKIN' && l.status === 'SUCCESS');
@@ -63,13 +60,13 @@ export default function ApiSyncStatusPage() {
     fetchLogs();
   }, []);
 
-  const handleForceSyncGo365 = async () => {
-    setIsSyncingGo365(true);
+  const handleForceSyncTourFactory = async () => {
+    setIsSyncingTourFactory(true);
     try {
       const res = await fetch('/api/admin/sync', { 
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ supplierId: 'SUP_GO365' }) 
+        body: JSON.stringify({ supplierId: 'SUP_TOURFACTORY' }) 
       });
       const data = await res.json();
       if (data.success) {
@@ -81,7 +78,7 @@ export default function ApiSyncStatusPage() {
       console.error(e);
       alert("Network error during sync");
     } finally {
-      setIsSyncingGo365(false);
+      setIsSyncingTourFactory(false);
     }
   };
 
@@ -130,10 +127,6 @@ export default function ApiSyncStatusPage() {
     }
   };
 
-  const handleForceSyncTourFactory = async () => {
-    setIsSyncingTourFactory(true);
-    setTimeout(() => setIsSyncingTourFactory(false), 1000);
-  };
 
   const formatDate = (dateString: string) => {
     const d = new Date(dateString);
@@ -161,16 +154,16 @@ export default function ApiSyncStatusPage() {
       {/* API Connections Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         
-        {/* Go365 Card */}
-        <div className="bg-white rounded-2xl border border-blue-200 shadow-md overflow-hidden relative">
-          <div className="absolute top-0 left-0 w-full h-1 bg-blue-500"></div>
+        {/* TourFactory Card */}
+        <div className="bg-white rounded-2xl border border-rose-200 shadow-md overflow-hidden relative">
+          <div className="absolute top-0 left-0 w-full h-1 bg-rose-500"></div>
           <div className="p-6 border-b border-gray-100 flex justify-between items-start">
             <div className="flex items-center gap-4">
-              <div className="w-14 h-14 bg-blue-600 rounded-2xl flex items-center justify-center text-white font-bold text-xl shadow-inner shadow-blue-800/50">
-                G3
+              <div className="w-14 h-14 bg-rose-600 rounded-2xl flex items-center justify-center text-white font-bold text-xl shadow-inner shadow-rose-800/50">
+                TF
               </div>
               <div>
-                <h3 className="font-bold text-xl text-gray-900">Go365 API</h3>
+                <h3 className="font-bold text-xl text-gray-900">Tour Factory API</h3>
                 <p className="text-sm text-gray-500">Active API Adapter</p>
               </div>
             </div>
@@ -179,25 +172,25 @@ export default function ApiSyncStatusPage() {
             </div>
           </div>
           
-          <div className="p-6 bg-blue-50/30">
+          <div className="p-6 bg-rose-50/30">
             <div className="grid grid-cols-2 gap-4 mb-6">
-              <div className="bg-white p-4 rounded-xl border border-blue-100 shadow-sm">
-                <p className="text-xs text-blue-500 font-bold flex items-center gap-1.5"><ArrowDownToLine className="w-4 h-4" /> ซิงค์ล่าสุด (Tours)</p>
-                <p className="text-lg font-bold text-gray-900 mt-1">{go365Count.toLocaleString()} <span className="text-xs font-normal text-gray-500">รายการ</span></p>
+              <div className="bg-white p-4 rounded-xl border border-rose-100 shadow-sm">
+                <p className="text-xs text-rose-500 font-bold flex items-center gap-1.5"><ArrowDownToLine className="w-4 h-4" /> ซิงค์ล่าสุด (Tours)</p>
+                <p className="text-lg font-bold text-gray-900 mt-1">{tourFactoryCount.toLocaleString()} <span className="text-xs font-normal text-gray-500">รายการ</span></p>
               </div>
-              <div className="bg-white p-4 rounded-xl border border-blue-100 shadow-sm">
-                <p className="text-xs text-blue-500 font-bold flex items-center gap-1.5"><Clock className="w-4 h-4" /> เวลาอัปเดตล่าสุด</p>
-                <p className="text-sm font-bold text-blue-700 mt-2">{lastSyncGo365}</p>
+              <div className="bg-white p-4 rounded-xl border border-rose-100 shadow-sm">
+                <p className="text-xs text-rose-500 font-bold flex items-center gap-1.5"><Clock className="w-4 h-4" /> เวลาอัปเดตล่าสุด</p>
+                <p className="text-sm font-bold text-rose-700 mt-2">{lastSyncTourFactory}</p>
               </div>
             </div>
             
             <button 
-              onClick={handleForceSyncGo365}
-              disabled={isSyncingGo365}
-              className="w-full py-3 bg-blue-600 text-white hover:bg-blue-700 border border-blue-700 rounded-xl font-bold flex items-center justify-center gap-2 transition-colors disabled:opacity-70 shadow-sm"
+              onClick={handleForceSyncTourFactory}
+              disabled={isSyncingTourFactory}
+              className="w-full py-3 bg-rose-600 text-white hover:bg-rose-700 border border-rose-700 rounded-xl font-bold flex items-center justify-center gap-2 transition-colors disabled:opacity-70 shadow-sm"
             >
-              {isSyncingGo365 ? (
-                <><RefreshCcw className="w-5 h-5 animate-spin" /> กำลังดูดข้อมูลจาก Go365...</>
+              {isSyncingTourFactory ? (
+                <><RefreshCcw className="w-5 h-5 animate-spin" /> กำลังดูดข้อมูลจาก Tour Factory...</>
               ) : (
                 <><RefreshCcw className="w-5 h-5" /> สั่งซิงค์ข้อมูล (Manual Sync)</>
               )}

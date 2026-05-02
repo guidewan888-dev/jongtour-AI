@@ -1,12 +1,12 @@
 import { SupplierAdapter, RawTour, RawTourDetail, RawDeparture, TourPrices, BookingPayload, BookingResult } from '../core/SupplierAdapter';
 
-export class Go365Adapter implements SupplierAdapter {
-  readonly supplierId = 'SUP_GO365'; // Match this in database
-  private baseUrl = 'https://api.go365.example.com/v1';
+export class TourFactoryAdapter implements SupplierAdapter {
+  readonly supplierId = 'SUP_TOURFACTORY'; // Match this in database
+  private baseUrl = 'https://api.tourfactory.example.com/v1';
 
   // Mocking internal fetch with credential handling
   private async fetchApi(endpoint: string, options: any = {}) {
-    console.log(`[Go365Adapter] Calling API: ${this.baseUrl}${endpoint}`);
+    console.log(`[TourFactoryAdapter] Calling API: ${this.baseUrl}${endpoint}`);
     // Simulating delay
     await new Promise(res => setTimeout(res, 500));
     return { success: true, data: [] };
@@ -15,13 +15,13 @@ export class Go365Adapter implements SupplierAdapter {
   async getTours(): Promise<RawTour[]> {
     await this.fetchApi('/tours');
     
-    // Mock Raw Data from Go365 Wholesale
+    // Mock Raw Data from TourFactory Wholesale
     return [
       {
-        externalId: "GO365_EUR_01",
+        externalId: "TF_EUR_01",
         name: "Classic Europe 9 Days",
         payload: {
-          tour_code: "GO365_EUR_01",
+          tour_code: "TF_EUR_01",
           title: "Classic Europe 9 Days (Ger, Switz, France)",
           country: "Europe",
           duration: "9D6N",
@@ -30,10 +30,10 @@ export class Go365Adapter implements SupplierAdapter {
         }
       },
       {
-        externalId: "GO365_TPE_02",
+        externalId: "TF_TPE_02",
         name: "Taipei Alishan 5 Days",
         payload: {
-          tour_code: "GO365_TPE_02",
+          tour_code: "TF_TPE_02",
           title: "Taipei Alishan 5 Days",
           country: "Taiwan",
           duration: "5D4N",
@@ -48,7 +48,7 @@ export class Go365Adapter implements SupplierAdapter {
     await this.fetchApi(`/tours/${externalTourId}`);
     return {
       externalId: externalTourId,
-      name: "Detail Mock Go365",
+      name: "Detail Mock TourFactory",
       payload: {},
       itinerary: [],
       images: []
@@ -81,7 +81,7 @@ export class Go365Adapter implements SupplierAdapter {
   }
 
   async createBooking(payload: BookingPayload): Promise<BookingResult> {
-    return { externalBookingId: `BK_GO_${Date.now()}`, status: 'confirmed' };
+    return { externalBookingId: `BK_TF_${Date.now()}`, status: 'confirmed' };
   }
 
   async getBookingStatus(externalBookingId: string): Promise<string> {

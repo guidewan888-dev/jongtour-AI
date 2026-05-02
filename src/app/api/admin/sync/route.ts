@@ -1,12 +1,12 @@
 import { NextResponse } from 'next/server';
 import { SyncManager, AdapterFactory } from '@/services/suppliers/core/SyncManager';
 import { LetgoAdapter } from '@/services/suppliers/adapters/LetgoAdapter';
-import { Go365Adapter } from '@/services/suppliers/adapters/Go365Adapter';
+import { TourFactoryAdapter } from '@/services/suppliers/adapters/TourFactoryAdapter';
 import { CheckinAdapter } from '@/services/suppliers/adapters/CheckinAdapter';
 
 // Register adapters here (in a real app, this might happen at startup or inside a registry file)
 AdapterFactory.register(new LetgoAdapter());
-AdapterFactory.register(new Go365Adapter());
+AdapterFactory.register(new TourFactoryAdapter());
 AdapterFactory.register(new CheckinAdapter());
 
 export async function POST(request: Request) {
