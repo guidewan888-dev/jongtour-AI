@@ -53,7 +53,7 @@ export default function ApiSettingsPage() {
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
                     <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
                   </span>
-                  เชื่อมต่อล่าสุด: วันนี้ 08:00 น.
+                  สถานะ: พร้อมใช้งาน (Ready)
                 </div>
               </div>
             </div>
@@ -103,7 +103,7 @@ export default function ApiSettingsPage() {
                 <h3 className="font-bold text-lg text-gray-900">ระบบ Zego</h3>
                 <div className="flex items-center gap-1.5 mt-0.5 text-xs text-green-600 font-medium">
                   <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></div>
-                  เชื่อมต่อล่าสุด: วันนี้ 08:05 น.
+                  สถานะ: พร้อมใช้งาน (Ready)
                 </div>
               </div>
             </div>
@@ -153,7 +153,7 @@ export default function ApiSettingsPage() {
                 <h3 className="font-bold text-lg text-gray-900">ระบบ Check In Group</h3>
                 <div className="flex items-center gap-1.5 mt-0.5 text-xs text-green-600 font-medium">
                   <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></div>
-                  เชื่อมต่อล่าสุด: วันนี้ 08:15 น.
+                  สถานะ: พร้อมใช้งาน (Ready)
                 </div>
               </div>
             </div>
