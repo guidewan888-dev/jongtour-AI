@@ -308,7 +308,7 @@ export default function InteractiveItinerary({ itinerary }: { itinerary: any }) 
                 ราคาประเมินเริ่มต้น
                 {isCalculatingPrice && <Loader2 className="w-3 h-3 animate-spin text-orange-500" />}
               </div>
-              <div className="bg-orange-500 text-white font-bold rounded-lg px-4 py-1.5 shadow-md border border-orange-400 outline-none focus:ring-2 focus:ring-orange-300 transition-colors" contentEditable suppressContentEditableWarning>
+              <div key={estimatedPrice} className="bg-orange-500 text-white font-bold rounded-lg px-4 py-1.5 shadow-md border border-orange-400 outline-none focus:ring-2 focus:ring-orange-300 transition-colors" contentEditable suppressContentEditableWarning>
                 {estimatedPrice}
               </div>
             </div>
@@ -379,7 +379,7 @@ export default function InteractiveItinerary({ itinerary }: { itinerary: any }) 
                       <div className="flex items-center gap-2 text-xs font-bold text-blue-600 mb-1">
                         🛫 เที่ยวบินขาไป
                       </div>
-                      <div className="text-sm text-gray-800 font-medium whitespace-pre-line" contentEditable suppressContentEditableWarning>
+                      <div key={recommendedFlight.outbound} className="text-sm text-gray-800 font-medium whitespace-pre-line" contentEditable suppressContentEditableWarning>
                         {recommendedFlight.outbound}
                       </div>
                     </div>
@@ -388,7 +388,7 @@ export default function InteractiveItinerary({ itinerary }: { itinerary: any }) 
                       <div className="flex items-center gap-2 text-xs font-bold text-green-600 mb-1">
                         🛬 เที่ยวบินขากลับ
                       </div>
-                      <div className="text-sm text-gray-800 font-medium whitespace-pre-line" contentEditable suppressContentEditableWarning>
+                      <div key={recommendedFlight.inbound} className="text-sm text-gray-800 font-medium whitespace-pre-line" contentEditable suppressContentEditableWarning>
                         {recommendedFlight.inbound}
                       </div>
                     </div>
