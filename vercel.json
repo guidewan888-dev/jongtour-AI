@@ -1,20 +1,16 @@
 {
   "crons": [
     {
-      "path": "/api/sync/zego",
+      "path": "/api/cron/sync?supplierId=SUP_LETGO",
       "schedule": "0 * * * *"
     },
     {
-      "path": "/api/sync/tourfactory",
-      "schedule": "15 * * * *"
+      "path": "/api/cron/sync?supplierId=SUP_TOURFACTORY",
+      "schedule": "20 * * * *"
     },
     {
-      "path": "/api/sync/go365",
-      "schedule": "30 * * * *"
-    },
-    {
-      "path": "/api/sync/checkingroup",
-      "schedule": "45 * * * *"
+      "path": "/api/cron/sync?supplierId=SUP_CHECKIN",
+      "schedule": "40 * * * *"
     }
   ]
 }
