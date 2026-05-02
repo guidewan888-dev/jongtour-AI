@@ -422,7 +422,7 @@ export default function InteractiveItinerary({ itinerary }: { itinerary: any }) 
         <div className="relative z-40 p-6 md:p-10 md:w-3/5 h-full flex flex-col justify-center">
           {/* Jongtour Logo */}
           <div className="flex items-center gap-2 mb-4">
-            <img src="/images/logos/logo.png" alt="Jongtour Logo" className="h-16 object-contain mix-blend-multiply" crossOrigin="anonymous" />
+            <img src="/images/logos/logo_transparent.png" alt="Jongtour Logo" className="h-24 object-contain drop-shadow-md" crossOrigin="anonymous" />
           </div>
 
           {/* Ribbon Badge */}
@@ -995,7 +995,7 @@ export default function InteractiveItinerary({ itinerary }: { itinerary: any }) 
         
         <div className="relative z-10">
           <div className="flex items-center gap-2 mb-6">
-             <img src="/images/logos/logo.png" alt="Jongtour Logo" className="h-12 object-contain mix-blend-multiply" crossOrigin="anonymous" />
+             <img src="/images/logos/logo_transparent.png" alt="Jongtour Logo" className="h-16 object-contain" crossOrigin="anonymous" />
           </div>
 
           {coverImage && (

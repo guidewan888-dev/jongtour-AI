@@ -244,10 +244,13 @@ ${referenceTourItinerary}
 ` : ""}
 
 ${pricingData.recommendedHotel ? `
-ข้อมูลโรงแรมแนะนำ (บังคับใช้):
-- ให้ระบุชื่อโรงแรมเป็น "${pricingData.recommendedHotel.name}" สำหรับวันที่มีการเข้าพัก
-- และบังคับคืนค่า hotelImageUrl ใน JSON ของวันนั้นๆ เป็น "${pricingData.recommendedHotel.imageUrl}"
-` : ""}
+ข้อมูลโรงแรมแนะนำ (บังคับใช้อย่างเด็ดขาด):
+- บังคับระบุชื่อโรงแรมเป็น "${pricingData.recommendedHotel.name}" ลงใน field "hotel" ของแผนการเดินทางทุกวัน (ยกเว้นวันสุดท้ายที่เดินทางกลับ) ห้ามปล่อยว่าง
+- บังคับคืนค่า hotelImageUrl ใน JSON ของวันนั้นๆ เป็น "${pricingData.recommendedHotel.imageUrl}"
+` : `
+ข้อมูลโรงแรม:
+- กรุณาสุ่มชื่อโรงแรมที่สมจริงให้ตรงกับประเทศและเมืองที่ระบุ ลงใน field "hotel" ของแผนการเดินทางทุกวัน
+`}
 
 กฎการสร้าง JSON:
 1. "title": ตั้งชื่อทริปให้น่าสนใจ (ภาษาไทย)
