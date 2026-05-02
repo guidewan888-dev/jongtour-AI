@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { createServerClient } from "@supabase/ssr";
 
 export const config = {
   matcher: [
@@ -15,44 +16,91 @@ export const config = {
   ],
 };
 
-export function middleware(req: NextRequest) {
+export async function middleware(req: NextRequest) {
   const url = req.nextUrl.clone();
   const hostname = req.headers.get('host') || '';
 
-  // Extract subdomain (e.g., admin.jongtour.com -> admin)
-  const isAdmin = hostname.startsWith('admin.');
-  const isBooking = hostname.startsWith('booking.');
+  let response = NextResponse.next({
+    request: {
+      headers: req.headers,
+    },
+  });
 
-  // Paths that should not be rewritten even on subdomains (like login, API routes)
-  const excludePaths = ['/login', '/api', '/auth', '/_next'];
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://qterfftaebnoawnzkfgu.supabase.co';
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || 'sb_publishable_SRwNSJ89mInda5FcuB1W2w_9IEJlSOI';
+
+  const supabase = createServerClient(
+    supabaseUrl,
+    supabaseKey,
+    {
+      cookies: {
+        getAll() {
+          return req.cookies.getAll();
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value }) => req.cookies.set(name, value));
+          response = NextResponse.next({
+            request: req,
+          });
+          cookiesToSet.forEach(({ name, value, options }) =>
+            response.cookies.set(name, value, options)
+          );
+        },
+      },
+    }
+  );
+
+  // Refresh session if expired
+  const { data: { user } } = await supabase.auth.getUser();
+
+  // Extract subdomain (e.g., admin.jongtour.com -> admin)
+  const isAdminSubdomain = hostname.startsWith('admin.');
+  const isBookingSubdomain = hostname.startsWith('booking.');
+
+  // Check path rules
+  const isAdminPath = url.pathname.startsWith('/admin') || isAdminSubdomain;
+  const isB2bPath = url.pathname.startsWith('/b2b') || isBookingSubdomain;
+  const isAuthPath = url.pathname.startsWith('/auth');
+
+  // Paths that should not be rewritten or blocked
+  const excludePaths = ['/api', '/_next', '/favicon.ico', '/images'];
   const shouldExclude = excludePaths.some(p => url.pathname.startsWith(p));
 
-  // Rewrite for Admin Subdomain
-  if (isAdmin && !shouldExclude) {
-    // If the path doesn't already start with /admin, we prepend it.
-    // E.g., visiting admin.jongtour.com/sync will load /admin/sync internally
-    if (!url.pathname.startsWith('/admin')) {
-      url.pathname = `/admin${url.pathname === '/' ? '' : url.pathname}`;
-      return NextResponse.rewrite(url);
-    }
+  if (shouldExclude) {
+    return response;
   }
 
-  // If someone accesses /admin from the main domain, redirect them to the admin subdomain
-  if (!isAdmin && !isBooking && url.pathname.startsWith('/admin')) {
-    const newUrl = req.nextUrl.clone();
-    newUrl.hostname = `admin.${hostname.replace('www.', '')}`;
-    newUrl.pathname = url.pathname.replace(/^\/admin/, '') || '/';
-    return NextResponse.redirect(newUrl);
+  // Authentication Guards
+  if ((isAdminPath || isB2bPath) && !user) {
+    // Not logged in -> Redirect to login
+    url.pathname = '/auth/login';
+    return NextResponse.redirect(url);
   }
 
-  // Rewrite for Booking Subdomain (B2B Agent Portal)
-  if (isBooking && !shouldExclude) {
-    // Assuming you will create a /booking folder in the future
-    if (!url.pathname.startsWith('/booking')) {
-      url.pathname = `/booking${url.pathname === '/' ? '' : url.pathname}`;
-      return NextResponse.rewrite(url);
-    }
+  if (isAuthPath && user) {
+    // Already logged in -> Redirect to B2B or Admin
+    // Ideally we fetch role from Prisma here, but we can't use Prisma client in Edge Runtime easily.
+    // For now, redirect to /b2b as default, and the b2b/admin layouts can do the final role check.
+    url.pathname = '/b2b';
+    return NextResponse.redirect(url);
   }
 
-  return NextResponse.next();
+  // Subdomain Rewrites
+  if (isAdminSubdomain && !url.pathname.startsWith('/admin')) {
+    url.pathname = `/admin${url.pathname === '/' ? '' : url.pathname}`;
+    return NextResponse.rewrite(url);
+  }
+
+  if (!isAdminSubdomain && !isBookingSubdomain && url.pathname.startsWith('/admin')) {
+    url.hostname = `admin.${hostname.replace('www.', '')}`;
+    url.pathname = url.pathname.replace(/^\/admin/, '') || '/';
+    return NextResponse.redirect(url);
+  }
+
+  if (isBookingSubdomain && !url.pathname.startsWith('/b2b')) {
+    url.pathname = `/b2b${url.pathname === '/' ? '' : url.pathname}`;
+    return NextResponse.rewrite(url);
+  }
+
+  return response;
 }

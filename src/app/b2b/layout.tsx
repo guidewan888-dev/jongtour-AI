@@ -1,4 +1,7 @@
 import Link from 'next/link';
+import { createClient } from "@/utils/supabase/server";
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 import { 
   LayoutDashboard, 
   Package, 
@@ -11,11 +14,30 @@ import {
   Bell
 } from 'lucide-react';
 
-export default function B2BLayout({
+export default async function B2BLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const cookieStore = await cookies();
+  const supabase = createClient(cookieStore);
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect("/auth/login");
+  }
+
+  // Fetch user role
+  const { data: dbUser } = await supabase
+    .from("User")
+    .select("*, company:Company(*)")
+    .eq("id", user.id)
+    .single();
+
+  if (!dbUser || (dbUser.role !== "AGENT" && dbUser.role !== "SUPPLIER" && dbUser.role !== "ADMIN")) {
+    redirect("/auth/login?error=unauthorized");
+  }
+
   return (
     <div className="flex h-screen bg-slate-50 text-slate-900 font-sans">
       {/* Sidebar */}
@@ -72,11 +94,11 @@ export default function B2BLayout({
             </button>
             <div className="flex items-center gap-3 pl-4 border-l border-slate-200">
               <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-white font-bold text-sm">
-                A
+                {dbUser.name ? dbUser.name.charAt(0).toUpperCase() : 'U'}
               </div>
               <div className="hidden sm:block">
-                <p className="text-sm font-medium text-slate-700 leading-none">Admin User</p>
-                <p className="text-xs text-slate-500 mt-1">Super Admin</p>
+                <p className="text-sm font-medium text-slate-700 leading-none">{dbUser.name || "B2B User"}</p>
+                <p className="text-xs text-slate-500 mt-1">{dbUser.company?.name || dbUser.role}</p>
               </div>
             </div>
           </div>
