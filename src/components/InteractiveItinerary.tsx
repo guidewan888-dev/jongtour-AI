@@ -275,11 +275,11 @@ export default function InteractiveItinerary({ itinerary }: { itinerary: any }) 
 
         {/* Content Left Side */}
         <div className="relative z-40 p-6 md:p-10 md:w-3/5 h-full flex flex-col justify-center">
-          {/* Jongtour AI Logo */}
+          {/* Jongtour Logo */}
           <div className="flex items-center gap-2 mb-4">
-            <Sparkles className="w-5 h-5 text-orange-500" />
-            <span className="text-sm font-bold bg-clip-text text-transparent bg-gradient-to-r from-orange-500 to-amber-500 uppercase tracking-widest">
-              Jongtour AI
+            <Sparkles className="w-6 h-6 text-orange-500" />
+            <span className="text-lg font-black bg-clip-text text-transparent bg-gradient-to-r from-orange-500 to-amber-500 uppercase tracking-widest">
+              JONGTOUR
             </span>
           </div>
 
@@ -361,12 +361,12 @@ export default function InteractiveItinerary({ itinerary }: { itinerary: any }) 
         <div className="relative z-40 p-6 md:p-10 md:w-2/5 flex flex-col justify-center items-center md:items-end gap-6">
           
           {/* Price Badge Moved to Right Side */}
-          <div className="w-full max-w-sm bg-white/90 backdrop-blur-md shadow-lg rounded-2xl p-5 border border-orange-100 flex flex-col items-center md:items-end transform transition hover:scale-105">
-            <div className="text-gray-500 text-xs font-bold mb-1.5 uppercase tracking-wider flex items-center gap-1.5">
+          <div className="bg-white/90 backdrop-blur-md shadow-md rounded-xl p-3 border border-orange-100 flex flex-col items-center md:items-end transform transition hover:scale-105">
+            <div className="text-gray-500 text-[10px] font-bold mb-1 uppercase tracking-wider flex items-center gap-1.5">
               ราคาประเมินเริ่มต้น
-              {isCalculatingPrice && <Loader2 className="w-3.5 h-3.5 animate-spin text-orange-500" />}
+              {isCalculatingPrice && <Loader2 className="w-3 h-3 animate-spin text-orange-500" />}
             </div>
-            <div key={estimatedPrice} className="bg-gradient-to-r from-orange-500 to-amber-500 text-white text-xl md:text-2xl font-black rounded-xl px-6 py-2 shadow-md outline-none focus:ring-2 focus:ring-orange-300 transition-colors w-full text-center md:text-right" contentEditable suppressContentEditableWarning>
+            <div key={estimatedPrice} className="bg-gradient-to-r from-orange-500 to-amber-500 text-white text-lg md:text-xl font-bold rounded-lg px-4 py-1.5 shadow-sm outline-none focus:ring-2 focus:ring-orange-300 transition-colors text-center md:text-right" contentEditable suppressContentEditableWarning>
               {estimatedPrice}
             </div>
           </div>

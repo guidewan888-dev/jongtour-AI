@@ -67,9 +67,9 @@ export async function POST(req: NextRequest) {
       
       country = extracted.country || "ญี่ปุ่น";
       cities = extracted.cities || "";
-      pax = Number(extracted.pax) || 2;
-      hotelStars = Number(extracted.hotelStars) || 3;
-      finalDurationDays = Number(extracted.durationDays) || 3;
+      pax = parseInt(String(extracted.pax).replace(/\D/g, '')) || 2;
+      hotelStars = parseInt(String(extracted.hotelStars).replace(/\D/g, '')) || 3;
+      finalDurationDays = parseInt(String(extracted.durationDays).replace(/\D/g, '')) || 3;
       if (extracted.airlinePreference === "fullservice") {
         airlinePreference = "fullservice";
       }
