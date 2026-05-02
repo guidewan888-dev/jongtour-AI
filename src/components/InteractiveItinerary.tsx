@@ -395,6 +395,7 @@ export default function InteractiveItinerary({ itinerary }: { itinerary: any }) 
   if (!itinerary) return null;
 
   return (
+    <>
     <div className="w-full max-w-[900px] mx-auto mt-4 bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm flex flex-col">
       
       {/* Promotional Banner Header - Flight Info Centric */}
@@ -624,7 +625,7 @@ export default function InteractiveItinerary({ itinerary }: { itinerary: any }) 
       </div>
 
       {/* Itinerary Table */}
-      <div className="p-0 print-itinerary-body overflow-x-auto">
+      <div className="p-0 print-itinerary-body print:overflow-visible overflow-x-auto">
         <table className="w-full text-left border-collapse min-w-[700px]">
           <thead>
             <tr className="bg-orange-500 text-white">
@@ -920,6 +921,7 @@ export default function InteractiveItinerary({ itinerary }: { itinerary: any }) 
           </div>
         </div>
       )}
+    </div>
 
       <FitProposalPDF ref={pdfRef} itinerary={{...itinerary, days, airlineCode: localAirline, recommendedFlight, estimatedPrice}} />
 
@@ -1013,6 +1015,6 @@ export default function InteractiveItinerary({ itinerary }: { itinerary: any }) 
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }
