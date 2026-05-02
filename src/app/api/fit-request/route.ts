@@ -36,8 +36,9 @@ export async function POST(req: NextRequest) {
     }
     const openai = new OpenAI({ apiKey: openaiApiKey });
 
-    let finalDurationDays = 3;
+    let finalDurationDays = body.durationDays || 3;
     let airlinePreference: "lowcost" | "fullservice" = "lowcost";
+    let airlineCode = body.airlineCode || "";
 
     // AI Natural Language Extraction if prompt is provided
     if (prompt) {
@@ -100,33 +101,35 @@ export async function POST(req: NextRequest) {
     includeGuide = includeGuide ?? true;
     includeInsurance = includeInsurance ?? true;
 
-    // Save Lead to Database
+    // Save Lead to Database if not preview
     let fitRequest;
-    try {
-      fitRequest = await prisma.fitRequest.create({
-        data: {
-          serviceType,
-          name,
-          email: email || null,
-          phone: phone || null,
-          pax,
-          startDate: start,
-          endDate: end,
-          durationDays: finalDurationDays,
-          country,
-          cities,
-          includeFlights,
-          includeHotels,
-          includeMeals,
-          includeTransport,
-          includeGuide,
-          includeInsurance,
-          hotelStars,
-          status: "PENDING"
-        }
-      });
-    } catch (dbError) {
-      console.error("Failed to save FIT request to DB:", dbError);
+    if (!body.isPreview) {
+      try {
+        fitRequest = await prisma.fitRequest.create({
+          data: {
+            serviceType,
+            name,
+            email: email || null,
+            phone: phone || null,
+            pax,
+            startDate: start,
+            endDate: end,
+            durationDays: finalDurationDays,
+            country,
+            cities,
+            includeFlights,
+            includeHotels,
+            includeMeals,
+            includeTransport,
+            includeGuide,
+            includeInsurance,
+            hotelStars,
+            status: "PENDING"
+          }
+        });
+      } catch (dbError) {
+        console.error("Failed to save FIT request to DB:", dbError);
+      }
     }
 
     let inclusionDetails = "";
@@ -168,6 +171,7 @@ export async function POST(req: NextRequest) {
       includeGuide: isFullService || includeGuide,
       includeInsurance: isFullService || includeInsurance,
       airlinePreference,
+      airlineCode,
       startDate: start
     });
     
@@ -194,7 +198,7 @@ ${inclusionDetails}
 4. "estimatedPrice": ประเมินราคารวมเป็นเงินบาท โดยบังคับใช้ราคา "${pricingData.sellingPricePerPax.toLocaleString()} THB/ท่าน" เท่านั้น พร้อมวงเล็บ "(ราคาโดยประมาณจากระบบอ้างอิง)"
 5. "days": แผนการเดินทางรายวัน ${finalDurationDays} วัน 
 6. "inclusions" และ "exclusions" สรุปให้ครบถ้วน
-7. "recommendedFlight": ข้อมูลเที่ยวบินที่เหมาะสม (สมจริงที่สุด) อิงจากประเทศปลายทางและสายการบินประเภท ${airlinePreference}
+7. "recommendedFlight": ข้อมูลเที่ยวบินที่เหมาะสม (สมจริงที่สุด) อิงจากประเทศปลายทางและสายการบิน ${airlineCode ? `รหัส ${airlineCode}` : `ประเภท ${airlinePreference}`}
 
 IMPORTANT: "exclusions" MUST BE EXACTLY this array:
   [

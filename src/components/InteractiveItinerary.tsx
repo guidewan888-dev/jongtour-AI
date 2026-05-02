@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { CheckCircle2, XCircle, Check, X, Star, Download, Loader2 } from "lucide-react";
+import { CheckCircle2, XCircle, Check, X, Star, Download, Loader2, Sparkles } from "lucide-react";
 import { FitProposalPDF } from "./FitProposalPDF";
 import { useRef } from "react";
 import html2canvas from "html2canvas";
@@ -21,6 +21,44 @@ export default function InteractiveItinerary({ itinerary }: { itinerary: any }) 
   const [hotelStars, setHotelStars] = useState(itinerary?.hotelStars || 3);
   const [estimatedPrice, setEstimatedPrice] = useState(itinerary?.estimatedPrice || "");
   const [isCalculatingPrice, setIsCalculatingPrice] = useState(false);
+  const [isRegeneratingFullPlan, setIsRegeneratingFullPlan] = useState(false);
+
+  const handleRegenerateFullPlan = async () => {
+    setIsRegeneratingFullPlan(true);
+    try {
+      const country = itinerary?.country || itinerary?.title || "Unknown";
+      const res = await fetch("/api/fit-request", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          country: country,
+          durationDays: days.length,
+          pax: pax,
+          hotelStars: hotelStars,
+          airlineCode: localAirline,
+          isPreview: true,
+          prompt: `ลูกค้าปรับแก้ไขแผนเดิม รบกวนเขียนแผนการเดินทางใหม่ให้ครอบคลุม ${days.length} วัน โรงแรม ${hotelStars} ดาว สายการบิน ${localAirline}`
+        })
+      });
+      const data = await res.json();
+      if (data.success && data.itinerary) {
+        setDays(data.itinerary.days || []);
+        if (data.itinerary.recommendedFlight) {
+           setRecommendedFlight(data.itinerary.recommendedFlight);
+           if (data.itinerary.recommendedFlight.airlineCode) {
+             setLocalAirline(data.itinerary.recommendedFlight.airlineCode);
+           }
+        }
+        if (data.itinerary.estimatedPrice) setEstimatedPrice(data.itinerary.estimatedPrice);
+      } else {
+        alert("ขออภัย ไม่สามารถสร้างแผนใหม่ได้ในขณะนี้");
+      }
+    } catch (err) {
+      alert("เกิดข้อผิดพลาดในการเชื่อมต่อ AI");
+    } finally {
+      setIsRegeneratingFullPlan(false);
+    }
+  };
 
   useEffect(() => {
     const fetchNewPrice = async () => {
@@ -307,6 +345,18 @@ export default function InteractiveItinerary({ itinerary }: { itinerary: any }) 
                 {estimatedPrice}
               </div>
             </div>
+          </div>
+          
+          {/* Regenerate AI Plan Button */}
+          <div className="mt-4 flex w-full no-print">
+            <button 
+              onClick={handleRegenerateFullPlan} 
+              disabled={isRegeneratingFullPlan}
+              className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white text-[11px] font-bold px-3 py-1.5 rounded-lg shadow-sm flex items-center gap-1.5 transition-colors"
+            >
+              {isRegeneratingFullPlan ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
+              {isRegeneratingFullPlan ? "กำลังเขียนแผนใหม่..." : "✨ ให้ AI อัปเดตสถานที่และโรงแรมให้ตรงกับเงื่อนไขนี้"}
+            </button>
           </div>
         </div>
 
