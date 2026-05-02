@@ -216,6 +216,8 @@ IMPORTANT: "exclusions" MUST BE EXACTLY this array:
   "marketingHeadline": "string",
   "highlights": ["string"],
   "estimatedPrice": "string",
+  "pax": ${pax},
+  "durationDays": ${finalDurationDays},
   "hotelStars": ${hotelStars},
   "recommendedFlight": {
     "airline": "string (ชื่อสายการบิน เช่น Thai Airways, AirAsia X)",

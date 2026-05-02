@@ -361,7 +361,7 @@ export default function InteractiveItinerary({ itinerary }: { itinerary: any }) 
         <div className="relative z-40 p-6 md:p-10 md:w-2/5 flex flex-col justify-center items-center md:items-end gap-6">
           
           {/* Price Badge Moved to Right Side */}
-          <div className="bg-white/90 backdrop-blur-md shadow-md rounded-xl p-3 border border-orange-100 flex flex-col items-center md:items-end transform transition hover:scale-105">
+          <div className="w-full max-w-sm bg-white/90 backdrop-blur-md shadow-md rounded-xl p-4 border border-orange-100 flex flex-col items-center md:items-end transform transition hover:scale-105">
             <div className="text-gray-500 text-[10px] font-bold mb-1 uppercase tracking-wider flex items-center gap-1.5">
               ราคาประเมินเริ่มต้น
               {isCalculatingPrice && <Loader2 className="w-3 h-3 animate-spin text-orange-500" />}
