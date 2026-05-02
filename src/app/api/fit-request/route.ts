@@ -167,7 +167,8 @@ export async function POST(req: NextRequest) {
       includeTransport: isFullService || includeTransport,
       includeGuide: isFullService || includeGuide,
       includeInsurance: isFullService || includeInsurance,
-      airlinePreference
+      airlinePreference,
+      startDate: start
     });
     
     console.log("[Pricing Engine] Cost Breakdown:", JSON.stringify(pricingData.breakdownPerPax, null, 2));

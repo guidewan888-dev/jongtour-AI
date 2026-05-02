@@ -13,6 +13,7 @@ export interface PricingOptions {
   includeGuide: boolean;
   includeInsurance: boolean;
   airlinePreference?: "lowcost" | "fullservice";
+  startDate?: Date; // Add startDate
 }
 
 export async function calculateFitPrice(options: PricingOptions) {
@@ -27,10 +28,17 @@ export async function calculateFitPrice(options: PricingOptions) {
     includeGuide,
     includeInsurance,
     airlinePreference,
+    startDate,
   } = options;
 
   const pax = Math.max(1, rawPax);
   const durationDays = Math.max(1, rawDays);
+  
+  // Use provided startDate or default to 30 days from now
+  const start = startDate ? new Date(startDate) : new Date();
+  if (!startDate) {
+    start.setDate(start.getDate() + 30);
+  }
 
   // 1. Region Detection (Europe/Americas vs Asia)
   const isEurope = /ยุโรป|สวิส|ฝรั่งเศส|อิตาลี|อังกฤษ|อเมริกา|ออสเตรเลีย|นิวซีแลนด์/.test(country);
@@ -78,8 +86,6 @@ export async function calculateFitPrice(options: PricingOptions) {
   // 4. Cache Costs (Flights, Hotels, Activities)
   let flightCostPerPax = 0;
   if (includeFlights) {
-    const start = new Date();
-    start.setDate(start.getDate() + 30);
     const end = new Date(start);
     end.setDate(end.getDate() + durationDays);
     const flightData = await getEstimatedFlightPrice(country, start, end, airlinePreference);
@@ -88,7 +94,7 @@ export async function calculateFitPrice(options: PricingOptions) {
 
   let hotelCostPerPax = 0;
   if (includeHotels) {
-    const hotelData = await getEstimatedHotelPrice(country, hotelStars, durationDays, pax);
+    const hotelData = await getEstimatedHotelPrice(country, hotelStars, durationDays, pax, start);
     hotelCostPerPax = hotelData.totalCost / pax;
   }
 

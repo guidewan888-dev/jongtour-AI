@@ -27,13 +27,43 @@ export async function getEstimatedFlightPrice(country: string, startDate: Date, 
 
   const destinationIata = mockInfo.destIata;
 
+  // Helper for Algorithmic Pricing
+  const applyFlightAlgorithm = (basePrice: number) => {
+    let finalPrice = basePrice;
+    
+    // 1. Airline Preference
+    if (airlinePreference === "fullservice") finalPrice *= 1.5;
+    else finalPrice *= 0.8;
+
+    // 2. Seasonality
+    const month = startDate.getMonth() + 1; // 1-12
+    if ([4, 12, 1].includes(month)) { // Peak Season: April, Dec, Jan
+      finalPrice *= 1.30;
+    } else if ([10, 11].includes(month)) { // Shoulder Season: Oct, Nov
+      finalPrice *= 1.10;
+    } else if ([5, 6, 7, 8, 9].includes(month)) { // Low Season
+      finalPrice *= 0.85;
+    }
+
+    // 3. Advance Booking Window
+    const daysUntilFlight = Math.max(0, Math.floor((startDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24)));
+    if (daysUntilFlight <= 7) {
+      finalPrice *= 1.40; // Very urgent
+    } else if (daysUntilFlight <= 21) {
+      finalPrice *= 1.20; // Somewhat urgent
+    } else if (daysUntilFlight > 90) {
+      finalPrice *= 0.90; // Early bird
+    }
+
+    return Math.round(finalPrice);
+  };
+
   try {
     // 1. Check cache
     const cached = await prisma.flightPriceCache.findFirst({
       where: {
         originIata,
         destinationIata,
-        // In a real app, cache would also split by airlinePreference, but we mock it here
       },
       orderBy: { fetchedAt: 'desc' }
     });
@@ -43,12 +73,10 @@ export async function getEstimatedFlightPrice(country: string, startDate: Date, 
       if (ageHours < CACHE_TTL_HOURS) {
         console.log(`[Flight Cache HIT] Using cached price for ${originIata}-${destinationIata}`);
         
-        let cachedPrice = cached.priceAmount;
-        if (airlinePreference === "fullservice") cachedPrice *= 1.5;
-        else cachedPrice *= 0.8;
+        const finalPrice = applyFlightAlgorithm(cached.priceAmount);
 
         return {
-          price: Math.round(cachedPrice),
+          price: finalPrice,
           currency: cached.currency,
           source: 'CACHE',
           provider: cached.provider,
@@ -65,15 +93,7 @@ export async function getEstimatedFlightPrice(country: string, startDate: Date, 
     
     // Generate slight fluctuation for realism (+- 5%)
     const fluctuation = 1 + ((Math.random() * 0.1) - 0.05);
-    
-    let basePrice = mockInfo.price;
-    if (airlinePreference === "fullservice") {
-      basePrice *= 1.5;
-    } else {
-      basePrice *= 0.8;
-    }
-
-    const newPrice = Math.round(basePrice * fluctuation);
+    const rawBasePrice = Math.round(mockInfo.price * fluctuation);
 
     // 3. Save to Cache
     const newRecord = await prisma.flightPriceCache.create({
@@ -82,14 +102,16 @@ export async function getEstimatedFlightPrice(country: string, startDate: Date, 
         destinationIata,
         departureDate: startDate,
         returnDate: endDate,
-        priceAmount: newPrice,
+        priceAmount: rawBasePrice, // Save the RAW market base price
         currency: "THB",
         provider: "AMADEUS_MOCK_API"
       }
     });
 
+    const finalPrice = applyFlightAlgorithm(rawBasePrice);
+
     return {
-      price: newRecord.priceAmount,
+      price: finalPrice,
       currency: newRecord.currency,
       source: 'LIVE_API',
       provider: newRecord.provider,
@@ -99,8 +121,9 @@ export async function getEstimatedFlightPrice(country: string, startDate: Date, 
   } catch (error) {
     console.error("Flight pricing error:", error);
     // Fallback if DB fails
+    const finalPrice = applyFlightAlgorithm(mockInfo.price);
     return {
-      price: mockInfo.price,
+      price: finalPrice,
       currency: "THB",
       source: 'FALLBACK',
       provider: 'STATIC_FALLBACK',
