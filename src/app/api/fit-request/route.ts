@@ -243,6 +243,12 @@ ${referenceTourItinerary}
 คำแนะนำ: คุณสามารถใช้ข้อมูลสถานที่ท่องเที่ยว, โรงแรม, หรือกิจกรรม จากทัวร์ต้นแบบมาเป็นไอเดียในการจัดทริปให้ลูกค้าได้ เพื่อความสมจริงและเฉพาะเจาะจงมากขึ้น แต่ปรับจำนวนวันให้ตรงกับที่ลูกค้าขอ (${finalDurationDays} วัน)
 ` : ""}
 
+${pricingData.recommendedHotel ? `
+ข้อมูลโรงแรมแนะนำ (บังคับใช้):
+- ให้ระบุชื่อโรงแรมเป็น "${pricingData.recommendedHotel.name}" สำหรับวันที่มีการเข้าพัก
+- และบังคับคืนค่า hotelImageUrl ใน JSON ของวันนั้นๆ เป็น "${pricingData.recommendedHotel.imageUrl}"
+` : ""}
+
 กฎการสร้าง JSON:
 1. "title": ตั้งชื่อทริปให้น่าสนใจ (ภาษาไทย)
 2. "marketingHeadline": สโลแกนสั้นๆ ดึงดูดใจ
@@ -284,6 +290,7 @@ IMPORTANT: "exclusions" MUST BE EXACTLY this array:
       "detail": "string",
       "meals": {"breakfast": boolean,"lunch": boolean,"dinner": boolean},
       "hotel": "string",
+      "hotelImageUrl": "string (ถ้าไม่มีให้ใส่ null)",
       "imagePrompt": "string (A short ENGLISH phrase describing the main tourist attraction of this day, optimized for AI image generation.)"
     }
   ],

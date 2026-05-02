@@ -21,6 +21,30 @@ const regionMultiplier: Record<string, number> = {
   "เวียดนาม": 0.8,
 };
 
+// Real Hotel Data Mock
+const realHotelsMock: Record<string, Record<number, {name: string, imageUrl: string}>> = {
+  "ญี่ปุ่น": {
+    3: { name: "APA Hotel Shinjuku Kabukicho Tower", imageUrl: "https://images.unsplash.com/photo-1590447158019-883d815f8bc1?w=800&q=80" },
+    4: { name: "Hotel Gracery Shinjuku (Godzilla Hotel)", imageUrl: "https://images.unsplash.com/photo-1542314831-c6a4d1409b1c?w=800&q=80" },
+    5: { name: "The Ritz-Carlton, Tokyo", imageUrl: "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&q=80" }
+  },
+  "เกาหลี": {
+    3: { name: "Ibis Styles Ambassador Seoul Myeongdong", imageUrl: "https://images.unsplash.com/photo-1555854877-bab0e564b8d5?w=800&q=80" },
+    4: { name: "Lotte Hotel Seoul", imageUrl: "https://images.unsplash.com/photo-1582719508461-905c673771fd?w=800&q=80" },
+    5: { name: "The Shilla Seoul", imageUrl: "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&q=80" }
+  },
+  "ยุโรป": {
+    3: { name: "Ibis Paris Tour Eiffel", imageUrl: "https://images.unsplash.com/photo-1551882547-ff40c0d5e9af?w=800&q=80" },
+    4: { name: "Novotel London West", imageUrl: "https://images.unsplash.com/photo-1542314831-c6a4d1409b1c?w=800&q=80" },
+    5: { name: "The Savoy, London", imageUrl: "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&q=80" }
+  },
+  "default": {
+    3: { name: "Standard City Hotel", imageUrl: "https://images.unsplash.com/photo-1551882547-ff40c0d5e9af?w=800&q=80" },
+    4: { name: "Premium Grand Hotel", imageUrl: "https://images.unsplash.com/photo-1582719508461-905c673771fd?w=800&q=80" },
+    5: { name: "Luxury Resort & Spa", imageUrl: "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&q=80" }
+  }
+};
+
 export async function getEstimatedHotelPrice(
   cityOrCountry: string, 
   hotelStars: number, 
@@ -129,6 +153,10 @@ export async function getEstimatedHotelPrice(
     const serviceFee = 300; // Fixed booking service fee
     const grandTotal = Math.round(hotelTotal + taxEstimate + serviceFee);
 
+    // 5. Get Recommended Hotel Data
+    const countryKey = Object.keys(realHotelsMock).find(key => cityOrCountry.includes(key)) || "default";
+    const recommendedHotel = realHotelsMock[countryKey][stars] || realHotelsMock["default"][stars];
+
     return {
       pricePerNight,
       nights,
@@ -137,7 +165,8 @@ export async function getEstimatedHotelPrice(
       currency: "THB",
       source: rawBasePrice === cached?.pricePerNight ? 'CACHE' : 'LIVE_API',
       provider,
-      fetchedAt
+      fetchedAt,
+      recommendedHotel
     };
 
   } catch (error) {
@@ -147,6 +176,9 @@ export async function getEstimatedHotelPrice(
     const pricePerNight = applyHotelAlgorithm(rawFallback);
     const fallbackTotal = pricePerNight * nights * rooms * 1.07 + 300;
     
+    const countryKey = Object.keys(realHotelsMock).find(key => cityOrCountry.includes(key)) || "default";
+    const recommendedHotel = realHotelsMock[countryKey][stars] || realHotelsMock["default"][stars];
+
     return {
       pricePerNight,
       nights,
@@ -155,7 +187,8 @@ export async function getEstimatedHotelPrice(
       currency: "THB",
       source: 'FALLBACK',
       provider: 'STATIC_FALLBACK',
-      fetchedAt: new Date()
+      fetchedAt: new Date(),
+      recommendedHotel
     };
   }
 }

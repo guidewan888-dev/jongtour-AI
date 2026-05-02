@@ -34,6 +34,11 @@ export default function InteractiveItinerary({ itinerary }: { itinerary: any }) 
   const [weather, setWeather] = useState<{temp: number, desc: string} | null>(null);
   const shareCardRef = useRef<HTMLDivElement>(null);
   const [isGeneratingShare, setIsGeneratingShare] = useState(false);
+  const [expandedHotelImages, setExpandedHotelImages] = useState<Record<number, boolean>>({});
+
+  const toggleHotelImage = (dayIndex: number) => {
+    setExpandedHotelImages(prev => ({...prev, [dayIndex]: !prev[dayIndex]}));
+  };
 
   useEffect(() => {
     // Fetch Wikipedia Cover Image
@@ -724,11 +729,28 @@ export default function InteractiveItinerary({ itinerary }: { itinerary: any }) 
                       ))}
                     </div>
                   )}
-                  <p className="text-[13px] font-bold text-orange-600 outline-none focus:bg-orange-50 focus:ring-2 focus:ring-orange-200 rounded px-1" contentEditable suppressContentEditableWarning>
-                    {d.hotel || "-"}
-                  </p>
+                  <div className="flex flex-col items-center gap-1">
+                    <p className="text-[13px] font-bold text-orange-600 outline-none focus:bg-orange-50 focus:ring-2 focus:ring-orange-200 rounded px-1" contentEditable suppressContentEditableWarning>
+                      {d.hotel || "-"}
+                    </p>
+                    {d.hotelImageUrl && d.hotelImageUrl !== "null" && (
+                      <button 
+                        onClick={() => toggleHotelImage(index)}
+                        className="text-[11px] bg-orange-100 hover:bg-orange-200 text-orange-700 px-2 py-0.5 rounded-full transition-colors font-bold no-print mt-1 flex items-center gap-1"
+                      >
+                        {expandedHotelImages[index] ? "ซ่อนรูป" : "🏨 ดูรูป"}
+                      </button>
+                    )}
+                  </div>
+                  
+                  {expandedHotelImages[index] && d.hotelImageUrl && d.hotelImageUrl !== "null" && (
+                    <div className="mt-2 w-full flex justify-center no-print animate-in fade-in slide-in-from-top-2">
+                      <img src={d.hotelImageUrl} alt="Hotel" className="max-w-[120px] max-h-[100px] object-cover rounded shadow-sm border border-orange-100" />
+                    </div>
+                  )}
+
                   {d.hotel && d.hotel !== "-" && (
-                    <span className="block text-[10px] text-gray-400 font-normal mt-1 leading-tight">
+                    <span className="block text-[10px] text-gray-400 font-normal mt-2 leading-tight">
                       หรือเทียบเท่าระดับเดียวกัน
                     </span>
                   )}

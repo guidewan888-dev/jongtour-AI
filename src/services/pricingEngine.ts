@@ -92,6 +92,7 @@ export async function calculateFitPrice(options: PricingOptions) {
   let hotelCostPerPax = 0;
   let activityCostPerPax = 0;
   let cacheCostPerPax = 0;
+  let recommendedHotel = undefined;
 
   if (referenceTourPrice && referenceTourPrice > 0) {
     // If we have a reference wholesale tour, use its price as the base for flight, hotel, and activities.
@@ -109,6 +110,7 @@ export async function calculateFitPrice(options: PricingOptions) {
     if (includeHotels) {
       const hotelData = await getEstimatedHotelPrice(country, hotelStars, durationDays, pax, start);
       hotelCostPerPax = hotelData.totalCost / pax;
+      recommendedHotel = hotelData.recommendedHotel;
     }
 
     // Activities (Assume always included if this is a tour)
@@ -142,6 +144,7 @@ export async function calculateFitPrice(options: PricingOptions) {
         activity: activityCostPerPax,
       },
       totalCost: totalCostPerPax
-    }
+    },
+    recommendedHotel
   };
 }
