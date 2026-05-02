@@ -6,13 +6,18 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const { durationDays, pax, hotelStars, country, airlinePreference, startDate } = body;
 
-    const pricingData = calculateFitPrice({
+    const pricingData = await calculateFitPrice({
       durationDays: durationDays || 3,
       pax: pax || 2,
       hotelStars: hotelStars || 3,
       country: country || "Unknown",
       airlinePreference: airlinePreference || "Low-cost",
-      startDate: startDate || new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString() // Default to 2 months from now
+      startDate: startDate || new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString(),
+      includeFlights: true,
+      includeHotels: true,
+      includeTransport: true,
+      includeGuide: true,
+      includeInsurance: true
     });
 
     const estimatedPrice = `${pricingData.sellingPricePerPax.toLocaleString()} THB/ท่าน`;

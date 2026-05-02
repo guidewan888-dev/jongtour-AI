@@ -18,6 +18,7 @@ export default function InteractiveItinerary({ itinerary }: { itinerary: any }) 
   const [editPrompt, setEditPrompt] = useState("");
   const [isRegenerating, setIsRegenerating] = useState(false);
   const [pax, setPax] = useState(2);
+  const [hotelStars, setHotelStars] = useState(itinerary?.hotelStars || 3);
   const [estimatedPrice, setEstimatedPrice] = useState(itinerary?.estimatedPrice || "");
   const [isCalculatingPrice, setIsCalculatingPrice] = useState(false);
 
@@ -37,7 +38,7 @@ export default function InteractiveItinerary({ itinerary }: { itinerary: any }) 
           body: JSON.stringify({
             durationDays: days.length,
             pax: pax,
-            hotelStars: itinerary?.hotelStars || 3,
+            hotelStars: hotelStars,
             country: country,
             airlinePreference: airlinePref
           })
@@ -58,7 +59,7 @@ export default function InteractiveItinerary({ itinerary }: { itinerary: any }) 
     }, 600);
 
     return () => clearTimeout(timer);
-  }, [days.length, pax, localAirline, itinerary?.country, itinerary?.title, itinerary?.hotelStars]);
+  }, [days.length, pax, localAirline, hotelStars, itinerary?.country, itinerary?.title]);
 
   const addDay = () => {
     const newDayNum = days.length + 1;
@@ -290,6 +291,17 @@ export default function InteractiveItinerary({ itinerary }: { itinerary: any }) 
               <button className="px-2 py-1 hover:bg-gray-100 rounded text-gray-500 no-print" onClick={() => setPax(pax + 1)}>+</button>
             </div>
 
+            {/* Hotel Stars Badge */}
+            <div className="bg-white border border-gray-200 text-gray-800 text-xs font-bold px-1 py-1 rounded-lg flex items-center shadow-sm">
+              <button className="px-2 py-1 hover:bg-gray-100 rounded text-gray-500 no-print" onClick={() => setHotelStars(Math.max(1, hotelStars - 1))}>-</button>
+              <div className="flex items-center gap-0.5 px-2 min-w-[60px] justify-center">
+                {[...Array(hotelStars)].map((_, i) => (
+                  <Star key={i} className="w-3 h-3 fill-orange-400 text-orange-400" />
+                ))}
+              </div>
+              <button className="px-2 py-1 hover:bg-gray-100 rounded text-gray-500 no-print" onClick={() => setHotelStars(Math.min(5, hotelStars + 1))}>+</button>
+            </div>
+
             {/* Price Badge */}
             <div className="ml-auto flex flex-col items-start md:items-end">
               <div className="text-gray-500 text-[10px] font-bold mb-0.5 uppercase tracking-wider flex items-center gap-1.5">
@@ -489,7 +501,7 @@ export default function InteractiveItinerary({ itinerary }: { itinerary: any }) 
                 <td className="py-4 px-4 text-center align-middle border-l border-gray-100">
                   {d.hotel && d.hotel !== "-" && (
                     <div className="flex justify-center gap-0.5 mb-1.5">
-                      {[...Array(itinerary.hotelStars || 3)].map((_, i) => (
+                      {[...Array(hotelStars)].map((_, i) => (
                         <Star key={i} className="w-3 h-3 fill-orange-400 text-orange-400" />
                       ))}
                     </div>
