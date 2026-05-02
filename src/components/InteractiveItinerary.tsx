@@ -421,8 +421,8 @@ export default function InteractiveItinerary({ itinerary }: { itinerary: any }) 
         {/* Content Left Side */}
         <div className="relative z-40 p-6 md:p-10 md:w-3/5 h-full flex flex-col justify-center">
           {/* Jongtour Logo */}
-          <div className="flex items-center gap-2 mb-4 -ml-6 md:-ml-10">
-            <img src="/images/logos/logo_transparent.png" alt="Jongtour Logo" className="h-24 object-contain drop-shadow-md" crossOrigin="anonymous" />
+          <div className="flex justify-start items-center gap-2 mb-4 -ml-6 md:-ml-10">
+            <img src="/images/logos/logo_transparent.png" alt="Jongtour Logo" className="h-24 w-auto object-contain object-left drop-shadow-md -ml-4 md:-ml-8" crossOrigin="anonymous" />
           </div>
 
           {/* Ribbon Badge */}

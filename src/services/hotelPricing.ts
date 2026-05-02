@@ -169,8 +169,8 @@ export async function getEstimatedHotelPrice(
     const grandTotal = Math.round(hotelTotal + taxEstimate + serviceFee);
 
     // 5. Get Recommended Hotel Data
-    const countryKey = Object.keys(realHotelsMock).find(key => cityOrCountry.includes(key)) || "default";
-    const recommendedHotel = realHotelsMock[countryKey][stars] || realHotelsMock["default"][stars];
+    const countryKey = Object.keys(realHotelsMock).find(key => cityOrCountry.includes(key));
+    const recommendedHotel = countryKey ? (realHotelsMock[countryKey][stars] || null) : null;
 
     return {
       pricePerNight,
@@ -191,8 +191,8 @@ export async function getEstimatedHotelPrice(
     const pricePerNight = applyHotelAlgorithm(rawFallback);
     const fallbackTotal = pricePerNight * nights * rooms * 1.07 + 300;
     
-    const countryKey = Object.keys(realHotelsMock).find(key => cityOrCountry.includes(key)) || "default";
-    const recommendedHotel = realHotelsMock[countryKey][stars] || realHotelsMock["default"][stars];
+    const countryKey = Object.keys(realHotelsMock).find(key => cityOrCountry.includes(key));
+    const recommendedHotel = countryKey ? (realHotelsMock[countryKey][stars] || null) : null;
 
     return {
       pricePerNight,
