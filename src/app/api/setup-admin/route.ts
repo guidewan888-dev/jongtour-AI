@@ -60,7 +60,8 @@ export async function GET(request: Request) {
             email,
             role: 'ADMIN',
             password: 'OAUTH_USER', // Dummy password for DB, auth handled by Supabase
-            name: 'Jongtour Admin'
+            name: 'Jongtour Admin',
+            updatedAt: new Date().toISOString()
         }, { onConflict: 'email' });
 
     if (dbError) {
