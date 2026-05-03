@@ -1,41 +1,76 @@
-import { Skeleton } from '@/components/ui/Skeleton';
+import { createClient } from '@/utils/supabase/server';
+import { cookies } from 'next/headers';
+import Link from 'next/link';
+import { Calendar, Clock, ChevronRight } from 'lucide-react';
 
-export default function BlogPage() {
+export const dynamic = 'force-dynamic';
+
+export default async function BlogListingPage() {
+  const cookieStore = await cookies();
+  const supabase = createClient(cookieStore);
+
+  // Fetch blogs from Supabase, order by published_at descending
+  // Assuming table `blogs` exists with columns: id, title, slug, excerpt, cover_image, published_at, category
+  const { data: blogs, error } = await supabase
+    .from('blogs')
+    .select('*')
+    .eq('status', 'PUBLISHED')
+    .order('published_at', { ascending: false });
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-      <div className="text-center mb-16">
-        <h1 className="text-4xl md:text-5xl font-black text-slate-900 tracking-tight mb-4">บทความท่องเที่ยว (Blog)</h1>
-        <p className="text-xl text-slate-600">อัปเดตเทรนด์ท่องเที่ยว รีวิวร้านอาหาร และสถานที่อันซีนทั่วโลกโดยทีมงาน Jongtour</p>
+      <div className="text-center max-w-3xl mx-auto mb-16">
+        <h1 className="text-4xl md:text-5xl font-black text-slate-900 mb-6 tracking-tight">บทความท่องเที่ยว</h1>
+        <p className="text-lg text-slate-500 font-medium">อัปเดตเทรนด์ท่องเที่ยว รีวิวสถานที่น่าสนใจ และทิปส์การเดินทางจากผู้เชี่ยวชาญ Jongtour</p>
       </div>
 
-      {/* Categories */}
-      <div className="flex flex-wrap justify-center gap-3 mb-12">
-        <span className="px-5 py-2 rounded-full bg-blue-600 text-white font-medium text-sm cursor-pointer">ทั้งหมด</span>
-        <span className="px-5 py-2 rounded-full bg-slate-100 text-slate-600 font-medium text-sm hover:bg-slate-200 cursor-pointer">รีวิวทัวร์</span>
-        <span className="px-5 py-2 rounded-full bg-slate-100 text-slate-600 font-medium text-sm hover:bg-slate-200 cursor-pointer">แนะนำของกิน</span>
-        <span className="px-5 py-2 rounded-full bg-slate-100 text-slate-600 font-medium text-sm hover:bg-slate-200 cursor-pointer">ข่าวสาร</span>
-      </div>
+      {error && (
+        <div className="bg-amber-50 border border-amber-200 text-amber-800 p-6 rounded-2xl mb-8">
+          <h3 className="font-bold text-lg mb-2">ยังไม่มีบทความในระบบ</h3>
+          <p>กรุณาสร้าง Table `blogs` ใน Supabase และเพิ่มข้อมูลบทความเพื่อแสดงผลที่นี่</p>
+        </div>
+      )}
 
-      {/* Articles Grid (Simulated with Skeletons as CMS is not connected yet) */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-        {[1, 2, 3, 4, 5, 6].map((i) => (
-          <div key={i} className="flex flex-col group cursor-pointer">
-            <div className="relative h-56 rounded-2xl overflow-hidden mb-4 bg-slate-100">
-              <Skeleton className="absolute inset-0 w-full h-full" />
-            </div>
-            <div className="flex items-center gap-2 mb-2">
-              <span className="text-xs font-bold text-blue-600 uppercase tracking-wider">อัปเดตล่าสุด</span>
-              <span className="text-xs text-slate-400">• 2 วันที่แล้ว</span>
-            </div>
-            <h3 className="text-xl font-bold text-slate-900 mb-2 group-hover:text-blue-600 transition-colors">
-              Loading Article Title...
-            </h3>
-            <p className="text-slate-500 text-sm line-clamp-2">
-              กำลังเชื่อมต่อข้อมูลบทความจากระบบ CMS (Content Management System) เนื้อหาจะแสดงที่นี่เร็วๆ นี้
-            </p>
-          </div>
-        ))}
-      </div>
+      {blogs && blogs.length === 0 && !error && (
+        <div className="text-center py-20 bg-slate-50 rounded-3xl border border-slate-100">
+          <p className="text-slate-500 text-lg">ยังไม่มีบทความในขณะนี้ กลับมาใหม่เร็วๆ นี้นะครับ</p>
+        </div>
+      )}
+
+      {blogs && blogs.length > 0 && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {blogs.map((blog: any) => (
+            <Link key={blog.id} href={`/blog/${blog.slug}`} className="group bg-white border border-slate-100 rounded-3xl overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col">
+              <div className="relative h-64 overflow-hidden">
+                <img 
+                  src={blog.cover_image || 'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?q=80&w=1000&auto=format&fit=crop'} 
+                  alt={blog.title}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                />
+                {blog.category && (
+                  <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold text-indigo-600 shadow-sm">
+                    {blog.category}
+                  </div>
+                )}
+              </div>
+              <div className="p-8 flex flex-col flex-1">
+                <div className="flex items-center gap-4 text-xs font-medium text-slate-400 mb-4">
+                  <span className="flex items-center gap-1"><Calendar className="w-3.5 h-3.5" /> {new Date(blog.published_at).toLocaleDateString('th-TH')}</span>
+                </div>
+                <h2 className="text-xl font-bold text-slate-900 mb-3 group-hover:text-indigo-600 transition-colors line-clamp-2">
+                  {blog.title}
+                </h2>
+                <p className="text-slate-500 text-sm leading-relaxed mb-6 line-clamp-3 flex-1">
+                  {blog.excerpt}
+                </p>
+                <div className="flex items-center text-indigo-600 font-semibold text-sm group-hover:gap-2 transition-all">
+                  อ่านต่อ <ChevronRight className="w-4 h-4" />
+                </div>
+              </div>
+            </Link>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
