@@ -80,7 +80,7 @@ export async function middleware(req: NextRequest) {
   const isAdminPath = url.pathname.startsWith('/admin') || isAdminSubdomain;
   const isB2bPath = url.pathname.startsWith('/b2b') || isBookingSubdomain;
   const isTourCmsPath = url.pathname.startsWith('/tour-cms') || isTourSubdomain;
-  const isAuthPath = url.pathname.startsWith('/auth');
+  const isAuthPath = url.pathname.startsWith('/auth') || url.pathname.startsWith('/login');
 
   // Paths that should not be rewritten or blocked
   const excludePaths = ['/api', '/_next', '/favicon.ico', '/images'];
@@ -91,6 +91,11 @@ export async function middleware(req: NextRequest) {
   }
 
   // Authentication Guards
+  if ((isAdminSubdomain || isBookingSubdomain) && url.pathname.startsWith('/login')) {
+    url.pathname = '/auth/login';
+    return NextResponse.redirect(url);
+  }
+
   if ((isAdminPath || isB2bPath || isTourCmsPath) && !isAuthPath && !user) {
     // Not logged in -> Redirect to login
     url.pathname = '/auth/login';
@@ -98,10 +103,17 @@ export async function middleware(req: NextRequest) {
   }
 
   if (isAuthPath && user) {
-    // Already logged in -> Redirect to B2B or Admin
-    // Ideally we fetch role from Prisma here, but we can't use Prisma client in Edge Runtime easily.
-    // For now, redirect to /b2b as default, and the b2b/admin/tour layouts can do the final role check.
-    url.pathname = '/b2b';
+    // If they have an error parameter (e.g. unauthorized), let them stay on the login page to see it
+    if (url.searchParams.has('error')) {
+      return response;
+    }
+
+    // Already logged in -> Redirect to B2B or Admin based on subdomain
+    if (isAdminSubdomain) {
+      url.pathname = '/';
+    } else {
+      url.pathname = '/b2b';
+    }
     return NextResponse.redirect(url);
   }
 

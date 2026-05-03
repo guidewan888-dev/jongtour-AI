@@ -5,7 +5,7 @@ import { ShieldCheck, MapPin, Calendar, Users, Info, Plus, ScanLine, Loader2 } f
 import { submitCheckout } from "@/app/actions/checkout";
 import { useSearchParams, useRouter } from "next/navigation";
 
-export default function CheckoutClient({ tour, departures }: { tour: any, departures: any[] }) {
+export default function CheckoutClient({ tour, departures, agentId }: { tour: any, departures: any[], agentId?: string }) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const initAdults = parseInt(searchParams.get('adults') || '2', 10);
@@ -133,6 +133,7 @@ export default function CheckoutClient({ tour, departures }: { tour: any, depart
       <input type="hidden" name="paymentType" value={effectivePaymentType} />
       <input type="hidden" name="totalPrice" value={totalPrice} />
       <input type="hidden" name="totalDeposit" value={totalDeposit} />
+      {agentId && <input type="hidden" name="agentId" value={agentId} />}
       
       <div className="flex flex-col lg:flex-row gap-8">
         

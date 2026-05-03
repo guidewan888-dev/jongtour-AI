@@ -27,9 +27,8 @@ export default function LoginPage() {
       if (error) throw error;
 
       // Check user role from Prisma by calling an API or we can just redirect and let middleware handle it
-      // For now, let's just refresh the router, which will trigger the middleware
-      router.refresh();
-      router.push("/b2b"); // Or /admin depending on role, middleware should ideally route this
+      // Let the server middleware handle the exact routing based on subdomain and authentication
+      window.location.href = "/";
       
     } catch (error: any) {
       setError(error.message || "Invalid login credentials");

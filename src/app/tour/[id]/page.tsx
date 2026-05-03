@@ -7,7 +7,7 @@ import { destinationConfig, findPathByKeyword, getDestinationData } from "@/lib/
 
 export const dynamic = "force-dynamic";
 
-async function TourDetailsContent({ params }: { params: { id: string } }) {
+export async function TourDetailsContent({ params, agentId }: { params: { id: string }, agentId?: string }) {
   // ดึงข้อมูลทัวร์จาก Database
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://qterfftaebnoawnzkfgu.supabase.co";
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || "sb_publishable_SRwNSJ89mInda5FcuB1W2w_9IEJlSOI";

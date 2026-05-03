@@ -27,11 +27,11 @@ export default async function B2BLayout({
     redirect("/auth/login");
   }
 
-  // Fetch user role
+  // Fetch user role using email instead of ID because Prisma uses CUID while Supabase uses UUID
   const { data: dbUser } = await supabase
     .from("User")
     .select("*, company:Company(*)")
-    .eq("id", user.id)
+    .eq("email", user.email || "")
     .single();
 
   if (!dbUser || (dbUser.role !== "AGENT" && dbUser.role !== "SUPPLIER" && dbUser.role !== "ADMIN")) {

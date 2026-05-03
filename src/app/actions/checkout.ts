@@ -36,6 +36,7 @@ export async function submitCheckout(formData: FormData) {
   const firstName = formData.get("firstName") as string;
   const lastName = formData.get("lastName") as string;
   const phone = formData.get("phone") as string;
+  const agentId = formData.get("agentId") as string | null;
   
   if (!departureId) {
     return { success: false, error: "กรุณาเลือกรอบเดินทาง" };
@@ -69,6 +70,7 @@ export async function submitCheckout(formData: FormData) {
       children,
       singleRooms,
       paymentType,
+      agentId: agentId || null,
       depositAmount: paymentType === 'deposit' ? depositAmount : null,
       updatedAt: new Date().toISOString()
     })

@@ -13,10 +13,12 @@ export default async function B2BDashboardPage() {
   let dbUser = null;
   let company = null;
   let tourCount = 0;
+  let recentBookings: any[] = [];
+  let totalBookings = 0;
   
   if (user) {
     dbUser = await prisma.user.findUnique({
-      where: { id: user.id },
+      where: { email: user.email || "" },
       include: { company: true }
     });
     
@@ -26,14 +28,49 @@ export default async function B2BDashboardPage() {
         tourCount = await prisma.tour.count({
           where: { supplierId: company.id }
         });
+        
+        // Supplier sees bookings for their tours
+        const supplierTours = await prisma.tour.findMany({
+          where: { supplierId: company.id },
+          select: { id: true }
+        });
+        const tourIds = supplierTours.map(t => t.id);
+        
+        totalBookings = await prisma.booking.count({
+          where: { departure: { tourId: { in: tourIds } } }
+        });
+        
+        recentBookings = await prisma.booking.findMany({
+          where: { departure: { tourId: { in: tourIds } } },
+          orderBy: { createdAt: 'desc' },
+          take: 5,
+          include: {
+            departure: { include: { tour: true } },
+            agent: true
+          }
+        });
       } else {
         tourCount = await prisma.tour.count(); // Agent sees all tours
+        
+        // Agent sees their own bookings
+        totalBookings = await prisma.booking.count({
+          where: { agentId: company.id }
+        });
+        
+        recentBookings = await prisma.booking.findMany({
+          where: { agentId: company.id },
+          orderBy: { createdAt: 'desc' },
+          take: 5,
+          include: {
+            departure: { include: { tour: true } }
+          }
+        });
       }
     }
   }
 
   const stats = [
-    { label: "Total Bookings", value: "0", change: "0%", icon: <Receipt className="text-blue-500" /> },
+    { label: "Total Bookings", value: totalBookings.toString(), change: "0%", icon: <Receipt className="text-blue-500" /> },
     { label: company?.type === 'SUPPLIER' ? "My Tours" : "Available Tours", value: tourCount.toString(), change: "-", icon: <Package className="text-indigo-500" /> },
     { label: "Status", value: company?.type || "AGENT", change: "Active", icon: <Building2 className="text-emerald-500" /> },
     { label: "Credit Limit (THB)", value: `฿${(company?.creditLimit || 0).toLocaleString()}`, change: "-", icon: <TrendingUp className="text-amber-500" /> },
@@ -96,25 +133,36 @@ export default async function B2BDashboardPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200 bg-white">
-                {[
-                  { ref: "BK-2026-0501", agent: "Global Travel Co.", tour: "Japan Classic 5D3N", date: "Oct 12, 2026", amount: "฿125,000", status: "Confirmed", statusColor: "bg-emerald-100 text-emerald-700" },
-                  { ref: "BK-2026-0502", agent: "Siam Holiday", tour: "Swiss Alps Explorer", date: "Nov 05, 2026", amount: "฿340,000", status: "Pending", statusColor: "bg-amber-100 text-amber-700" },
-                  { ref: "BK-2026-0503", agent: "Wanderlust TH", tour: "Vietnam Danang", date: "Sep 20, 2026", amount: "฿45,000", status: "Paid", statusColor: "bg-blue-100 text-blue-700" },
-                  { ref: "BK-2026-0504", agent: "Global Travel Co.", tour: "Korea Winter Snow", date: "Dec 15, 2026", amount: "฿88,000", status: "Confirmed", statusColor: "bg-emerald-100 text-emerald-700" },
-                ].map((row, i) => (
-                  <tr key={i} className="hover:bg-slate-50 transition-colors">
-                    <td className="px-6 py-4 font-medium text-slate-900">{row.ref}</td>
-                    <td className="px-6 py-4 text-slate-600">{row.agent}</td>
-                    <td className="px-6 py-4 text-slate-600">{row.tour}</td>
-                    <td className="px-6 py-4 text-slate-600">{row.date}</td>
-                    <td className="px-6 py-4 font-medium text-slate-900">{row.amount}</td>
-                    <td className="px-6 py-4">
-                      <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${row.statusColor}`}>
-                        {row.status}
-                      </span>
+                {recentBookings.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="px-6 py-8 text-center text-slate-500">
+                      ไม่มีรายการจองล่าสุด
                     </td>
                   </tr>
-                ))}
+                ) : (
+                  recentBookings.map((booking) => {
+                    let statusColor = "bg-slate-100 text-slate-700";
+                    if (booking.status === 'CONFIRMED' || booking.status === 'FULL_PAID') statusColor = "bg-emerald-100 text-emerald-700";
+                    else if (booking.status === 'PENDING') statusColor = "bg-amber-100 text-amber-700";
+                    else if (booking.status === 'CANCELLED') statusColor = "bg-red-100 text-red-700";
+                    else if (booking.status === 'DEPOSIT_PAID') statusColor = "bg-blue-100 text-blue-700";
+                    
+                    return (
+                      <tr key={booking.id} className="hover:bg-slate-50 transition-colors">
+                        <td className="px-6 py-4 font-medium text-slate-900">{booking.id.substring(0,8).toUpperCase()}</td>
+                        <td className="px-6 py-4 text-slate-600">{booking.agent?.name || company?.name || 'Direct'}</td>
+                        <td className="px-6 py-4 text-slate-600">{booking.departure?.tour?.title || 'Unknown Tour'}</td>
+                        <td className="px-6 py-4 text-slate-600">{new Date(booking.createdAt).toLocaleDateString('th-TH')}</td>
+                        <td className="px-6 py-4 font-medium text-slate-900">฿{booking.totalPrice.toLocaleString()}</td>
+                        <td className="px-6 py-4">
+                          <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${statusColor}`}>
+                            {booking.status}
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
               </tbody>
             </table>
           </div>

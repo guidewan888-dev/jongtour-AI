@@ -138,8 +138,6 @@ export const getQualityCheckerPrompt = (
 
 หน้าที่ของคุณคือตรวจคำตอบสุดท้ายก่อนส่งให้ลูกค้า
 
-ให้ตรวจสอบเรื่อง Supplier อย่างเข้มงวด:
-
 requested_supplier_id:
 ${requestedSupplierId}
 
@@ -152,20 +150,20 @@ ${JSON.stringify(tours.map((t: any) => ({ id: t.id, title: t.title, supplier_id:
 AI_RESPONSE_TO_VALIDATE:
 ${finalOutputText}
 
-กฎตรวจสอบ:
-1. ถ้า requested_supplier_id มีค่า ทุก tour ใน final_tour_results ต้องมี supplier_id ตรงกับ requested_supplier_id
-2. ถ้ามี tour ใด supplier_id ไม่ตรง ให้ approved = false ทันที
-3. ถ้าคำตอบอ้างว่าเป็นของ "${requestedSupplierName}" แต่ tour.supplier_id ไม่ใช่ supplier_id ของ ${requestedSupplierName} ให้ approved = false ทันที
-4. ถ้าไม่พบผลลัพธ์ของ Supplier ที่ระบุ คำตอบที่ถูกต้องคือต้องบอกว่าไม่พบ ไม่ใช่แนะนำ Supplier อื่น
-5. ถ้าจะเสนอ Supplier อื่น ต้องถามลูกค้าก่อนว่า “ต้องการให้ผมหาเจ้าอื่นให้ไหมครับ?”
+กฎตรวจสอบ (โปรดอ่านอย่างละเอียด):
+1. ตรวจสอบว่า final_tour_results มีข้อมูลทัวร์หรือไม่
+   - ถ้า "มีข้อมูลทัวร์" และทุกทัวร์มี supplier_id ตรงกับ requested_supplier_id ให้คุณตอบ approved = true เสมอ
+   - ถ้า "ไม่มีข้อมูลทัวร์เลย" (array ว่าง) ให้คุณตอบ approved = true เฉพาะกรณีที่ AI_RESPONSE_TO_VALIDATE บอกลูกค้าตรงๆ ว่า "ไม่พบโปรแกรม"
+2. กรณีที่จะให้ approved = false ทันที มีแค่ 2 กรณีนี้เท่านั้น:
+   - มีข้อมูลทัวร์ที่ supplier_id ไม่ตรงกับ requested_supplier_id ปะปนมา
+   - ไม่มีข้อมูลทัวร์เลย แต่ AI ดันเสนอทัวร์ของ Supplier อื่นโดยไม่ได้ถามลูกค้าก่อน
 
 ตอบกลับเป็น JSON เท่านั้น:
 {
   "approved": boolean,
-  "reason": "string",
-  "invalid_tours": [],
+  "reason": "คำอธิบายสั้นๆ ว่าทำไมถึงให้ผ่านหรือไม่ผ่าน",
   "safe_response": "string or null"
 }
 
-ถ้าไม่ผ่าน ให้ใส่ safe_response เป็น:
+ถ้าให้ approved = false ให้ใส่ safe_response เป็น:
 "ยังไม่พบโปรแกรมของ ${requestedSupplierName} ตามเงื่อนไขนี้ครับ\n\nเงื่อนไขที่ค้นหา:\n- Supplier: ${requestedSupplierName}\n\nต้องการให้ผมหาโปรแกรมจาก Supplier เจ้าอื่นที่ใกล้เคียงให้ไหมครับ?"`;
