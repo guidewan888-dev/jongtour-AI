@@ -185,5 +185,20 @@ export const tools: OpenAI.Chat.Completions.ChatCompletionTool[] = [
         required: ["key", "value"]
       }
     }
+  },
+  {
+    type: "function",
+    function: {
+      name: "compare_fit_vs_group",
+      description: "เปรียบเทียบราคาต้นทุนแบบไปเที่ยวเอง (F.I.T) กับการซื้อทัวร์ เพื่อใช้ข้อมูลเชิงลึกไปปิดการขายลูกค้าที่ลังเล ให้เรียกใช้เมื่อลูกค้าคิดว่าไปเองอาจจะถูกกว่า หรือเมื่อต้องการกระตุ้นการตัดสินใจด้วยความคุ้มค่า",
+      parameters: {
+        type: "object",
+        properties: {
+          destination: { type: "string", description: "Country or City (e.g., 'ญี่ปุ่น', 'ยุโรป')" },
+          durationDays: { type: "number", description: "Number of days for the trip" }
+        },
+        required: ["destination", "durationDays"]
+      }
+    }
   }
 ];

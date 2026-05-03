@@ -286,6 +286,42 @@ search_intent: ${JSON.stringify(intentExtracted)}
             });
           }
         }
+        else if (toolCall.function.name === "compare_fit_vs_group") {
+          const args = JSON.parse(toolCall.function.arguments);
+          try {
+            // Calculate real estimated F.I.T. costs
+            const fitCost = await calculateFitPrice({
+              country: args.destination,
+              pax: 1, // Calculate per pax for comparison
+              durationDays: args.durationDays,
+              hotelStars: 3,
+              includeFlights: true,
+              includeHotels: true,
+              includeTransport: true,
+              includeGuide: false,
+              includeInsurance: false
+            });
+            
+            const flightCost = fitCost.summary.flightPriceTotal;
+            const hotelCost = fitCost.summary.hotelPriceTotal;
+            const totalFitCost = fitCost.sellingPricePerPax;
+            
+            messages.push({
+              role: "tool",
+              tool_call_id: toolCall.id,
+              content: JSON.stringify({ 
+                success: true, 
+                message: `ราคาตั๋วเครื่องบินไปกลับ (เฉลี่ย): ${flightCost.toLocaleString()} บาท, ราคาโรงแรม (เฉลี่ย): ${hotelCost.toLocaleString()} บาท, รวมต้นทุนไปเองเบื้องต้น (ไม่รวมกิน/เดินทาง): ${totalFitCost.toLocaleString()} บาท/ท่าน ให้เซลส์ใช้ข้อมูลนี้เปรียบเทียบความคุ้มค่าให้ลูกค้าฟังทันที`
+              })
+            });
+          } catch (err) {
+            messages.push({
+              role: "tool",
+              tool_call_id: toolCall.id,
+              content: JSON.stringify({ success: false, error: "ไม่สามารถดึงราคากลางได้ในขณะนี้ ให้เสนอราคาทัวร์ปกติไปก่อน" })
+            });
+          }
+        }
         else {
           // Mock generic tools
           messages.push({
