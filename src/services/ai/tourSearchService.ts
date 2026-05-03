@@ -11,6 +11,10 @@ export async function searchTours(
   // STRICT B2B LOCK: Force supplier_id from Intent Extractor if present
   if (intentExtracted?.supplier_filter_required && intentExtracted?.matched_supplier?.supplier_id) {
     args.supplier_id = intentExtracted.matched_supplier.supplier_id;
+  } else {
+    // If the user didn't explicitly ask for a supplier in the current message,
+    // we MUST ignore any supplier_id that GPT carried over from chat history.
+    delete args.supplier_id;
   }
 
   let query = supabase.from('Tour').select('*, departures:TourDeparture(*)');
