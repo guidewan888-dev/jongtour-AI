@@ -2,7 +2,7 @@
 import { Button } from '@/components/ui/Button';
 import { DataTable } from '@/components/ui/DataTable';
 import { Badge } from '@/components/ui/Badge';
-import { Flame, Clock, TrendingDown, Plus } from 'lucide-react';
+import { Flame, Clock, TrendingDown, Plus, Search } from 'lucide-react';
 import { Input } from '@/components/ui/Input';
 
 export default function FireSaleManagerPage() {
