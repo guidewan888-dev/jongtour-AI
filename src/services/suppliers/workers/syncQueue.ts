@@ -13,94 +13,63 @@ export async function processTourDetailSync(supplierId: string, externalTourId: 
     
     // 1. Fetch detailed info and departures
     const detail = await adapter.getTourDetail(externalTourId);
-    const departures = await adapter.getDepartures(externalTourId);
+    const rawDepartures = await adapter.getDepartures(externalTourId);
     
+    // Check if supplier exists, create if not
+    const { data: supplierData } = await supabase.from('suppliers').select('id').eq('id', supplierId).single();
+    if (!supplierData) {
+      const supplierName = supplierId === 'SUP_LETGO' ? "Let's Go" : supplierId === 'SUP_TOURFACTORY' ? "Tour Factory" : "Check In Group";
+      await supabase.from('suppliers').insert({
+        id: supplierId,
+        canonicalName: supplierName.toLowerCase().replace(/ /g, ''),
+        displayName: supplierName,
+        status: 'ACTIVE',
+        bookingMethod: 'API',
+        updatedAt: new Date().toISOString()
+      });
+    }
+
     // 2. Store Raw Data for audit
-    await supabase.from('TourRawData').upsert({
+    await supabase.from('tour_raw_sources').upsert({
       supplierId,
       externalTourId,
-      rawPayload: { detail, departures },
-      syncStatus: 'PROCESSED',
-      updatedAt: new Date().toISOString()
+      rawPayload: { detail, departures: rawDepartures },
+      rawHash: 'N/A',
+      sourceType: 'API',
+      syncedAt: new Date().toISOString()
     }, { onConflict: 'supplierId,externalTourId' });
 
-    // 3. Normalize
-    const normalizedTour = Normalizer.mapTour(supplierId, detail);
-    
     // Find existing tour to get its internal ID
     let tourId = null;
     const { data: existingTour } = await supabase
-      .from('Tour')
+      .from('tours')
       .select('id')
       .eq('externalTourId', externalTourId)
       .eq('supplierId', supplierId)
       .single();
 
-    if (existingTour) {
-      tourId = existingTour.id;
-      // Upsert Tour
-      await supabase.from('Tour').update({
-        ...normalizedTour,
-        isActive: true,
-        updatedAt: new Date().toISOString()
-      }).eq('id', tourId);
-    } else {
-      // Create new Tour
-      const { data: newTour } = await supabase.from('Tour').insert({
-        ...normalizedTour,
-        isActive: true,
-        updatedAt: new Date().toISOString()
-      }).select('id').single();
-      tourId = newTour?.id;
+    tourId = existingTour?.id;
+    if (!tourId) {
+       tourId = 'c' + Math.random().toString(36).substring(2, 11) + Math.random().toString(36).substring(2, 11);
     }
 
-    if (!tourId) return;
+    // 3. Normalize
+    const normalized = Normalizer.mapTour(supplierId, tourId, detail);
+
+    // Upsert Tour
+    await supabase.from('tours').upsert(normalized.tour, { onConflict: 'id' });
+    if (normalized.destinations.length > 0) await supabase.from('tour_destinations').upsert(normalized.destinations, { onConflict: 'id' });
+    if (normalized.images.length > 0) await supabase.from('tour_images').upsert(normalized.images, { onConflict: 'id' });
 
     // 4. Handle Departures and Price History
-    for (const dep of departures) {
-      // Find existing departure
-      const { data: existingDep } = await supabase
-        .from('TourDeparture')
-        .select('id, price, netPrice')
-        .eq('externalDepartureId', dep.externalId)
-        .eq('tourId', tourId)
-        .single();
+    const fakeRawData = { ...detail, payload: { ...detail.payload, periods: rawDepartures } };
+    const depsNormalized = Normalizer.mapDepartures(supplierId, tourId, fakeRawData);
 
-      if (existingDep) {
-        // Check for price changes
-        if (existingDep.price !== dep.price || existingDep.netPrice !== dep.payload?.CostPrice) {
-          await supabase.from('TourPriceHistory').insert({
-            departureId: existingDep.id,
-            oldPrice: existingDep.price,
-            newPrice: dep.price,
-            oldNetPrice: existingDep.netPrice,
-            newNetPrice: dep.payload?.CostPrice || dep.payload?.net_price || null,
-          });
-        }
-        
-        // Update departure
-        await supabase.from('TourDeparture').update({
-          startDate: new Date(dep.startDate).toISOString(),
-          endDate: new Date(dep.endDate).toISOString(),
-          price: dep.price,
-          availableSeats: dep.availableSeats,
-          totalSeats: dep.totalSeats,
-          status: dep.status,
-        }).eq('id', existingDep.id);
-      } else {
-        // Insert new departure
-        await supabase.from('TourDeparture').insert({
-          tourId,
-          externalDepartureId: dep.externalId,
-          startDate: new Date(dep.startDate).toISOString(),
-          endDate: new Date(dep.endDate).toISOString(),
-          price: dep.price,
-          netPrice: dep.payload?.CostPrice || dep.payload?.net_price || null,
-          availableSeats: dep.availableSeats,
-          totalSeats: dep.totalSeats,
-          status: dep.status,
-        });
-      }
+    if (depsNormalized.departures.length > 0) {
+      await supabase.from('departures').upsert(depsNormalized.departures, { onConflict: 'id' });
+    }
+    if (depsNormalized.prices.length > 0) {
+      await supabase.from('prices').upsert(depsNormalized.prices, { onConflict: 'id' });
     }
 
   } catch (err) {

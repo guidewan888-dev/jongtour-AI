@@ -2,7 +2,6 @@ import { SupplierAdapter } from './SupplierAdapter';
 import { Normalizer } from './Normalizer';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
-
 // Simple ID generator for Prisma cuid equivalents
 const generateId = () => {
   if (typeof crypto !== 'undefined' && crypto.randomUUID) {
@@ -11,7 +10,6 @@ const generateId = () => {
   return 'c' + Math.random().toString(36).substring(2, 11) + Math.random().toString(36).substring(2, 11);
 };
 
-// Simple factory pattern concept
 import { LetgoAdapter } from '../adapters/LetgoAdapter';
 import { CheckinAdapter } from '../adapters/CheckinAdapter';
 import { TourFactoryAdapter } from '../adapters/TourFactoryAdapter';
@@ -46,9 +44,6 @@ export class SyncManager {
     this.supabase = createClient(supabaseUrl, supabaseKey);
   }
 
-  /**
-   * Helper for exponential backoff retry
-   */
   private async withRetry<T>(operation: () => Promise<T>, maxRetries = 3): Promise<T> {
     let attempt = 0;
     while (attempt < maxRetries) {
@@ -57,7 +52,6 @@ export class SyncManager {
       } catch (error) {
         attempt++;
         if (attempt >= maxRetries) throw error;
-        // Wait 5s, 15s, 45s...
         const waitTime = Math.pow(3, attempt) * 1000 + 2000;
         await new Promise(resolve => setTimeout(resolve, waitTime));
       }
@@ -65,13 +59,9 @@ export class SyncManager {
     throw new Error("Max retries exceeded");
   }
 
-  /**
-   * Main synchronization job for a single supplier
-   */
   async syncSupplierTours(supplierId: string): Promise<void> {
     console.log(`[SyncManager] Starting full sync for ${supplierId}`);
     
-    // 1. Create a Sync Log
     const syncLogId = generateId();
     const { data: syncLog, error: logError } = await this.supabase
       .from('ApiSyncLog')
@@ -91,73 +81,58 @@ export class SyncManager {
 
     try {
       const adapter = AdapterFactory.getAdapter(supplierId);
-      
-      // 2. Fetch with Retry Logic
       const rawTours = await this.withRetry(() => adapter.getTours());
 
-      // 3. Pre-fetch existing records to map IDs for fast upserting
-      const expectedSource = supplierId === 'SUP_LETGO' ? 'API_ZEGO' : (supplierId === 'SUP_TOURFACTORY' ? 'TOUR_FACTORY' : 'CHECKIN');
+      // Pre-fetch mappings
       const { data: existingTours } = await this.supabase
-        .from('Tour')
-        .select('id, providerId')
-        .eq('source', expectedSource);
-      const existingTourMap = new Map((existingTours || []).map(t => [t.providerId, t.id]));
+        .from('tours')
+        .select('id, externalTourId')
+        .eq('supplierId', supplierId);
+      const existingTourMap = new Map((existingTours || []).map(t => [t.externalTourId, t.id]));
 
       const { data: existingRaw } = await this.supabase
-        .from('TourRawData')
+        .from('tour_raw_sources')
         .select('id, externalTourId')
         .eq('supplierId', supplierId);
       const existingRawMap = new Map((existingRaw || []).map(r => [r.externalTourId, r.id]));
 
-      // 4. Prepare data arrays
       const rawDataToUpsert: any[] = [];
       const toursToUpsert: any[] = [];
+      const destinationsToUpsert: any[] = [];
+      const imagesToUpsert: any[] = [];
       const departuresToUpsert: any[] = [];
+      const pricesToUpsert: any[] = [];
 
       for (const raw of rawTours) {
         try {
-          const rawId = existingRawMap.get(raw.externalId) || generateId();
+          const rawId = existingRawMap.get(raw.externalId.toString()) || generateId();
           rawDataToUpsert.push({
             id: rawId,
             supplierId,
-            externalTourId: raw.externalId,
-            rawPayload: raw.payload,
-            syncStatus: 'PROCESSED',
-            updatedAt: new Date().toISOString()
+            externalTourId: raw.externalId.toString(),
+            rawPayload: raw.payload || {},
+            rawHash: 'N/A',
+            sourceType: 'API',
+            syncedAt: new Date().toISOString()
           });
 
-          const tourId = existingTourMap.get(raw.externalId) || generateId();
-          const normalized = Normalizer.mapTour(supplierId, raw);
+          const tourId = existingTourMap.get(raw.externalId.toString()) || generateId();
+          const normalized = Normalizer.mapTour(supplierId, tourId, raw);
           
-          toursToUpsert.push({
-            id: tourId,
-            source: supplierId === 'SUP_LETGO' ? 'API_ZEGO' : (supplierId === 'SUP_TOURFACTORY' ? 'TOUR_FACTORY' : 'CHECKIN'),
-            providerId: raw.externalId,
-            title: normalized.title,
-            destination: normalized.destination,
-            durationDays: normalized.durationDays,
-            price: normalized.price,
-            imageUrl: normalized.imageUrl,
-            description: normalized.description,
-            airlineCode: normalized.airlineCode,
-            pdfUrl: normalized.pdfUrl,
-            itinerary: normalized.itinerary,
-            flights: normalized.flights,
-            updatedAt: new Date().toISOString()
-          });
+          toursToUpsert.push(normalized.tour);
+          destinationsToUpsert.push(...normalized.destinations);
+          imagesToUpsert.push(...normalized.images);
 
-          const deps = Normalizer.mapDepartures(supplierId, tourId, raw);
-          if (deps && deps.length > 0) {
-            departuresToUpsert.push(...deps);
-          }
+          const depsNormalized = Normalizer.mapDepartures(supplierId, tourId, raw);
+          departuresToUpsert.push(...depsNormalized.departures);
+          pricesToUpsert.push(...depsNormalized.prices);
+          
         } catch (itemError) {
           console.error(`Failed to map tour ${raw.externalId}: `, itemError);
         }
       }
 
-      // 5. Bulk Upsert execution (in chunks of 100 to prevent payload too large errors)
-      const batchSize = 100;
-      
+      const batchSize = 50;
       const upsertChunks = async (table: string, data: any[]) => {
         for (let i = 0; i < data.length; i += batchSize) {
           const chunk = data.slice(i, i + batchSize);
@@ -166,11 +141,32 @@ export class SyncManager {
         }
       };
 
-      await upsertChunks('TourRawData', rawDataToUpsert);
-      await upsertChunks('Tour', toursToUpsert);
-      await upsertChunks('TourDeparture', departuresToUpsert);
+      // Ensure Supplier exists first to avoid foreign key violations.
+      // If it doesn't exist, we must create it.
+      const { data: supplierData } = await this.supabase.from('suppliers').select('id').eq('id', supplierId).single();
+      if (!supplierData) {
+        const supplierName = supplierId === 'SUP_LETGO' ? "Let's Go" : supplierId === 'SUP_TOURFACTORY' ? "Tour Factory" : supplierId === 'SUP_GO365' ? "Go 365" : "Check In Group";
+        const { error: suppError } = await this.supabase.from('suppliers').insert({
+          id: supplierId,
+          canonicalName: supplierName.toLowerCase().replace(/ /g, ''),
+          displayName: supplierName,
+          status: 'ACTIVE',
+          bookingMethod: 'API',
+          updatedAt: new Date().toISOString()
+        });
+        if (suppError) {
+          console.error("Failed to insert supplier", suppError);
+          throw new Error("Failed to create supplier: " + suppError.message);
+        }
+      }
 
-      // 6. Complete Log
+      await upsertChunks('tour_raw_sources', rawDataToUpsert);
+      await upsertChunks('tours', toursToUpsert);
+      await upsertChunks('tour_destinations', destinationsToUpsert);
+      await upsertChunks('tour_images', imagesToUpsert);
+      await upsertChunks('departures', departuresToUpsert);
+      await upsertChunks('prices', pricesToUpsert);
+
       await this.supabase
         .from('ApiSyncLog')
         .update({
@@ -182,8 +178,6 @@ export class SyncManager {
       console.log(`[SyncManager] Successfully synced ${toursToUpsert.length} tours for ${supplierId}`);
     } catch (error: any) {
       console.error(`[SyncManager] Critical failure for ${supplierId}: `, error);
-      
-      // Update Log to FAILED
       await this.supabase
         .from('ApiSyncLog')
         .update({
@@ -191,8 +185,6 @@ export class SyncManager {
           errorMessage: error.message || 'Unknown error'
         })
         .eq('id', syncLog.id);
-
-      // TODO: Trigger Notification to Admin (LINE/Email)
     }
   }
 }
