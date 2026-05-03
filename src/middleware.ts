@@ -108,6 +108,26 @@ export async function middleware(req: NextRequest) {
     return response;
   }
 
+  // IP Restriction for Admin/B2BAdmin Subdomains
+  if (isAdminSubdomain || isB2bAdminSubdomain) {
+    // In production, configure NEXT_PUBLIC_ADMIN_WHITELIST_IPS with comma-separated IPs
+    const whitelistIps = process.env.NEXT_PUBLIC_ADMIN_WHITELIST_IPS;
+    if (whitelistIps && whitelistIps !== '*') {
+      const clientIp = req.ip || req.headers.get('x-forwarded-for') || 'unknown';
+      const allowedIps = whitelistIps.split(',').map(ip => ip.trim());
+      
+      // If client IP is known and not in whitelist, block access
+      if (clientIp !== 'unknown' && !allowedIps.includes(clientIp)) {
+        console.log(`[Security] Blocked unauthorized IP: ${clientIp} trying to access Admin portal`);
+        // Return 404 to completely hide the existence of the admin portal
+        return new NextResponse(
+          "Not Found",
+          { status: 404 }
+        );
+      }
+    }
+  }
+
   // Authentication Guards
   if ((isAdminSubdomain || isAgentSubdomain || isB2bAdminSubdomain || isSupplierSubdomain || isSaleSubdomain) && (url.pathname === '/login' || url.pathname === '/auth/login')) {
     if ((isAdminSubdomain || isB2bAdminSubdomain || isSupplierSubdomain || isSaleSubdomain) && url.pathname !== '/auth/admin-login') {
