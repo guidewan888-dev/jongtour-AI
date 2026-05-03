@@ -160,9 +160,9 @@ export default async function WholesaleLandingPage({ params, searchParams }: { p
   let matchedKeys: string[] = [];
   if (activeDest) {
     matchedKeys = allDestinationKeys.filter(k => {
-       const mapped = countryMap[activeDest];
+       const mapped = countryMap[k.toUpperCase()];
        const upperK = k.toUpperCase();
-       return upperK === activeDest || upperK.includes(activeDest) || activeDest.includes(upperK) || (mapped && k.includes(mapped.th));
+       return upperK === activeDest || upperK.includes(activeDest) || activeDest.includes(upperK) || (mapped && mapped.th === activeDest) || (mapped && mapped.th.includes(activeDest));
     });
   }
 

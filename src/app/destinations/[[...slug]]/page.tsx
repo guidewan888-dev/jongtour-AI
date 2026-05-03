@@ -88,7 +88,7 @@ export default async function DestinationPage({ params }: { params: { slug?: str
     durationDays: t.durationDays,
     destination: t.destinations?.[0]?.country || "ไม่ระบุ",
     imageUrl: t.images?.[0]?.imageUrl || "https://images.unsplash.com/photo-1436491865332-7a61a109cc05",
-    source: t.supplier?.bookingMethod || "MANUAL",
+    source: t.supplier?.canonicalName || "MANUAL",
     departures: t.departures.map(d => ({
       id: d.id,
       startDate: d.startDate,
@@ -99,10 +99,10 @@ export default async function DestinationPage({ params }: { params: { slug?: str
   }));
   
   const wholesaleMap: Record<string, { slug: string, name: string, logo: string }> = {
-    "API_ZEGO": { slug: "letsgo", name: "Let's Go Group", logo: "/images/wholesales/download.png" },
-    "API_GO365": { slug: "go365", name: "GO 365 Travel", logo: "/images/wholesales/download.jfif" },
-    "CHECKIN": { slug: "checkingroup", name: "Check In Group", logo: "/images/wholesales/CH7.jpg" },
-    "TOUR_FACTORY": { slug: "tourfactory", name: "Tour Factory", logo: "/images/wholesales/Tour-Factory.jpg" },
+    "let'sgo": { slug: "letsgo", name: "Let's Go Group", logo: "/images/wholesales/download.png" },
+    "go365": { slug: "go365", name: "GO 365 Travel", logo: "/images/wholesales/download.jfif" },
+    "checkingroup": { slug: "checkingroup", name: "Check In Group", logo: "/images/wholesales/CH7.jpg" },
+    "tourfactory": { slug: "tourfactory", name: "Tour Factory", logo: "/images/wholesales/Tour-Factory.jpg" },
     "MANUAL": { slug: "", name: "Jongtour Packages", logo: "" }
   };
 
@@ -114,7 +114,7 @@ export default async function DestinationPage({ params }: { params: { slug?: str
   }, {});
 
   const wholesaleKeys = Object.keys(toursByWholesale).sort((a, b) => {
-    const order = ['API_ZEGO', 'API_GO365', 'CHECKIN', 'TOUR_FACTORY', 'MANUAL'];
+    const order = ["let'sgo", "go365", "checkingroup", "tourfactory", 'MANUAL'];
     return (order.indexOf(a) === -1 ? 99 : order.indexOf(a)) - (order.indexOf(b) === -1 ? 99 : order.indexOf(b));
   });
 

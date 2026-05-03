@@ -83,7 +83,6 @@ export default function Header() {
                         <CityLink name="ต้าเหลียน" href="/destinations/asia/china/dalian" />
                         <CityLink name="มองโกเลีย" href="/destinations/asia/china/inner-mongolia" />
                         <CityLink name="จู่ไห่" href="/destinations/asia/china/zhuhai" />
-                        <CityLink name="กวางโจว" href="/destinations/asia/china/guangzhou" />
                       </div>
                       
                       {/* เส้นทางพิเศษ */}
