@@ -119,25 +119,76 @@ export async function middleware(req: NextRequest) {
     }
   }
 
-  // Info, Tour, Booking are mostly public, but Agent, Sale, Admin, Supplier require auth for their base paths
+  // Not logged in -> Redirect to login for protected domains
   if ((isAdminPath || isB2bAdminPath || isSupplierPath || isAgentPath || isSalePath) && !isAuthPath && !user) {
-    // Not logged in -> Redirect to login
     url.pathname = (isAdminPath || isB2bAdminPath || isSupplierPath || isSalePath) ? '/auth/admin-login' : '/auth/login';
     return NextResponse.redirect(url);
   }
 
+  // RBAC Enforcement (Role-Based Access Control)
+  if (user && !isAuthPath) {
+    // 1. Fetch User Role
+    const { data: dbUser } = await supabase
+      .from('users')
+      .select('role:roles(name)')
+      .eq('email', user.email)
+      .single();
+      
+    // @ts-ignore
+    const userRole = dbUser?.role?.name || 'CUSTOMER';
+
+    // 2. Access Matrix
+    const accessMap: Record<string, string[]> = {
+      'SUPER_ADMIN': ['admin', 'b2badmin', 'sale', 'agent', 'booking', 'tour', 'info'],
+      'ADMIN': ['admin', 'b2badmin', 'sale', 'agent', 'booking', 'tour', 'info'],
+      'OPERATION': ['admin', 'b2badmin', 'booking', 'tour', 'info'],
+      'FINANCE': ['admin', 'booking', 'tour', 'info'],
+      'CONTENT_MANAGER': ['admin', 'tour', 'info'],
+      'SALE_MANAGER': ['sale', 'booking', 'tour', 'info'],
+      'SALE_STAFF': ['sale', 'booking', 'tour', 'info'],
+      'SUPPLIER_MANAGER': ['b2badmin', 'tour', 'info'],
+      'API_MANAGER': ['b2badmin'],
+      'AGENT_OWNER': ['agent', 'booking', 'tour', 'info'],
+      'AGENT_STAFF': ['agent', 'booking', 'tour', 'info'],
+      'CUSTOMER_SUPPORT': ['sale', 'booking', 'tour', 'info'],
+      'CUSTOMER': ['booking', 'tour', 'info']
+    };
+
+    const allowedDomains = accessMap[userRole] || ['booking', 'tour', 'info'];
+
+    // 3. Check Current Domain Need
+    let requiredDomain = null;
+    if (isAdminPath) requiredDomain = 'admin';
+    else if (isB2bAdminPath) requiredDomain = 'b2badmin';
+    else if (isSalePath) requiredDomain = 'sale';
+    else if (isAgentPath) requiredDomain = 'agent';
+
+    // 4. Enforce Access
+    if (requiredDomain && !allowedDomains.includes(requiredDomain)) {
+      console.log(`[RBAC Blocked] User ${user.email} (Role: ${userRole}) tried to access ${requiredDomain}.`);
+      // Redirect to a fallback domain they have access to
+      let fallbackDomain = 'tour';
+      if (allowedDomains.includes('admin')) fallbackDomain = 'admin';
+      else if (allowedDomains.includes('sale')) fallbackDomain = 'sale';
+      else if (allowedDomains.includes('b2badmin')) fallbackDomain = 'b2badmin';
+      else if (allowedDomains.includes('agent')) fallbackDomain = 'agent';
+      
+      const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'jongtour.com';
+      const protocol = process.env.NODE_ENV === 'production' ? 'https' : 'http';
+      const port = process.env.NODE_ENV === 'production' ? '' : ':3000';
+      
+      // We use absolute URL for cross-subdomain redirect
+      return NextResponse.redirect(`${protocol}://${fallbackDomain}.${rootDomain}${port}/`);
+    }
+  }
+
   if (isAuthPath && user) {
-    // If they have an error parameter (e.g. unauthorized), let them stay on the login page to see it
     if (url.searchParams.has('error')) {
       return response;
     }
-
-    // Already logged in -> Redirect to B2B or Admin based on subdomain
-    if (isAdminSubdomain) {
-      url.pathname = '/';
-    } else {
-      url.pathname = '/b2b';
-    }
+    // Already logged in -> Let RBAC logic above or normal app flow handle it.
+    // If they are on the login page but already logged in, redirect them to root.
+    url.pathname = '/';
     return NextResponse.redirect(url);
   }
 
