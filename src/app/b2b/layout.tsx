@@ -39,9 +39,9 @@ export default async function B2BLayout({
   }
 
   return (
-    <div className="flex h-screen bg-slate-50 text-slate-900 font-sans">
+    <div className="flex h-screen bg-slate-50 text-slate-900 font-sans print:h-auto print:bg-white">
       {/* Sidebar */}
-      <aside className="w-64 bg-slate-900 text-slate-300 flex flex-col hidden md:flex">
+      <aside className="w-64 bg-slate-900 text-slate-300 flex flex-col hidden md:flex print:hidden">
         <div className="h-16 flex items-center px-6 border-b border-slate-800">
           <span className="text-xl font-bold text-white tracking-tight">Jongtour B2B</span>
           <span className="ml-2 px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-500/20 text-indigo-400 border border-indigo-500/30">PRO</span>
@@ -79,9 +79,9 @@ export default async function B2BLayout({
       </aside>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden print:overflow-visible">
         {/* Topbar */}
-        <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6 z-10 shrink-0">
+        <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6 z-10 shrink-0 print:hidden">
           <div className="flex items-center gap-4">
             <h1 className="text-xl font-semibold text-slate-800 hidden md:block">B2B Management Platform</h1>
             {/* Mobile menu button could go here */}
@@ -105,8 +105,8 @@ export default async function B2BLayout({
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 overflow-y-auto p-6 lg:p-8">
-          <div className="max-w-7xl mx-auto">
+        <main className="flex-1 overflow-y-auto p-6 lg:p-8 print:p-0 print:overflow-visible">
+          <div className="max-w-7xl mx-auto print:max-w-none print:w-full">
             {children}
           </div>
         </main>

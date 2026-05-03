@@ -101,9 +101,9 @@ export default async function QuotationsPage() {
                     </span>
                   </td>
                   <td className="px-6 py-4 text-right">
-                    <button className="text-indigo-600 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 p-2 rounded-md transition-colors" title="Download PDF">
+                    <Link href={`/b2b/quotations/${q.id}/pdf`} target="_blank" className="inline-block text-indigo-600 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 p-2 rounded-md transition-colors" title="Download PDF">
                       <FileDown size={18} />
-                    </button>
+                    </Link>
                   </td>
                 </tr>
               ))
