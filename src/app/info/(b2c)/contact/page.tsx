@@ -1,11 +1,32 @@
-import { MapPin, Phone, Mail, Clock, MessageCircle } from 'lucide-react';
+"use client";
 
-export const metadata = {
-  title: 'ติดต่อเรา (Contact Us) | Jongtour',
-  description: 'ติดต่อทีมงาน Jongtour สอบถามข้อมูลทัวร์ โปรโมชัน หรือแจ้งปัญหาการใช้งาน',
-};
+import { useState } from 'react';
+import { MapPin, Phone, Mail, Clock, MessageCircle, Send } from 'lucide-react';
 
 export default function ContactPage() {
+  const [formData, setFormData] = useState({ name: '', phone: '', detail: '' });
+  const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setStatus('loading');
+    try {
+      const res = await fetch('/api/leads/track', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ source: 'CONTACT_FORM', tourId: null, notes: `Name: ${formData.name}\nPhone: ${formData.phone}\nMessage: ${formData.detail}` })
+      });
+      if (res.ok) {
+        setStatus('success');
+        setFormData({ name: '', phone: '', detail: '' });
+      } else {
+        setStatus('error');
+      }
+    } catch {
+      setStatus('error');
+    }
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
       {/* Header */}
@@ -60,6 +81,28 @@ export default function ContactPage() {
               <div className="flex items-center gap-2 text-sm text-slate-500 mb-8 font-medium bg-slate-50 p-4 rounded-xl">
                 <Clock className="w-5 h-5 text-amber-500" />
                 <span><strong>เวลาทำการ:</strong> จันทร์ - ศุกร์ (09:00 - 18:00 น.) / หยุดวันเสาร์-อาทิตย์ และนักขัตฤกษ์</span>
+              </div>
+
+              {/* Form Section */}
+              <div className="border-t border-slate-100 pt-8 mb-8">
+                <h3 className="text-xl font-bold text-slate-900 mb-4">ฝากข้อความให้เจ้าหน้าที่ติดต่อกลับ</h3>
+                {status === 'success' ? (
+                  <div className="bg-green-50 text-green-700 p-4 rounded-xl border border-green-200 font-medium">
+                    ขอบคุณที่ติดต่อเรา เจ้าหน้าที่จะรีบติดต่อกลับโดยเร็วที่สุดครับ/ค่ะ
+                  </div>
+                ) : (
+                  <form onSubmit={handleSubmit} className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <input required type="text" placeholder="ชื่อ-นามสกุล" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full border border-slate-200 rounded-xl px-4 py-3 outline-none focus:border-indigo-500 bg-slate-50" />
+                      <input required type="tel" placeholder="เบอร์โทรศัพท์" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} className="w-full border border-slate-200 rounded-xl px-4 py-3 outline-none focus:border-indigo-500 bg-slate-50" />
+                    </div>
+                    <textarea required placeholder="ข้อความ หรือแพ็กเกจทัวร์ที่สนใจ..." rows={3} value={formData.detail} onChange={e => setFormData({...formData, detail: e.target.value})} className="w-full border border-slate-200 rounded-xl px-4 py-3 outline-none focus:border-indigo-500 bg-slate-50"></textarea>
+                    <button type="submit" disabled={status === 'loading'} className="bg-indigo-600 text-white font-bold px-6 py-3 rounded-xl flex items-center justify-center gap-2 hover:bg-indigo-700 w-full md:w-auto disabled:opacity-50 transition-colors">
+                      <Send className="w-4 h-4" /> {status === 'loading' ? 'กำลังส่งข้อมูล...' : 'ส่งข้อความ'}
+                    </button>
+                    {status === 'error' && <p className="text-red-500 text-sm mt-2">เกิดข้อผิดพลาดในการส่งข้อมูล กรุณาลองใหม่อีกครั้ง</p>}
+                  </form>
+                )}
               </div>
             </div>
             

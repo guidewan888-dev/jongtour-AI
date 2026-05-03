@@ -1,5 +1,6 @@
-import { Phone, Mail, FileText, Send, Clock, User, CalendarDays, ExternalLink, Link as LinkIcon } from 'lucide-react';
+import { Phone, Mail, Clock, User, CalendarDays } from 'lucide-react';
 import Link from 'next/link';
+import LeadActions from './LeadActions';
 
 export default function LeadDetailPage({ params }: { params: { id: string } }) {
   return (
@@ -93,39 +94,7 @@ export default function LeadDetailPage({ params }: { params: { id: string } }) {
         </div>
       </div>
 
-      {/* Right Column: Action Bar (Crucial for CRM) */}
-      <div className="w-80 min-w-[320px] bg-white border-l border-slate-200 p-6 flex flex-col gap-4">
-        <h2 className="text-sm font-bold text-slate-800 uppercase tracking-wider mb-2">เครื่องมือการขาย (Sales Actions)</h2>
-        
-        {/* Create Quotation */}
-        <button className="w-full flex items-center gap-3 p-4 bg-white border-2 border-indigo-100 hover:border-indigo-600 rounded-xl group transition-colors text-left">
-          <div className="w-10 h-10 bg-indigo-50 rounded-lg flex items-center justify-center text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
-            <FileText size={20} />
-          </div>
-          <div>
-            <p className="font-bold text-slate-800 text-sm">สร้างใบเสนอราคา</p>
-            <p className="text-xs text-slate-500">ออกเอกสารส่งให้ลูกค้าดู</p>
-          </div>
-        </button>
-
-        {/* Generate Booking Link (The Rule Enforcement) */}
-        <button className="w-full flex items-center gap-3 p-4 bg-white border-2 border-emerald-100 hover:border-emerald-600 rounded-xl group transition-colors text-left">
-          <div className="w-10 h-10 bg-emerald-50 rounded-lg flex items-center justify-center text-emerald-600 group-hover:bg-emerald-600 group-hover:text-white transition-colors">
-            <LinkIcon size={20} />
-          </div>
-          <div>
-            <p className="font-bold text-slate-800 text-sm">สร้างลิงก์ชำระเงิน</p>
-            <p className="text-xs text-slate-500">โยนไปโดเมน Booking</p>
-          </div>
-        </button>
-
-        <div className="mt-8 pt-6 border-t border-slate-200">
-          <h3 className="text-xs font-bold text-slate-500 uppercase mb-3">Links ที่เกี่ยวข้อง</h3>
-          <a href="/sale/tours" className="flex items-center gap-2 text-sm text-indigo-600 font-medium hover:text-indigo-800">
-            <Search size={16} /> ไปหน้าค้นหาทัวร์ (เช็คที่นั่ง)
-          </a>
-        </div>
-      </div>
+      <LeadActions leadId={params.id} />
       
     </div>
   );

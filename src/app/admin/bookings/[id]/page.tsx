@@ -22,7 +22,8 @@ export default async function BookingDetailsPage({ params }: { params: { id: str
       departure:departures(startDate, endDate),
       travelers:booking_travelers(*),
       payments(*),
-      rpaSessions:wholesale_rpa_sessions(*)
+      rpaSessions:wholesale_rpa_sessions(*),
+      externalRefs:booking_external_refs(*)
     `)
     .eq("id", params.id)
     .single();
@@ -161,6 +162,30 @@ export default async function BookingDetailsPage({ params }: { params: { id: str
                    เปิดดูรายการทัวร์ต้นทาง
                  </a>
                )}
+
+               {/* External Booking Ref Input */}
+               <form action={async (formData) => {
+                 "use server";
+                 const ref = formData.get("external_ref") as string;
+                 const { createClient } = require("@supabase/supabase-js");
+                 const sb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
+                 await sb.from("booking_external_refs").upsert({
+                   bookingId: booking.id,
+                   externalBookingId: ref,
+                   platform: booking.wholesaleType || "MANUAL",
+                   createdAt: new Date().toISOString()
+                 }, { onConflict: 'bookingId' });
+                 const { revalidatePath } = require("next/cache");
+                 revalidatePath(`/admin/bookings/${booking.id}`);
+               }} className="mt-4 border-t border-gray-100 pt-4">
+                 <label className="text-xs text-gray-500 font-bold uppercase mb-2 block">หมายเลขการจองต้นทาง (External Ref)</label>
+                 <div className="flex gap-2">
+                   <input type="text" name="external_ref" defaultValue={booking.externalRefs?.[0]?.externalBookingId || ""} placeholder="เช่น PNR หรือ Ref จาก Wholesale" className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-orange-500" />
+                   <button type="submit" className="bg-slate-900 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-slate-800">
+                     บันทึก
+                   </button>
+                 </div>
+               </form>
             </div>
           </div>
 
@@ -252,6 +277,47 @@ export default async function BookingDetailsPage({ params }: { params: { id: str
                 </a>
               </div>
             )}
+          </div>
+
+          {/* Timeline / Logs */}
+          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 mt-6">
+            <h3 className="font-bold text-gray-900 mb-4 border-b border-gray-100 pb-2">ไทม์ไลน์สถานะ (Timeline)</h3>
+            <div className="space-y-4">
+              <div className="flex gap-4">
+                <div className="mt-1"><div className="w-3 h-3 bg-blue-500 rounded-full"></div></div>
+                <div>
+                  <p className="text-sm font-bold text-gray-800">สร้าง Booking ใหม่</p>
+                  <p className="text-xs text-gray-500">{new Date(booking.createdAt).toLocaleString('th-TH')}</p>
+                </div>
+              </div>
+              {booking.payments?.map((p: any, i: number) => (
+                <div key={`p-${i}`} className="flex gap-4">
+                  <div className="mt-1"><div className="w-3 h-3 bg-emerald-500 rounded-full"></div></div>
+                  <div>
+                    <p className="text-sm font-bold text-gray-800">ชำระเงิน {p.amount.toLocaleString()} บาท</p>
+                    <p className="text-xs text-gray-500">{new Date(p.createdAt).toLocaleString('th-TH')}</p>
+                  </div>
+                </div>
+              ))}
+              {booking.rpaSessions?.map((r: any, i: number) => (
+                <div key={`r-${i}`} className="flex gap-4">
+                  <div className="mt-1"><div className="w-3 h-3 bg-orange-500 rounded-full"></div></div>
+                  <div>
+                    <p className="text-sm font-bold text-gray-800">ระบบ RPA ดำเนินการจอง</p>
+                    <p className="text-xs text-gray-500">{new Date(r.createdAt).toLocaleString('th-TH')}</p>
+                  </div>
+                </div>
+              ))}
+              {booking.externalRefs?.map((e: any, i: number) => (
+                <div key={`e-${i}`} className="flex gap-4">
+                  <div className="mt-1"><div className="w-3 h-3 bg-indigo-500 rounded-full"></div></div>
+                  <div>
+                    <p className="text-sm font-bold text-gray-800">บันทึกรหัส Wholesale: {e.externalBookingId}</p>
+                    <p className="text-xs text-gray-500">{new Date(e.createdAt || booking.updatedAt).toLocaleString('th-TH')}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </div>

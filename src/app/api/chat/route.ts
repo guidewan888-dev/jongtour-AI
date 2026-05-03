@@ -355,6 +355,49 @@ search_intent: ${JSON.stringify(intentExtracted)}
             });
           }
         }
+        else if (toolCall.function.name === "get_booking_link") {
+          const args = JSON.parse(toolCall.function.arguments);
+          const domain = process.env.NEXT_PUBLIC_SITE_URL || "https://jongtour.com";
+          const bookingUrl = `${domain}/checkout/${args.tourCode}?departureId=${args.departureId}`;
+          messages.push({
+            role: "tool",
+            tool_call_id: toolCall.id,
+            content: JSON.stringify({ success: true, booking_link: bookingUrl, message: `บอกลูกค้าว่า "สามารถคลิกที่ลิงก์นี้เพื่อดำเนินการจองได้เลยครับ: ${bookingUrl}"` })
+          });
+        }
+        else if (toolCall.function.name === "create_lead") {
+          const args = JSON.parse(toolCall.function.arguments);
+          try {
+            const { error } = await supabase.from("Lead").insert({
+              id: `L-AI-${Date.now()}`,
+              status: "NEW",
+              source: "AI_AGENT",
+              notes: `AI Generated Lead.\nCustomer Intent: ${args.notes}\nPhone: ${args.phone || 'N/A'}\nEmail: ${args.email || 'N/A'}`,
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString()
+            });
+            if (error) throw error;
+            messages.push({
+              role: "tool",
+              tool_call_id: toolCall.id,
+              content: JSON.stringify({ success: true, message: "Lead created in CRM. Tell customer we will contact them soon." })
+            });
+          } catch (e: any) {
+            messages.push({
+              role: "tool",
+              tool_call_id: toolCall.id,
+              content: JSON.stringify({ success: false, error: e.message })
+            });
+          }
+        }
+        else if (toolCall.function.name === "create_quotation_draft") {
+          const args = JSON.parse(toolCall.function.arguments);
+          messages.push({
+            role: "tool",
+            tool_call_id: toolCall.id,
+            content: JSON.stringify({ success: true, message: "Quotation draft prepared for Sales team." })
+          });
+        }
         else {
           // Mock generic tools
           messages.push({

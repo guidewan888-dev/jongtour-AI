@@ -33,6 +33,17 @@ export async function submitCheckout(formData: FormData) {
   const phone = formData.get("phone") as string;
   const email = formData.get("email") as string; // From form or user fallback
   
+  // Try to get agentId from form data (if passed) or user role
+  let agentId = formData.get("agentId") as string | null;
+  let bookingSource = "ONLINE";
+  
+  if (dbUser.role === "AGENT") {
+    agentId = dbUser.id;
+    bookingSource = "AGENT";
+  } else if (agentId) {
+    bookingSource = "SALE"; // or AGENT via referral link
+  }
+  
   if (!departureId) {
     return { success: false, error: "กรุณาเลือกรอบเดินทาง" };
   }
@@ -86,7 +97,9 @@ export async function submitCheckout(formData: FormData) {
           totalPrice,
           paymentStatus: "UNPAID",
           wholesaleType: "API", 
-          wholesaleStatus: "PENDING"
+          wholesaleStatus: "PENDING",
+          agentId,
+          bookingSource
         }
       });
       newBookingId = booking.id;

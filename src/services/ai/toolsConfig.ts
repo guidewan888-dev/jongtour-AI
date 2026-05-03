@@ -215,5 +215,36 @@ export const tools: OpenAI.Chat.Completions.ChatCompletionTool[] = [
         required: ["destination", "durationDays"]
       }
     }
+  },
+  {
+    type: "function",
+    function: {
+      name: "create_lead",
+      description: "Create a sales lead in the CRM. Use when a customer leaves their contact info to be contacted later.",
+      parameters: {
+        type: "object",
+        properties: {
+          notes: { type: "string", description: "Customer requirements or tour interest" },
+          phone: { type: "string" },
+          email: { type: "string" }
+        },
+        required: ["notes"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "create_quotation_draft",
+      description: "Create a draft quotation for a customer.",
+      parameters: {
+        type: "object",
+        properties: {
+          tourCode: { type: "string" },
+          pax: { type: "number" }
+        },
+        required: ["tourCode", "pax"]
+      }
+    }
   }
 ];
