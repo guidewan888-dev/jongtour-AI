@@ -29,6 +29,9 @@ model Supplier {
   users          User[]
   wholesaleRefs  BookingWholesaleRef[]
   wholesaleActions BookingWholesaleAction[]
+  credentials      SupplierCredential[]
+  automationConfig SupplierAutomationConfig?
+  rpaSessions      WholesaleRpaSession[]
 
   @@map("suppliers")
 }
@@ -389,6 +392,8 @@ model Booking {
   priceSnapshots PriceSnapshot[]
   wholesaleRef   BookingWholesaleRef?
   wholesaleActions BookingWholesaleAction[]
+  rpaSessions      WholesaleRpaSession[]
+  rpaActions       WholesaleRpaAction[]
 
   @@map("bookings")
 }
@@ -1077,4 +1082,90 @@ model BookingWholesaleAction {
   supplier Supplier @relation(fields: [supplierId], references: [id], onDelete: Restrict)
 
   @@map("booking_wholesale_actions")
+}
+
+
+// -----------------------------------------------------
+// AI & RPA Automation Additions
+// -----------------------------------------------------
+
+model SupplierCredential {
+  id                 String   @id @default(cuid())
+  supplierId         String
+  credentialName     String
+  encryptedUsername  String
+  encryptedPassword  String
+  authType           String   @default("LOGIN_FORM")
+  status             String   @default("ACTIVE")
+  lastUsedAt         DateTime?
+  failedLoginCount   Int      @default(0)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  supplier Supplier @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+
+  @@map("supplier_credentials")
+}
+
+model SupplierAutomationConfig {
+  id                      String   @id @default(cuid())
+  supplierId              String   @unique
+  automationEnabled       Boolean  @default(false)
+  loginUrl                String?
+  bookingMethod           String   @default("MANUAL")
+  selectorsJson           Json?
+  bookingUrlPattern       String?
+  requiresAdminApproval   Boolean  @default(true)
+  captchaDetectionRule    String?
+  otpDetectionRule        String?
+  status                  String   @default("DRAFT")
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+
+  supplier Supplier @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+
+  @@map("supplier_automation_configs")
+}
+
+model WholesaleRpaSession {
+  id                    String   @id @default(cuid())
+  bookingId             String
+  supplierId            String
+  status                String   // NOT_STARTED, CHECKING_DATA, LOGGING_IN, FILLING_FORM, WAITING_ADMIN_APPROVAL, SUBMITTED, FAILED
+  startedBy             String
+  startedAt             DateTime @default(now())
+  finishedAt            DateTime?
+  errorMessage          String?  @db.Text
+  screenshotBeforeUrl   String?
+  screenshotAfterUrl    String?
+  adminApprovalRequired Boolean  @default(true)
+  adminApprovedBy       String?
+  adminApprovedAt       DateTime?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  booking  Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  supplier Supplier @relation(fields: [supplierId], references: [id], onDelete: Restrict)
+  actions  WholesaleRpaAction[]
+
+  @@map("wholesale_rpa_sessions")
+}
+
+model WholesaleRpaAction {
+  id            String   @id @default(cuid())
+  sessionId     String
+  bookingId     String
+  actionType    String   // FILL_FIELD, CLICK_BUTTON, READ_TEXT
+  actionStatus  String   // SUCCESS, FAILED
+  actionUrl     String?
+  inputSummary  String?
+  outputSummary String?
+  screenshotUrl String?
+  errorMessage  String?  @db.Text
+  createdAt     DateTime @default(now())
+
+  session  WholesaleRpaSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  booking  Booking             @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@map("wholesale_rpa_actions")
 }
