@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
     // Prepare Messages History
     const messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
       { role: "system", content: getSystemPrompt() },
-      ...(chatHistory.slice(-6).filter((m: any) => !(m.role === 'ai' && (m.content.includes("ไม่สามารถ") || m.content.includes("ขอโทษครับ")))).map((m: any) => {
+      ...(chatHistory.slice(-15).filter((m: any) => !(m.role === 'ai' && (m.content.includes("ไม่สามารถ") || m.content.includes("ขอโทษครับ")))).map((m: any) => {
         let content = m.content;
         if (m.role === 'ai' && m.tours && m.tours.length > 0) {
           const toursContext = m.tours.map((t:any) => {
