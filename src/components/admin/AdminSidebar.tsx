@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, Ticket, Users, FileText, Settings, LogOut, RefreshCcw } from "lucide-react";
+import { LayoutDashboard, Ticket, Users, FileText, Settings, LogOut, RefreshCcw, Activity } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
 
 export default function AdminSidebar() {
@@ -16,6 +16,7 @@ export default function AdminSidebar() {
     { name: "ลูกค้าสมาชิก", href: "/admin/customers", icon: Users },
     { name: "การเงิน & เอกสาร", href: "/admin/finance", icon: FileText },
     { name: "สถานะ API Sync", href: "/admin/sync", icon: RefreshCcw },
+    { name: "Link Health Monitor", href: "/admin/link-monitor", icon: Activity },
     { name: "ตั้งค่าระบบ", href: "/admin/settings", icon: Settings },
   ];
 
