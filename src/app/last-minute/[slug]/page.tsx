@@ -4,7 +4,7 @@ import { MapPin, Calendar, Star, Clock, ChevronRight, Flame } from "lucide-react
 import { notFound } from "next/navigation";
 
 // ใช้ ISR Cache 1 นาที เพื่อให้เว็บเร็วขึ้น และข้อมูลยังอัปเดตอยู่
-export const revalidate = 60;
+export const dynamic = "force-dynamic";
 
 const wholesaleConfig: Record<string, { name: string, logo: string, source: string, description: string, coverImage: string }> = {
   "letsgo": {
