@@ -106,6 +106,9 @@ export async function POST(request: NextRequest) {
       }
     } else {
       if (intentExtracted) {
+        if (intentExtracted.intent === "search_tour") {
+          forceTool = true;
+        }
         messages.push({
           role: "system",
           content: `คุณคือ AI Search Agent สำหรับระบบค้นหาทัวร์
