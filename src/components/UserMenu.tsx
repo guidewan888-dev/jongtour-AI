@@ -55,11 +55,7 @@ export default function UserMenu({ user }: { user: any }) {
           
           {/* Main Links */}
           <div className="py-2 flex flex-col">
-            {user.email === 'admin@jongtour.com' && (
-              <Link href="/admin/bookings" className="px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors flex items-center justify-between border-b border-gray-100 font-bold">
-                <span>⚡ ระบบจัดการ (Admin)</span>
-              </Link>
-            )}
+
             <Link href="/user/bookings" className="px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center justify-between">
               <span>รายการจอง</span>
             </Link>
@@ -113,7 +109,7 @@ export default function UserMenu({ user }: { user: any }) {
 
           {/* Host CTA */}
           <div className="bg-gray-50 pt-1 pb-3 px-3">
-            <Link href="/host" className="block border border-gray-200 bg-white rounded overflow-hidden hover:border-gray-300 transition-colors">
+            <Link href="https://agent.jongtour.com" className="block border border-gray-200 bg-white rounded overflow-hidden hover:border-gray-300 transition-colors">
               <div className="px-3 py-2 bg-gray-100 text-sm font-medium text-gray-700 text-center border-b border-gray-200">
                 ร่วมเป็นพาร์ทเนอร์กับเรา
               </div>
