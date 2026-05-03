@@ -75,7 +75,13 @@ export default async function WholesaleLandingPage({ params, searchParams }: { p
     notFound();
   }
 
-  const supplierAlias = wholesale.source.toLowerCase();
+  const supplierAliasMap: Record<string, string> = {
+    "API_ZEGO": "let'sgo",
+    "API_GO365": "go365",
+    "CHECKIN": "checkingroup",
+    "TOUR_FACTORY": "tourfactory"
+  };
+  const supplierAlias = supplierAliasMap[wholesale.source] || wholesale.source.toLowerCase();
   
   const toursData = await prisma.tour.findMany({
     where: { supplier: { canonicalName: supplierAlias }, status: 'PUBLISHED' },
@@ -116,7 +122,8 @@ export default async function WholesaleLandingPage({ params, searchParams }: { p
     return acc;
   }, {});
 
-  const activeDest = searchParams?.dest?.toUpperCase();
+  const destParam = Array.isArray(searchParams?.dest) ? searchParams.dest[0] : searchParams?.dest;
+  const activeDest = destParam?.toUpperCase();
   const allDestinationKeys = Object.keys(toursByDestination).sort();
   
   let matchedKeys: string[] = [];
