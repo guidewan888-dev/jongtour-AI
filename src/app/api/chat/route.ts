@@ -67,6 +67,29 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ reply: earlyReturnMessage, tours: [] });
     }
 
+    // STEP 1.5: Deep Semantic Search (RAG)
+    let semanticMatchedTourIds: string[] = [];
+    if (openai && userMessage.length > 8) {
+      try {
+        const embedResponse = await openai.embeddings.create({
+          model: "text-embedding-3-small",
+          input: userMessage.replace(/\n/g, " "),
+          encoding_format: "float",
+        });
+        const query_embedding = embedResponse.data[0].embedding;
+        const { data: matches, error: matchError } = await supabase.rpc('match_tours', {
+          query_embedding,
+          match_threshold: 0.25,
+          match_count: 10
+        });
+        if (!matchError && matches && matches.length > 0) {
+          semanticMatchedTourIds = matches.map((m: any) => m.id);
+        }
+      } catch (err) {
+        console.error("Semantic search failed:", err);
+      }
+    }
+
     // Prepare Messages History
     const messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
       { role: "system", content: getSystemPrompt() + crmContext },
@@ -165,7 +188,7 @@ search_intent: ${JSON.stringify(intentExtracted)}
           const args = JSON.parse(toolCall.function.arguments);
           if (userImage) args.userImage = true;
           
-          const searchResult = await searchTours(supabase, args, intentExtracted);
+          const searchResult = await searchTours(supabase, args, intentExtracted, semanticMatchedTourIds);
           tours = searchResult.tours;
           
           messages.push({

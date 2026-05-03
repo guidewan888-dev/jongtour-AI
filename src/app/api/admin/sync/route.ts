@@ -34,6 +34,15 @@ export async function POST(request: Request) {
     // For MVP, wait for it so we know it worked
     await syncManager.syncSupplierTours(supplierId);
 
+    // Trigger background embedding generation for RAG (Deep Semantic Search)
+    const host = request.headers.get("host");
+    const protocol = process.env.NODE_ENV === "development" ? "http" : "https";
+    fetch(`${protocol}://${host}/api/admin/generate-embeddings`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ limit: 100 })
+    }).catch(e => console.error("Failed to trigger generate-embeddings:", e));
+
     return NextResponse.json({
       success: true,
       message: `Sync job completed for supplier ${supplierId}`

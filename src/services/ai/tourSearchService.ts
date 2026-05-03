@@ -5,7 +5,8 @@ import { supplierMaster } from './supplierConfig';
 export async function searchTours(
   supabase: SupabaseClient,
   args: any,
-  intentExtracted: IntentExtractionResult | null
+  intentExtracted: IntentExtractionResult | null,
+  semanticMatchedTourIds: string[] = []
 ): Promise<{ tours: any[], strictInstruction: string }> {
   
   // STRICT B2B LOCK: Force supplier_id from Intent Extractor if present
@@ -26,12 +27,24 @@ export async function searchTours(
     query = supabase.from('Tour').select('*, departures:TourDeparture!inner(*)').gte('departures.startDate', today.toISOString()).lte('departures.startDate', next30Days.toISOString());
   }
 
-  if (args.destination) {
+  // If we have semantic matched tours, we want to retrieve them too!
+  if (semanticMatchedTourIds.length > 0) {
+     if (args.destination) {
+        // Find by destination OR by semantic match
+        const destParts = args.destination.split(/[\s-]+/).filter((p: string) => p.trim().length > 0);
+        let orStrings = destParts.map((part: string) => `title.ilike.%${part}%,description.ilike.%${part}%,destination.ilike.%${part}%`);
+        orStrings.push(`id.in.(${semanticMatchedTourIds.join(',')})`);
+        query = query.or(orStrings.join(','));
+     } else {
+        query = query.or(`id.in.(${semanticMatchedTourIds.join(',')})`);
+     }
+  } else if (args.destination) {
     const destParts = args.destination.split(/[\s-]+/).filter((p: string) => p.trim().length > 0);
     for (const part of destParts) {
       query = query.or(`title.ilike.%${part}%,description.ilike.%${part}%,destination.ilike.%${part}%`);
     }
   }
+
   if (args.date_from) {
     query = query.gte('departures.startDate', args.date_from);
   }
@@ -61,9 +74,6 @@ export async function searchTours(
 
   let { data: rawTours } = await query;
   
-  // Removed fallback query that drops destination filter. 
-  // It caused irrelevant tours to show up in the UI when 0 rows matched the destination.
-  
   let tours = rawTours || [];
   
   // Strict Validation Rule
@@ -76,7 +86,8 @@ export async function searchTours(
     );
   }
   
-  if (args.keyword) {
+  if (args.keyword && semanticMatchedTourIds.length === 0) {
+    // Only apply basic keyword filter if RAG didn't find anything
     const kws = args.keyword.toLowerCase().split(/\s+/).filter((k: string) => k.length > 2);
     if (kws.length > 0) {
       const filtered = tours.filter((t: any) => kws.some((kw: string) => t.title.toLowerCase().includes(kw) || (t.description && t.description.toLowerCase().includes(kw))));
@@ -98,8 +109,18 @@ export async function searchTours(
     tours = tours.filter((tour: any) => aliases.some((a:string) => ((tour.periodText||"")+" "+(tour.departures?.map((d:any)=>d.dateText).join(" ")||"")).toLowerCase().includes(a)));
   }
 
-  // Shuffle tours if no specific supplier was requested to "mix" results
-  if (!args.supplier_id && tours.length > 0) {
+  // Sort matched tours to the top!
+  if (semanticMatchedTourIds.length > 0) {
+    tours.sort((a, b) => {
+      const aIndex = semanticMatchedTourIds.indexOf(a.id);
+      const bIndex = semanticMatchedTourIds.indexOf(b.id);
+      if (aIndex !== -1 && bIndex !== -1) return aIndex - bIndex;
+      if (aIndex !== -1) return -1;
+      if (bIndex !== -1) return 1;
+      return 0;
+    });
+  } else if (!args.supplier_id && tours.length > 0) {
+    // Shuffle tours if no specific supplier was requested to "mix" results
     for (let i = tours.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [tours[i], tours[j]] = [tours[j], tours[i]];
