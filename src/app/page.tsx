@@ -8,8 +8,7 @@ import AuthButtons from "@/components/AuthButtons";
 import { prisma } from "@/lib/prisma";
 import { processAiQuery } from "@/services/aiPlanner";
 
-// ใช้ ISR Cache 1 นาที เพื่อให้เว็บเร็วขึ้น และข้อมูลยังอัปเดตอยู่
-export const revalidate = 60;
+export const dynamic = "force-dynamic";
 
 export default async function Home() {
   const cookieStore = await cookies();
