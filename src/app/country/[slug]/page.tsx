@@ -9,11 +9,128 @@ import AiSearchBar from "@/components/AiSearchBar";
 
 export const dynamic = 'force-dynamic';
 
+const COUNTRY_CONFIG: Record<string, any> = {
+  japan: {
+    name: "ญี่ปุ่น", searchName: "Japan",
+    image: "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e",
+    cities: ["tokyo", "osaka", "hokkaido", "fukuoka", "okinawa"],
+    cityNames: ["โตเกียว", "โอซาก้า", "ฮอกไกโด", "ฟุกุโอกะ", "โอกินาว่า"],
+    seasons: [
+      { name: "🌸 ซากุระ", desc: "มีนาคม - เมษายน" },
+      { name: "🍁 ใบไม้เปลี่ยนสี", desc: "ตุลาคม - พฤศจิกายน" },
+      { name: "⛄ หิมะ / เล่นสกี", desc: "ธันวาคม - กุมภาพันธ์" },
+      { name: "🎏 Golden Week", desc: "ปลายเมษายน - ต้นพฤษภาคม" }
+    ],
+    visa: "คนไทยเข้าญี่ปุ่นได้โดยไม่ต้องขอวีซ่า พำนักได้ไม่เกิน 15 วัน เพียงแค่เตรียมพาสปอร์ตที่มีอายุเหลือมากกว่า 6 เดือน"
+  },
+  china: {
+    name: "จีน", searchName: "China",
+    image: "https://images.unsplash.com/photo-1508804185872-d7bad800043e",
+    cities: ["beijing", "shanghai", "chengdu", "zhangjiajie", "kunming"],
+    cityNames: ["ปักกิ่ง", "เซี่ยงไฮ้", "เฉิงตู", "จางเจียเจี้ย", "คุนหมิง"],
+    seasons: [
+      { name: "🧧 ตรุษจีน", desc: "มกราคม - กุมภาพันธ์" },
+      { name: "⛄ หิมะฮาร์บิน", desc: "ธันวาคม - กุมภาพันธ์" },
+      { name: "🏞️ จางเจียเจี้ย", desc: "เที่ยวได้ตลอดปี" },
+      { name: "🍁 ฤดูใบไม้ร่วง", desc: "กันยายน - พฤศจิกายน" }
+    ],
+    visa: "คนไทยเข้าจีนได้โดยไม่ต้องขอวีซ่าสำหรับการท่องเที่ยว (ระยะสั้น)"
+  },
+  egypt: {
+    name: "อียิปต์", searchName: "Egypt",
+    image: "https://images.unsplash.com/photo-1539650116574-8efeb43e2b50",
+    cities: ["cairo", "alexandria", "luxor", "aswan"],
+    cityNames: ["ไคโร", "อเล็กซานเดรีย", "ลักซอร์", "อัสวาน"],
+    seasons: [
+      { name: "🐪 อากาศเย็นสบาย", desc: "ตุลาคม - กุมภาพันธ์" },
+      { name: "☀️ ฤดูร้อน", desc: "มิถุนายน - สิงหาคม (อากาศร้อนจัด)" }
+    ],
+    visa: "ต้องขอวีซ่าอียิปต์ล่วงหน้า หรือสามารถขอ Visa on Arrival ได้ที่สนามบินสำหรับบางกรณี (โปรดสอบถามเจ้าหน้าที่ทัวร์)"
+  },
+  georgia: {
+    name: "จอร์เจีย", searchName: "Georgia",
+    image: "https://images.unsplash.com/photo-1565008576549-57569a49371d",
+    cities: ["tbilisi", "gudauri", "batumi", "kazbegi"],
+    cityNames: ["ทบิลิซี", "กูดาวรี", "บาทูมี", "คาซเบกิ"],
+    seasons: [
+      { name: "⛄ เล่นสกี (ฤดูหนาว)", desc: "ธันวาคม - กุมภาพันธ์" },
+      { name: "🌸 ฤดูใบไม้ผลิ", desc: "พฤษภาคม - มิถุนายน (ดอกไม้บาน)" }
+    ],
+    visa: "คนไทยเข้าจอร์เจียได้ฟรีโดยไม่ต้องขอวีซ่า พำนักได้นานถึง 365 วัน!"
+  },
+  turkey: {
+    name: "ตุรกี", searchName: "Turkey",
+    image: "https://images.unsplash.com/photo-1524231757912-21f4fe3a7200",
+    cities: ["istanbul", "cappadocia", "pamukkale", "antalya"],
+    cityNames: ["อิสตันบูล", "คัปปาโดเกีย", "ปามุคคาเล่", "อันตัลยา"],
+    seasons: [
+      { name: "🎈 ขึ้นบอลลูน", desc: "พฤษภาคม - ตุลาคม (สภาพอากาศเอื้ออำนวย)" },
+      { name: "❄️ ฤดูหนาว/หิมะ", desc: "พฤศจิกายน - เมษายน" }
+    ],
+    visa: "คนไทยเข้าตุรกีได้โดยไม่ต้องขอวีซ่า พำนักได้ไม่เกิน 30 วัน"
+  },
+  france: {
+    name: "ฝรั่งเศส", searchName: "France",
+    image: "https://images.unsplash.com/photo-1502602898657-3e91760cbb34",
+    cities: ["paris", "nice", "lyon", "marseille"],
+    cityNames: ["ปารีส", "นีซ", "ลียง", "มาร์แซย์"],
+    seasons: [
+      { name: "🌷 ฤดูใบไม้ผลิ", desc: "มีนาคม - พฤษภาคม" },
+      { name: "🍂 ฤดูใบไม้ร่วง", desc: "กันยายน - พฤศจิกายน" }
+    ],
+    visa: "ต้องขอวีซ่าแชงเก้นล่วงหน้า แนะนำให้ยื่นก่อนเดินทางอย่างน้อย 1-2 เดือน"
+  },
+  switzerland: {
+    name: "สวิตเซอร์แลนด์", searchName: "Switzerland",
+    image: "https://images.unsplash.com/photo-1530122037265-a5f1f91d3b99",
+    cities: ["zurich", "geneva", "lucerne", "zermatt"],
+    cityNames: ["ซูริก", "เจนีวา", "ลูเซิร์น", "เซอร์แมท"],
+    seasons: [
+      { name: "🏔️ ชมยอดเขาแบบสดใส", desc: "มิถุนายน - สิงหาคม" },
+      { name: "⛄ เล่นสกี/เทศกาลหิมะ", desc: "ธันวาคม - มีนาคม" }
+    ],
+    visa: "ต้องขอวีซ่าแชงเก้นล่วงหน้า แนะนำให้ยื่นก่อนเดินทางอย่างน้อย 1-2 เดือน"
+  },
+  italy: {
+    name: "อิตาลี", searchName: "Italy",
+    image: "https://images.unsplash.com/photo-1515542622106-78b28af7815b",
+    cities: ["rome", "venice", "milan", "florence"],
+    cityNames: ["โรม", "เวนิส", "มิลาน", "ฟลอเรนซ์"],
+    seasons: [
+      { name: "☀️ ฤดูร้อน", desc: "มิถุนายน - สิงหาคม (ฟ้าใส ถ่ายรูปสวย)" },
+      { name: "🎭 เทศกาลคาร์นิวัล", desc: "กุมภาพันธ์ - มีนาคม (เวนิส)" }
+    ],
+    visa: "ต้องขอวีซ่าแชงเก้นล่วงหน้า แนะนำให้ยื่นก่อนเดินทางอย่างน้อย 1-2 เดือน"
+  },
+  uk: {
+    name: "อังกฤษ", searchName: "UK",
+    image: "https://images.unsplash.com/photo-1513635269975-59663e0ac1ad",
+    cities: ["london", "manchester", "edinburgh", "liverpool"],
+    cityNames: ["ลอนดอน", "แมนเชสเตอร์", "เอดินบะระ", "ลิเวอร์พูล"],
+    seasons: [
+      { name: "🌷 ฤดูใบไม้ผลิ", desc: "เมษายน - มิถุนายน (อากาศดี)" },
+      { name: "⚽ ฤดูกาลฟุตบอล", desc: "สิงหาคม - พฤษภาคม" }
+    ],
+    visa: "ต้องขอวีซ่าท่องเที่ยวอังกฤษ (UK Visa) ล่วงหน้า (ไม่สามารถใช้แชงเก้นได้)"
+  }
+};
+
+const DEFAULT_CONFIG = {
+  name: "ต่างประเทศ", searchName: "",
+  image: "https://images.unsplash.com/photo-1464817739973-0128fe77aaa1",
+  cities: [], cityNames: [],
+  seasons: [
+    { name: "☀️ High Season", desc: "ขึ้นอยู่กับแต่ละภูมิภาค กรุณาสอบถามเจ้าหน้าที่" },
+    { name: "❄️ Low Season", desc: "ราคาพิเศษ คนน้อย" }
+  ],
+  visa: "สำหรับกรุ๊ปทัวร์ บางโปรแกรมอาจรวมค่าวีซ่ากรุ๊ปแล้ว หรือฟรีวีซ่าสำหรับคนไทย โปรดตรวจสอบรายละเอียดในแต่ละโปรแกรม"
+};
+
 export async function generateMetadata({ params }: { params: { slug: string } }) {
-  const countryName = params.slug === 'japan' ? 'ญี่ปุ่น' : params.slug === 'china' ? 'จีน' : params.slug;
+  const config = COUNTRY_CONFIG[params.slug] || { name: params.slug };
   return {
-    title: `แพ็กเกจทัวร์${countryName} | จองทัวร์${countryName}ราคาถูก คุ้มค่าที่สุด - Jongtour`,
-    description: `ค้นหาแพ็กเกจทัวร์${countryName} อัปเดตล่าสุด เปรียบเทียบราคา จองง่าย ปลอดภัย 100% พร้อมผู้เชี่ยวชาญดูแลตลอดการเดินทาง`,
+    title: `แพ็กเกจทัวร์${config.name} | จองทัวร์${config.name}ราคาถูก คุ้มค่าที่สุด - Jongtour`,
+    description: `ค้นหาแพ็กเกจทัวร์${config.name} อัปเดตล่าสุด เปรียบเทียบราคา จองง่าย ปลอดภัย 100% พร้อมผู้เชี่ยวชาญดูแลตลอดการเดินทาง`,
   };
 }
 
@@ -23,14 +140,15 @@ export default async function CountryPage({ params }: { params: { slug: string }
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!
   );
 
-  const countryName = params.slug === 'japan' ? 'Japan' : params.slug === 'china' ? 'China' : params.slug;
-  const thCountryName = params.slug === 'japan' ? 'ญี่ปุ่น' : params.slug === 'china' ? 'จีน' : params.slug;
+  const config = COUNTRY_CONFIG[params.slug] || { ...DEFAULT_CONFIG, name: params.slug, searchName: params.slug };
+  const thCountryName = config.name;
+  const searchName = config.searchName;
 
   // Search by country via existing tour_destinations table
   const { data: dests } = await supabase
     .from('tour_destinations')
     .select('tourId')
-    .ilike('country', `%${countryName}%`)
+    .ilike('country', `%${searchName}%`)
     .limit(50);
 
   const tourIds = dests?.map(d => d.tourId) || [];
@@ -64,7 +182,7 @@ export default async function CountryPage({ params }: { params: { slug: string }
       title: t.tourName,
       code: t.tourCode,
       days: t.durationDays,
-      image: t.images?.[0]?.imageUrl || "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e",
+      image: t.images?.[0]?.imageUrl || config.image,
       price: minPrice,
       supplier: t.supplier?.name || "Jongtour Partner",
       isFlashSale,
@@ -75,7 +193,6 @@ export default async function CountryPage({ params }: { params: { slug: string }
   }).filter((t: any) => t.price > 0);
 
   const flashSaleTours = formattedTours.filter((t: any) => t.isFlashSale);
-  const confirmedTours = formattedTours.filter((t: any) => t.isConfirmed);
 
   return (
     <main className="min-h-screen bg-background pb-20 font-sans">
@@ -84,7 +201,7 @@ export default async function CountryPage({ params }: { params: { slug: string }
       <div className="relative pt-24 pb-32 overflow-hidden bg-trust-900">
         <div className="absolute inset-0">
           <img 
-            src={params.slug === 'japan' ? "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e" : "https://images.unsplash.com/photo-1508804185872-d7bad800043e"} 
+            src={config.image} 
             alt={`ทัวร์${thCountryName}`} 
             className="w-full h-full object-cover opacity-40"
           />
@@ -105,7 +222,7 @@ export default async function CountryPage({ params }: { params: { slug: string }
             ทัวร์{thCountryName} <span className="text-primary">คุ้มที่สุด</span>
           </h1>
           <p className="text-lg text-trust-200 max-w-2xl mb-10 font-medium">
-            ค้นหาแพ็กเกจทัวร์{thCountryName} อัปเดตล่าสุด เปรียบเทียบราคาจากโฮลเซลล์ชั้นนำกว่า 100 โปรแกรม จองง่าย ปลอดภัย 100%
+            ค้นหาแพ็กเกจทัวร์{thCountryName} อัปเดตล่าสุด เปรียบเทียบราคาจากโฮลเซลล์ชั้นนำ จองง่าย ปลอดภัย 100%
           </p>
 
           <div className="flex gap-4">
@@ -118,40 +235,31 @@ export default async function CountryPage({ params }: { params: { slug: string }
           </div>
 
           <div className="w-full max-w-4xl mt-10">
-             <AiSearchBar placeholder={`AI ช่วยหาทัวร์${thCountryName} เช่น "ไป${thCountryName}เดือนหน้า ราคาไม่เกิน 30,000"`} />
+             <AiSearchBar placeholder={`AI ช่วยหาทัวร์${thCountryName} เช่น "ไป${thCountryName}เดือนหน้า ราคาไม่เกิน 30,000"`} defaultContext={{ country: searchName }} />
           </div>
         </div>
       </div>
 
       <div className="max-w-7xl mx-auto px-4 -mt-8 relative z-20">
          {/* 3. Popular Cities */}
-         <div className="mb-16">
-            <h2 className="text-2xl font-black text-trust-900 mb-6 text-center">จุดหมายยอดนิยมใน{thCountryName}</h2>
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-               {params.slug === 'japan' && ['โตเกียว', 'โอซาก้า', 'ฮอกไกโด', 'ฟุกุโอกะ', 'โอกินาว่า'].map(city => (
-                  <Link key={city} href={`/country/japan/${city === 'โตเกียว' ? 'tokyo' : city === 'โอซาก้า' ? 'osaka' : city === 'ฮอกไกโด' ? 'hokkaido' : city === 'ฟุกุโอกะ' ? 'fukuoka' : 'okinawa'}`}>
-                     <Card className="overflow-hidden hover:border-primary transition-all group shadow-sm border-border cursor-pointer h-full">
-                        <div className="h-24 bg-muted relative overflow-hidden">
-                           <img src="https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
-                           <div className="absolute inset-0 bg-black/30 group-hover:bg-black/10 transition-colors"></div>
-                           <h3 className="absolute bottom-2 left-3 text-white font-black text-lg drop-shadow-md">{city}</h3>
-                        </div>
-                     </Card>
-                  </Link>
-               ))}
-               {params.slug === 'china' && ['ปักกิ่ง', 'เซี่ยงไฮ้', 'เฉิงตู', 'จางเจียเจี้ย', 'คุนหมิง'].map(city => (
-                  <Link key={city} href={`/country/china/${city === 'ปักกิ่ง' ? 'beijing' : city === 'เซี่ยงไฮ้' ? 'shanghai' : city === 'เฉิงตู' ? 'chengdu' : city === 'จางเจียเจี้ย' ? 'zhangjiajie' : 'kunming'}`}>
-                     <Card className="overflow-hidden hover:border-red-500 transition-all group shadow-sm border-border cursor-pointer h-full">
-                        <div className="h-24 bg-muted relative overflow-hidden">
-                           <img src="https://images.unsplash.com/photo-1508804185872-d7bad800043e" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
-                           <div className="absolute inset-0 bg-black/30 group-hover:bg-black/10 transition-colors"></div>
-                           <h3 className="absolute bottom-2 left-3 text-white font-black text-lg drop-shadow-md">{city}</h3>
-                        </div>
-                     </Card>
-                  </Link>
-               ))}
-            </div>
-         </div>
+         {config.cities.length > 0 && (
+           <div className="mb-16">
+              <h2 className="text-2xl font-black text-trust-900 mb-6 text-center">จุดหมายยอดนิยมใน{thCountryName}</h2>
+              <div className="flex flex-wrap justify-center gap-4">
+                 {config.cities.map((cityEn: string, idx: number) => (
+                    <Link key={cityEn} href={`/country/${params.slug}/${cityEn}`} className="w-40 h-32 md:w-48 md:h-36">
+                       <Card className="overflow-hidden hover:border-primary transition-all group shadow-sm border-border cursor-pointer h-full">
+                          <div className="h-full bg-muted relative overflow-hidden">
+                             <img src={config.image} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                             <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-colors"></div>
+                             <h3 className="absolute bottom-3 left-3 text-white font-black text-lg drop-shadow-md">{config.cityNames[idx]}</h3>
+                          </div>
+                       </Card>
+                    </Link>
+                 ))}
+              </div>
+           </div>
+         )}
 
          {/* 5. Promotion Section */}
          {flashSaleTours.length > 0 && (
@@ -168,28 +276,12 @@ export default async function CountryPage({ params }: { params: { slug: string }
 
          {/* 6. Travel Season Section */}
          <div className="mb-16 bg-muted/30 rounded-3xl p-8 border border-border">
-            <h2 className="text-2xl font-black text-trust-900 mb-6 flex items-center gap-2"><CloudSun className="w-6 h-6 text-primary" /> เที่ยว{thCountryName}ฤดูไหนดี?</h2>
+            <h2 className="text-2xl font-black text-trust-900 mb-6 flex items-center gap-2"><CloudSun className="w-6 h-6 text-primary" /> เที่ยว{thCountryName}ช่วงไหนดี?</h2>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-               {params.slug === 'japan' && [
-                  { name: '🌸 ซากุระ', desc: 'มีนาคม - เมษายน' },
-                  { name: '🍁 ใบไม้เปลี่ยนสี', desc: 'ตุลาคม - พฤศจิกายน' },
-                  { name: '⛄ หิมะ / เล่นสกี', desc: 'ธันวาคม - กุมภาพันธ์' },
-                  { name: '🎏 Golden Week', desc: 'ปลายเมษายน - ต้นพฤษภาคม' }
-               ].map(s => (
-                  <div key={s.name} className="bg-white p-4 rounded-xl border border-border shadow-sm text-center hover:border-primary transition-colors cursor-pointer">
+               {config.seasons.map((s: any) => (
+                  <div key={s.name} className="bg-white p-4 rounded-xl border border-border shadow-sm text-center hover:border-primary transition-colors cursor-pointer flex flex-col justify-center min-h-[100px]">
                      <p className="font-bold text-trust-900">{s.name}</p>
-                     <p className="text-xs text-muted-foreground mt-1">{s.desc}</p>
-                  </div>
-               ))}
-               {params.slug === 'china' && [
-                  { name: '🧧 ตรุษจีน', desc: 'มกราคม - กุมภาพันธ์' },
-                  { name: '⛄ หิมะฮาร์บิน', desc: 'ธันวาคม - กุมภาพันธ์' },
-                  { name: '🏞️ จางเจียเจี้ย', desc: 'เที่ยวได้ตลอดปี' },
-                  { name: '🍁 ฤดูใบไม้ร่วง', desc: 'กันยายน - พฤศจิกายน' }
-               ].map(s => (
-                  <div key={s.name} className="bg-white p-4 rounded-xl border border-border shadow-sm text-center hover:border-red-500 transition-colors cursor-pointer">
-                     <p className="font-bold text-trust-900">{s.name}</p>
-                     <p className="text-xs text-muted-foreground mt-1">{s.desc}</p>
+                     <p className="text-xs text-muted-foreground mt-2 leading-relaxed">{s.desc}</p>
                   </div>
                ))}
             </div>
@@ -226,8 +318,8 @@ export default async function CountryPage({ params }: { params: { slug: string }
                            </div>
                            <h4 className="font-bold text-trust-900">ให้ AI ช่วยหาเส้นทางอื่น</h4>
                         </div>
-                        <p className="text-sm text-muted-foreground mb-4">พิมพ์บอกความต้องการ เช่น "แนะนำประเทศแถบเอเชียที่ไปเที่ยวช่วงเดือนหน้า"</p>
-                        <AiSearchBar placeholder="พิมพ์ความต้องการของคุณที่นี่..." />
+                        <p className="text-sm text-muted-foreground mb-4">พิมพ์บอกความต้องการ เช่น "แนะนำประเทศใกล้เคียงที่ไปเที่ยวช่วงเดือนหน้า"</p>
+                        <AiSearchBar placeholder="พิมพ์ความต้องการของคุณที่นี่..." defaultContext={{ country: searchName }} />
                      </CardContent>
                   </Card>
 
@@ -266,7 +358,7 @@ export default async function CountryPage({ params }: { params: { slug: string }
                   <CardContent className="p-6 flex flex-col items-center text-center">
                      <div className="w-12 h-12 bg-primary-50 text-primary rounded-full flex items-center justify-center mb-4"><FileText className="w-6 h-6" /></div>
                      <h3 className="font-bold text-trust-900 mb-2">วีซ่าและเอกสาร</h3>
-                     <p className="text-sm text-muted-foreground">{params.slug === 'japan' ? 'คนไทยเข้าญี่ปุ่นได้โดยไม่ต้องขอวีซ่า พำนักได้ไม่เกิน 15 วัน เพียงแค่เตรียมพาสปอร์ตที่มีอายุเหลือมากกว่า 6 เดือน' : 'สำหรับกรุ๊ปทัวร์ บางโปรแกรมอาจรวมค่าวีซ่ากรุ๊ปแล้ว หรือฟรีวีซ่าสำหรับคนไทย โปรดตรวจสอบในแต่ละโปรแกรม'}</p>
+                     <p className="text-sm text-muted-foreground">{config.visa}</p>
                   </CardContent>
                </Card>
                <Card className="shadow-sm border-border bg-white">

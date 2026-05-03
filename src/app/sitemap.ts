@@ -22,11 +22,37 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: route === '' ? 1 : 0.8,
   }));
 
+  // Dynamic Country Pages
+  const countries = ['japan', 'china', 'korea', 'taiwan', 'hongkong', 'singapore', 'vietnam', 'europe', 'switzerland', 'france', 'italy', 'egypt', 'georgia', 'turkey', 'usa', 'australia'];
+  const countryUrls = countries.map((slug) => ({
+    url: `${baseUrl}/country/${slug}`,
+    lastModified: new Date(),
+    changeFrequency: 'daily' as const,
+    priority: 0.8,
+  }));
+
+  // Dynamic Region Pages
+  const regions = ['europe', 'asia'];
+  const regionUrls = regions.map((slug) => ({
+    url: `${baseUrl}/region/${slug}`,
+    lastModified: new Date(),
+    changeFrequency: 'daily' as const,
+    priority: 0.9,
+  }));
+
   // Dynamic Landing Pages configuration (Phase 6 UI layer)
+  const wholesalePages = [
+    '/wholesale/letgo-group', '/wholesale/go365', '/wholesale/check-in-group', '/wholesale/tour-factory',
+  ].map((route) => ({
+    url: `${baseUrl}${route}`,
+    lastModified: new Date(),
+    changeFrequency: 'daily' as const,
+    priority: 0.9,
+  }));
+
   const landingPages = [
     '/country/japan', '/country/japan/tokyo', '/country/japan/osaka', '/country/japan/hokkaido', '/country/japan/sakura',
     '/country/china', '/country/china/beijing', '/country/china/shanghai', '/country/china/zhangjiajie', '/country/china/flash-sale',
-    '/wholesale/letgo-group', '/wholesale/go365', '/wholesale/check-in-group', '/wholesale/tour-factory',
   ].map((route) => ({
     url: `${baseUrl}${route}`,
     lastModified: new Date(),
@@ -53,9 +79,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.9,
     }));
 
-    return [...staticRoutes, ...landingPages, ...tourRoutes];
+    return [...staticRoutes, ...countryUrls, ...regionUrls, ...wholesalePages, ...landingPages, ...tourRoutes];
   } catch (error) {
     console.error('Error generating sitemap:', error);
-    return staticRoutes;
+    return [...staticRoutes, ...countryUrls, ...regionUrls, ...wholesalePages, ...landingPages];
   }
 }

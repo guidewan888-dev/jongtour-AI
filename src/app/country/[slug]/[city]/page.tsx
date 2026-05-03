@@ -11,16 +11,31 @@ export const dynamic = 'force-dynamic';
 
 export async function generateMetadata({ params }: { params: { slug: string, city: string } }) {
   const cityNameMap: Record<string, string> = {
+    // Asia
     'tokyo': 'โตเกียว', 'osaka': 'โอซาก้า', 'kyoto': 'เกียวโต', 'hokkaido': 'ฮอกไกโด', 
     'fukuoka': 'ฟุกุโอกะ', 'okinawa': 'โอกินาว่า', 'kansai': 'คันไซ', 'kyushu': 'คิวชู', 
     'tohoku': 'โทโฮคุ', 'fuji': 'ฟูจิ', 'sakura': 'ซากุระ', 'autumn': 'ใบไม้เปลี่ยนสี', 
     'winter': 'หิมะ', 'flash-sale': 'ไฟไหม้', 'beijing': 'ปักกิ่ง', 'shanghai': 'เซี่ยงไฮ้', 
     'chengdu': 'เฉิงตู', 'chongqing': 'ฉงชิ่ง', 'xian': 'ซีอาน', 'kunming': 'คุนหมิง', 
     'zhangjiajie': 'จางเจียเจี้ย', 'guilin': 'กุ้ยหลิน', 'lijiang': 'ลี่เจียง', 'dali': 'ต้าหลี่', 
-    'shangri-la': 'แชงกรีล่า', 'chinese-new-year': 'ตรุษจีน', 'new-year': 'ปีใหม่'
+    'shangri-la': 'แชงกรีล่า', 'chinese-new-year': 'ตรุษจีน', 'new-year': 'ปีใหม่',
+    // Europe
+    'paris': 'ปารีส', 'nice': 'นีซ', 'lyon': 'ลียง', 'marseille': 'มาร์แซย์',
+    'zurich': 'ซูริก', 'geneva': 'เจนีวา', 'lucerne': 'ลูเซิร์น', 'zermatt': 'เซอร์แมท',
+    'rome': 'โรม', 'venice': 'เวนิส', 'milan': 'มิลาน', 'florence': 'ฟลอเรนซ์',
+    'london': 'ลอนดอน', 'manchester': 'แมนเชสเตอร์', 'edinburgh': 'เอดินบะระ', 'liverpool': 'ลิเวอร์พูล',
+    // Middle East / Others
+    'cairo': 'ไคโร', 'alexandria': 'อเล็กซานเดรีย', 'luxor': 'ลักซอร์', 'aswan': 'อัสวาน',
+    'tbilisi': 'ทบิลิซี', 'gudauri': 'กูดาวรี', 'batumi': 'บาทูมี', 'kazbegi': 'คาซเบกิ',
+    'istanbul': 'อิสตันบูล', 'cappadocia': 'คัปปาโดเกีย', 'pamukkale': 'ปามุคคาเล่', 'antalya': 'อันตัลยา',
   };
 
-  const countryName = params.slug === 'japan' ? 'ญี่ปุ่น' : params.slug === 'china' ? 'จีน' : params.slug;
+  const countryNameMap: Record<string, string> = {
+    'japan': 'ญี่ปุ่น', 'china': 'จีน', 'egypt': 'อียิปต์', 'georgia': 'จอร์เจีย',
+    'turkey': 'ตุรกี', 'france': 'ฝรั่งเศส', 'switzerland': 'สวิตเซอร์แลนด์', 'italy': 'อิตาลี', 'uk': 'อังกฤษ'
+  };
+
+  const countryName = countryNameMap[params.slug] || params.slug;
   const cityName = cityNameMap[params.city] || params.city;
 
   return {
@@ -35,8 +50,12 @@ export default async function CityPage({ params }: { params: { slug: string, cit
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!
   );
 
-  const countryName = params.slug === 'japan' ? 'Japan' : params.slug === 'china' ? 'China' : params.slug;
-  const thCountryName = params.slug === 'japan' ? 'ญี่ปุ่น' : params.slug === 'china' ? 'จีน' : params.slug;
+  const countryNameMap: Record<string, string> = {
+    'japan': 'ญี่ปุ่น', 'china': 'จีน', 'egypt': 'อียิปต์', 'georgia': 'จอร์เจีย',
+    'turkey': 'ตุรกี', 'france': 'ฝรั่งเศส', 'switzerland': 'สวิตเซอร์แลนด์', 'italy': 'อิตาลี', 'uk': 'อังกฤษ'
+  };
+  const thCountryName = countryNameMap[params.slug] || params.slug;
+  const englishCountryName = params.slug;
   
   const cityNameMap: Record<string, string> = {
     'tokyo': 'โตเกียว', 'osaka': 'โอซาก้า', 'kyoto': 'เกียวโต', 'hokkaido': 'ฮอกไกโด', 
@@ -45,7 +64,14 @@ export default async function CityPage({ params }: { params: { slug: string, cit
     'winter': 'หิมะ', 'flash-sale': 'ไฟไหม้', 'beijing': 'ปักกิ่ง', 'shanghai': 'เซี่ยงไฮ้', 
     'chengdu': 'เฉิงตู', 'chongqing': 'ฉงชิ่ง', 'xian': 'ซีอาน', 'kunming': 'คุนหมิง', 
     'zhangjiajie': 'จางเจียเจี้ย', 'guilin': 'กุ้ยหลิน', 'lijiang': 'ลี่เจียง', 'dali': 'ต้าหลี่', 
-    'shangri-la': 'แชงกรีล่า', 'chinese-new-year': 'ตรุษจีน', 'new-year': 'ปีใหม่'
+    'shangri-la': 'แชงกรีล่า', 'chinese-new-year': 'ตรุษจีน', 'new-year': 'ปีใหม่',
+    'paris': 'ปารีส', 'nice': 'นีซ', 'lyon': 'ลียง', 'marseille': 'มาร์แซย์',
+    'zurich': 'ซูริก', 'geneva': 'เจนีวา', 'lucerne': 'ลูเซิร์น', 'zermatt': 'เซอร์แมท',
+    'rome': 'โรม', 'venice': 'เวนิส', 'milan': 'มิลาน', 'florence': 'ฟลอเรนซ์',
+    'london': 'ลอนดอน', 'manchester': 'แมนเชสเตอร์', 'edinburgh': 'เอดินบะระ', 'liverpool': 'ลิเวอร์พูล',
+    'cairo': 'ไคโร', 'alexandria': 'อเล็กซานเดรีย', 'luxor': 'ลักซอร์', 'aswan': 'อัสวาน',
+    'tbilisi': 'ทบิลิซี', 'gudauri': 'กูดาวรี', 'batumi': 'บาทูมี', 'kazbegi': 'คาซเบกิ',
+    'istanbul': 'อิสตันบูล', 'cappadocia': 'คัปปาโดเกีย', 'pamukkale': 'ปามุคคาเล่', 'antalya': 'อันตัลยา',
   };
 
   const thCityName = cityNameMap[params.city] || params.city;
@@ -111,7 +137,7 @@ export default async function CityPage({ params }: { params: { slug: string, cit
           </p>
 
           <div className="w-full max-w-4xl">
-             <AiSearchBar />
+             <AiSearchBar defaultContext={{ country: englishCountryName, city: thCityName }} />
           </div>
         </div>
       </div>
@@ -149,7 +175,7 @@ export default async function CityPage({ params }: { params: { slug: string, cit
                            <h4 className="font-bold text-trust-900">ให้ AI ช่วยหาเส้นทางอื่น</h4>
                         </div>
                         <p className="text-sm text-muted-foreground mb-4">พิมพ์บอกความต้องการ เช่น "อยากไปเที่ยวเมืองใกล้ๆ {thCityName} งบ 30,000 บาท"</p>
-                        <AiSearchBar placeholder="พิมพ์ความต้องการของคุณที่นี่..." />
+                        <AiSearchBar placeholder="พิมพ์ความต้องการของคุณที่นี่..." defaultContext={{ country: englishCountryName, city: thCityName }} />
                      </CardContent>
                   </Card>
 

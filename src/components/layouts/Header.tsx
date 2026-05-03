@@ -61,80 +61,100 @@ export default function Header({ agentLogo, agentName }: HeaderProps) {
               ทัวร์ต่างประเทศ
               <ChevronDown className="w-4 h-4 group-hover:rotate-180 transition-transform duration-300" />
             </button>
-            <div className="absolute left-1/2 -translate-x-1/2 top-[80px] w-[800px] bg-white border border-border shadow-floating rounded-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 transform origin-top translate-y-2 group-hover:translate-y-0 p-6 z-50 flex gap-8">
+            <div className="absolute left-1/2 -translate-x-1/2 top-[80px] w-screen max-w-[1100px] bg-white border border-border shadow-floating rounded-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 transform origin-top translate-y-2 group-hover:translate-y-0 p-6 z-50 flex gap-6">
                
-               {/* ทัวร์ญี่ปุ่น */}
-               <div className="flex-1">
+               {/* Column 1: Asia */}
+               <div className="flex-[1.2]">
                   <div className="flex items-center justify-between border-b-2 border-primary pb-2 mb-4">
-                     <h3 className="text-base font-black text-trust-900">🇯🇵 ทัวร์ญี่ปุ่น</h3>
-                     <Link href="/country/japan" className="text-xs font-bold text-primary hover:underline">ดูทั้งหมด</Link>
+                     <h3 className="text-sm font-black text-trust-900">🌏 เอเชีย</h3>
+                     <Link href="/region/asia" className="text-[10px] font-bold text-primary hover:underline">ดูทั้งหมด</Link>
                   </div>
-                  <div className="grid grid-cols-2 gap-x-4 gap-y-6">
+                  <div className="grid grid-cols-2 gap-x-2 gap-y-4">
                      <div>
-                        <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-2">เมืองยอดนิยม</p>
-                        <ul className="space-y-2">
-                           <CityLink name="โตเกียว" href="/country/japan/tokyo" />
-                           <CityLink name="โอซาก้า" href="/country/japan/osaka" />
-                           <CityLink name="เกียวโต" href="/country/japan/kyoto" />
-                           <CityLink name="ฮอกไกโด" href="/country/japan/hokkaido" />
-                           <CityLink name="ฟุกุโอกะ" href="/country/japan/fukuoka" />
-                           <CityLink name="โอกินาว่า" href="/country/japan/okinawa" />
+                        <ul className="space-y-1.5">
+                           <CityLink name="ทัวร์ญี่ปุ่น" href="/country/japan" className="font-bold text-trust-900" />
+                           <CityLink name="ทัวร์จีน" href="/country/china" className="font-bold text-red-600" />
+                           <CityLink name="ทัวร์เกาหลี" href="/country/korea" />
+                           <CityLink name="ทัวร์ไต้หวัน" href="/country/taiwan" />
+                           <CityLink name="ฮ่องกง" href="/country/hongkong" />
+                           <CityLink name="สิงคโปร์" href="/country/singapore" />
+                           <CityLink name="เวียดนาม" href="/country/vietnam" />
                         </ul>
                      </div>
                      <div>
-                        <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-2">ภูมิภาค</p>
-                        <ul className="space-y-2 mb-4">
-                           <CityLink name="คันไซ" href="/country/japan/kansai" />
-                           <CityLink name="คิวชู" href="/country/japan/kyushu" />
-                           <CityLink name="โทโฮคุ" href="/country/japan/tohoku" />
-                           <CityLink name="ฟูจิ" href="/country/japan/fuji" />
-                        </ul>
-                        <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-2">โปรโมชัน</p>
-                        <ul className="space-y-2">
-                           <CityLink name="🌸 ทัวร์ซากุระ" href="/country/japan/sakura" highlight />
-                           <CityLink name="🍁 ใบไม้เปลี่ยนสี" href="/country/japan/autumn" highlight />
-                           <CityLink name="⛄ ทัวร์หิมะ" href="/country/japan/winter" highlight />
-                           <CityLink name="🔥 ไฟไหม้ญี่ปุ่น" href="/country/japan/flash-sale" highlight className="text-destructive" />
+                        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1.5">เมืองฮิตเอเชีย</p>
+                        <ul className="space-y-1.5">
+                           <CityLink name="โตเกียว" href="/country/japan/tokyo" />
+                           <CityLink name="โอซาก้า" href="/country/japan/osaka" />
+                           <CityLink name="ฮอกไกโด" href="/country/japan/hokkaido" />
+                           <CityLink name="ปักกิ่ง" href="/country/china/beijing" />
+                           <CityLink name="เซี่ยงไฮ้" href="/country/china/shanghai" />
+                           <CityLink name="จางเจียเจี้ย" href="/country/china/zhangjiajie" />
                         </ul>
                      </div>
                   </div>
                </div>
 
-               {/* ทัวร์จีน */}
-               <div className="flex-1 border-l border-border pl-8">
-                  <div className="flex items-center justify-between border-b-2 border-red-500 pb-2 mb-4">
-                     <h3 className="text-base font-black text-trust-900">🇨🇳 ทัวร์จีน</h3>
-                     <Link href="/country/china" className="text-xs font-bold text-red-500 hover:underline">ดูทั้งหมด</Link>
+               {/* Column 2: Europe */}
+               <div className="flex-[1.5] border-l border-border pl-6">
+                  <div className="flex items-center justify-between border-b-2 border-blue-600 pb-2 mb-4">
+                     <h3 className="text-sm font-black text-trust-900">🏰 ยุโรป</h3>
+                     <Link href="/region/europe" className="text-[10px] font-bold text-blue-600 hover:underline">ดูทั้งหมด</Link>
                   </div>
-                  <div className="grid grid-cols-2 gap-x-4 gap-y-6">
+                  <div className="grid grid-cols-2 gap-x-2 gap-y-4">
                      <div>
-                        <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-2">เมืองยอดนิยม</p>
-                        <ul className="space-y-2">
-                           <CityLink name="ปักกิ่ง" href="/country/china/beijing" />
-                           <CityLink name="เซี่ยงไฮ้" href="/country/china/shanghai" />
-                           <CityLink name="เฉิงตู" href="/country/china/chengdu" />
-                           <CityLink name="ฉงชิ่ง" href="/country/china/chongqing" />
-                           <CityLink name="ซีอาน" href="/country/china/xian" />
-                           <CityLink name="คุนหมิง" href="/country/china/kunming" />
+                        <ul className="space-y-1.5">
+                           <CityLink name="แกรนด์ยุโรป" href="/region/europe/grand" className="font-bold text-trust-900" />
+                           <CityLink name="สวิตเซอร์แลนด์" href="/country/switzerland" />
+                           <CityLink name="ฝรั่งเศส" href="/country/france" />
+                           <CityLink name="อิตาลี" href="/country/italy" />
+                           <CityLink name="อังกฤษ" href="/country/uk" />
+                           <CityLink name="เยอรมนี" href="/country/germany" />
+                           <CityLink name="ออสเตรีย" href="/country/austria" />
+                           <CityLink name="สเปน" href="/country/spain" />
                         </ul>
                      </div>
                      <div>
-                        <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-2">ธรรมชาติ / วิวสวย</p>
-                        <ul className="space-y-2 mb-4">
-                           <CityLink name="จางเจียเจี้ย" href="/country/china/zhangjiajie" />
-                           <CityLink name="กุ้ยหลิน" href="/country/china/guilin" />
-                           <CityLink name="ลี่เจียง" href="/country/china/lijiang" />
-                           <CityLink name="ต้าหลี่" href="/country/china/dali" />
-                           <CityLink name="แชงกรีล่า" href="/country/china/shangri-la" />
-                        </ul>
-                        <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-2">โปรโมชัน</p>
-                        <ul className="space-y-2">
-                           <CityLink name="🧧 ทัวร์ตรุษจีน" href="/country/china/chinese-new-year" highlight />
-                           <CityLink name="🎆 ทัวร์ปีใหม่จีน" href="/country/china/new-year" highlight />
-                           <CityLink name="🔥 ไฟไหม้จีน" href="/country/china/flash-sale" highlight className="text-destructive" />
+                        <ul className="space-y-1.5">
+                           <CityLink name="โปรตุเกส" href="/country/portugal" />
+                           <CityLink name="เช็ก" href="/country/czech" />
+                           <CityLink name="ฮังการี" href="/country/hungary" />
+                           <CityLink name="ไอซ์แลนด์" href="/country/iceland" />
+                           <CityLink name="สแกนดิเนเวีย" href="/region/europe/scandinavia" />
+                           <CityLink name="บอลข่าน" href="/region/europe/balkan" />
+                           <div className="pt-2 mt-2 border-t border-border"></div>
+                           <CityLink name="🔥 ไฟไหม้ยุโรป" href="/region/europe/flash-sale" highlight className="text-destructive text-xs" />
                         </ul>
                      </div>
                   </div>
+               </div>
+
+               {/* Column 3: Middle East / Africa */}
+               <div className="flex-1 border-l border-border pl-6">
+                  <div className="flex items-center justify-between border-b-2 border-amber-600 pb-2 mb-4">
+                     <h3 className="text-sm font-black text-trust-900">🐪 ตะวันออกกลาง / แอฟริกา</h3>
+                  </div>
+                  <ul className="space-y-1.5">
+                     <CityLink name="อียิปต์" href="/country/egypt" className="font-bold text-amber-700" />
+                     <CityLink name="จอร์เจีย" href="/country/georgia" className="font-bold text-trust-900" />
+                     <CityLink name="ตุรกี" href="/country/turkey" className="font-bold text-red-600" />
+                     <CityLink name="ดูไบ (UAE)" href="/country/uae/dubai" />
+                     <CityLink name="จอร์แดน" href="/country/jordan" />
+                     <CityLink name="โมร็อกโก" href="/country/morocco" />
+                  </ul>
+               </div>
+
+               {/* Column 4: America / Australia */}
+               <div className="flex-1 border-l border-border pl-6">
+                  <div className="flex items-center justify-between border-b-2 border-emerald-600 pb-2 mb-4">
+                     <h3 className="text-sm font-black text-trust-900">🗽 อเมริกา / ออสเตรเลีย</h3>
+                  </div>
+                  <ul className="space-y-1.5">
+                     <CityLink name="อเมริกา" href="/country/usa" />
+                     <CityLink name="แคนาดา" href="/country/canada" />
+                     <CityLink name="ออสเตรเลีย" href="/country/australia" />
+                     <CityLink name="นิวซีแลนด์" href="/country/newzealand" />
+                  </ul>
                </div>
 
             </div>
@@ -215,22 +235,44 @@ export default function Header({ agentLogo, agentName }: HeaderProps) {
                   isOpen={activeMobileSection === 'overseas'} 
                   onClick={() => toggleMobileSection('overseas')}
                >
-                  <div className="pl-4 space-y-2 mt-2">
-                     <p className="text-xs font-bold text-primary mt-2">ทัวร์ญี่ปุ่น</p>
-                     <div className="grid grid-cols-2 gap-2">
-                        <Link href="/country/japan/tokyo" className="text-sm text-trust-700 py-1" onClick={() => setMobileMenuOpen(false)}>โตเกียว</Link>
-                        <Link href="/country/japan/osaka" className="text-sm text-trust-700 py-1" onClick={() => setMobileMenuOpen(false)}>โอซาก้า</Link>
-                        <Link href="/country/japan/hokkaido" className="text-sm text-trust-700 py-1" onClick={() => setMobileMenuOpen(false)}>ฮอกไกโด</Link>
+                  <div className="pl-4 space-y-4 mt-2">
+                     <div>
+                        <p className="text-xs font-bold text-primary mb-2">🌏 เอเชีย</p>
+                        <div className="grid grid-cols-2 gap-2">
+                           <Link href="/country/japan" className="text-sm text-trust-700 py-1" onClick={() => setMobileMenuOpen(false)}>ญี่ปุ่น</Link>
+                           <Link href="/country/china" className="text-sm text-trust-700 py-1" onClick={() => setMobileMenuOpen(false)}>จีน</Link>
+                           <Link href="/country/korea" className="text-sm text-trust-700 py-1" onClick={() => setMobileMenuOpen(false)}>เกาหลี</Link>
+                           <Link href="/country/taiwan" className="text-sm text-trust-700 py-1" onClick={() => setMobileMenuOpen(false)}>ไต้หวัน</Link>
+                           <Link href="/country/hongkong" className="text-sm text-trust-700 py-1" onClick={() => setMobileMenuOpen(false)}>ฮ่องกง</Link>
+                           <Link href="/country/singapore" className="text-sm text-trust-700 py-1" onClick={() => setMobileMenuOpen(false)}>สิงคโปร์</Link>
+                           <Link href="/country/vietnam" className="text-sm text-trust-700 py-1" onClick={() => setMobileMenuOpen(false)}>เวียดนาม</Link>
+                        </div>
                      </div>
-                     <Link href="/country/japan" className="text-xs text-primary font-bold block mt-1" onClick={() => setMobileMenuOpen(false)}>ดูทัวร์ญี่ปุ่นทั้งหมด ➔</Link>
-                     
-                     <p className="text-xs font-bold text-red-500 mt-4">ทัวร์จีน</p>
-                     <div className="grid grid-cols-2 gap-2">
-                        <Link href="/country/china/beijing" className="text-sm text-trust-700 py-1" onClick={() => setMobileMenuOpen(false)}>ปักกิ่ง</Link>
-                        <Link href="/country/china/shanghai" className="text-sm text-trust-700 py-1" onClick={() => setMobileMenuOpen(false)}>เซี่ยงไฮ้</Link>
-                        <Link href="/country/china/chengdu" className="text-sm text-trust-700 py-1" onClick={() => setMobileMenuOpen(false)}>เฉิงตู</Link>
+                     <div>
+                        <p className="text-xs font-bold text-blue-600 mb-2">🏰 ยุโรป</p>
+                        <div className="grid grid-cols-2 gap-2">
+                           <Link href="/region/europe" className="text-sm font-bold text-trust-700 py-1" onClick={() => setMobileMenuOpen(false)}>ยุโรปทั้งหมด</Link>
+                           <Link href="/country/switzerland" className="text-sm text-trust-700 py-1" onClick={() => setMobileMenuOpen(false)}>สวิตเซอร์แลนด์</Link>
+                           <Link href="/country/france" className="text-sm text-trust-700 py-1" onClick={() => setMobileMenuOpen(false)}>ฝรั่งเศส</Link>
+                           <Link href="/country/italy" className="text-sm text-trust-700 py-1" onClick={() => setMobileMenuOpen(false)}>อิตาลี</Link>
+                        </div>
                      </div>
-                     <Link href="/country/china" className="text-xs text-red-500 font-bold block mt-1" onClick={() => setMobileMenuOpen(false)}>ดูทัวร์จีนทั้งหมด ➔</Link>
+                     <div>
+                        <p className="text-xs font-bold text-amber-600 mb-2">🐪 ตะวันออกกลาง / แอฟริกา</p>
+                        <div className="grid grid-cols-2 gap-2">
+                           <Link href="/country/egypt" className="text-sm text-trust-700 py-1" onClick={() => setMobileMenuOpen(false)}>อียิปต์</Link>
+                           <Link href="/country/georgia" className="text-sm text-trust-700 py-1" onClick={() => setMobileMenuOpen(false)}>จอร์เจีย</Link>
+                           <Link href="/country/turkey" className="text-sm text-trust-700 py-1" onClick={() => setMobileMenuOpen(false)}>ตุรกี</Link>
+                           <Link href="/country/uae/dubai" className="text-sm text-trust-700 py-1" onClick={() => setMobileMenuOpen(false)}>ดูไบ</Link>
+                        </div>
+                     </div>
+                     <div>
+                        <p className="text-xs font-bold text-emerald-600 mb-2">🗽 อเมริกา / ออสเตรเลีย</p>
+                        <div className="grid grid-cols-2 gap-2">
+                           <Link href="/country/usa" className="text-sm text-trust-700 py-1" onClick={() => setMobileMenuOpen(false)}>อเมริกา</Link>
+                           <Link href="/country/australia" className="text-sm text-trust-700 py-1" onClick={() => setMobileMenuOpen(false)}>ออสเตรเลีย</Link>
+                        </div>
+                     </div>
                   </div>
                </MobileAccordion>
 
