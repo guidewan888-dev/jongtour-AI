@@ -20,10 +20,19 @@ export default async function Home() {
   let recommendedTours: any[] = [];
 
   if (lineUid) {
-    const session = await prisma.lineChatSession.findUnique({ where: { lineUserId: lineUid } });
-    if (session && session.summary) {
-      dynamicGreeting = "ทัวร์แนะนำพิเศษสำหรับคุณ (อ้างอิงจากแชทล่าสุดใน LINE)";
-      recommendedTours = await processAiQuery(session.summary);
+    try {
+      const { data: session, error } = await supabase
+        .from('LineChatSession')
+        .select('*')
+        .eq('lineUserId', lineUid)
+        .single();
+      
+      if (!error && session && session.summary) {
+        dynamicGreeting = "ทัวร์แนะนำพิเศษสำหรับคุณ (อ้างอิงจากแชทล่าสุดใน LINE)";
+        recommendedTours = await processAiQuery(session.summary);
+      }
+    } catch (e) {
+      console.error("Error loading personalized tours:", e);
     }
   }
 

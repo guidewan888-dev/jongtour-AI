@@ -1,6 +1,6 @@
 import { createClient } from "@/utils/supabase/server";
 import { cookies } from "next/headers";
-import { prisma } from "@/lib/prisma";
+import { createClient as createSupabaseClient } from '@supabase/supabase-js';
 import { notFound, redirect } from "next/navigation";
 import CheckoutClient from "./CheckoutClient";
 
@@ -13,18 +13,29 @@ export default async function CheckoutPage({ params }: { params: { tourId: strin
     redirect('/login?redirect=/checkout/' + params.tourId);
   }
 
-  const tourData = await prisma.tour.findUnique({
-    where: { id: params.tourId },
-    include: {
-      departures: {
-        where: { startDate: { gte: new Date() } },
-        orderBy: { startDate: 'asc' },
-        include: { prices: true }
-      },
-      destinations: true,
-      images: { take: 1 }
-    }
-  });
+  const serverSupabase = createSupabaseClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://qterfftaebnoawnzkfgu.supabase.co',
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || 'sb_publishable_SRwNSJ89mInda5FcuB1W2w_9IEJlSOI'
+  );
+
+  const { data: tourRaw, error } = await serverSupabase
+    .from('tours')
+    .select(`
+      *,
+      departures(*, prices(*)),
+      destinations:tour_destinations(*),
+      images:tour_images(*)
+    `)
+    .eq('id', params.tourId)
+    .single();
+
+  let tourData = tourRaw;
+  if (tourData) {
+    const today = new Date();
+    const validDeps = (tourData.departures || []).filter((d: any) => new Date(d.startDate) >= today);
+    validDeps.sort((a: any, b: any) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime());
+    tourData.departures = validDeps;
+  }
 
   if (!tourData) {
     console.error("Tour not found for checkout");

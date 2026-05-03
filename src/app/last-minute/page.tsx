@@ -1,7 +1,7 @@
 import Link from "next/link";
+import { createClient } from '@supabase/supabase-js';
 import { prisma } from "@/lib/prisma";
 import { MapPin, Calendar, Star, ChevronRight, Clock, Flame } from "lucide-react";
-
 export const dynamic = "force-dynamic";
 
 export default async function LastMinutePage() {
@@ -13,40 +13,45 @@ export default async function LastMinutePage() {
   let prismaError: string | null = null;
   
   try {
-    toursData = await prisma.tour.findMany({
-      where: {
-        status: 'PUBLISHED',
-        departures: {
-          some: {
-            startDate: {
-              gte: today,
-              lte: next30Days
-            }
-          }
-        }
-      },
-      include: {
-        departures: {
-          where: { startDate: { gte: today, lte: next30Days } },
-          orderBy: { startDate: 'asc' },
-          include: { prices: true }
-        },
-        destinations: true,
-        images: { take: 1 },
-        supplier: true
-      },
-      orderBy: { createdAt: 'desc' },
-      take: 12
-    });
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://qterfftaebnoawnzkfgu.supabase.co',
+      process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || 'sb_publishable_SRwNSJ89mInda5FcuB1W2w_9IEJlSOI'
+    );
+
+    const { data, error } = await supabase
+      .from('tours')
+      .select(`
+        *,
+        supplier:suppliers(*),
+        departures!inner(*, prices(*)),
+        destinations:tour_destinations(*),
+        images:tour_images(*)
+      `)
+      .eq('status', 'PUBLISHED')
+      .gte('departures.startDate', today.toISOString())
+      .lte('departures.startDate', next30Days.toISOString())
+      .order('createdAt', { ascending: false });
+
+    if (error) throw error;
+
+    toursData = (data || []).map((t: any) => {
+      const futureDeps = (t.departures || []).filter((d: any) => {
+        const dDate = new Date(d.startDate);
+        return dDate >= today && dDate <= next30Days;
+      });
+      futureDeps.sort((a: any, b: any) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime());
+      return { ...t, departures: futureDeps };
+    }).filter((t: any) => t.departures.length > 0).slice(0, 12);
+
   } catch (error: any) {
-    console.error("Prisma error in last-minute:", error);
+    console.error("Supabase error in last-minute:", error);
     prismaError = error?.message || String(error);
   }
 
   if (prismaError) {
     return (
       <div className="bg-red-50 p-6 rounded-lg m-10 text-red-800 font-mono text-xs whitespace-pre-wrap">
-        <h2>Database Connection Error (IPv6 Panic / Prisma Error)</h2>
+        <h2>Database Connection Error</h2>
         <p>{prismaError}</p>
       </div>
     );

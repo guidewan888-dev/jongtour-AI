@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { prisma } from "@/lib/prisma";
+import { createClient } from '@supabase/supabase-js';
 import { MapPin, Calendar, Star, Clock, ChevronRight } from "lucide-react";
 import { notFound } from "next/navigation";
 
@@ -87,30 +87,43 @@ export default async function WholesaleLandingPage({ params, searchParams }: { p
   let prismaError: string | null = null;
   
   try {
-    toursData = await prisma.tour.findMany({
-      where: { supplier: { canonicalName: supplierAlias }, status: 'PUBLISHED' },
-      include: {
-        departures: {
-          where: { startDate: { gte: new Date() } },
-          orderBy: { startDate: 'asc' },
-          include: { prices: true }
-        },
-        destinations: true,
-        images: { take: 1 },
-        supplier: true
-      },
-      orderBy: { createdAt: 'desc' },
-      take: 12
-    });
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://qterfftaebnoawnzkfgu.supabase.co',
+      process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || 'sb_publishable_SRwNSJ89mInda5FcuB1W2w_9IEJlSOI'
+    );
+
+    const { data, error } = await supabase
+      .from('tours')
+      .select(`
+        *,
+        supplier:suppliers(*),
+        departures(*, prices(*)),
+        destinations:tour_destinations(*),
+        images:tour_images(*)
+      `)
+      .eq('status', 'PUBLISHED')
+      .order('createdAt', { ascending: false });
+
+    if (error) throw error;
+
+    const today = new Date();
+    toursData = (data || [])
+      .filter((t: any) => t.supplier && t.supplier.canonicalName === supplierAlias)
+      .map((t: any) => {
+        const futureDeps = (t.departures || []).filter((d: any) => new Date(d.startDate) >= today);
+        futureDeps.sort((a: any, b: any) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime());
+        return { ...t, departures: futureDeps };
+      }).filter((t: any) => t.departures.length > 0).slice(0, 12);
+
   } catch (error: any) {
-    console.error("Prisma error in wholesale:", error);
+    console.error("Supabase error in wholesale:", error);
     prismaError = error?.message || String(error);
   }
 
   if (prismaError) {
     return (
       <div className="bg-red-50 p-6 rounded-lg m-10 text-red-800 font-mono text-xs whitespace-pre-wrap">
-        <h2>Database Connection Error (IPv6 Panic / Prisma Error)</h2>
+        <h2>Database Connection Error</h2>
         <p>{prismaError}</p>
       </div>
     );

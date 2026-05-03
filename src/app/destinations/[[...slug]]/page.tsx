@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { prisma } from "@/lib/prisma";
+import { createClient } from '@supabase/supabase-js';
 import { MapPin, Calendar, Star, ChevronRight, CheckCircle2, Clock } from "lucide-react";
 import { destinationConfig, getDestinationData } from "@/lib/destinations";
 import { notFound } from "next/navigation";
@@ -24,46 +24,59 @@ export default async function DestinationPage({ params }: { params: { slug?: str
   }
 
   // 2. ดึงข้อมูลจาก Prisma
-  const keywordConditions = node.keywords.map(kw => ({
-    OR: [
-      { destinations: { some: { country: { contains: kw, mode: 'insensitive' } } } },
-      { tourName: { contains: kw, mode: 'insensitive' } }
-    ]
-  }));
-
-  const whereClause: any = { status: 'PUBLISHED' };
-  if (keywordConditions.length > 0) {
-    whereClause.OR = keywordConditions;
-  }
-
+  // 2. ดึงข้อมูลจาก Supabase JS แทน Prisma เพื่อเลี่ยง IPv6 Panic บน Vercel Edge
   let toursData: any[] = [];
   let prismaError: string | null = null;
   
   try {
-    toursData = await prisma.tour.findMany({
-      where: whereClause,
-      include: {
-        departures: {
-          where: { startDate: { gte: new Date() } },
-          orderBy: { startDate: 'asc' },
-          include: { prices: true }
-        },
-        destinations: true,
-        images: { take: 1 },
-        supplier: true
-      },
-      orderBy: { createdAt: 'desc' },
-      take: 20
-    });
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://qterfftaebnoawnzkfgu.supabase.co',
+      process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || 'sb_publishable_SRwNSJ89mInda5FcuB1W2w_9IEJlSOI'
+    );
+
+    const { data, error } = await supabase
+      .from('tours')
+      .select(`
+        *,
+        supplier:suppliers(*),
+        departures(*, prices(*)),
+        destinations:tour_destinations(*),
+        images:tour_images(*)
+      `)
+      .eq('status', 'PUBLISHED')
+      .order('createdAt', { ascending: false });
+
+    if (error) throw error;
+
+    let filteredData = data || [];
+    
+    if (node.keywords && node.keywords.length > 0) {
+      filteredData = filteredData.filter((t: any) => {
+        return node.keywords.some((kw: string) => {
+          const lowerKw = kw.toLowerCase();
+          const matchName = t.tourName.toLowerCase().includes(lowerKw);
+          const matchDest = t.destinations?.some((d: any) => d.country?.toLowerCase().includes(lowerKw));
+          return matchName || matchDest;
+        });
+      });
+    }
+
+    const today = new Date();
+    toursData = filteredData.map((t: any) => {
+      const futureDeps = (t.departures || []).filter((d: any) => new Date(d.startDate) >= today);
+      futureDeps.sort((a: any, b: any) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime());
+      return { ...t, departures: futureDeps };
+    }).filter((t: any) => t.departures.length > 0).slice(0, 20);
+
   } catch (error: any) {
-    console.error("Prisma error in destinations:", error);
+    console.error("Supabase error in destinations:", error);
     prismaError = error?.message || String(error);
   }
 
   if (prismaError) {
     return (
       <div className="bg-red-50 p-6 rounded-lg m-10 text-red-800 font-mono text-xs whitespace-pre-wrap relative z-50">
-        <h2>Database Connection Error (IPv6 Panic / Prisma Error)</h2>
+        <h2>Database Connection Error</h2>
         <p>{prismaError}</p>
       </div>
     );

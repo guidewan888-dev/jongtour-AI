@@ -5,25 +5,36 @@ import DeparturesTable from "./DeparturesTable";
 import BookingWidget from "./BookingWidget";
 import { destinationConfig, findPathByKeyword, getDestinationData } from "@/lib/destinations";
 
-import { prisma } from "@/lib/prisma";
+import { createClient } from '@supabase/supabase-js';
 
 export const dynamic = "force-dynamic";
 
 export async function TourDetailsContent({ params, agentId }: { params: { id: string }, agentId?: string }) {
   // ดึงข้อมูลทัวร์จาก Database
-  const tour = await prisma.tour.findUnique({
-    where: { id: params.id },
-    include: {
-      supplier: true,
-      destinations: true,
-      images: { take: 1 },
-      departures: {
-        where: { startDate: { gte: new Date() } },
-        orderBy: { startDate: 'asc' },
-        include: { prices: true }
-      }
-    }
-  });
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://qterfftaebnoawnzkfgu.supabase.co',
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || 'sb_publishable_SRwNSJ89mInda5FcuB1W2w_9IEJlSOI'
+  );
+
+  const { data: tourRaw, error } = await supabase
+    .from('tours')
+    .select(`
+      *,
+      supplier:suppliers(*),
+      destinations:tour_destinations(*),
+      images:tour_images(*),
+      departures(*, prices(*))
+    `)
+    .eq('id', params.id)
+    .single();
+
+  let tour = tourRaw;
+  if (tour) {
+    const today = new Date();
+    const validDeps = (tour.departures || []).filter((d: any) => new Date(d.startDate) >= today);
+    validDeps.sort((a: any, b: any) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime());
+    tour.departures = validDeps;
+  }
 
   if (!tour) {
     notFound(); // 404 page

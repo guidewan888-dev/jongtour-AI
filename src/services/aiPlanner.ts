@@ -69,20 +69,50 @@ export async function processAiQuery(userMessage: string) {
     whereClause.id = { in: matchedTourIds };
   }
 
-  let toursData = await prisma.tour.findMany({
-    where: whereClause,
-    include: {
-      departures: {
-        where: { startDate: { gte: new Date() } },
-        orderBy: { startDate: 'asc' },
-        include: { prices: true }
-      },
-      destinations: true,
-      supplier: true
-    },
-    orderBy: { createdAt: 'desc' },
-    take: 60
-  });
+  let toursData: any[] = [];
+  try {
+    let query = supabase
+      .from('tours')
+      .select(`
+        *,
+        departures(*, prices(*)),
+        destinations:tour_destinations(*),
+        supplier:suppliers(*)
+      `)
+      .eq('status', 'PUBLISHED')
+      .order('createdAt', { ascending: false })
+      .limit(60);
+
+    if (isSemanticSearch && matchedTourIds.length > 0) {
+      query = query.in('id', matchedTourIds);
+    }
+
+    const { data, error } = await query;
+    if (error) throw error;
+    
+    toursData = data || [];
+
+    // Apply keyword filtering in memory since PostgREST OR with relations is complex
+    if (!isSemanticSearch && keywords.length > 0) {
+      toursData = toursData.filter((t: any) => {
+        const titleMatch = keywords.some(kw => t.tourName?.toLowerCase().includes(kw.toLowerCase()));
+        const destMatch = t.destinations?.some((d: any) => keywords.some(kw => d.country?.toLowerCase().includes(kw.toLowerCase())));
+        return titleMatch || destMatch;
+      });
+    }
+
+    // Filter valid departures
+    const today = new Date();
+    toursData = toursData.map((t: any) => {
+      const futureDeps = (t.departures || []).filter((d: any) => new Date(d.startDate) >= today);
+      futureDeps.sort((a: any, b: any) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime());
+      return { ...t, departures: futureDeps };
+    });
+
+  } catch (error) {
+    console.error("Supabase error in processAiQuery:", error);
+    toursData = [];
+  }
 
   let tours = toursData.map((t: any) => ({
     id: t.id,

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { prisma } from "@/lib/prisma";
+import { createClient } from '@supabase/supabase-js';
 import { MapPin, Calendar, Star, Clock, ChevronRight, Flame } from "lucide-react";
 import { notFound } from "next/navigation";
 
@@ -81,32 +81,38 @@ export default async function WholesaleLastMinutePage({ params, searchParams }: 
 
   const supplierAlias = wholesale.source.toLowerCase();
 
-  const toursData = await prisma.tour.findMany({
-    where: {
-      supplier: { canonicalName: supplierAlias },
-      status: 'PUBLISHED',
-      departures: {
-        some: {
-          startDate: {
-            gte: today,
-            lte: next30Days
-          }
-        }
-      }
-    },
-    include: {
-      departures: {
-        where: { startDate: { gte: today, lte: next30Days } },
-        orderBy: { startDate: 'asc' },
-        include: { prices: true }
-      },
-      destinations: true,
-      images: { take: 1 },
-      supplier: true
-    },
-    orderBy: { createdAt: 'desc' },
-    take: 12
-  });
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://qterfftaebnoawnzkfgu.supabase.co',
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || 'sb_publishable_SRwNSJ89mInda5FcuB1W2w_9IEJlSOI'
+  );
+
+  const { data: rawTours, error } = await supabase
+    .from('tours')
+    .select(`
+      *,
+      departures(*, prices(*)),
+      destinations:tour_destinations(*),
+      images:tour_images(*),
+      supplier:suppliers!inner(*)
+    `)
+    .eq('status', 'PUBLISHED')
+    .eq('supplier.canonicalName', supplierAlias)
+    .order('createdAt', { ascending: false });
+
+  let toursData = rawTours || [];
+
+  toursData = toursData.filter((t: any) => {
+    const validDeps = (t.departures || []).filter((d: any) => {
+      const start = new Date(d.startDate);
+      return start >= today && start <= next30Days;
+    });
+    if (validDeps.length > 0) {
+      validDeps.sort((a: any, b: any) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime());
+      t.departures = validDeps;
+      return true;
+    }
+    return false;
+  }).slice(0, 12);
 
   const validTours = toursData.map(t => ({
     id: t.id,

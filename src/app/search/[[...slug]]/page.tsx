@@ -1,64 +1,72 @@
 import Link from "next/link";
-import { prisma } from "@/lib/prisma";
+import { createClient } from '@supabase/supabase-js';
 import { Map, Calendar, Users, Star, Filter } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
 export default async function SearchPage({ params }: { params: { slug?: string[] } }) {
-  // Logic สำหรับอ่าน Slug เพื่อนำไป Filter (เช่น /search/asia/japan)
   const slug = params?.slug || [];
   let destinationFilter = undefined;
 
-  // ง่ายๆ สำหรับจำลอง ถ้ามีคำว่า japan หรือ ทวีป/ประเทศ ก็ค้นหาจาก DB
   if (slug.includes("japan") || slug.includes("thailand")) {
-    destinationFilter = "Japan"; // ตัวอย่าง Map string
+    destinationFilter = "Japan";
   } else if (slug.includes("europe")) {
     destinationFilter = "Europe";
   } else if (slug.includes("south-korea") || slug.includes("korea")) {
     destinationFilter = "South Korea";
   }
 
-  let whereClause: any = { status: 'PUBLISHED' };
-  if (destinationFilter) {
-    whereClause.destinations = {
-      some: {
-        country: { contains: destinationFilter, mode: 'insensitive' }
-      }
-    };
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://qterfftaebnoawnzkfgu.supabase.co',
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || 'sb_publishable_SRwNSJ89mInda5FcuB1W2w_9IEJlSOI'
+  );
+
+  let query = supabase
+    .from('tours')
+    .select(`
+      *,
+      departures(*, prices(*)),
+      destinations:tour_destinations(*),
+      images:tour_images(*),
+      supplier:suppliers(*)
+    `)
+    .eq('status', 'PUBLISHED')
+    .order('createdAt', { ascending: false })
+    .limit(12);
+
+  const { data, error } = await query;
+  let toursData = data || [];
+
+  if (destinationFilter && toursData.length > 0) {
+    toursData = toursData.filter((t: any) => 
+      t.destinations?.some((d: any) => 
+        d.country?.toLowerCase().includes(destinationFilter!.toLowerCase())
+      )
+    );
   }
 
-  const toursData = await prisma.tour.findMany({
-    where: whereClause,
-    include: {
-      departures: {
-        where: { startDate: { gte: new Date() } },
-        orderBy: { startDate: 'asc' },
-        include: { prices: true }
-      },
-      destinations: true,
-      images: { take: 1 },
-      supplier: true
-    },
-    orderBy: { createdAt: 'desc' },
-    take: 12
-  });
-
-  const tours = toursData.map(t => ({
-    id: t.id,
-    title: t.tourName,
-    description: "แพ็กเกจทัวร์คุณภาพ ออกเดินทางแน่นอน",
-    durationDays: t.durationDays,
-    destination: t.destinations?.[0]?.country || "ไม่ระบุ",
-    imageUrl: t.images?.[0]?.imageUrl || "https://images.unsplash.com/photo-1436491865332-7a61a109cc05",
-    source: t.supplier?.bookingMethod || "UNKNOWN",
-    departures: t.departures.map(d => ({
-      id: d.id,
-      startDate: d.startDate,
-      endDate: d.endDate,
-      price: d.prices?.[0]?.sellingPrice || 0
-    })),
-    price: t.departures.length > 0 ? Math.min(...t.departures.map(d => d.prices?.[0]?.sellingPrice || 0)) : 0
-  }));
+  const today = new Date();
+  const tours = toursData.map((t: any) => {
+    const futureDeps = (t.departures || []).filter((d: any) => new Date(d.startDate) >= today);
+    futureDeps.sort((a: any, b: any) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime());
+    
+    return {
+      id: t.id,
+      title: t.tourName,
+      description: "แพ็กเกจทัวร์คุณภาพ ออกเดินทางแน่นอน",
+      durationDays: t.durationDays,
+      destination: t.destinations?.[0]?.country || "ไม่ระบุ",
+      imageUrl: t.images?.[0]?.imageUrl || "https://images.unsplash.com/photo-1436491865332-7a61a109cc05",
+      source: t.supplier?.bookingMethod || "UNKNOWN",
+      departures: futureDeps.map((d: any) => ({
+        id: d.id,
+        startDate: d.startDate,
+        endDate: d.endDate,
+        price: d.prices?.[0]?.sellingPrice || 0
+      })),
+      price: futureDeps.length > 0 ? Math.min(...futureDeps.map((d: any) => d.prices?.[0]?.sellingPrice || 0)) : 0
+    };
+  }).filter(t => t.departures.length > 0);
 
   return (
     <main className="min-h-screen bg-gray-50 pb-20">

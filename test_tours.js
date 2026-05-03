@@ -1,1 +1,0 @@
-const { PrismaClient } = require('@prisma/client'); const p = new PrismaClient(); p.tour.findMany({ select: { id: true } }).then(async (tours) => { for(const t of tours) { await new Promise(r => require('http').get('http://localhost:3005/tour/' + t.id, (res) => { console.log(t.id, res.statusCode); r(); })); } }).finally(() => p.$disconnect());
