@@ -10,7 +10,7 @@ export async function POST(req: Request) {
     }
 
     // Call the internal Bot Service
-    const botUrl = process.env.BOT_SERVICE_URL || 'http://localhost:4000';
+    const botUrl = process.env.BOT_SERVICE_URL || 'https://bot.jongtour.com';
     const res = await fetch(`${botUrl}/run/start`, {
       method: 'POST',
       headers: {

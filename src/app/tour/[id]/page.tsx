@@ -1,11 +1,14 @@
 import Link from "next/link";
-import { MapPin, Calendar, Clock, FileText, ChevronRight, Info } from "lucide-react";
+import { MapPin, Calendar, Clock, FileText, ChevronRight, Info, Plane, Star, Download, ShieldCheck, CheckCircle2, ChevronDown, MessageSquareText, FileQuestion, ThumbsUp, Hotel, Utensils } from "lucide-react";
 import { notFound } from "next/navigation";
 import DeparturesTable from "./DeparturesTable";
 import BookingWidget from "./BookingWidget";
 import { destinationConfig, findPathByKeyword, getDestinationData } from "@/lib/destinations";
-
 import { createClient } from '@supabase/supabase-js';
+
+import { Badge } from "@/components/ui-new/Badge";
+import { Card, CardContent } from "@/components/ui-new/Card";
+import { Button } from "@/components/ui-new/Button";
 
 export const dynamic = "force-dynamic";
 
@@ -45,7 +48,6 @@ export async function generateMetadata({ params }: { params: { id: string } }) {
 }
 
 export async function TourDetailsContent({ params, agentId }: { params: { id: string }, agentId?: string }) {
-  // ดึงข้อมูลทัวร์จาก Database
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://qterfftaebnoawnzkfgu.supabase.co',
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || 'sb_publishable_SRwNSJ89mInda5FcuB1W2w_9IEJlSOI'
@@ -72,10 +74,10 @@ export async function TourDetailsContent({ params, agentId }: { params: { id: st
   }
 
   if (!tour) {
-    notFound(); // 404 page
+    notFound(); 
   }
 
-  const mappedDepartures = tour.departures.map(d => ({
+  const mappedDepartures = tour.departures.map((d: any) => ({
     id: d.id,
     startDate: d.startDate,
     endDate: d.endDate,
@@ -84,273 +86,296 @@ export async function TourDetailsContent({ params, agentId }: { params: { id: st
     price: d.prices?.[0]?.sellingPrice || 0
   }));
 
-  // หาวันเดินทางที่ถูกที่สุด
-  // หาวันเดินทางที่ถูกที่สุด
   const lowestPrice = mappedDepartures.length > 0 
     ? Math.min(...mappedDepartures.map((d: any) => d.price)) 
     : 0;
 
   const tourDestination = tour.destinations?.[0]?.country || "";
-  const destPath = findPathByKeyword(tourDestination);
-  const { breadcrumbs } = destPath ? getDestinationData(destPath) : { breadcrumbs: [] };
 
-  const wholesaleMap: Record<string, { slug: string, name: string, logo: string }> = {
-    "API_ZEGO": { slug: "letsgo", name: "Let's Go Group", logo: "/images/wholesales/download.png" },
-    "API_GO365": { slug: "go365", name: "GO 365 Travel", logo: "/images/wholesales/download.jfif" },
-    "CHECKIN": { slug: "checkingroup", name: "Check In Group", logo: "/images/wholesales/CH7.jpg" },
-    "TOUR_FACTORY": { slug: "tourfactory", name: "Tour Factory", logo: "/images/wholesales/Tour-Factory.jpg" }
-  };
+  // Mock Itinerary Data for UI demonstration
+  const itinerary = Array.from({ length: tour.durationDays || 3 }).map((_, i) => ({
+     day: i + 1,
+     title: i === 0 ? "ออกเดินทางจาก กรุงเทพฯ - สู่จุดหมายปลายทาง" : i === (tour.durationDays - 1) ? "เดินทางกลับ กรุงเทพฯ โดยสวัสดิภาพ" : "ท่องเที่ยวอิสระ หรือ ตามโปรแกรม",
+     desc: "สัมผัสประสบการณ์สุดพิเศษพร้อมไกด์ดูแลตลอดการเดินทาง พักผ่อนตามอัธยาศัย",
+     meals: i === 0 ? "เย็น" : "เช้า, กลางวัน, เย็น"
+  }));
 
   return (
-    <main className="min-h-screen bg-[#f8f9fa] pb-20 pt-4">
+    <main className="min-h-screen bg-background pb-32 font-sans relative">
       
-      {/* Breadcrumb */}
-      <div className="max-w-[1440px] mx-auto px-4 mb-4 text-sm text-gray-500 flex flex-wrap items-center gap-2">
-        <Link href="/" className="hover:text-orange-600 transition-colors">หน้าหลัก</Link>
-        <ChevronRight className="w-4 h-4 shrink-0" />
-        
-        {breadcrumbs.length > 1 ? (
-          // ถ้าหา breadcrumbs เจอ
-          breadcrumbs.slice(1).map((crumb, idx) => (
-            <div key={crumb.url} className="flex items-center gap-2">
-              <Link href={crumb.url} className="hover:text-orange-600 transition-colors">
-                {crumb.name}
-              </Link>
-              <ChevronRight className="w-4 h-4 shrink-0" />
-            </div>
-          ))
-        ) : (
-          // ถ้าหาไม่เจอ ให้ fallback
-          <div className="flex items-center gap-2">
-            <span className="text-gray-500">{tourDestination || "ไม่ระบุ"}</span>
-            <ChevronRight className="w-4 h-4 shrink-0" />
-          </div>
-        )}
-        
-        <span className="text-gray-800 font-medium truncate max-w-[200px] sm:max-w-md lg:max-w-xl">{tour.tourName}</span>
+      {/* Top Banner & Breadcrumb */}
+      <div className="bg-trust-900 text-white pt-6 pb-28">
+        <div className="max-w-7xl mx-auto px-4 flex items-center gap-2 text-xs md:text-sm text-trust-300 overflow-x-auto whitespace-nowrap hide-scrollbar mb-6">
+          <Link href="/" className="hover:text-white transition-colors flex items-center gap-1">หน้าหลัก</Link>
+          <ChevronRight className="w-3.5 h-3.5 shrink-0" />
+          <Link href="/tour/search" className="hover:text-white transition-colors">ค้นหาทัวร์</Link>
+          <ChevronRight className="w-3.5 h-3.5 shrink-0" />
+          <span className="text-white font-medium">รหัสทัวร์: {tour.tourCode}</span>
+        </div>
+        <div className="max-w-7xl mx-auto px-4 flex flex-col md:flex-row md:justify-between md:items-start gap-4">
+           <div>
+              <div className="flex gap-2 mb-3">
+                 <Badge variant="brand" className="bg-primary/20 text-primary-100 border-transparent">AI Match: 98% ⚡</Badge>
+                 <Badge variant="outline" className="text-trust-200 border-trust-600 bg-trust-800/50">ยอดนิยม</Badge>
+              </div>
+              <h1 className="text-2xl md:text-4xl lg:text-5xl font-black leading-tight mb-4">{tour.tourName}</h1>
+              <div className="flex flex-wrap items-center gap-4 text-trust-200 text-sm">
+                <div className="flex items-center gap-1.5"><MapPin className="w-4 h-4 text-primary"/> {tourDestination}</div>
+                <div className="flex items-center gap-1.5"><Clock className="w-4 h-4 text-primary"/> {tour.durationDays} วัน {tour.durationDays - 1 > 0 ? tour.durationDays - 1 : 0} คืน</div>
+                <div className="flex items-center gap-1.5"><ShieldCheck className="w-4 h-4 text-primary"/> ให้บริการโดย {tour.supplier?.name || "Jongtour Partner"}</div>
+              </div>
+           </div>
+           
+           {/* Mobile Price Hidden here, shown in sticky bottom */}
+           <div className="hidden md:block text-right bg-trust-800/40 p-4 rounded-xl border border-trust-700 backdrop-blur-md">
+              <p className="text-trust-300 text-xs mb-1">ราคาเริ่มต้น</p>
+              <div className="text-4xl font-black text-primary">฿{lowestPrice.toLocaleString()}</div>
+              <p className="text-trust-400 text-[10px] mt-1">/ท่าน รวมภาษีแล้ว</p>
+           </div>
+        </div>
       </div>
 
-      <div className="max-w-[1440px] mx-auto px-4 flex flex-col xl:flex-row gap-6">
+      <div className="max-w-7xl mx-auto px-4 -mt-20 relative z-10 flex flex-col lg:flex-row gap-8">
         
-        {/* Left Sidebar (Hidden on smaller screens, 3-column on XL) */}
-        <aside className="hidden xl:block w-[280px] shrink-0 space-y-6">
+        {/* Main Content Area */}
+        <div className="flex-1 space-y-8 min-w-0">
           
-          {/* Filter: Wholesale */}
-          <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-200">
-            <h3 className="font-bold text-gray-900 mb-4 pb-3 border-b border-gray-100">โฮลเซลล์ (Wholesale)</h3>
-            <div className="space-y-3">
-              {Object.keys(wholesaleMap).map(wsKey => {
-                const wsConfig = wholesaleMap[wsKey];
-                return (
-                  <Link href={`/wholesale/${wsConfig.slug}`} key={wsKey} className="flex items-center gap-3 cursor-pointer group">
-                    <div className="w-10 h-10 border-2 border-transparent rounded overflow-hidden flex items-center justify-center bg-gray-50 group-hover:border-orange-500 transition-colors p-1">
-                      <img src={wsConfig.logo} alt={wsConfig.name} className="w-full h-full object-contain" />
-                    </div>
-                    <span className="text-sm font-bold text-gray-700 group-hover:text-orange-600 transition-colors">{wsConfig.name}</span>
-                  </Link>
-                );
-              })}
-            </div>
+          {/* Hero Gallery */}
+          <Card className="overflow-hidden border-border shadow-soft p-1">
+             <div className="w-full h-[300px] md:h-[500px] rounded-lg overflow-hidden relative group">
+               <img 
+                 src={tour.images?.[0]?.imageUrl || "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e"} 
+                 alt={tour.tourName} 
+                 className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+               />
+               <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+               <div className="absolute top-4 left-4 flex gap-2">
+                 <Badge variant="success" className="shadow-lg backdrop-blur-md bg-emerald-500/90 py-1.5 px-3">จองด่วน มีที่ว่าง</Badge>
+               </div>
+             </div>
+             
+             {/* Key Highlights Grid */}
+             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 p-3">
+                <div className="flex flex-col items-center justify-center p-4 rounded-lg bg-muted text-center hover:bg-primary/5 transition-colors border border-transparent hover:border-primary/20">
+                   <Plane className="w-6 h-6 text-primary mb-2" />
+                   <span className="text-xs font-bold text-trust-900">สายการบิน</span>
+                   <span className="text-[10px] text-muted-foreground">Full Service</span>
+                </div>
+                <div className="flex flex-col items-center justify-center p-4 rounded-lg bg-muted text-center hover:bg-primary/5 transition-colors border border-transparent hover:border-primary/20">
+                   <Hotel className="w-6 h-6 text-primary mb-2" />
+                   <span className="text-xs font-bold text-trust-900">ที่พักมาตรฐาน</span>
+                   <span className="text-[10px] text-muted-foreground">ระดับ 4-5 ดาว</span>
+                </div>
+                <div className="flex flex-col items-center justify-center p-4 rounded-lg bg-muted text-center hover:bg-primary/5 transition-colors border border-transparent hover:border-primary/20">
+                   <Utensils className="w-6 h-6 text-primary mb-2" />
+                   <span className="text-xs font-bold text-trust-900">อาหารครบมื้อ</span>
+                   <span className="text-[10px] text-muted-foreground">เมนูพิเศษทุกวัน</span>
+                </div>
+                <button className="flex flex-col items-center justify-center p-4 rounded-lg bg-primary-50 text-center hover:bg-primary-100 transition-colors border border-primary-200 group">
+                   <Download className="w-6 h-6 text-primary mb-2 group-hover:-translate-y-1 transition-transform" />
+                   <span className="text-xs font-bold text-primary-800">โหลดโปรแกรม</span>
+                   <span className="text-[10px] text-primary-600">PDF File</span>
+                </button>
+             </div>
+          </Card>
+
+          {/* Embedded AI Assistant Panel */}
+          <div className="bg-gradient-to-r from-primary to-orange-600 rounded-2xl p-1 shadow-[0_10px_30px_rgba(249,115,22,0.3)]">
+             <div className="bg-white rounded-[14px] p-5 flex flex-col md:flex-row items-center gap-4 justify-between">
+                <div className="flex items-center gap-4">
+                   <div className="w-12 h-12 rounded-full bg-primary-50 text-primary flex items-center justify-center shadow-inner shrink-0">
+                      <MessageSquareText className="w-6 h-6" />
+                   </div>
+                   <div>
+                      <h3 className="font-bold text-trust-900 flex items-center gap-1.5">ถาม Jongtour AI เกี่ยวกับทัวร์นี้ <Sparkles className="w-4 h-4 text-primary"/></h3>
+                      <p className="text-xs text-muted-foreground">AI สามารถวิเคราะห์โปรแกรม เช็คสภาพอากาศ และแนะนำการแต่งตัวได้ทันที</p>
+                   </div>
+                </div>
+                <Button variant="brand" className="w-full md:w-auto shadow-floating rounded-full px-6 gap-2" onClick={() => document.getElementById('ai-chat-btn')?.click()}>
+                   ถาม AI เลยตอนนี้
+                </Button>
+             </div>
           </div>
 
-          {/* Filter: Categories/Destinations Tree */}
-          <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-200">
-            <h3 className="font-bold text-gray-900 mb-4 pb-3 border-b border-gray-100">จุดหมายปลายทางยอดฮิต</h3>
-            <div className="space-y-4 max-h-[500px] overflow-y-auto custom-scrollbar pr-2">
-              
-              {/* ญี่ปุ่น */}
-              <div className="pt-2 border-t border-gray-50 first:border-0 first:pt-0">
-                <Link href="/destinations/asia/japan" className="font-bold text-sm text-gray-800 hover:text-orange-600 flex justify-between items-center mb-2">
-                  ญี่ปุ่น (JAPAN) <ChevronRight className="w-4 h-4 text-gray-400" />
-                </Link>
-                <div className="pl-3 border-l-2 border-gray-100 space-y-2 ml-1">
-                  <Link href="/destinations/asia/japan/tokyo" className="text-sm text-gray-600 hover:text-orange-600 block">โตเกียว</Link>
-                  <Link href="/destinations/asia/japan/osaka" className="text-sm text-gray-600 hover:text-orange-600 block">โอซาก้า</Link>
-                  <Link href="/destinations/asia/japan/hokkaido" className="text-sm text-gray-600 hover:text-orange-600 block">ฮอกไกโด</Link>
-                  <Link href="/destinations/asia/japan/fukuoka" className="text-sm text-gray-600 hover:text-orange-600 block">ฟุกุโอกะ</Link>
-                  <Link href="/destinations/asia/japan/kyoto" className="text-sm text-gray-600 hover:text-orange-600 block">เกียวโต</Link>
-                  <Link href="/destinations/asia/japan/okinawa" className="text-sm text-gray-600 hover:text-orange-600 block">โอกินาว่า</Link>
-                </div>
+          {/* Quick Summary / Highlight */}
+          <Card className="border-border shadow-soft">
+            <CardContent className="p-6 md:p-8">
+              <h2 className="text-xl font-bold text-trust-900 mb-6 flex items-center gap-2">
+                <FileText className="w-5 h-5 text-primary" /> ไฮไลท์โปรแกรมทัวร์
+              </h2>
+              <div className="prose prose-sm md:prose-base prose-slate max-w-none text-muted-foreground leading-relaxed">
+                 <p className="font-medium text-trust-800 mb-4">สัมผัสประสบการณ์การเดินทางที่เหนือกว่า พร้อมไกด์ผู้เชี่ยวชาญดูแลตลอดการเดินทาง พักสบาย เดินทางสะดวก คุ้มค่าทุกวินาที</p>
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div className="flex gap-2 items-start"><CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0"/> เที่ยวชมหมู่บ้านมรดกโลก ชิราคาวาโกะ</div>
+                    <div className="flex gap-2 items-start"><CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0"/> ช้อปปิ้งจุใจที่ย่านชินจูกุและฮาราจูกุ</div>
+                    <div className="flex gap-2 items-start"><CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0"/> แช่ออนเซ็นธรรมชาติแท้ 100%</div>
+                    <div className="flex gap-2 items-start"><CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0"/> พิเศษ! บุฟเฟต์ขาปูยักษ์ไม่อั้น พร้อมเครื่องดื่ม</div>
+                 </div>
               </div>
+            </CardContent>
+          </Card>
 
-              {/* จีน */}
-              <div className="pt-2 border-t border-gray-50">
-                <Link href="/destinations/asia/china" className="font-bold text-sm text-gray-800 hover:text-orange-600 flex justify-between items-center mb-2">
-                  จีน (CHINA) <ChevronRight className="w-4 h-4 text-gray-400" />
-                </Link>
-                <div className="pl-3 border-l-2 border-gray-100 space-y-2 ml-1">
-                  <Link href="/destinations/asia/china/chengdu" className="text-sm text-gray-600 hover:text-orange-600 block">เฉิงตู</Link>
-                  <Link href="/destinations/asia/china/shanghai" className="text-sm text-gray-600 hover:text-orange-600 block">เซี่ยงไฮ้</Link>
-                  <Link href="/destinations/asia/china/zhangjiajie" className="text-sm text-gray-600 hover:text-orange-600 block">จางเจียเจี้ย</Link>
-                  <Link href="/destinations/asia/china/chongqing" className="text-sm text-gray-600 hover:text-orange-600 block">ฉงชิ่ง</Link>
-                  <Link href="/destinations/asia/china/beijing" className="text-sm text-gray-600 hover:text-orange-600 block">ปักกิ่ง</Link>
-                  <Link href="/destinations/asia/china/kunming" className="text-sm text-gray-600 hover:text-orange-600 block">คุนหมิง</Link>
-                  <Link href="/destinations/asia/china/guilin" className="text-sm text-gray-600 hover:text-orange-600 block">กุ้ยหลิน</Link>
-                  <Link href="/destinations/asia/china/xian" className="text-sm text-gray-600 hover:text-orange-600 block">ซีอาน</Link>
-                  <Link href="/destinations/asia/china/silk-road" className="text-sm text-gray-600 hover:text-orange-600 block">เส้นทางสายไหม</Link>
-                  <Link href="/destinations/asia/china/xinjiang" className="text-sm text-gray-600 hover:text-orange-600 block">ซินเจียง</Link>
-                  <Link href="/destinations/asia/china/tibet" className="text-sm text-gray-600 hover:text-orange-600 block">ทิเบต</Link>
-                  <Link href="/destinations/asia/china/lijiang" className="text-sm text-gray-600 hover:text-orange-600 block">ลี่เจียง</Link>
-                  <Link href="/destinations/asia/china/yichang" className="text-sm text-gray-600 hover:text-orange-600 block">อี้ชาง</Link>
-                  <Link href="/destinations/asia/china/hangzhou" className="text-sm text-gray-600 hover:text-orange-600 block">หังโจว</Link>
-                  <Link href="/destinations/asia/china/dali" className="text-sm text-gray-600 hover:text-orange-600 block">ต้าหลี่</Link>
-                  <Link href="/destinations/asia/china/guangzhou" className="text-sm text-gray-600 hover:text-orange-600 block">กวางโจว</Link>
-                  <Link href="/destinations/asia/china/harbin" className="text-sm text-gray-600 hover:text-orange-600 block">ฮาร์บิ้น</Link>
-                  <Link href="/destinations/asia/china/luoyang" className="text-sm text-gray-600 hover:text-orange-600 block">ลั่วหยาง</Link>
-                  <Link href="/destinations/asia/china/wangxian" className="text-sm text-gray-600 hover:text-orange-600 block">หุบเขาเทวดา</Link>
-                  <Link href="/destinations/asia/china/enshi" className="text-sm text-gray-600 hover:text-orange-600 block">เอินซือ</Link>
-                  <Link href="/destinations/asia/china/qingdao" className="text-sm text-gray-600 hover:text-orange-600 block">ชิงเต่า</Link>
-                  <Link href="/destinations/asia/china/dalian" className="text-sm text-gray-600 hover:text-orange-600 block">ต้าเหลียน</Link>
-                  <Link href="/destinations/asia/china/inner-mongolia" className="text-sm text-gray-600 hover:text-orange-600 block">มองโกเลีย</Link>
-                  <Link href="/destinations/asia/china/zhuhai" className="text-sm text-gray-600 hover:text-orange-600 block">จู่ไห่</Link>
-
-                  <div className="mt-3 pt-2 border-t border-gray-100">
-                    <span className="text-xs font-bold text-gray-400 mb-1 block">เส้นทางพิเศษ</span>
-                    <Link href="/destinations/asia/china/no-shopping" className="text-sm text-gray-600 hover:text-orange-600 block">ทัวร์ไม่ลงร้าน</Link>
-                    <Link href="/destinations/asia/china/chongqing-zhangjiajie" className="text-sm text-gray-600 hover:text-orange-600 block">ฉงชิ่ง-จางเจียเจี้ย</Link>
-                    <Link href="/destinations/asia/china/shanghai-beijing" className="text-sm text-gray-600 hover:text-orange-600 block">เซี่ยงไฮ้-ปักกิ่ง</Link>
-                    <Link href="/destinations/asia/china/zhuhai-macau" className="text-sm text-gray-600 hover:text-orange-600 block">จู่ไห่-มาเก๊า</Link>
-                    <Link href="/destinations/asia/china/guangzhou-macau" className="text-sm text-gray-600 hover:text-orange-600 block">กวางโจว-มาเก๊า</Link>
-                    <Link href="/destinations/asia/china/guangzhou-hongkong" className="text-sm text-gray-600 hover:text-orange-600 block">กวางโจว-ฮ่องกง</Link>
-                  </div>
-                </div>
-              </div>
-
-              {/* ทัวร์เอเชีย */}
-              <div className="pt-2 border-t border-gray-50">
-                <Link href="/destinations/asia" className="font-bold text-sm text-gray-800 hover:text-orange-600 flex justify-between items-center mb-2">
-                  เอเชีย (ASIA) <ChevronRight className="w-4 h-4 text-gray-400" />
-                </Link>
-                <div className="pl-3 border-l-2 border-gray-100 space-y-2 ml-1">
-                  <Link href="/destinations/asia/south-korea" className="text-sm text-gray-600 hover:text-orange-600 block">เกาหลีใต้ (Korea)</Link>
-                  <Link href="/destinations/asia/taiwan" className="text-sm text-gray-600 hover:text-orange-600 block">ไต้หวัน (Taiwan)</Link>
-                  <Link href="/destinations/asia/hongkong" className="text-sm text-gray-600 hover:text-orange-600 block">ฮ่องกง (Hong Kong)</Link>
-                  <Link href="/destinations/asia/macau" className="text-sm text-gray-600 hover:text-orange-600 block">มาเก๊า (Macau)</Link>
-                  <Link href="/destinations/asia/vietnam" className="text-sm text-gray-600 hover:text-orange-600 block">เวียดนาม (Vietnam)</Link>
-                  <Link href="/destinations/asia/singapore" className="text-sm text-gray-600 hover:text-orange-600 block">สิงคโปร์ (Singapore)</Link>
-                  <Link href="/destinations/asia/malaysia" className="text-sm text-gray-600 hover:text-orange-600 block">มาเลเซีย (Malaysia)</Link>
-                  <Link href="/destinations/asia/indonesia" className="text-sm text-gray-600 hover:text-orange-600 block">อินโดนีเซีย (Indonesia)</Link>
-                  <Link href="/destinations/asia/india" className="text-sm text-gray-600 hover:text-orange-600 block">อินเดีย (India)</Link>
-                  <Link href="/destinations/asia/maldives" className="text-sm text-gray-600 hover:text-orange-600 block">มัลดีฟส์ (Maldives)</Link>
-                </div>
-              </div>
-
-              {/* ยุโรป & ตะวันออกกลาง */}
-              <div className="pt-2 border-t border-gray-50">
-                <Link href="/destinations/europe" className="font-bold text-sm text-gray-800 hover:text-orange-600 flex justify-between items-center mb-2">
-                  ยุโรป & ตะวันออกกลาง <ChevronRight className="w-4 h-4 text-gray-400" />
-                </Link>
-                <div className="pl-3 border-l-2 border-gray-100 space-y-2 ml-1">
-                  <Link href="/destinations/europe/switzerland" className="text-sm text-gray-600 hover:text-orange-600 block">สวิตเซอร์แลนด์</Link>
-                  <Link href="/destinations/europe/italy" className="text-sm text-gray-600 hover:text-orange-600 block">อิตาลี</Link>
-                  <Link href="/destinations/europe/france" className="text-sm text-gray-600 hover:text-orange-600 block">ฝรั่งเศส</Link>
-                  <Link href="/destinations/europe/uk" className="text-sm text-gray-600 hover:text-orange-600 block">อังกฤษ</Link>
-                  <Link href="/destinations/europe/germany" className="text-sm text-gray-600 hover:text-orange-600 block">เยอรมนี</Link>
-                  <Link href="/destinations/europe/austria" className="text-sm text-gray-600 hover:text-orange-600 block">ออสเตรีย</Link>
-                  <Link href="/destinations/europe/czech" className="text-sm text-gray-600 hover:text-orange-600 block">เช็ก</Link>
-                  <Link href="/destinations/europe/spain" className="text-sm text-gray-600 hover:text-orange-600 block">สเปน</Link>
-                  <Link href="/destinations/europe/netherlands" className="text-sm text-gray-600 hover:text-orange-600 block">เนเธอร์แลนด์</Link>
-                  <Link href="/destinations/europe/finland" className="text-sm text-gray-600 hover:text-orange-600 block">ฟินแลนด์</Link>
-                  <div className="my-2 pt-2 border-t border-gray-100"></div>
-                  <Link href="/destinations/middle-east/turkey" className="text-sm text-gray-600 hover:text-orange-600 block">ตุรกี</Link>
-                  <Link href="/destinations/europe/georgia" className="text-sm text-gray-600 hover:text-orange-600 block">จอร์เจีย</Link>
-                  <Link href="/destinations/middle-east/egypt" className="text-sm text-gray-600 hover:text-orange-600 block">อียิปต์</Link>
-                  <Link href="/destinations/middle-east/jordan" className="text-sm text-gray-600 hover:text-orange-600 block">จอร์แดน</Link>
-                  <Link href="/destinations/africa/morocco" className="text-sm text-gray-600 hover:text-orange-600 block">โมร็อกโก</Link>
-                </div>
-              </div>
-              
-              {/* อเมริกา & โอเชียเนีย */}
-              <div className="pt-2 border-t border-gray-50">
-                <div className="font-bold text-sm text-gray-800 flex justify-between items-center mb-2">
-                  อเมริกา & โอเชียเนีย
-                </div>
-                <div className="pl-3 border-l-2 border-gray-100 space-y-2 ml-1">
-                  <Link href="/destinations/america/usa" className="text-sm text-gray-600 hover:text-orange-600 block">อเมริกา</Link>
-                  <Link href="/destinations/america/canada" className="text-sm text-gray-600 hover:text-orange-600 block">แคนาดา</Link>
-                  <div className="my-2 pt-2 border-t border-gray-100"></div>
-                  <Link href="/destinations/oceania/australia" className="text-sm text-gray-600 hover:text-orange-600 block">ออสเตรเลีย</Link>
-                  <Link href="/destinations/oceania/new-zealand" className="text-sm text-gray-600 hover:text-orange-600 block">นิวซีแลนด์</Link>
-                </div>
-              </div>
-              
-            </div>
-          </div>
-        </aside>
-
-        {/* Middle Column: Content */}
-        <div className="flex-1 min-w-0">
-          
-          {/* Header Section (เรียบๆ ทางการ) */}
-          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mb-6">
-            <div className="flex items-center gap-3 mb-4">
-              <span className="bg-gray-100 text-gray-700 px-3 py-1 rounded text-xs font-bold border border-gray-200">
-                รหัสทัวร์: {tour.tourCode}
-              </span>
-              {tour.supplier?.bookingMethod === "API_ZEGO" && (
-                <div className="h-6 w-auto flex items-center">
-                  <img src="/images/wholesales/download.png" alt="LET'S GO" className="h-full w-auto object-contain" />
-                </div>
-              )}
-              {tour.supplier?.bookingMethod === "API_GO365" && (
-                <div className="h-6 w-auto flex items-center">
-                  <img src="/images/wholesales/download.jfif" alt="GO365" className="h-full w-auto object-contain" />
-                </div>
-              )}
-            </div>
-            
-            <h1 className="text-2xl md:text-3xl font-bold text-gray-900 leading-snug mb-4">{tour.tourName}</h1>
-            
-            <div className="flex flex-wrap items-center gap-6 text-sm text-gray-700 bg-gray-50 p-4 rounded-md border border-gray-100">
-              <div className="flex items-center gap-2">
-                <MapPin className="w-5 h-5 text-orange-600" />
-                <span className="font-medium">{tourDestination}</span>
-              </div>
-              <div className="w-px h-6 bg-gray-300 hidden sm:block"></div>
-              <div className="flex items-center gap-2">
-                <Clock className="w-5 h-5 text-orange-600" />
-                <span className="font-medium">{tour.durationDays} วัน {tour.durationDays - 1 > 0 ? tour.durationDays - 1 : 0} คืน</span>
-              </div>
-              </div>
+          {/* Itinerary by Day */}
+          <div className="space-y-4">
+             <h2 className="text-xl font-bold text-trust-900 flex items-center gap-2">
+               <Calendar className="w-5 h-5 text-primary" /> แผนการเดินทาง (Itinerary)
+             </h2>
+             <div className="space-y-4 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-border before:to-transparent">
+                {itinerary.map((day, idx) => (
+                   <div key={idx} className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
+                      <div className="flex items-center justify-center w-10 h-10 rounded-full border-4 border-white bg-primary text-white shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 absolute left-0 md:left-1/2 -translate-x-1/2 font-bold text-sm">
+                         วันที่ {day.day}
+                      </div>
+                      <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] ml-16 md:ml-0 p-5 rounded-2xl shadow-sm border border-border bg-white hover:border-primary/50 transition-colors">
+                         <h3 className="font-bold text-trust-900 text-sm md:text-base mb-2">{day.title}</h3>
+                         <p className="text-xs md:text-sm text-muted-foreground leading-relaxed">{day.desc}</p>
+                         <div className="mt-3 pt-3 border-t border-border flex items-center gap-2 text-xs text-trust-700 font-medium">
+                            <Utensils className="w-3.5 h-3.5 text-primary" /> มื้ออาหาร: {day.meals}
+                         </div>
+                      </div>
+                   </div>
+                ))}
+             </div>
           </div>
 
-          {/* Tour Image & Highlights (Side by Side) */}
-          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mb-6 flex flex-col md:flex-row gap-6 items-start">
-            
-            {/* Left: Tour Image */}
-            <div className="w-full md:w-[280px] shrink-0">
-              <img 
-                src={tour.images?.[0]?.imageUrl || "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e"} 
-                alt={tour.tourName} 
-                className="w-full h-auto aspect-auto object-contain rounded border border-gray-100 shadow-sm bg-gray-50"
-              />
-            </div>
-            
-            {/* Right: Overview & Download PDF */}
-            <div className="flex-1 min-w-0 w-full flex flex-col">
-              <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 mb-4 pb-4 border-b border-gray-100">
-                <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2 shrink-0">
-                  <Info className="w-5 h-5 text-orange-600" /> ไฮไลท์แพ็กเกจ
-                </h2>
-              </div>
-              
-              <div className="text-gray-700 leading-relaxed text-sm max-h-[350px] overflow-y-auto pr-3 custom-scrollbar bg-gray-50/50 p-4 rounded-md border border-gray-50">
-                สัมผัสประสบการณ์การเดินทางที่เหนือกว่า พร้อมไกด์ผู้เชี่ยวชาญดูแลตลอดการเดินทาง พักสบาย เดินทางสะดวก คุ้มค่าทุกวินาที
-              </div>
-            </div>
+          {/* Departures Table Section */}
+          <div id="departures" className="scroll-mt-24">
+             <h2 className="text-xl font-bold text-trust-900 mb-4 flex items-center gap-2">
+               <Plane className="w-5 h-5 text-primary" /> เลือกรอบวันเดินทาง (Departures)
+             </h2>
+             <div className="bg-white rounded-2xl shadow-soft border border-border overflow-hidden p-2">
+                <DeparturesTable departures={mappedDepartures} tourId={tour.id} />
+             </div>
           </div>
 
-          {/* Departures Table (Client Component) */}
-          <DeparturesTable departures={mappedDepartures} tourId={tour.id} />
+          {/* Included / Excluded & Policies */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+             <Card className="border-border shadow-sm border-t-4 border-t-emerald-500">
+                <CardContent className="p-6">
+                   <h3 className="font-bold text-trust-900 mb-4 flex items-center gap-2"><CheckCircle2 className="w-5 h-5 text-emerald-500" /> อัตรานี้รวม (Included)</h3>
+                   <ul className="text-sm text-muted-foreground space-y-2">
+                      <li>• ค่าตั๋วเครื่องบินไป-กลับ พร้อมน้ำหนักกระเป๋า</li>
+                      <li>• ค่าโรงแรมที่พักตามรายการ (ห้องละ 2-3 ท่าน)</li>
+                      <li>• ค่าอาหารทุกมื้อตามที่ระบุในรายการ</li>
+                      <li>• ค่าเข้าชมสถานที่ต่างๆ ตามรายการ</li>
+                      <li>• ประกันอุบัติเหตุระหว่างการเดินทาง</li>
+                   </ul>
+                </CardContent>
+             </Card>
+             <Card className="border-border shadow-sm border-t-4 border-t-destructive">
+                <CardContent className="p-6">
+                   <h3 className="font-bold text-trust-900 mb-4 flex items-center gap-2"><Info className="w-5 h-5 text-destructive" /> อัตรานี้ไม่รวม (Excluded)</h3>
+                   <ul className="text-sm text-muted-foreground space-y-2">
+                      <li>• ค่าวีซ่า (ถ้ามี หรือสำหรับชาวต่างชาติ)</li>
+                      <li>• ทิปไกด์ท้องถิ่นและคนขับรถ (ประมาณ 1,500 บาท)</li>
+                      <li>• ค่าใช้จ่ายส่วนตัวนอกเหนือจากรายการ</li>
+                      <li>• ภาษีมูลค่าเพิ่ม 7% และหัก ณ ที่จ่าย 3% (กรณีขอใบกำกับภาษี)</li>
+                   </ul>
+                </CardContent>
+             </Card>
+          </div>
+
+          {/* FAQ Section */}
+          <Card className="border-border shadow-soft bg-muted/30">
+             <CardContent className="p-6 md:p-8">
+               <h2 className="text-xl font-bold text-trust-900 mb-6 flex items-center gap-2">
+                 <FileQuestion className="w-5 h-5 text-primary" /> คำถามที่พบบ่อย (FAQ)
+               </h2>
+               <div className="space-y-4">
+                  <details className="group bg-white rounded-xl border border-border p-4 [&_summary::-webkit-details-marker]:hidden cursor-pointer shadow-sm">
+                     <summary className="flex justify-between items-center font-bold text-trust-900 text-sm">
+                        จองทัวร์แล้วสามารถยกเลิกได้หรือไม่?
+                        <ChevronDown className="w-5 h-5 text-muted-foreground group-open:rotate-180 transition-transform" />
+                     </summary>
+                     <p className="mt-3 text-sm text-muted-foreground leading-relaxed">
+                        สามารถยกเลิกได้ตามเงื่อนไขที่บริษัทกำหนด หากยกเลิกก่อนเดินทาง 30 วัน คืนเงินมัดจำเต็มจำนวน (หักค่าใช้จ่ายที่เกิดขึ้นจริง)
+                     </p>
+                  </details>
+                  <details className="group bg-white rounded-xl border border-border p-4 [&_summary::-webkit-details-marker]:hidden cursor-pointer shadow-sm">
+                     <summary className="flex justify-between items-center font-bold text-trust-900 text-sm">
+                        มีบริการรับทำวีซ่าให้ด้วยหรือไม่?
+                        <ChevronDown className="w-5 h-5 text-muted-foreground group-open:rotate-180 transition-transform" />
+                     </summary>
+                     <p className="mt-3 text-sm text-muted-foreground leading-relaxed">
+                        เรามีบริการให้คำปรึกษาและช่วยเตรียมเอกสารสำหรับการยื่นวีซ่า โดยจะมีเจ้าหน้าที่ติดต่อกลับหลังจากทำการจองเรียบร้อยแล้ว
+                     </p>
+                  </details>
+               </div>
+             </CardContent>
+          </Card>
 
         </div>
 
-        {/* Right Column: Formal Booking Panel (ไม่ทับแบนเนอร์) */}
-        <aside className="w-full lg:w-[350px] shrink-0">
-          <BookingWidget lowestPrice={lowestPrice} tourId={tour.id} departures={mappedDepartures} />
+        {/* Right Sidebar: Sticky Booking Panel */}
+        <aside className="w-full lg:w-[380px] shrink-0 hidden md:block">
+           <div className="sticky top-24 space-y-6">
+              
+              {/* Main Booking Widget */}
+              <div className="bg-white rounded-2xl shadow-floating border border-border overflow-hidden">
+                 <div className="bg-trust-900 p-6 text-center border-b border-trust-800 relative overflow-hidden">
+                    <div className="absolute top-0 right-0 opacity-10">
+                       <Plane className="w-32 h-32 transform translate-x-1/4 -translate-y-1/4" />
+                    </div>
+                    <Badge variant="brand" className="mb-2 bg-white/10 text-white border-transparent">โปรโมชันพิเศษจำกัดเวลา</Badge>
+                    <p className="text-trust-300 text-sm mb-1">ราคาเริ่มต้นเพียง</p>
+                    <div className="text-4xl font-black text-primary drop-shadow-md">฿{lowestPrice.toLocaleString()}</div>
+                    <p className="text-trust-400 text-xs mt-2">ราคาสุทธิ ไม่มีบวกเพิ่ม</p>
+                 </div>
+                 <div className="p-6">
+                    <BookingWidget lowestPrice={lowestPrice} tourId={tour.id} departures={mappedDepartures} />
+                    
+                    <div className="mt-4 pt-4 border-t border-border space-y-3">
+                       <Button variant="outline" className="w-full gap-2 border-primary text-primary hover:bg-primary-50">
+                          <FileText className="w-4 h-4" /> ขอใบเสนอราคา
+                       </Button>
+                       <Button variant="ghost" className="w-full gap-2 text-trust-600 hover:text-primary hover:bg-primary-50">
+                          <MessageSquareText className="w-4 h-4" /> สอบถามเจ้าหน้าที่
+                       </Button>
+                    </div>
+                 </div>
+              </div>
+
+              {/* Trust Indicators */}
+              <Card className="bg-primary-50 border-primary-100 shadow-none">
+                 <CardContent className="p-5">
+                    <h3 className="font-bold text-trust-900 text-sm mb-4">ทำไมถึงควรจองกับ Jongtour?</h3>
+                    <ul className="space-y-3">
+                       <li className="flex gap-3 items-start">
+                          <ShieldCheck className="w-5 h-5 text-primary shrink-0" />
+                          <div>
+                             <p className="text-sm font-bold text-trust-900">บริษัทจดทะเบียนถูกต้อง</p>
+                             <p className="text-xs text-trust-700">มีใบอนุญาตประกอบธุรกิจนำเที่ยวจาก ททท.</p>
+                          </div>
+                       </li>
+                       <li className="flex gap-3 items-start">
+                          <ThumbsUp className="w-5 h-5 text-primary shrink-0" />
+                          <div>
+                             <p className="text-sm font-bold text-trust-900">รีวิวเชื่อถือได้ 100%</p>
+                             <p className="text-xs text-trust-700">จากลูกค้าที่เดินทางจริงมากกว่า 10,000 ท่าน</p>
+                          </div>
+                       </li>
+                    </ul>
+                 </CardContent>
+              </Card>
+
+           </div>
         </aside>
 
       </div>
+
+      {/* Mobile Sticky Bottom Booking Bar */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-border p-4 shadow-[0_-10px_30px_rgba(0,0,0,0.1)] z-50 flex items-center justify-between">
+         <div>
+            <p className="text-xs text-muted-foreground font-medium">เริ่มต้นที่</p>
+            <p className="text-2xl font-black text-primary">฿{lowestPrice.toLocaleString()}</p>
+         </div>
+         <Button size="lg" className="shadow-floating px-8" onClick={() => {
+            document.getElementById('departures')?.scrollIntoView({ behavior: 'smooth' });
+         }}>
+            เลือกรอบเดินทาง
+         </Button>
+      </div>
+
     </main>
   );
 }
@@ -361,15 +386,15 @@ export default async function TourDetailsPage(props: { params: { id: string } })
   } catch (error: any) {
     if (error?.message === 'NEXT_NOT_FOUND') { throw error; }
     return (
-      <main className="min-h-screen bg-[#f8f9fa] flex items-center justify-center p-4">
-        <div className="bg-white p-8 rounded-2xl shadow-lg border border-red-100 max-w-2xl w-full text-center">
-          <h1 className="text-2xl font-bold text-red-600 mb-4">ขออภัย เกิดข้อผิดพลาดของระบบ (500)</h1>
-          <p className="text-gray-700 mb-4">ไม่สามารถโหลดข้อมูลทัวร์ได้ กรุณาลองใหม่อีกครั้ง</p>
-          <div className="bg-red-50 p-4 rounded-lg text-left overflow-x-auto text-xs text-red-800 font-mono mb-6 whitespace-pre-wrap break-all">
+      <main className="min-h-screen bg-background flex items-center justify-center p-4">
+        <div className="bg-white p-8 rounded-2xl shadow-floating border border-destructive/20 max-w-2xl w-full text-center">
+          <h1 className="text-2xl font-bold text-destructive mb-4">ขออภัย เกิดข้อผิดพลาดของระบบ (500)</h1>
+          <p className="text-muted-foreground mb-4">ไม่สามารถโหลดข้อมูลทัวร์ได้ กรุณาลองใหม่อีกครั้ง</p>
+          <div className="bg-destructive/10 p-4 rounded-lg text-left overflow-x-auto text-xs text-destructive-dark font-mono mb-6 whitespace-pre-wrap break-all">
             <strong>Error:</strong> {error?.message || "Unknown Server Error"}
           </div>
-          <Link href="/" className="inline-block bg-orange-600 text-white px-6 py-2 rounded-lg font-bold hover:bg-orange-700">
-            กลับหน้าหลัก
+          <Link href="/">
+             <Button variant="brand" className="px-8 rounded-full">กลับหน้าหลัก</Button>
           </Link>
         </div>
       </main>

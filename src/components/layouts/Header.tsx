@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Map, Compass, Flame, Users, BookOpen, Star, FileText, Smartphone } from "lucide-react";
 import AuthButtons from "@/components/AuthButtons";
+import { useState } from "react";
 
 interface HeaderProps {
   agentLogo?: string | null;
@@ -12,241 +13,292 @@ interface HeaderProps {
 
 export default function Header({ agentLogo, agentName }: HeaderProps) {
   const pathname = usePathname();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [activeMobileSection, setActiveMobileSection] = useState<string | null>(null);
 
   if (pathname === "/" || pathname.startsWith("/admin")) {
     return null;
   }
 
+  const toggleMobileSection = (section: string) => {
+    setActiveMobileSection(activeMobileSection === section ? null : section);
+  };
+
   return (
-    <nav className="bg-white shadow-sm border-b border-gray-100 relative z-50">
+    <nav className="bg-white shadow-sm border-b border-border relative z-50">
       <div className="max-w-7xl mx-auto px-4 flex items-center justify-between h-20">
         <Link href="/" className="flex items-center gap-2">
           {agentLogo ? (
             <img src={agentLogo} alt={agentName || "Agent Logo"} className="h-10 object-contain" />
           ) : (
-            <span className="text-3xl font-bold tracking-tight text-gray-800">
-              <span className="text-[var(--brand-color,theme(colors.orange.500))]">Jong</span>tour AI
+            <span className="text-2xl md:text-3xl font-black tracking-tight text-trust-900">
+              <span className="text-primary">Jong</span>tour <span className="text-primary font-bold">AI</span>
             </span>
           )}
         </Link>
 
-        <div className="hidden md:flex items-center gap-4">
+        {/* Desktop Navigation */}
+        <div className="hidden lg:flex items-center gap-1">
           
-          <Link href="/" className="px-2 lg:px-4 py-2 text-gray-600 hover:text-[var(--brand-color,theme(colors.orange.500))] font-medium transition-colors whitespace-nowrap">
-            หน้าแรก
-          </Link>
+          <NavLink href="/" label="หน้าแรก" />
+          
+          <div className="group py-8 relative">
+            <button className="flex items-center gap-1 px-3 py-2 text-trust-700 group-hover:text-primary font-medium transition-colors whitespace-nowrap text-[15px]">
+              ค้นหาทัวร์
+              <ChevronDown className="w-4 h-4 group-hover:rotate-180 transition-transform duration-300" />
+            </button>
+            <div className="absolute left-0 top-[80px] w-56 bg-white border border-border shadow-floating rounded-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 transform origin-top translate-y-2 group-hover:translate-y-0 p-2 z-50">
+               <DropdownLink href="/tour/search" icon={Map} label="ค้นหาทัวร์ทั้งหมด" />
+               <DropdownLink href="/ai-planner" icon={Compass} label="AI ช่วยหาทัวร์" />
+               <DropdownLink href="/compare" icon={Star} label="เปรียบเทียบทัวร์" />
+               <DropdownLink href="/ai-planner?action=image" icon={Smartphone} label="ค้นหาด้วยรูปภาพ / PDF" />
+            </div>
+          </div>
 
-          {/* Mega Menu Item */}
-          <div className="group py-8">
-            <button className="flex items-center gap-1 px-2 lg:px-4 py-2 text-gray-600 group-hover:text-[var(--brand-color,theme(colors.orange.500))] font-medium transition-colors whitespace-nowrap">
+          {/* ทัวร์ต่างประเทศ MEGA MENU */}
+          <div className="group py-8 relative">
+            <button className="flex items-center gap-1 px-3 py-2 text-trust-700 group-hover:text-primary font-medium transition-colors whitespace-nowrap text-[15px]">
               ทัวร์ต่างประเทศ
               <ChevronDown className="w-4 h-4 group-hover:rotate-180 transition-transform duration-300" />
             </button>
-
-            {/* Dropdown Container (Full Width) */}
-            <div className="absolute left-0 top-full w-full bg-white border-t border-gray-100 shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 transform origin-top translate-y-2 group-hover:translate-y-0 max-h-[80vh] overflow-y-auto">
-              <div className="max-w-7xl mx-auto px-4 py-8">
-                <div className="grid grid-cols-1 md:grid-cols-5 gap-8">
-                  
-                  {/* Column 1: ยอดฮิต (Japan & China) */}
-                  <div className="col-span-1 md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <div>
-                      <h3 className="text-lg font-bold text-gray-800 border-b-2 border-orange-500 pb-2 mb-4">จุดหมายยอดฮิต</h3>
-                      
-                      <div className="mb-6">
-                        <CountryLink countryCode="jp" name="ทัวร์ญี่ปุ่น" href="/destinations/asia/japan" />
-                        <div className="grid grid-cols-2 gap-x-2 gap-y-2 mt-3 ml-2">
-                          <CityLink name="โตเกียว" href="/destinations/asia/japan/tokyo" />
-                          <CityLink name="โอซาก้า" href="/destinations/asia/japan/osaka" />
-                          <CityLink name="ฮอกไกโด" href="/destinations/asia/japan/hokkaido" />
-                          <CityLink name="ฟุกุโอกะ" href="/destinations/asia/japan/fukuoka" />
-                          <CityLink name="เกียวโต" href="/destinations/asia/japan/kyoto" />
-                          <CityLink name="โอกินาว่า" href="/destinations/asia/japan/okinawa" />
-                        </div>
-                      </div>
-                    </div>
-
-                    <div>
-                      <h3 className="text-lg font-bold text-transparent border-b-2 border-transparent pb-2 mb-4 hidden md:block">&nbsp;</h3>
-                      <CountryLink countryCode="cn" name="ทัวร์จีน" href="/destinations/asia/china" />
-                      <div className="grid grid-cols-2 gap-x-2 gap-y-1 mt-3 ml-2">
-                        <CityLink name="เฉิงตู" href="/destinations/asia/china/chengdu" />
-                        <CityLink name="เซี่ยงไฮ้" href="/destinations/asia/china/shanghai" />
-                        <CityLink name="จางเจียเจี้ย" href="/destinations/asia/china/zhangjiajie" />
-                        <CityLink name="ฉงชิ่ง" href="/destinations/asia/china/chongqing" />
-                        <CityLink name="ปักกิ่ง" href="/destinations/asia/china/beijing" />
-                        <CityLink name="คุนหมิง" href="/destinations/asia/china/kunming" />
-                        <CityLink name="กุ้ยหลิน" href="/destinations/asia/china/guilin" />
-                        <CityLink name="ซีอาน" href="/destinations/asia/china/xian" />
-                        <CityLink name="เส้นทางสายไหม" href="/destinations/asia/china/silk-road" />
-                        <CityLink name="ซินเจียง" href="/destinations/asia/china/xinjiang" />
-                        <CityLink name="ทิเบต" href="/destinations/asia/china/tibet" />
-                        <CityLink name="ลี่เจียง" href="/destinations/asia/china/lijiang" />
-                        <CityLink name="อี้ชาง" href="/destinations/asia/china/yichang" />
-                        <CityLink name="หังโจว" href="/destinations/asia/china/hangzhou" />
-                        <CityLink name="ต้าหลี่" href="/destinations/asia/china/dali" />
-                        <CityLink name="กวางโจว" href="/destinations/asia/china/guangzhou" />
-                        <CityLink name="ฮาร์บิ้น" href="/destinations/asia/china/harbin" />
-                        <CityLink name="ลั่วหยาง" href="/destinations/asia/china/luoyang" />
-                        <CityLink name="หุบเขาเทวดา" href="/destinations/asia/china/wangxian" />
-                        <CityLink name="เอินซือ" href="/destinations/asia/china/enshi" />
-                        <CityLink name="ชิงเต่า" href="/destinations/asia/china/qingdao" />
-                        <CityLink name="ต้าเหลียน" href="/destinations/asia/china/dalian" />
-                        <CityLink name="มองโกเลีย" href="/destinations/asia/china/inner-mongolia" />
-                        <CityLink name="จู่ไห่" href="/destinations/asia/china/zhuhai" />
-                      </div>
-                      
-                      {/* เส้นทางพิเศษ */}
-                      <div className="mt-3 ml-2 border-t border-gray-100 pt-2">
-                        <span className="text-xs font-bold text-gray-400 mb-1 block">เส้นทางพิเศษ</span>
-                        <div className="flex flex-col gap-1">
-                          <CityLink name="ทัวร์ไม่ลงร้าน" href="/destinations/asia/china/no-shopping" />
-                          <CityLink name="ฉงชิ่ง-จางเจียเจี้ย" href="/destinations/asia/china/chongqing-zhangjiajie" />
-                          <CityLink name="เซี่ยงไฮ้-ปักกิ่ง" href="/destinations/asia/china/shanghai-beijing" />
-                          <CityLink name="จู่ไห่-มาเก๊า" href="/destinations/asia/china/zhuhai-macau" />
-                          <CityLink name="กวางโจว-มาเก๊า" href="/destinations/asia/china/guangzhou-macau" />
-                          <CityLink name="กวางโจว-ฮ่องกง" href="/destinations/asia/china/guangzhou-hongkong" />
-                        </div>
-                      </div>
-                    </div>
+            <div className="absolute left-1/2 -translate-x-1/2 top-[80px] w-[800px] bg-white border border-border shadow-floating rounded-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 transform origin-top translate-y-2 group-hover:translate-y-0 p-6 z-50 flex gap-8">
+               
+               {/* ทัวร์ญี่ปุ่น */}
+               <div className="flex-1">
+                  <div className="flex items-center justify-between border-b-2 border-primary pb-2 mb-4">
+                     <h3 className="text-base font-black text-trust-900">🇯🇵 ทัวร์ญี่ปุ่น</h3>
+                     <Link href="/country/japan" className="text-xs font-bold text-primary hover:underline">ดูทั้งหมด</Link>
                   </div>
-
-                  {/* Column 2: เอเชีย */}
-                  <div className="col-span-1">
-                    <h3 className="text-lg font-bold text-gray-800 border-b-2 border-orange-500 pb-2 mb-4">ทัวร์เอเชีย</h3>
-                    <ul className="space-y-3">
-                      <CountryLink countryCode="kr" name="ทัวร์เกาหลีใต้" href="/destinations/asia/south-korea" />
-                      <CountryLink countryCode="tw" name="ทัวร์ไต้หวัน" href="/destinations/asia/taiwan" />
-                      <CountryLink countryCode="hk" name="ทัวร์ฮ่องกง" href="/destinations/asia/hongkong" />
-                      <CountryLink countryCode="mo" name="ทัวร์มาเก๊า" href="/destinations/asia/macau" />
-                      <CountryLink countryCode="vn" name="ทัวร์เวียดนาม" href="/destinations/asia/vietnam" />
-                      <CountryLink countryCode="sg" name="ทัวร์สิงคโปร์" href="/destinations/asia/singapore" />
-                      <CountryLink countryCode="my" name="ทัวร์มาเลเซีย" href="/destinations/asia/malaysia" />
-                      <CountryLink countryCode="id" name="ทัวร์อินโดนีเซีย" href="/destinations/asia/indonesia" />
-                      <CountryLink countryCode="in" name="ทัวร์อินเดีย" href="/destinations/asia/india" />
-                      <CountryLink countryCode="mv" name="ทัวร์มัลดีฟส์" href="/destinations/asia/maldives" />
-                    </ul>
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-6">
+                     <div>
+                        <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-2">เมืองยอดนิยม</p>
+                        <ul className="space-y-2">
+                           <CityLink name="โตเกียว" href="/country/japan/tokyo" />
+                           <CityLink name="โอซาก้า" href="/country/japan/osaka" />
+                           <CityLink name="เกียวโต" href="/country/japan/kyoto" />
+                           <CityLink name="ฮอกไกโด" href="/country/japan/hokkaido" />
+                           <CityLink name="ฟุกุโอกะ" href="/country/japan/fukuoka" />
+                           <CityLink name="โอกินาว่า" href="/country/japan/okinawa" />
+                        </ul>
+                     </div>
+                     <div>
+                        <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-2">ภูมิภาค</p>
+                        <ul className="space-y-2 mb-4">
+                           <CityLink name="คันไซ" href="/country/japan/kansai" />
+                           <CityLink name="คิวชู" href="/country/japan/kyushu" />
+                           <CityLink name="โทโฮคุ" href="/country/japan/tohoku" />
+                           <CityLink name="ฟูจิ" href="/country/japan/fuji" />
+                        </ul>
+                        <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-2">โปรโมชัน</p>
+                        <ul className="space-y-2">
+                           <CityLink name="🌸 ทัวร์ซากุระ" href="/country/japan/sakura" highlight />
+                           <CityLink name="🍁 ใบไม้เปลี่ยนสี" href="/country/japan/autumn" highlight />
+                           <CityLink name="⛄ ทัวร์หิมะ" href="/country/japan/winter" highlight />
+                           <CityLink name="🔥 ไฟไหม้ญี่ปุ่น" href="/country/japan/flash-sale" highlight className="text-destructive" />
+                        </ul>
+                     </div>
                   </div>
+               </div>
 
-                  {/* Column 3: ยุโรป & ตะวันออกกลาง */}
-                  <div className="col-span-1">
-                    <h3 className="text-lg font-bold text-gray-800 border-b-2 border-blue-500 pb-2 mb-4">ยุโรป & ตะวันออกกลาง</h3>
-                    <ul className="space-y-3">
-                      <CountryLink countryCode="ch" name="สวิตเซอร์แลนด์" href="/destinations/europe/switzerland" titleColor="hover:text-blue-600" />
-                      <CountryLink countryCode="it" name="อิตาลี" href="/destinations/europe/italy" titleColor="hover:text-blue-600" />
-                      <CountryLink countryCode="fr" name="ฝรั่งเศส" href="/destinations/europe/france" titleColor="hover:text-blue-600" />
-                      <CountryLink countryCode="gb" name="อังกฤษ" href="/destinations/europe/uk" titleColor="hover:text-blue-600" />
-                      <CountryLink countryCode="de" name="เยอรมนี" href="/destinations/europe/germany" titleColor="hover:text-blue-600" />
-                      <CountryLink countryCode="at" name="ออสเตรีย" href="/destinations/europe/austria" titleColor="hover:text-blue-600" />
-                      <CountryLink countryCode="cz" name="เช็ก" href="/destinations/europe/czech" titleColor="hover:text-blue-600" />
-                      <CountryLink countryCode="es" name="สเปน" href="/destinations/europe/spain" titleColor="hover:text-blue-600" />
-                      <CountryLink countryCode="nl" name="เนเธอร์แลนด์" href="/destinations/europe/netherlands" titleColor="hover:text-blue-600" />
-                      <CountryLink countryCode="fi" name="ฟินแลนด์" href="/destinations/europe/finland" titleColor="hover:text-blue-600" />
-                      <div className="my-2 pt-2 border-t border-gray-100"></div>
-                      <CountryLink countryCode="tr" name="ทัวร์ตุรกี" href="/destinations/middle-east/turkey" titleColor="hover:text-blue-600" />
-                      <CountryLink countryCode="ge" name="ทัวร์จอร์เจีย" href="/destinations/europe/georgia" titleColor="hover:text-blue-600" />
-                      <CountryLink countryCode="eg" name="ทัวร์อียิปต์" href="/destinations/middle-east/egypt" titleColor="hover:text-blue-600" />
-                      <CountryLink countryCode="jo" name="ทัวร์จอร์แดน" href="/destinations/middle-east/jordan" titleColor="hover:text-blue-600" />
-                      <CountryLink countryCode="ma" name="ทัวร์โมร็อกโก" href="/destinations/africa/morocco" titleColor="hover:text-blue-600" />
-                    </ul>
+               {/* ทัวร์จีน */}
+               <div className="flex-1 border-l border-border pl-8">
+                  <div className="flex items-center justify-between border-b-2 border-red-500 pb-2 mb-4">
+                     <h3 className="text-base font-black text-trust-900">🇨🇳 ทัวร์จีน</h3>
+                     <Link href="/country/china" className="text-xs font-bold text-red-500 hover:underline">ดูทั้งหมด</Link>
                   </div>
-
-                  {/* Column 4: อเมริกา & โอเชียเนีย */}
-                  <div className="col-span-1">
-                    <h3 className="text-lg font-bold text-gray-800 border-b-2 border-emerald-500 pb-2 mb-4">อเมริกา & โอเชียเนีย</h3>
-                    <ul className="space-y-3">
-                      <CountryLink countryCode="us" name="ทัวร์อเมริกา" href="/destinations/america/usa" titleColor="hover:text-emerald-600" />
-                      <CountryLink countryCode="ca" name="ทัวร์แคนาดา" href="/destinations/america/canada" titleColor="hover:text-emerald-600" />
-                      <div className="my-4 pt-4 border-t border-gray-100"></div>
-                      <CountryLink countryCode="au" name="ทัวร์ออสเตรเลีย" href="/destinations/oceania/australia" titleColor="hover:text-emerald-600" />
-                      <CountryLink countryCode="nz" name="ทัวร์นิวซีแลนด์" href="/destinations/oceania/new-zealand" titleColor="hover:text-emerald-600" />
-                    </ul>
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-6">
+                     <div>
+                        <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-2">เมืองยอดนิยม</p>
+                        <ul className="space-y-2">
+                           <CityLink name="ปักกิ่ง" href="/country/china/beijing" />
+                           <CityLink name="เซี่ยงไฮ้" href="/country/china/shanghai" />
+                           <CityLink name="เฉิงตู" href="/country/china/chengdu" />
+                           <CityLink name="ฉงชิ่ง" href="/country/china/chongqing" />
+                           <CityLink name="ซีอาน" href="/country/china/xian" />
+                           <CityLink name="คุนหมิง" href="/country/china/kunming" />
+                        </ul>
+                     </div>
+                     <div>
+                        <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-2">ธรรมชาติ / วิวสวย</p>
+                        <ul className="space-y-2 mb-4">
+                           <CityLink name="จางเจียเจี้ย" href="/country/china/zhangjiajie" />
+                           <CityLink name="กุ้ยหลิน" href="/country/china/guilin" />
+                           <CityLink name="ลี่เจียง" href="/country/china/lijiang" />
+                           <CityLink name="ต้าหลี่" href="/country/china/dali" />
+                           <CityLink name="แชงกรีล่า" href="/country/china/shangri-la" />
+                        </ul>
+                        <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-2">โปรโมชัน</p>
+                        <ul className="space-y-2">
+                           <CityLink name="🧧 ทัวร์ตรุษจีน" href="/country/china/chinese-new-year" highlight />
+                           <CityLink name="🎆 ทัวร์ปีใหม่จีน" href="/country/china/new-year" highlight />
+                           <CityLink name="🔥 ไฟไหม้จีน" href="/country/china/flash-sale" highlight className="text-destructive" />
+                        </ul>
+                     </div>
                   </div>
+               </div>
 
-                </div>
-              </div>
             </div>
           </div>
 
-          {/* Wholesale Mega Menu */}
+          {/* Wholesale */}
           <div className="group py-8 relative">
-            <button className="flex items-center gap-1 px-4 py-2 text-gray-600 group-hover:text-orange-500 font-medium transition-colors whitespace-nowrap">
-              โฮลเซลล์ (Wholesale)
+            <button className="flex items-center gap-1 px-3 py-2 text-trust-700 group-hover:text-primary font-medium transition-colors whitespace-nowrap text-[15px]">
+              ทัวร์ตามโฮลเซล
               <ChevronDown className="w-4 h-4 group-hover:rotate-180 transition-transform duration-300" />
             </button>
-
-            <div className="absolute left-1/2 -translate-x-1/2 top-full w-[650px] bg-white border border-gray-100 shadow-2xl rounded-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 transform origin-top translate-y-2 group-hover:translate-y-0 p-6 z-50">
-              <div className="grid grid-cols-2 gap-8">
-                {[
-                  { slug: "letsgo", name: "Let's Go Group", logo: "/images/wholesales/download.png", dests: ["ญี่ปุ่น", "จีน", "เกาหลีใต้", "ไต้หวัน", "ฮ่องกง", "เวียดนาม", "ยุโรป"] },
-                  { slug: "go365", name: "GO 365 Travel", logo: "/images/wholesales/download.jfif", dests: ["ญี่ปุ่น", "จีน", "ยุโรป", "เวียดนาม", "สิงคโปร์", "ตุรกี"] },
-                  { slug: "checkingroup", name: "Check In Group", logo: "/images/wholesales/CH7.jpg", dests: ["จีน", "ฮ่องกง", "มาเก๊า", "ไต้หวัน"] },
-                  { slug: "tourfactory", name: "Tour Factory", logo: "/images/wholesales/Tour-Factory.jpg", dests: ["จีน", "ฮ่องกง", "มาเก๊า", "ไต้หวัน", "เวียดนาม"] }
-                ].map((ws) => (
-                  <div key={ws.slug} className="flex flex-col">
-                    <Link href={`/wholesale/${ws.slug}`} className="flex items-center gap-3 mb-3 group/ws">
-                      <div className="w-14 h-14 bg-white rounded-xl border border-gray-100 p-1.5 flex items-center justify-center shadow-sm group-hover/ws:border-orange-500 group-hover/ws:shadow-md transition-all shrink-0">
-                        <img src={ws.logo} alt={ws.name} className="max-w-full max-h-full object-contain" />
-                      </div>
-                      <span className="font-bold text-gray-800 text-lg group-hover/ws:text-orange-500 transition-colors">{ws.name}</span>
-                    </Link>
-                    <div className="flex flex-wrap gap-1.5 pl-[68px] mt-auto">
-                      {ws.dests.map(dest => (
-                         <Link key={dest} href={`/wholesale/${ws.slug}?dest=${encodeURIComponent(dest)}`} className="text-[11px] font-medium text-gray-500 hover:text-orange-600 hover:bg-orange-50 px-2 py-1 rounded-md transition-colors bg-gray-50 border border-gray-100">
-                           {dest}
-                         </Link>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
+            <div className="absolute left-0 top-[80px] w-56 bg-white border border-border shadow-floating rounded-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 transform origin-top translate-y-2 group-hover:translate-y-0 p-2 z-50">
+               <DropdownLink href="/wholesale/letgo-group" label="Let's go Group" />
+               <DropdownLink href="/wholesale/go365" label="Go365" />
+               <DropdownLink href="/wholesale/check-in-group" label="Check in Group" />
+               <DropdownLink href="/wholesale/tour-factory" label="Tour Factory" />
+               <div className="my-1 border-t border-border"></div>
+               <DropdownLink href="/wholesale" label="ดูโฮลเซลทั้งหมด" className="font-bold text-primary" />
             </div>
           </div>
 
-          <Link href="/last-minute" className="px-2 lg:px-4 py-2 text-rose-600 hover:text-rose-700 font-bold transition-colors flex items-center gap-1 whitespace-nowrap">
-            🔥 ทัวร์ไฟไหม้
-          </Link>
+          <NavLink href="/deals/flash-sale" label="🔥 โปรโมชัน" className="text-destructive hover:text-destructive font-bold" />
           
-          <Link href="/ai-planner" className="bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white px-4 lg:px-5 py-2 rounded-full font-bold transition-all shadow-md hover:shadow-lg flex items-center gap-2 transform hover:-translate-y-0.5 ml-1 lg:ml-2 whitespace-nowrap text-sm lg:text-base">
-            ✨ AI จัดทริปส่วนตัว
-          </Link>
+          {/* Private Group */}
+          <div className="group py-8 relative">
+            <button className="flex items-center gap-1 px-3 py-2 text-trust-700 group-hover:text-primary font-medium transition-colors whitespace-nowrap text-[15px]">
+              กรุ๊ปส่วนตัว
+              <ChevronDown className="w-4 h-4 group-hover:rotate-180 transition-transform duration-300" />
+            </button>
+            <div className="absolute left-0 top-[80px] w-56 bg-white border border-border shadow-floating rounded-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 transform origin-top translate-y-2 group-hover:translate-y-0 p-2 z-50">
+               <DropdownLink href="/ai-planner" icon={Compass} label="ให้ AI ออกแบบทริป" />
+               <DropdownLink href="/contact?type=quotation" icon={FileText} label="ขอใบเสนอราคา" />
+               <DropdownLink href="/private-group/examples" icon={Users} label="ตัวอย่างกรุ๊ปส่วนตัว" />
+            </div>
+          </div>
 
-          <Link href="https://info.jongtour.com/contact" className="px-2 lg:px-4 py-2 text-gray-600 hover:text-[var(--brand-color,theme(colors.orange.500))] font-medium transition-colors whitespace-nowrap">
-            ติดต่อเรา
-          </Link>
+          {/* บทความ */}
+          <div className="group py-8 relative">
+            <button className="flex items-center gap-1 px-3 py-2 text-trust-700 group-hover:text-primary font-medium transition-colors whitespace-nowrap text-[15px]">
+              บทความ
+              <ChevronDown className="w-4 h-4 group-hover:rotate-180 transition-transform duration-300" />
+            </button>
+            <div className="absolute left-0 top-[80px] w-48 bg-white border border-border shadow-floating rounded-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 transform origin-top translate-y-2 group-hover:translate-y-0 p-2 z-50">
+               <DropdownLink href="/blog/guides" label="คู่มือท่องเที่ยว" />
+               <DropdownLink href="/blog/destinations" label="แนะนำประเทศ" />
+               <DropdownLink href="/blog/visa" label="วีซ่า" />
+               <DropdownLink href="/how-to-book" label="วิธีจอง" />
+               <DropdownLink href="/faq" label="FAQ" />
+            </div>
+          </div>
+
+          <NavLink href="/contact" label="ติดต่อเรา" />
         </div>
 
-        <div className="flex gap-4 items-center">
-          <AuthButtons />
+        <div className="flex items-center gap-4">
+          <div className="hidden md:block">
+             <AuthButtons />
+          </div>
+          
+          {/* Mobile Menu Toggle */}
+          <button 
+             className="lg:hidden p-2 text-trust-700"
+             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          >
+             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+          </button>
         </div>
       </div>
+
+      {/* Mobile Accordion Menu */}
+      {mobileMenuOpen && (
+         <div className="lg:hidden absolute top-20 left-0 right-0 bg-white border-b border-border shadow-floating max-h-[calc(100vh-80px)] overflow-y-auto custom-scrollbar p-4">
+            <div className="flex flex-col space-y-2">
+               <Link href="/" className="p-3 font-bold text-trust-900 border-b border-border" onClick={() => setMobileMenuOpen(false)}>หน้าแรก</Link>
+               
+               <MobileAccordion 
+                  title="ทัวร์ต่างประเทศ" 
+                  isOpen={activeMobileSection === 'overseas'} 
+                  onClick={() => toggleMobileSection('overseas')}
+               >
+                  <div className="pl-4 space-y-2 mt-2">
+                     <p className="text-xs font-bold text-primary mt-2">ทัวร์ญี่ปุ่น</p>
+                     <div className="grid grid-cols-2 gap-2">
+                        <Link href="/country/japan/tokyo" className="text-sm text-trust-700 py-1" onClick={() => setMobileMenuOpen(false)}>โตเกียว</Link>
+                        <Link href="/country/japan/osaka" className="text-sm text-trust-700 py-1" onClick={() => setMobileMenuOpen(false)}>โอซาก้า</Link>
+                        <Link href="/country/japan/hokkaido" className="text-sm text-trust-700 py-1" onClick={() => setMobileMenuOpen(false)}>ฮอกไกโด</Link>
+                     </div>
+                     <Link href="/country/japan" className="text-xs text-primary font-bold block mt-1" onClick={() => setMobileMenuOpen(false)}>ดูทัวร์ญี่ปุ่นทั้งหมด ➔</Link>
+                     
+                     <p className="text-xs font-bold text-red-500 mt-4">ทัวร์จีน</p>
+                     <div className="grid grid-cols-2 gap-2">
+                        <Link href="/country/china/beijing" className="text-sm text-trust-700 py-1" onClick={() => setMobileMenuOpen(false)}>ปักกิ่ง</Link>
+                        <Link href="/country/china/shanghai" className="text-sm text-trust-700 py-1" onClick={() => setMobileMenuOpen(false)}>เซี่ยงไฮ้</Link>
+                        <Link href="/country/china/chengdu" className="text-sm text-trust-700 py-1" onClick={() => setMobileMenuOpen(false)}>เฉิงตู</Link>
+                     </div>
+                     <Link href="/country/china" className="text-xs text-red-500 font-bold block mt-1" onClick={() => setMobileMenuOpen(false)}>ดูทัวร์จีนทั้งหมด ➔</Link>
+                  </div>
+               </MobileAccordion>
+
+               <MobileAccordion 
+                  title="ทัวร์ตามโฮลเซล" 
+                  isOpen={activeMobileSection === 'wholesale'} 
+                  onClick={() => toggleMobileSection('wholesale')}
+               >
+                  <div className="pl-4 space-y-2 mt-2 flex flex-col">
+                     <Link href="/wholesale/letgo-group" className="text-sm text-trust-700 py-2" onClick={() => setMobileMenuOpen(false)}>Let's go Group</Link>
+                     <Link href="/wholesale/go365" className="text-sm text-trust-700 py-2" onClick={() => setMobileMenuOpen(false)}>Go365</Link>
+                     <Link href="/wholesale/check-in-group" className="text-sm text-trust-700 py-2" onClick={() => setMobileMenuOpen(false)}>Check in Group</Link>
+                     <Link href="/wholesale/tour-factory" className="text-sm text-trust-700 py-2" onClick={() => setMobileMenuOpen(false)}>Tour Factory</Link>
+                  </div>
+               </MobileAccordion>
+
+               <Link href="/deals/flash-sale" className="p-3 font-bold text-destructive border-b border-border" onClick={() => setMobileMenuOpen(false)}>🔥 โปรโมชันไฟไหม้</Link>
+               
+               <div className="p-4 mt-4">
+                  <AuthButtons />
+               </div>
+            </div>
+         </div>
+      )}
     </nav>
   );
 }
 
-function CountryLink({ countryCode, name, href, titleColor = "hover:text-orange-500" }: { countryCode: string, name: string, href: string, titleColor?: string }) {
+function NavLink({ href, label, className = "" }: { href: string, label: string, className?: string }) {
   return (
-    <li className="flex items-center gap-3 group/item">
-      <div className="w-5 h-5 rounded-full overflow-hidden shrink-0 shadow-sm border border-gray-100 flex items-center justify-center bg-gray-50">
-        <img 
-          src={`https://flagcdn.com/w40/${countryCode}.png`} 
-          alt={`${name} flag`} 
-          className="w-full h-full object-cover"
-        />
-      </div>
-      <Link href={href} className={`text-[15px] font-medium text-gray-700 ${titleColor} transition-colors`}>
-        {name}
-      </Link>
+    <Link href={href} className={`px-3 py-2 text-[15px] font-medium text-trust-700 hover:text-primary transition-colors whitespace-nowrap ${className}`}>
+      {label}
+    </Link>
+  );
+}
+
+function DropdownLink({ href, label, icon: Icon, className = "" }: { href: string, label: string, icon?: any, className?: string }) {
+  return (
+    <Link href={href} className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-trust-700 hover:text-primary hover:bg-primary-50 rounded-lg transition-colors ${className}`}>
+      {Icon && <Icon className="w-4 h-4" />}
+      {label}
+    </Link>
+  );
+}
+
+function CityLink({ name, href, highlight, className = "" }: { name: string, href: string, highlight?: boolean, className?: string }) {
+  return (
+    <li>
+       <Link href={href} className={`text-sm flex items-center gap-2 transition-colors ${highlight ? 'font-bold' : 'font-medium'} ${className || 'text-trust-700 hover:text-primary'}`}>
+         {!highlight && <span className="w-1.5 h-1.5 rounded-full bg-border shrink-0"></span>}
+         {name}
+       </Link>
     </li>
   );
 }
 
-function CityLink({ name, href }: { name: string, href: string }) {
-  return (
-    <Link href={href} className="text-sm text-gray-500 hover:text-orange-500 flex items-center gap-1 transition-colors leading-tight">
-      <span className="w-1 h-1 bg-gray-300 rounded-full shrink-0"></span>
-      {name}
-    </Link>
-  );
+function MobileAccordion({ title, isOpen, onClick, children }: { title: string, isOpen: boolean, onClick: () => void, children: React.ReactNode }) {
+   return (
+      <div className="border-b border-border">
+         <button className="flex items-center justify-between w-full p-3 font-bold text-trust-900" onClick={onClick}>
+            {title}
+            <ChevronDown className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+         </button>
+         {isOpen && (
+            <div className="pb-3 px-3">
+               {children}
+            </div>
+         )}
+      </div>
+   );
 }
-  

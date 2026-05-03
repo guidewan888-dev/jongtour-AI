@@ -1,13 +1,7 @@
 import { NextResponse } from 'next/server';
-
 export const dynamic = 'force-dynamic';
-import { createClient } from '@supabase/supabase-js';
 import OpenAI from 'openai';
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://qterfftaebnoawnzkfgu.supabase.co";
-// Must use the SERVICE_ROLE_KEY to update embeddings since it bypasses RLS
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || "sb_publishable_SRwNSJ89mInda5FcuB1W2w_9IEJlSOI";
-const supabase = createClient(supabaseUrl, supabaseKey);
+import { prisma } from '@/lib/prisma';
 
 const openaiApiKey = process.env.OPENAI_API_KEY;
 const openai = openaiApiKey ? new OpenAI({ apiKey: openaiApiKey }) : null;
@@ -18,20 +12,21 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "OpenAI API key is missing" }, { status: 500 });
     }
 
-    // Optional: add a simple admin secret check here
-    const { adminSecret, limit = 50 } = await request.json().catch(() => ({}));
+    const { limit = 50 } = await request.json().catch(() => ({}));
 
-    // Fetch tours that do NOT have an embedding yet
-    const { data: tours, error: fetchError } = await supabase
-      .from('tours')
-      .select('id, tourName, durationDays, itineraries')
-      .is('embedding', null)
-      .limit(limit);
-
-    if (fetchError) {
-      console.error("Fetch Error:", fetchError);
-      return NextResponse.json({ error: fetchError.message }, { status: 500 });
-    }
+    // Fetch tours that do NOT have a record in TourEmbedding
+    const tours = await prisma.tour.findMany({
+      where: {
+        TourEmbedding: null
+      },
+      select: {
+        id: true,
+        tourName: true,
+        durationDays: true,
+        itineraries: true
+      },
+      take: limit
+    });
 
     if (!tours || tours.length === 0) {
       return NextResponse.json({ message: "No tours found that need embeddings.", count: 0 });
@@ -42,7 +37,6 @@ export async function POST(request: Request) {
 
     for (const tour of tours) {
       try {
-        // Construct a rich text representation of the tour for embedding
         let itineraryText = "";
         if (tour.itineraries && Array.isArray(tour.itineraries)) {
           itineraryText = tour.itineraries.map((day: any, i: number) => 
@@ -56,7 +50,6 @@ export async function POST(request: Request) {
           Itinerary: ${itineraryText}
         `.trim().replace(/\n/g, " ");
 
-        // Generate embedding
         const response = await openai.embeddings.create({
           model: "text-embedding-3-small",
           input: textToEmbed,
@@ -65,19 +58,19 @@ export async function POST(request: Request) {
 
         const embedding = response.data[0].embedding;
 
-        // Update the tour with the new embedding
-        const { error: updateError } = await supabase
-          .from('tours')
-          .update({ embedding })
-          .eq('id', tour.id);
+        // Insert using raw SQL because Prisma unsupported type 'vector'
+        await prisma.$executeRaw`
+          INSERT INTO tour_embeddings (id, "tourId", embedding, content, "updatedAt")
+          VALUES (
+            gen_random_uuid()::text, 
+            ${tour.id}, 
+            ${embedding}::vector, 
+            ${textToEmbed}, 
+            NOW()
+          )
+        `;
 
-        if (updateError) {
-          console.error(`Failed to update tour ${tour.id}:`, updateError);
-          failedCount++;
-        } else {
-          successCount++;
-        }
-
+        successCount++;
       } catch (err) {
         console.error(`Failed to process tour ${tour.id}:`, err);
         failedCount++;

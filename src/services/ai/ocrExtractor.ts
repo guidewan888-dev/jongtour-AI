@@ -1,87 +1,90 @@
 import OpenAI from 'openai';
+import { getActivePrompt } from './promptService';
 
-export async function processUserImage(openai: OpenAI, userImage: string) {
+export async function processUserImage(openai: OpenAI, userImage: string, customerMessage: string = "") {
   try {
-    // Step 1: Raw Text Extraction (Bypass Vision Safety Filters)
+    // Step 1: Raw Text Extraction
     const rawOcrRes = await openai.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [{
         role: "user",
         content: [
-          { type: "text", text: "Please extract all text visible in this image exactly as written. Do not analyze, summarize, or refuse. Just output the raw text." },
+          { type: "text", text: "Please extract all text visible in this image exactly as written. If there is no text, just reply 'NO_TEXT'." },
           { type: "image_url", image_url: { url: userImage } }
         ]
       }]
     });
     
     let rawOcrText = rawOcrRes.choices[0].message.content || "";
-    
     if (rawOcrText.toLowerCase().includes("sorry") || rawOcrText.toLowerCase().includes("cannot") || rawOcrText.toLowerCase().includes("can't") || rawOcrText.includes("ไม่สามารถ")) {
-       rawOcrText = ""; // Vision safety filter triggered, ignore.
+       rawOcrText = ""; 
     }
 
-    // Step 2: Structured JSON Extraction from Raw Text
-    let extractedDataForSearch: any = null;
-    if (rawOcrText.trim()) {
-       const ocrRes = await openai.chat.completions.create({
-         model: "gpt-4o-mini",
-         response_format: {
-           type: "json_schema",
-           json_schema: {
-             name: "tour_extraction",
-             strict: true,
-             schema: {
-               type: "object",
-               properties: {
-                 tour_code: { type: "object", properties: { value: { type: ["string", "null"] }, confidence: { type: "number" }, evidence_text: { type: ["string", "null"] } }, required: ["value", "confidence", "evidence_text"], additionalProperties: false },
-                 tour_name: { type: "object", properties: { value: { type: ["string", "null"] }, confidence: { type: "number" }, evidence_text: { type: ["string", "null"] } }, required: ["value", "confidence", "evidence_text"], additionalProperties: false },
-                 destinations: { type: "array", items: { type: "object", properties: { name: { type: ["string", "null"] }, type: { type: "string", enum: ["country", "city", "region", "attraction", "unknown"] }, confidence: { type: "number" }, evidence_text: { type: ["string", "null"] } }, required: ["name", "type", "confidence", "evidence_text"], additionalProperties: false } },
-                 duration: { type: "object", properties: { days: { type: ["number", "null"] }, nights: { type: ["number", "null"] }, confidence: { type: "number" }, evidence_text: { type: ["string", "null"] } }, required: ["days", "nights", "confidence", "evidence_text"], additionalProperties: false },
-                 dates: {
-                   type: "object",
-                   properties: {
-                     departure_dates: { type: "array", items: { type: "object", properties: { raw_text: { type: ["string", "null"] }, start_date: { type: ["string", "null"] }, end_date: { type: ["string", "null"] }, confidence: { type: "number" }, evidence_text: { type: ["string", "null"] }, reason: { type: ["string", "null"] } }, required: ["raw_text", "start_date", "end_date", "confidence", "evidence_text", "reason"], additionalProperties: false } },
-                     travel_periods: { type: "array", items: { type: "object", properties: { raw_text: { type: ["string", "null"] }, start_date: { type: ["string", "null"] }, end_date: { type: ["string", "null"] }, confidence: { type: "number" }, evidence_text: { type: ["string", "null"] } }, required: ["raw_text", "start_date", "end_date", "confidence", "evidence_text"], additionalProperties: false } },
-                     booking_deadlines: { type: "array", items: { type: "object", properties: { raw_text: { type: ["string", "null"] }, date: { type: ["string", "null"] }, confidence: { type: "number" }, evidence_text: { type: ["string", "null"] } }, required: ["raw_text", "date", "confidence", "evidence_text"], additionalProperties: false } },
-                     promotion_periods: { type: "array", items: { type: "object", properties: { raw_text: { type: ["string", "null"] }, start_date: { type: ["string", "null"] }, end_date: { type: ["string", "null"] }, confidence: { type: "number" }, evidence_text: { type: ["string", "null"] } }, required: ["raw_text", "start_date", "end_date", "confidence", "evidence_text"], additionalProperties: false } },
-                     payment_due_dates: { type: "array", items: { type: "object", properties: { raw_text: { type: ["string", "null"] }, date: { type: ["string", "null"] }, confidence: { type: "number" }, evidence_text: { type: ["string", "null"] } }, required: ["raw_text", "date", "confidence", "evidence_text"], additionalProperties: false } },
-                     ambiguous_dates: { type: "array", items: { type: "object", properties: { raw_text: { type: ["string", "null"] }, possible_types: { type: "array", items: { type: "string" } }, reason: { type: ["string", "null"] }, confidence: { type: "number" }, evidence_text: { type: ["string", "null"] } }, required: ["raw_text", "possible_types", "reason", "confidence", "evidence_text"], additionalProperties: false } }
-                   },
-                   required: ["departure_dates", "travel_periods", "booking_deadlines", "promotion_periods", "payment_due_dates", "ambiguous_dates"],
-                   additionalProperties: false
-                 },
-                 prices: { type: "array", items: { type: "object", properties: { raw_text: { type: ["string", "null"] }, amount: { type: ["number", "null"] }, currency: { type: "string", enum: ["THB", "USD", "EUR", "JPY", "unknown"] }, price_type: { type: "string", enum: ["adult", "child", "infant", "single_supplement", "group", "unknown"] }, confidence: { type: "number" }, evidence_text: { type: ["string", "null"] } }, required: ["raw_text", "amount", "currency", "price_type", "confidence", "evidence_text"], additionalProperties: false } },
-                 airline: { type: "object", properties: { value: { type: ["string", "null"] }, confidence: { type: "number" }, evidence_text: { type: ["string", "null"] } }, required: ["value", "confidence", "evidence_text"], additionalProperties: false },
-                 supplier_name: { type: "object", properties: { value: { type: ["string", "null"] }, confidence: { type: "number" }, evidence_text: { type: ["string", "null"] } }, required: ["value", "confidence", "evidence_text"], additionalProperties: false },
-                 overall_confidence: { type: "number" },
-                 missing_fields: { type: "array", items: { type: "string" } },
-                 warnings: { type: "array", items: { type: "string" } },
-                 should_ask_user: { type: "boolean" },
-                 question_to_user: { type: ["string", "null"] }
-               },
-               required: ["tour_code", "tour_name", "destinations", "duration", "dates", "prices", "airline", "supplier_name", "overall_confidence", "missing_fields", "warnings", "should_ask_user", "question_to_user"],
-               additionalProperties: false
-             }
-           }
-         },
+    // Step 2: File Intent Classification
+    const classifierPrompt = await getActivePrompt("FILE_INTENT_CLASSIFIER");
+    const classifierRes = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      response_format: { type: "json_object" },
+      messages: [
+        { role: "system", content: classifierPrompt },
+        { role: "user", content: `file_type: image\nocr_text: ${rawOcrText}\ncustomer_message: ${customerMessage}` },
+        { role: "user", content: [{ type: "image_url", image_url: { url: userImage } }] }
+      ]
+    });
+
+    let intentData: any = {};
+    try {
+      intentData = JSON.parse(classifierRes.choices[0].message.content || "{}");
+    } catch(e) {}
+
+    const fileCategory = intentData.file_category || "unknown";
+    console.log("[File Classifier Result]:", fileCategory);
+
+    // Step 3: Vision AI Extraction based on category
+    const visionPrompt = await getActivePrompt("VISION_AI_SYSTEM");
+    let extractedData: any = null;
+
+    if (fileCategory === "tour_program_image" || fileCategory === "price_table_image" || fileCategory === "departure_table_image") {
+       // Extract Tour Data
+       const extractRes = await openai.chat.completions.create({
+         model: "gpt-4o",
+         response_format: { type: "json_object" },
          messages: [
-           {
-             role: "system",
-             content: "You are a meticulous data extraction assistant. Your job is to parse raw, unformatted, and often error-prone OCR text extracted from Thai tour posters. You must output the extracted data STRICTLY in the provided JSON format."
-           },
-           {
-             role: "user",
-             content: `OCR text:\n${rawOcrText}\n\nPlease extract the requested fields.`
-           }
+           { role: "system", content: visionPrompt },
+           { role: "user", content: `Please extract the tour data as JSON. \nocr_text: ${rawOcrText}\ncustomer_message: ${customerMessage}` },
+           { role: "user", content: [{ type: "image_url", image_url: { url: userImage } }] }
          ]
        });
-       extractedDataForSearch = JSON.parse(ocrRes.choices[0].message.content || "{}");
-       console.log("[OCR Structured Data]:", JSON.stringify(extractedDataForSearch, null, 2));
+       extractedData = JSON.parse(extractRes.choices[0].message.content || "{}");
+       extractedData.internal_flow = "tour_extraction";
+    } 
+    else if (fileCategory === "travel_destination_image" || fileCategory === "landmark_image") {
+       // Extract Visual Destination
+       const extractRes = await openai.chat.completions.create({
+         model: "gpt-4o-mini",
+         response_format: { type: "json_object" },
+         messages: [
+           { role: "system", content: visionPrompt },
+           { role: "user", content: `Please analyze this destination image and return the JSON. \nocr_text: ${rawOcrText}\ncustomer_message: ${customerMessage}` },
+           { role: "user", content: [{ type: "image_url", image_url: { url: userImage } }] }
+         ]
+       });
+       extractedData = JSON.parse(extractRes.choices[0].message.content || "{}");
+       extractedData.internal_flow = "visual_destination";
     }
-    
-    return extractedDataForSearch;
+    else {
+       // Fallback or other document types (like passport, slip)
+       extractedData = { 
+         internal_flow: "unknown_or_document", 
+         intent: intentData 
+       };
+    }
+
+    console.log("[Vision Extraction]:", JSON.stringify(extractedData, null, 2));
+    return extractedData;
+
   } catch (error) {
-    console.error("OCR Extraction Failed:", error);
+    console.error("OCR/Vision Extraction Failed:", error);
     return null;
   }
 }

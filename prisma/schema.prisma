@@ -1,11 +1,13 @@
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
 }
 
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  directUrl  = env("DIRECT_URL")
+  extensions = [vector]
 }
 
 // 1. suppliers
@@ -19,15 +21,15 @@ model Supplier {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  aliases        SupplierAlias[]
-  apiCredentials SupplierApiCredential?
-  syncLogs       SupplierSyncLog[]
-  rawSources     TourRawSource[]
-  tours          Tour[]
-  departures     Departure[]
-  bookings       Booking[]
-  users          User[]
-  wholesaleRefs  BookingWholesaleRef[]
+  aliases          SupplierAlias[]
+  apiCredentials   SupplierApiCredential?
+  syncLogs         SupplierSyncLog[]
+  rawSources       TourRawSource[]
+  tours            Tour[]
+  departures       Departure[]
+  bookings         Booking[]
+  users            User[]
+  wholesaleRefs    BookingWholesaleRef[]
   wholesaleActions BookingWholesaleAction[]
   credentials      SupplierCredential[]
   automationConfig SupplierAutomationConfig?
@@ -101,44 +103,45 @@ model TourRawSource {
 
 // 6. tours
 model Tour {
-  id             String    @id @default(cuid())
-  supplierId     String
-  externalTourId String
-  tourCode       String    @unique
-  tourName       String
-  slug           String    @unique
-  tourType       String    @default("GROUP") // GROUP, FIT, PRIVATE
-  durationDays   Int
-  durationNights Int
-  status         String    @default("DRAFT") // DRAFT, PUBLISHED, ARCHIVED
-  sourceUrl      String?
-  bookingUrl     String?
-  lastSyncedAt           DateTime?
-  wholesaleTourUrl       String?
-  wholesaleBookingUrl    String?
-  wholesaleLoginUrl      String?
-  wholesaleSearchUrl     String?
-  supplierProgramCode    String?
-  supplierBookingNote    String?   @db.Text
-  linkHealthStatus       String    @default("UNVERIFIED") // HEALTHY, BROKEN, UNVERIFIED, MISSING
-  lastLinkCheckedAt      DateTime?
-  linkVerifiedBy         String?
-  linkVerifiedAt         DateTime?
-  createdAt              DateTime  @default(now())
-  updatedAt              DateTime  @updatedAt
+  id                  String    @id @default(cuid())
+  supplierId          String
+  externalTourId      String
+  tourCode            String    @unique
+  tourName            String
+  slug                String    @unique
+  tourType            String    @default("GROUP") // GROUP, FIT, PRIVATE
+  durationDays        Int
+  durationNights      Int
+  status              String    @default("DRAFT") // DRAFT, PUBLISHED, ARCHIVED
+  sourceUrl           String?
+  bookingUrl          String?
+  lastSyncedAt        DateTime?
+  wholesaleTourUrl    String?
+  wholesaleBookingUrl String?
+  wholesaleLoginUrl   String?
+  wholesaleSearchUrl  String?
+  supplierProgramCode String?
+  supplierBookingNote String?   @db.Text
+  linkHealthStatus    String    @default("UNVERIFIED") // HEALTHY, BROKEN, UNVERIFIED, MISSING
+  lastLinkCheckedAt   DateTime?
+  linkVerifiedBy      String?
+  linkVerifiedAt      DateTime?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
 
-  supplier     Supplier          @relation(fields: [supplierId], references: [id], onDelete: Restrict)
-  destinations TourDestination[]
-  images       TourImage[]
-  pdfs         TourPdf[]
-  mapping      TourMapping?
-  itineraries  Itinerary[]
-  meals        TourMeal[]
-  included     TourIncluded[]
-  excluded     TourExcluded[]
-  policies     TourPolicy[]
-  departures   Departure[]
-  bookings     Booking[]
+  supplier      Supplier          @relation(fields: [supplierId], references: [id], onDelete: Restrict)
+  destinations  TourDestination[]
+  images        TourImage[]
+  pdfs          TourPdf[]
+  mapping       TourMapping?
+  itineraries   Itinerary[]
+  meals         TourMeal[]
+  included      TourIncluded[]
+  excluded      TourExcluded[]
+  policies      TourPolicy[]
+  departures    Departure[]
+  bookings      Booking[]
+  TourEmbedding TourEmbedding?
 
   @@unique([supplierId, externalTourId])
   @@map("tours")
@@ -325,25 +328,25 @@ model Customer {
 
 // 19. agents
 model Agent {
-  id          String   @id @default(cuid())
-  companyName String
-  taxId       String?
-  contactName String
-  email       String   @unique
-  phone       String
-  creditLimit Float    @default(0)
-  balance     Float    @default(0)
-  status      String   @default("ACTIVE")
-  subdomain   String?  @unique
-  tier        String   @default("STANDARD") // STANDARD, BRONZE, SILVER, GOLD
-  discountRate Float   @default(0) // Discount percentage
-  logoUrl     String?
-  themeColor  String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id           String   @id @default(cuid())
+  companyName  String
+  taxId        String?
+  contactName  String
+  email        String   @unique
+  phone        String
+  creditLimit  Float    @default(0)
+  balance      Float    @default(0)
+  status       String   @default("ACTIVE")
+  subdomain    String?  @unique
+  tier         String   @default("STANDARD") // STANDARD, BRONZE, SILVER, GOLD
+  discountRate Float    @default(0) // Discount percentage
+  logoUrl      String?
+  themeColor   String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
-  users    User[]
-  bookings Booking[]
+  users      User[]
+  bookings   Booking[]
   quotations Quotation[]
 
   @@map("agents")
@@ -351,29 +354,29 @@ model Agent {
 
 // 20. bookings
 model Booking {
-  id            String   @id @default(cuid())
-  bookingRef    String   @unique
-  supplierId    String
-  tourId        String
-  departureId   String
-  customerId    String
-  agentId                String?
-  bookingSource          String    @default("ONLINE") // ONLINE, MANUAL, SALE, AGENT, AI_CHATBOT
-  status                 String    @default("PENDING") // pending, waiting_admin_review, waiting_wholesale_booking, waiting_wholesale_confirm, wholesale_confirmed, confirmed, payment_pending, paid, voucher_issued, completed, cancelled, rejected, failed
-  wholesaleBookingMethod String    @default("UNKNOWN") // API_BOOKING, MANUAL_WEBSITE, MANUAL_LINE, MANUAL_EMAIL, MANUAL_PHONE, ON_REQUEST, UNKNOWN
-  wholesaleStatus        String    @default("NOT_STARTED") // NOT_STARTED, LINK_READY, MISSING_LINK, OPENED_BY_ADMIN, SENT_TO_WHOLESALE, WAITING_CONFIRM, CONFIRMED, REJECTED, SOLD_OUT, PRICE_CHANGED, MANUAL_FOLLOW_UP_REQUIRED, SUPPLIER_NOT_AVAILABLE
-  supplierContactName    String?
-  supplierContactChannel String?
-  supplierConfirmedPrice Float?
-  supplierConfirmedStatus String?
-  supplierConfirmedAt    DateTime?
-  supplierNote           String?   @db.Text
-  internalNote           String?   @db.Text
+  id                       String    @id @default(cuid())
+  bookingRef               String    @unique
+  supplierId               String
+  tourId                   String
+  departureId              String
+  customerId               String
+  agentId                  String?
+  bookingSource            String    @default("ONLINE") // ONLINE, MANUAL, SALE, AGENT, AI_CHATBOT
+  status                   String    @default("PENDING") // pending, waiting_admin_review, waiting_wholesale_booking, waiting_wholesale_confirm, wholesale_confirmed, confirmed, payment_pending, paid, voucher_issued, completed, cancelled, rejected, failed
+  wholesaleBookingMethod   String    @default("UNKNOWN") // API_BOOKING, MANUAL_WEBSITE, MANUAL_LINE, MANUAL_EMAIL, MANUAL_PHONE, ON_REQUEST, UNKNOWN
+  wholesaleStatus          String    @default("NOT_STARTED") // NOT_STARTED, LINK_READY, MISSING_LINK, OPENED_BY_ADMIN, SENT_TO_WHOLESALE, WAITING_CONFIRM, CONFIRMED, REJECTED, SOLD_OUT, PRICE_CHANGED, MANUAL_FOLLOW_UP_REQUIRED, SUPPLIER_NOT_AVAILABLE
+  supplierContactName      String?
+  supplierContactChannel   String?
+  supplierConfirmedPrice   Float?
+  supplierConfirmedStatus  String?
+  supplierConfirmedAt      DateTime?
+  supplierNote             String?   @db.Text
+  internalNote             String?   @db.Text
   uploadedConfirmationFile String?
-  totalPrice             Float
-  totalNetPrice          Float?
-  createdAt              DateTime  @default(now())
-  updatedAt     DateTime @updatedAt
+  totalPrice               Float
+  totalNetPrice            Float?
+  createdAt                DateTime  @default(now())
+  updatedAt                DateTime  @updatedAt
 
   supplier  Supplier  @relation(fields: [supplierId], references: [id], onDelete: Restrict)
   tour      Tour      @relation(fields: [tourId], references: [id], onDelete: Restrict)
@@ -381,16 +384,16 @@ model Booking {
   customer  Customer  @relation(fields: [customerId], references: [id], onDelete: Restrict)
   agent     Agent?    @relation(fields: [agentId], references: [id], onDelete: SetNull)
 
-  travelers      BookingTraveler[]
-  items          BookingItem[]
-  externalRefs   BookingExternalRef?
-  payments       Payment[]
-  invoices       Invoice[]
-  receipts       Receipt[]
-  refunds        Refund[]
-  vouchers       Voucher[]
-  priceSnapshots PriceSnapshot[]
-  wholesaleRef   BookingWholesaleRef?
+  travelers        BookingTraveler[]
+  items            BookingItem[]
+  externalRefs     BookingExternalRef?
+  payments         Payment[]
+  invoices         Invoice[]
+  receipts         Receipt[]
+  refunds          Refund[]
+  vouchers         Voucher[]
+  priceSnapshots   PriceSnapshot[]
+  wholesaleRef     BookingWholesaleRef?
   wholesaleActions BookingWholesaleAction[]
   rpaSessions      WholesaleRpaSession[]
   rpaActions       WholesaleRpaAction[]
@@ -502,7 +505,8 @@ model AiConversation {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+  user      User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
+  AiMessage AiMessage[]
 
   @@map("ai_conversations")
 }
@@ -531,13 +535,14 @@ model User {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  role          Role             @relation(fields: [roleId], references: [id], onDelete: Restrict)
-  agent         Agent?           @relation(fields: [agentId], references: [id], onDelete: SetNull)
-  supplier      Supplier?        @relation(fields: [supplierId], references: [id], onDelete: SetNull)
-  customer      Customer?
-  conversations AiConversation[]
-  auditLogs     AuditLog[]
-  saleLeads     Lead[]           @relation("SaleLeads")
+  role            Role              @relation(fields: [roleId], references: [id], onDelete: Restrict)
+  agent           Agent?            @relation(fields: [agentId], references: [id], onDelete: SetNull)
+  supplier        Supplier?         @relation(fields: [supplierId], references: [id], onDelete: SetNull)
+  customer        Customer?
+  conversations   AiConversation[]
+  auditLogs       AuditLog[]
+  saleLeads       Lead[]            @relation("SaleLeads")
+  AiPromptVersion AiPromptVersion[]
 
   @@map("users")
 }
@@ -598,14 +603,14 @@ model Setting {
 }
 
 model ApiSyncLog {
-  id            String   @id @default(cuid())
-  supplierId    String   @default("UNKNOWN")
-  type          String   @default("FULL_SYNC") // 'FULL_SYNC', 'AVAILABILITY_SYNC', 'PRICE_SYNC'
-  status        String   // 'RUNNING', 'SUCCESS', 'FAILED', 'RETRYING'
-  recordsAdded  Int      @default(0)
-  recordsUpdated Int     @default(0)
-  errorMessage  String?
-  createdAt     DateTime @default(now())
+  id             String   @id @default(cuid())
+  supplierId     String   @default("UNKNOWN")
+  type           String   @default("FULL_SYNC") // 'FULL_SYNC', 'AVAILABILITY_SYNC', 'PRICE_SYNC'
+  status         String // 'RUNNING', 'SUCCESS', 'FAILED', 'RETRYING'
+  recordsAdded   Int      @default(0)
+  recordsUpdated Int      @default(0)
+  errorMessage   String?
+  createdAt      DateTime @default(now())
 }
 
 model LineChatSession {
@@ -616,101 +621,101 @@ model LineChatSession {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
-  messages   LineChatMessage[]
+  messages LineChatMessage[]
 }
 
 model LineChatMessage {
-  id         String   @id @default(cuid())
-  sessionId  String
-  role       String   // USER, ASSISTANT, SYSTEM
-  content    String   @db.Text
-  createdAt  DateTime @default(now())
+  id        String   @id @default(cuid())
+  sessionId String
+  role      String // USER, ASSISTANT, SYSTEM
+  content   String   @db.Text
+  createdAt DateTime @default(now())
 
-  session    LineChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  session LineChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
 }
 
 model UserProfile {
   id          String   @id @default(cuid())
   userId      String   @unique // Can be Supabase Auth ID or LINE User ID
-  preferences Json?    // e.g. { favorite_destinations: [], budget: 20000, pax: 2 }
+  preferences Json? // e.g. { favorite_destinations: [], budget: 20000, pax: 2 }
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
 
 model FitRequest {
-  id              String   @id @default(cuid())
-  serviceType     String   // "FULL_SERVICE" or "A_LA_CARTE"
-  name            String
-  email           String?
-  phone           String?
-  pax             Int
-  startDate       DateTime
-  endDate         DateTime
-  durationDays    Int
-  country         String
-  cities          String
-  
+  id           String   @id @default(cuid())
+  serviceType  String // "FULL_SERVICE" or "A_LA_CARTE"
+  name         String
+  email        String?
+  phone        String?
+  pax          Int
+  startDate    DateTime
+  endDate      DateTime
+  durationDays Int
+  country      String
+  cities       String
+
   // A La Carte Options
-  includeFlights  Boolean  @default(true)
-  includeHotels   Boolean  @default(true)
-  includeMeals    Boolean  @default(true)
+  includeFlights   Boolean @default(true)
+  includeHotels    Boolean @default(true)
+  includeMeals     Boolean @default(true)
   includeTransport Boolean @default(true)
-  includeGuide    Boolean  @default(true)
+  includeGuide     Boolean @default(true)
   includeInsurance Boolean @default(true)
-  hotelStars      Int      @default(3)
-  
-  itinerary       Json?    // Stores the generated F.I.T. JSON
-  
-  status          String   @default("PENDING")
-  createdAt       DateTime @default(now())
+  hotelStars       Int     @default(3)
+
+  itinerary Json? // Stores the generated F.I.T. JSON
+
+  status    String   @default("PENDING")
+  createdAt DateTime @default(now())
 }
 
 model FlightPriceCache {
-  id              Int      @id @default(autoincrement())
-  originIata      String   // e.g., "BKK"
-  destinationIata String   // e.g., "NRT"
+  id              Int       @id @default(autoincrement())
+  originIata      String // e.g., "BKK"
+  destinationIata String // e.g., "NRT"
   departureDate   DateTime?
   returnDate      DateTime?
   priceAmount     Float
-  currency        String   @default("THB")
-  provider        String   // e.g., "AMADEUS_MOCK"
-  fetchedAt       DateTime @default(now())
-  
+  currency        String    @default("THB")
+  provider        String // e.g., "AMADEUS_MOCK"
+  fetchedAt       DateTime  @default(now())
+
   @@index([originIata, destinationIata])
 }
 
 model HotelPriceCache {
-  id              Int      @id @default(autoincrement())
-  city            String   // e.g., "Tokyo"
-  hotelStars      Int      @default(3) // 3, 4, 5
-  pricePerNight   Float
-  currency        String   @default("THB")
-  provider        String   // e.g., "SERPAPI_MOCK"
-  fetchedAt       DateTime @default(now())
-  
+  id            Int      @id @default(autoincrement())
+  city          String // e.g., "Tokyo"
+  hotelStars    Int      @default(3) // 3, 4, 5
+  pricePerNight Float
+  currency      String   @default("THB")
+  provider      String // e.g., "SERPAPI_MOCK"
+  fetchedAt     DateTime @default(now())
+
   @@index([city, hotelStars])
 }
 
 model ActivityPriceCache {
-  id                  Int      @id @default(autoincrement())
-  provider            String   // e.g., "VIATOR_MOCK", "TIQETS"
-  providerProductId   String?
-  destinationCountry  String
-  destinationCity     String?
-  productName         String
-  category            String   // tour, attraction, ticket, day_trip
-  durationText        String?
-  priceFromAmount     Float
-  currency            String   @default("THB")
-  adultPrice          Float?
-  childPrice          Float?
-  rating              Float?
-  reviewCount         Int?
-  imageUrl            String?
-  bookingUrl          String?
-  fetchedAt           DateTime @default(now())
-  expiresAt           DateTime
-  note                String?
+  id                 Int      @id @default(autoincrement())
+  provider           String // e.g., "VIATOR_MOCK", "TIQETS"
+  providerProductId  String?
+  destinationCountry String
+  destinationCity    String?
+  productName        String
+  category           String // tour, attraction, ticket, day_trip
+  durationText       String?
+  priceFromAmount    Float
+  currency           String   @default("THB")
+  adultPrice         Float?
+  childPrice         Float?
+  rating             Float?
+  reviewCount        Int?
+  imageUrl           String?
+  bookingUrl         String?
+  fetchedAt          DateTime @default(now())
+  expiresAt          DateTime
+  note               String?
 
   @@index([destinationCountry, category])
 }
@@ -720,70 +725,70 @@ model ActivityPriceCache {
 // -----------------------------------------------------
 
 model LinkAuditRun {
-  id              String   @id @default(cuid())
-  startedAt       DateTime @default(now())
-  finishedAt      DateTime?
-  status          String   @default("RUNNING") // RUNNING, COMPLETED, FAILED
-  totalLinks      Int      @default(0)
-  brokenLinks     Int      @default(0)
-  criticalIssues  Int      @default(0)
-  summaryJson     Json?
-  errorMessage    String?  @db.Text
+  id             String    @id @default(cuid())
+  startedAt      DateTime  @default(now())
+  finishedAt     DateTime?
+  status         String    @default("RUNNING") // RUNNING, COMPLETED, FAILED
+  totalLinks     Int       @default(0)
+  brokenLinks    Int       @default(0)
+  criticalIssues Int       @default(0)
+  summaryJson    Json?
+  errorMessage   String?   @db.Text
 
-  items           LinkAuditItem[]
+  items LinkAuditItem[]
 
   @@map("link_audit_runs")
 }
 
 model LinkAuditItem {
-  id                String   @id @default(cuid())
-  runId             String
-  pageUrl           String   @db.Text
-  linkText          String?  @db.Text
-  href              String   @db.Text
-  normalizedUrl     String?  @db.Text
-  linkType          String   // INTERNAL, EXTERNAL, BOOKING, IMAGE, PDF
-  httpStatus        Int?
-  issueType         String   // 404, 500, WRONG_SUPPLIER, MISSING_SLUG, INVALID_TOUR_ID, REDIRECT_LOOP, etc.
-  severity          String   // CRITICAL, HIGH, MEDIUM, LOW
-  
+  id            String  @id @default(cuid())
+  runId         String
+  pageUrl       String  @db.Text
+  linkText      String? @db.Text
+  href          String  @db.Text
+  normalizedUrl String? @db.Text
+  linkType      String // INTERNAL, EXTERNAL, BOOKING, IMAGE, PDF
+  httpStatus    Int?
+  issueType     String // 404, 500, WRONG_SUPPLIER, MISSING_SLUG, INVALID_TOUR_ID, REDIRECT_LOOP, etc.
+  severity      String // CRITICAL, HIGH, MEDIUM, LOW
+
   relatedTourId     String?
   relatedSupplierId String?
   relatedBookingId  String?
-  expectedUrl       String?  @db.Text
-  suggestedFix      String?  @db.Text
-  canAutoFix        Boolean  @default(false)
-  
-  fixedAt           DateTime?
-  fixedBy           String?  // SYSTEM, ADMIN_ID
-  status            String   @default("UNRESOLVED") // UNRESOLVED, AUTO_FIXED, MANUAL_FIXED, IGNORED
-  createdAt         DateTime @default(now())
+  expectedUrl       String? @db.Text
+  suggestedFix      String? @db.Text
+  canAutoFix        Boolean @default(false)
 
-  run               LinkAuditRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+  fixedAt   DateTime?
+  fixedBy   String? // SYSTEM, ADMIN_ID
+  status    String    @default("UNRESOLVED") // UNRESOLVED, AUTO_FIXED, MANUAL_FIXED, IGNORED
+  createdAt DateTime  @default(now())
+
+  run LinkAuditRun @relation(fields: [runId], references: [id], onDelete: Cascade)
 
   @@index([runId, severity])
   @@map("link_audit_items")
 }
 
 model LinkFix {
-  id            String   @id @default(cuid())
-  auditItemId   String   @unique
-  originalUrl   String   @db.Text
-  newUrl        String   @db.Text
-  fixMethod     String   // AUTO_REPLACE, REDIRECT, REMOVE
-  createdAt     DateTime @default(now())
+  id          String   @id @default(cuid())
+  auditItemId String   @unique
+  originalUrl String   @db.Text
+  newUrl      String   @db.Text
+  fixMethod   String // AUTO_REPLACE, REDIRECT, REMOVE
+  createdAt   DateTime @default(now())
 
   @@map("link_fixes")
 }
 
 model RedirectRule {
-  id          String   @id @default(cuid())
-  sourcePath  String   @unique
-  targetPath  String
-  statusCode  Int      @default(301)
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id         String   @id @default(cuid())
+  sourcePath String   @unique
+  targetPath String
+  statusCode Int      @default(301)
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
   @@map("redirect_rules")
 }
@@ -792,11 +797,10 @@ model UrlHealthStatus {
   id            String   @id @default(cuid())
   url           String   @unique @db.Text
   lastStatus    Int?
-  responseTime  Int?     // milliseconds
+  responseTime  Int? // milliseconds
   isAlive       Boolean  @default(true)
   lastCheckedAt DateTime @default(now())
   failCount     Int      @default(0)
-
 }
 
 // Pricing Engine Tables
@@ -821,45 +825,45 @@ model Promotion {
 }
 
 model PricingRule {
-  id          String   @id @default(cuid())
-  name        String
-  type        String   @default("MARKUP_PERCENT") // MARKUP_PERCENT, MARKUP_FLAT
-  value       Float
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id        String   @id @default(cuid())
+  name      String
+  type      String   @default("MARKUP_PERCENT") // MARKUP_PERCENT, MARKUP_FLAT
+  value     Float
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@map("pricing_rules")
 }
 
 model Notification {
-  id          String   @id @default(cuid())
-  type        String   // BOOKING, PAYMENT, SUPPLIER, CUSTOMER, SYSTEM
-  title       String
-  message     String   @db.Text
-  isRead      Boolean  @default(false)
-  linkUrl     String?
-  createdAt   DateTime @default(now())
+  id        String   @id @default(cuid())
+  type      String // BOOKING, PAYMENT, SUPPLIER, CUSTOMER, SYSTEM
+  title     String
+  message   String   @db.Text
+  isRead    Boolean  @default(false)
+  linkUrl   String?
+  createdAt DateTime @default(now())
 
   @@map("notifications")
 }
 
 model Quotation {
-  id            String   @id @default(cuid())
-  quotationRef  String   @unique
-  agentId       String
-  departureId   String
-  customerName  String
-  customerEmail String?
-  paxAdult      Int
-  paxChild      Int      @default(0)
+  id                String   @id @default(cuid())
+  quotationRef      String   @unique
+  agentId           String
+  departureId       String
+  customerName      String
+  customerEmail     String?
+  paxAdult          Int
+  paxChild          Int      @default(0)
   totalSellingPrice Float
   netPriceEstimate  Float?
-  validUntil    DateTime
-  status        String   @default("ACTIVE") // ACTIVE, EXPIRED, BOOKED
-  notes         String?  @db.Text
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  validUntil        DateTime
+  status            String   @default("ACTIVE") // ACTIVE, EXPIRED, BOOKED
+  notes             String?  @db.Text
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 
   agent     Agent     @relation(fields: [agentId], references: [id], onDelete: Cascade)
   departure Departure @relation(fields: [departureId], references: [id], onDelete: Cascade)
@@ -871,18 +875,18 @@ model Quotation {
 // CRM Module additions
 // -----------------------------------------------------
 model Lead {
-  id              String   @id @default(cuid())
-  saleId          String?
-  customerName    String
-  contactInfo     String
-  source          String   @default("WEB") // WEB, LINE, FB, CALL
-  status          String   @default("NEW") // NEW, CONTACTED, QUOTED, WON, LOST
-  estimatedValue  Float?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id             String   @id @default(cuid())
+  saleId         String?
+  customerName   String
+  contactInfo    String
+  source         String   @default("WEB") // WEB, LINE, FB, CALL
+  status         String   @default("NEW") // NEW, CONTACTED, QUOTED, WON, LOST
+  estimatedValue Float?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
-  sale            User?    @relation("SaleLeads", fields: [saleId], references: [id], onDelete: SetNull)
-  activities      LeadActivity[]
+  sale       User?          @relation("SaleLeads", fields: [saleId], references: [id], onDelete: SetNull)
+  activities LeadActivity[]
 
   @@map("leads")
 }
@@ -894,7 +898,7 @@ model LeadActivity {
   note      String   @db.Text
   createdAt DateTime @default(now())
 
-  lead      Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  lead Lead @relation(fields: [leadId], references: [id], onDelete: Cascade)
 
   @@map("lead_activities")
 }
@@ -903,13 +907,13 @@ model LeadActivity {
 // Wholesale & Tour Additions
 // -----------------------------------------------------
 model TourMapping {
-  id          String   @id @default(cuid())
-  tourId      String   @unique
+  id           String   @id @default(cuid())
+  tourId       String   @unique
   mappingRules Json
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
-  tour        Tour     @relation(fields: [tourId], references: [id], onDelete: Cascade)
+  tour Tour @relation(fields: [tourId], references: [id], onDelete: Cascade)
 
   @@map("tour_mappings")
 }
@@ -921,7 +925,7 @@ model TourPdf {
   title     String?
   createdAt DateTime @default(now())
 
-  tour      Tour     @relation(fields: [tourId], references: [id], onDelete: Cascade)
+  tour Tour @relation(fields: [tourId], references: [id], onDelete: Cascade)
 
   @@map("tour_pdfs")
 }
@@ -930,29 +934,29 @@ model TourPdf {
 // Finance Additions
 // -----------------------------------------------------
 model Receipt {
-  id          String   @id @default(cuid())
-  bookingId   String
-  receiptNo   String   @unique
-  issueDate   DateTime @default(now())
-  amount      Float
-  pdfUrl      String?
-  createdAt   DateTime @default(now())
+  id        String   @id @default(cuid())
+  bookingId String
+  receiptNo String   @unique
+  issueDate DateTime @default(now())
+  amount    Float
+  pdfUrl    String?
+  createdAt DateTime @default(now())
 
-  booking     Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
 
   @@map("receipts")
 }
 
 model Refund {
-  id          String   @id @default(cuid())
-  bookingId   String
-  refundNo    String   @unique
-  amount      Float
-  reason      String   @db.Text
-  status      String   @default("PENDING") // PENDING, PROCESSED, REJECTED
-  createdAt   DateTime @default(now())
+  id        String   @id @default(cuid())
+  bookingId String
+  refundNo  String   @unique
+  amount    Float
+  reason    String   @db.Text
+  status    String   @default("PENDING") // PENDING, PROCESSED, REJECTED
+  createdAt DateTime @default(now())
 
-  booking     Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
 
   @@map("refunds")
 }
@@ -961,78 +965,78 @@ model Refund {
 // CMS Additions
 // -----------------------------------------------------
 model CmsPage {
-  id          String   @id @default(cuid())
-  slug        String   @unique
-  title       String
-  content     String   @db.Text
-  seoTitle    String?
-  status      String   @default("DRAFT") // DRAFT, PUBLISHED
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id        String   @id @default(cuid())
+  slug      String   @unique
+  title     String
+  content   String   @db.Text
+  seoTitle  String?
+  status    String   @default("DRAFT") // DRAFT, PUBLISHED
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@map("cms_pages")
 }
 
 model BlogPost {
-  id          String   @id @default(cuid())
-  slug        String   @unique
-  title       String
-  content     String   @db.Text
-  seoTitle    String?
-  status      String   @default("DRAFT") // DRAFT, PUBLISHED
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id        String   @id @default(cuid())
+  slug      String   @unique
+  title     String
+  content   String   @db.Text
+  seoTitle  String?
+  status    String   @default("DRAFT") // DRAFT, PUBLISHED
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@map("blog_posts")
 }
 
 model DestinationGuide {
-  id          String   @id @default(cuid())
-  slug        String   @unique
-  country     String
-  city        String?
-  title       String
-  content     String   @db.Text
-  status      String   @default("DRAFT") // DRAFT, PUBLISHED
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id        String   @id @default(cuid())
+  slug      String   @unique
+  country   String
+  city      String?
+  title     String
+  content   String   @db.Text
+  status    String   @default("DRAFT") // DRAFT, PUBLISHED
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@map("destination_guides")
 }
 
 model Faq {
-  id          String   @id @default(cuid())
-  question    String
-  answer      String   @db.Text
-  category    String?
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id        String   @id @default(cuid())
+  question  String
+  answer    String   @db.Text
+  category  String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@map("faqs")
 }
 
 model Banner {
-  id          String   @id @default(cuid())
-  imageUrl    String
-  linkUrl     String?
-  position    String   @default("HOME_HERO")
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id        String   @id @default(cuid())
+  imageUrl  String
+  linkUrl   String?
+  position  String   @default("HOME_HERO")
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@map("banners")
 }
 
 model LandingPage {
-  id          String   @id @default(cuid())
-  slug        String   @unique
-  title       String
-  content     String   @db.Text
-  seoTitle    String?
-  status      String   @default("DRAFT") // DRAFT, PUBLISHED
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id        String   @id @default(cuid())
+  slug      String   @unique
+  title     String
+  content   String   @db.Text
+  seoTitle  String?
+  status    String   @default("DRAFT") // DRAFT, PUBLISHED
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@map("landing_pages")
 }
@@ -1069,12 +1073,12 @@ model BookingWholesaleAction {
   id           String   @id @default(cuid())
   bookingId    String
   supplierId   String
-  actionType   String   // OPEN_LINK, COPY_LINK, MARK_SENT, UPLOAD_DOC
+  actionType   String // OPEN_LINK, COPY_LINK, MARK_SENT, UPLOAD_DOC
   actionLabel  String?
   actionUrl    String?
   clickedBy    String
   clickedAt    DateTime @default(now())
-  resultStatus String   // SUCCESS, FAILED
+  resultStatus String // SUCCESS, FAILED
   note         String?  @db.Text
   createdAt    DateTime @default(now())
 
@@ -1084,23 +1088,22 @@ model BookingWholesaleAction {
   @@map("booking_wholesale_actions")
 }
 
-
 // -----------------------------------------------------
 // AI & RPA Automation Additions
 // -----------------------------------------------------
 
 model SupplierCredential {
-  id                 String   @id @default(cuid())
-  supplierId         String
-  credentialName     String
-  encryptedUsername  String
-  encryptedPassword  String
-  authType           String   @default("LOGIN_FORM")
-  status             String   @default("ACTIVE")
-  lastUsedAt         DateTime?
-  failedLoginCount   Int      @default(0)
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
+  id                String    @id @default(cuid())
+  supplierId        String
+  credentialName    String
+  encryptedUsername String
+  encryptedPassword String
+  authType          String    @default("LOGIN_FORM")
+  status            String    @default("ACTIVE")
+  lastUsedAt        DateTime?
+  failedLoginCount  Int       @default(0)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
 
   supplier Supplier @relation(fields: [supplierId], references: [id], onDelete: Cascade)
 
@@ -1108,19 +1111,19 @@ model SupplierCredential {
 }
 
 model SupplierAutomationConfig {
-  id                      String   @id @default(cuid())
-  supplierId              String   @unique
-  automationEnabled       Boolean  @default(false)
-  loginUrl                String?
-  bookingMethod           String   @default("MANUAL")
-  selectorsJson           Json?
-  bookingUrlPattern       String?
-  requiresAdminApproval   Boolean  @default(true)
-  captchaDetectionRule    String?
-  otpDetectionRule        String?
-  status                  String   @default("DRAFT")
-  createdAt               DateTime @default(now())
-  updatedAt               DateTime @updatedAt
+  id                    String   @id @default(cuid())
+  supplierId            String   @unique
+  automationEnabled     Boolean  @default(false)
+  loginUrl              String?
+  bookingMethod         String   @default("MANUAL")
+  selectorsJson         Json?
+  bookingUrlPattern     String?
+  requiresAdminApproval Boolean  @default(true)
+  captchaDetectionRule  String?
+  otpDetectionRule      String?
+  status                String   @default("DRAFT")
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
 
   supplier Supplier @relation(fields: [supplierId], references: [id], onDelete: Cascade)
 
@@ -1128,24 +1131,24 @@ model SupplierAutomationConfig {
 }
 
 model WholesaleRpaSession {
-  id                    String   @id @default(cuid())
+  id                    String    @id @default(cuid())
   bookingId             String
   supplierId            String
-  status                String   // NOT_STARTED, CHECKING_DATA, LOGGING_IN, FILLING_FORM, WAITING_ADMIN_APPROVAL, SUBMITTED, FAILED
+  status                String // NOT_STARTED, CHECKING_DATA, LOGGING_IN, FILLING_FORM, WAITING_ADMIN_APPROVAL, SUBMITTED, FAILED
   startedBy             String
-  startedAt             DateTime @default(now())
+  startedAt             DateTime  @default(now())
   finishedAt            DateTime?
-  errorMessage          String?  @db.Text
+  errorMessage          String?   @db.Text
   screenshotBeforeUrl   String?
   screenshotAfterUrl    String?
-  adminApprovalRequired Boolean  @default(true)
+  adminApprovalRequired Boolean   @default(true)
   adminApprovedBy       String?
   adminApprovedAt       DateTime?
-  createdAt             DateTime @default(now())
-  updatedAt             DateTime @updatedAt
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
 
-  booking  Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
-  supplier Supplier @relation(fields: [supplierId], references: [id], onDelete: Restrict)
+  booking  Booking              @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  supplier Supplier             @relation(fields: [supplierId], references: [id], onDelete: Restrict)
   actions  WholesaleRpaAction[]
 
   @@map("wholesale_rpa_sessions")
@@ -1155,8 +1158,8 @@ model WholesaleRpaAction {
   id            String   @id @default(cuid())
   sessionId     String
   bookingId     String
-  actionType    String   // FILL_FIELD, CLICK_BUTTON, READ_TEXT
-  actionStatus  String   // SUCCESS, FAILED
+  actionType    String // FILL_FIELD, CLICK_BUTTON, READ_TEXT
+  actionStatus  String // SUCCESS, FAILED
   actionUrl     String?
   inputSummary  String?
   outputSummary String?
@@ -1164,8 +1167,184 @@ model WholesaleRpaAction {
   errorMessage  String?  @db.Text
   createdAt     DateTime @default(now())
 
-  session  WholesaleRpaSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-  booking  Booking             @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  session WholesaleRpaSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  booking Booking             @relation(fields: [bookingId], references: [id], onDelete: Cascade)
 
   @@map("wholesale_rpa_actions")
 }
+
+// ============================================
+// AI Center Models (Added for OS Phase 1)
+// ============================================
+
+model TourEmbedding {
+  id        String                      @id @default(cuid())
+  tourId    String                      @unique
+  embedding Unsupported("vector(1536)")
+  content   String                      @db.Text
+  createdAt DateTime                    @default(now())
+  updatedAt DateTime                    @updatedAt
+
+  tour Tour @relation(fields: [tourId], references: [id], onDelete: Cascade)
+
+  @@map("tour_embeddings")
+}
+
+model AiMessage {
+  id             String   @id @default(cuid())
+  conversationId String
+  role           String // user, assistant, system, tool
+  content        String?  @db.Text
+  toolCalls      Json?
+  createdAt      DateTime @default(now())
+
+  conversation AiConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  toolCallLogs AiToolCall[]
+
+  @@map("ai_messages")
+}
+
+model AiToolCall {
+  id           String   @id @default(cuid())
+  messageId    String
+  toolName     String
+  inputArgs    Json?
+  outputResult Json?
+  latencyMs    Int?
+  isError      Boolean  @default(false)
+  createdAt    DateTime @default(now())
+
+  message AiMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@map("ai_tool_calls")
+}
+
+model AiPromptTemplate {
+  id             String   @id @default(cuid())
+  name           String   @unique
+  currentVersion Int      @default(1)
+  status         String   @default("ACTIVE") // ACTIVE, DRAFT, ARCHIVED
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  versions AiPromptVersion[]
+
+  @@map("ai_prompt_templates")
+}
+
+model AiPromptVersion {
+  id         String   @id @default(cuid())
+  templateId String
+  version    Int
+  content    String   @db.Text
+  approvedBy String?
+  createdAt  DateTime @default(now())
+
+  template AiPromptTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  approver User?            @relation(fields: [approvedBy], references: [id], onDelete: SetNull)
+
+  @@unique([templateId, version])
+  @@map("ai_prompt_versions")
+}
+
+model AiLeadScore {
+  id             String         @id @default(cuid())
+  conversationId String         @unique
+  score          Int            
+  temperature    String         
+  nextBestAction String?        
+  createdAt      DateTime       @default(now())
+
+  @@map("ai_lead_scores")
+}
+
+model AiPrivateGroupDraft {
+  id             String         @id @default(cuid())
+  customerId     String
+  conversationId String
+  destination    String
+  durationDays   Int
+  pax            Int
+  budgetPerPax   Float?
+  style          String?        
+  aiItinerary    Json           
+  estimatedPrice Float
+  costBreakdown  Json?          
+  assumptions    String?        
+  status         String         @default("PENDING_SALE")
+  createdAt      DateTime       @default(now())
+
+  @@map("ai_private_group_drafts")
+}
+
+model AiAbTest {
+  id             String         @id @default(cuid())
+  testName       String
+  promptAId      String         
+  promptBId      String
+  trafficSplit   Int            @default(50) 
+  conversionA    Int            @default(0)
+  conversionB    Int            @default(0)
+  isActive       Boolean        @default(true)
+
+  @@map("ai_ab_tests")
+}
+
+model AiEvaluation {
+  id             String         @id @default(cuid())
+  testName       String         
+  expectedOutput Json           
+  lastRunAt      DateTime?
+  lastResult     String?        
+  errorReason    String?
+
+  @@map("ai_evaluations")
+}
+
+model AiReviewQueue {
+  id               String   @id @default(cuid())
+  type             String   // price_check, link_check, supplier_check
+  description      String
+  payload          Json
+  status           String   @default("pending") // pending, resolved
+  resolvedById     String?
+  createdAt        DateTime @default(now())
+
+  @@map("ai_review_queue")
+}
+
+model AiCostLog {
+  id               String   @id @default(cuid())
+  model            String
+  inputTokens      Int
+  outputTokens     Int
+  totalCostUsd     Float
+  feature          String   // chat, search, vision, private_group
+  createdAt        DateTime @default(now())
+
+  @@map("ai_cost_logs")
+}
+
+model AiModelSetting {
+  id               String   @id @default(cuid())
+  feature          String   @unique // chat, search, vision, general
+  model            String
+  temperature      Float    @default(0.7)
+  maxTokens        Int      @default(2048)
+  isActive         Boolean  @default(true)
+  updatedAt        DateTime @updatedAt
+
+  @@map("ai_model_settings")
+}
+
+model AiGuardrail {
+  id               String   @id @default(cuid())
+  ruleName         String   @unique
+  description      String?
+  isActive         Boolean  @default(true)
+  severity         String   @default("high") // high, medium, low
+  updatedAt        DateTime @updatedAt
+
+  @@map("ai_guardrails")
+}
+

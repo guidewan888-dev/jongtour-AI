@@ -36,6 +36,9 @@ export const metadata: Metadata = {
   },
 };
 
+import FloatingChat from "@/components/ui/FloatingChat";
+import AgentRegistrationBadge from "@/components/AgentRegistrationBadge";
+
 export default async function RootLayout({
   children,
 }: Readonly<{
@@ -75,6 +78,8 @@ export default async function RootLayout({
         </Suspense>
         <Header agentLogo={agentBranding?.logoUrl} agentName={agentBranding?.companyName} />
         {children}
+        <AgentRegistrationBadge />
+        <FloatingChat />
       </body>
     </html>
   );

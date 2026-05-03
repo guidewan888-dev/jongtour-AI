@@ -2,25 +2,46 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --foreground-rgb: 0, 0, 0;
-  --background-start-rgb: 248, 250, 252;
-  --background-end-rgb: 255, 255, 255;
+@layer base {
+  :root {
+    --background: #fafafa;
+    --foreground: #111827;
+    --card: #ffffff;
+    --card-foreground: #111827;
+    --popover: #ffffff;
+    --popover-foreground: #111827;
+    --primary: #f97316;
+    --primary-foreground: #ffffff;
+    --secondary: #fff7ed;
+    --secondary-foreground: #ea580c;
+    --muted: #f1f5f9;
+    --muted-foreground: #6b7280;
+    --accent: #ffedd5;
+    --accent-foreground: #c2410c;
+    --destructive: #dc2626;
+    --destructive-foreground: #ffffff;
+    --border: #e5e7eb;
+    --input: #e5e7eb;
+    --ring: #f97316;
+    --radius: 0.5rem;
+  }
 }
 
-body {
-  color: rgb(var(--foreground-rgb));
-  background: linear-gradient(
-      to bottom,
-      transparent,
-      rgb(var(--background-end-rgb))
-    )
-    rgb(var(--background-start-rgb));
+@layer base {
+  * {
+    border-color: var(--border);
+  }
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
 }
 
 /* Custom Scrollbar for compact areas */
 .custom-scrollbar::-webkit-scrollbar {
   width: 6px;
+  height: 6px;
 }
 .custom-scrollbar::-webkit-scrollbar-track {
   background: #f1f5f9; 
@@ -32,6 +53,15 @@ body {
 }
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: #94a3b8; 
+}
+
+/* Hide scrollbar completely but allow scrolling */
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.hide-scrollbar {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
 }
 
 @media print {

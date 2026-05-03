@@ -1,4 +1,4 @@
-import { ShieldCheck, Lock } from 'lucide-react';
+import { ShieldCheck, Lock, CheckCircle2 } from 'lucide-react';
 import Link from 'next/link';
 
 export const metadata = {
@@ -12,26 +12,35 @@ export default function BookingLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col font-sans">
+    <div className="min-h-screen bg-background flex flex-col font-sans">
       {/* Secure Header - No Distractions (No Navigation Links) */}
-      <header className="bg-white border-b border-slate-200 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <header className="bg-white border-b border-border sticky top-0 z-50 shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-[72px] flex items-center justify-between">
           
           {/* Logo (Can link back to tour domain to cancel flow) */}
-          <a href="https://tour.jongtour.com" className="flex items-center gap-2 group">
-            <span className="text-xl font-black text-slate-800 tracking-tight group-hover:text-slate-600 transition-colors">
-              Jong<span className="text-orange-500">tour</span>
+          <a href="/" className="flex items-center gap-2 group">
+            <span className="text-2xl font-black text-trust-900 tracking-tight transition-colors">
+              Jong<span className="text-primary">tour</span>
             </span>
           </a>
 
           {/* Secure Trust Badge */}
-          <div className="flex items-center gap-2 text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-full">
-            <Lock size={14} className="fill-emerald-700" />
-            <span className="text-xs font-bold uppercase tracking-wider">Secure Checkout</span>
+          <div className="flex items-center gap-1.5 text-trust-900 bg-muted px-3 py-1.5 rounded-full border border-border shadow-soft">
+            <Lock className="w-4 h-4 text-emerald-600" />
+            <span className="text-xs font-bold tracking-wide">SECURE CHECKOUT</span>
           </div>
 
         </div>
       </header>
+
+      {/* Trust Banner */}
+      <div className="bg-primary/5 border-b border-primary/10 py-2">
+         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-center gap-6 text-xs text-trust-800 font-medium">
+            <span className="flex items-center gap-1"><CheckCircle2 className="w-3.5 h-3.5 text-primary"/> ยืนยันที่นั่งทันที</span>
+            <span className="flex items-center gap-1"><CheckCircle2 className="w-3.5 h-3.5 text-primary"/> ไม่มีบวกเพิ่มทีหลัง</span>
+            <span className="flex items-center gap-1 hidden md:flex"><CheckCircle2 className="w-3.5 h-3.5 text-primary"/> เจ้าหน้าที่ดูแล 24 ชม.</span>
+         </div>
+      </div>
 
       {/* Main Content Area */}
       <main className="flex-1 w-full py-8">
@@ -41,21 +50,27 @@ export default function BookingLayout({
       </main>
 
       {/* Trust Footer */}
-      <footer className="bg-slate-100 py-8 border-t border-slate-200">
+      <footer className="bg-white py-10 border-t border-border mt-auto">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-4">
-              <span className="text-sm font-semibold text-slate-500 flex items-center gap-1">
-                <ShieldCheck size={16} /> Secure Payment Processing
-              </span>
+          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-emerald-50 flex items-center justify-center">
+                 <ShieldCheck className="w-5 h-5 text-emerald-600" /> 
+              </div>
+              <div>
+                 <p className="text-sm font-bold text-trust-900">100% Secure Payment</p>
+                 <p className="text-xs text-muted-foreground">เข้ารหัสข้อมูลระดับสูงสุด (SSL 256-bit)</p>
+              </div>
             </div>
-            <div className="text-sm text-slate-400">
-              Need help? Contact our support team at <span className="font-semibold text-slate-500">02-123-4567</span>
+            
+            <div className="text-sm text-trust-900 text-center md:text-left">
+              มีข้อสงสัย? ติดต่อ Call Center <span className="font-bold text-primary">02-123-4567</span>
             </div>
-            <div className="flex items-center gap-4 text-xs text-slate-400">
-              <a href="https://info.jongtour.com/privacy-policy" target="_blank" className="hover:text-slate-600">Privacy Policy</a>
+            
+            <div className="flex items-center gap-4 text-xs font-medium text-muted-foreground">
+              <a href="/info/privacy-policy" target="_blank" className="hover:text-primary transition-colors">Privacy Policy</a>
               <span>|</span>
-              <a href="https://info.jongtour.com/terms" target="_blank" className="hover:text-slate-600">Terms of Service</a>
+              <a href="/info/terms" target="_blank" className="hover:text-primary transition-colors">Terms of Service</a>
             </div>
           </div>
         </div>

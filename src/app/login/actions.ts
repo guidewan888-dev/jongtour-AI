@@ -53,7 +53,7 @@ export async function signInWithGoogle() {
   const headersList = await headers();
   const host = headersList.get('host');
   const protocol = process.env.NODE_ENV === 'production' ? 'https' : 'http';
-  const origin = host ? `${protocol}://${host}` : 'http://localhost:3000';
+  const origin = host ? `${protocol}://${host}` : (process.env.NEXT_PUBLIC_SITE_URL || 'https://jongtour.com');
   
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
@@ -73,7 +73,7 @@ export async function signInWithLine() {
   const headersList = await headers();
   const host = headersList.get('host');
   const protocol = process.env.NODE_ENV === 'production' ? 'https' : 'http';
-  const origin = host ? `${protocol}://${host}` : 'http://localhost:3000';
+  const origin = host ? `${protocol}://${host}` : (process.env.NEXT_PUBLIC_SITE_URL || 'https://jongtour.com');
   
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'line' as any,

@@ -1,9 +1,13 @@
 import Link from "next/link";
-import { ChevronLeft, Calendar, Users, MapPin, CreditCard, Clock, FileText, CheckCircle2, Download, AlertCircle, Plane } from "lucide-react";
+import { ChevronLeft, Calendar, Users, MapPin, CreditCard, Clock, FileText, CheckCircle2, Download, AlertCircle, Plane, Briefcase, ExternalLink, Copy, AlertTriangle, Phone, Mail, FileSignature, Receipt, History } from "lucide-react";
 import { createClient } from "@supabase/supabase-js";
 import { notFound } from "next/navigation";
 import { updateBookingStatus } from "@/actions/admin-booking";
 import RpaBookingManager from "./RpaBookingManager";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui-new/Card";
+import { Badge } from "@/components/ui-new/Badge";
+import { Button } from "@/components/ui-new/Button";
+import { Input } from "@/components/ui-new/Input";
 
 export const dynamic = 'force-dynamic';
 
@@ -35,135 +39,229 @@ export default async function BookingDetailsPage({ params }: { params: { id: str
   const totalPaid = booking.payments?.filter((p:any) => p.status === 'COMPLETED').reduce((sum: number, p: any) => sum + p.amount, 0) || 0;
   const balance = booking.totalPrice - totalPaid;
 
-  const statusMap: Record<string, string> = {
-    "PENDING": "รอชำระเงิน",
-    "AWAITING_CONFIRMATION": "รอตรวจสลิป",
-    "CONFIRMED": "ยืนยันแล้ว",
-    "COMPLETED": "เดินทางแล้ว",
-    "CANCELLED": "ยกเลิก"
+  const statusMap: Record<string, { label: string, variant: "default" | "brand" | "secondary" | "destructive" | "success" | "warning" | "outline" }> = {
+    "PENDING": { label: "รอชำระเงิน", variant: "warning" },
+    "AWAITING_CONFIRMATION": { label: "รอตรวจสลิป", variant: "brand" },
+    "DEPOSIT_PAID": { label: "มัดจำแล้ว", variant: "secondary" },
+    "FULL_PAID": { label: "ชำระเต็มจำนวน", variant: "success" },
+    "CONFIRMED": { label: "ยืนยันแล้ว", variant: "success" },
+    "COMPLETED": { label: "เดินทางเสร็จสิ้น", variant: "default" },
+    "CANCELLED": { label: "ยกเลิก", variant: "destructive" }
   };
 
-  const badgeColors: Record<string, string> = {
-    "PENDING": "bg-gray-100 text-gray-700 border-gray-200",
-    "AWAITING_CONFIRMATION": "bg-amber-100 text-amber-700 border-amber-200",
-    "CONFIRMED": "bg-green-100 text-green-700 border-green-200",
-    "COMPLETED": "bg-blue-100 text-blue-700 border-blue-200",
-    "CANCELLED": "bg-red-100 text-red-700 border-red-200",
-  };
+  const currentStatus = statusMap[booking.status] || { label: booking.status, variant: "default" };
 
   return (
-    <div className="max-w-6xl mx-auto pb-12">
-      <div className="flex items-center justify-between mb-8">
+    <div className="max-w-7xl mx-auto pb-16">
+      {/* Header Section */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
         <div className="flex items-center gap-4">
-          <Link href="/admin/bookings" className="w-10 h-10 bg-white border border-gray-200 rounded-xl flex items-center justify-center text-gray-500 hover:text-blue-600 hover:border-blue-200 transition-colors shadow-sm">
-            <ChevronLeft className="w-5 h-5" />
-          </Link>
+          <Button variant="outline" size="icon" asChild className="shrink-0">
+             <Link href="/admin/bookings"><ChevronLeft className="w-5 h-5" /></Link>
+          </Button>
           <div>
-            <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-3">
-              รายละเอียดการจอง
-              <span className={`px-3 py-1 rounded-full text-sm font-bold border ${badgeColors[booking.status] || badgeColors['PENDING']}`}>
-                {statusMap[booking.status] || booking.status}
-              </span>
-            </h2>
-            <p className="text-gray-500 mt-1 font-mono tracking-wide">Ref: {booking.bookingRef}</p>
+            <div className="flex items-center gap-3 mb-1">
+               <h2 className="text-2xl font-black text-trust-900 tracking-tight">
+                 Booking Details
+               </h2>
+               <Badge variant={currentStatus.variant}>{currentStatus.label}</Badge>
+            </div>
+            <p className="text-muted-foreground text-sm flex items-center gap-2">
+               Ref: <span className="font-mono font-bold text-trust-800">{booking.bookingRef}</span> 
+               <span className="text-border">•</span> 
+               Created: {new Date(booking.createdAt).toLocaleDateString('th-TH', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+            </p>
           </div>
         </div>
         
-        <div className="flex gap-3">
+        {/* Top Action Buttons */}
+        <div className="flex gap-2">
           {booking.status === 'AWAITING_CONFIRMATION' && (
             <form action={updateBookingStatus}>
               <input type="hidden" name="bookingId" value={booking.id} />
-              <input type="hidden" name="status" value="CONFIRMED" />
-              <button type="submit" className="bg-blue-600 text-white px-5 py-2.5 rounded-xl font-bold flex items-center gap-2 hover:bg-blue-700 shadow-lg shadow-blue-600/30 transition-all">
-                <CheckCircle2 className="w-5 h-5" /> อนุมัติสลิปโอนเงิน (Approve)
-              </button>
+              <input type="hidden" name="status" value="DEPOSIT_PAID" />
+              <Button type="submit" variant="brand" className="gap-2 shadow-sm">
+                <CheckCircle2 className="w-4 h-4" /> อนุมัติสลิปโอนเงิน
+              </Button>
             </form>
           )}
           {booking.status === 'PENDING' && (
              <form action={updateBookingStatus}>
              <input type="hidden" name="bookingId" value={booking.id} />
              <input type="hidden" name="status" value="CANCELLED" />
-             <button type="submit" className="bg-red-100 text-red-600 px-5 py-2.5 rounded-xl font-bold flex items-center gap-2 hover:bg-red-200 transition-all">
+             <Button type="submit" variant="destructive" className="bg-destructive/10 text-destructive hover:bg-destructive/20 shadow-none border-0">
                ยกเลิกการจอง
-             </button>
+             </Button>
            </form>
           )}
+          <Button variant="outline" className="gap-2">
+             <FileSignature className="w-4 h-4" /> สร้าง Invoice
+          </Button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
         
-        {/* Main Info Column */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Tour Package Info */}
-          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
-            <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
-              <Plane className="w-5 h-5 text-indigo-500" /> ข้อมูลทัวร์ (Tour Package)
-            </h3>
-            <div className="flex gap-4">
-              <div className="w-24 h-24 bg-indigo-100 rounded-xl shrink-0 overflow-hidden flex items-center justify-center text-indigo-300">
-                 <Plane className="w-8 h-8" />
-              </div>
-              <div className="flex-1 space-y-2">
-                <p className="font-bold text-lg text-gray-800">{booking.tour?.tourName}</p>
-                <p className="text-gray-600 flex items-center gap-2 text-sm"><Calendar className="w-4 h-4 text-gray-400" /> วันเดินทาง: <span className="font-bold">{booking.departure?.startDate ? new Date(booking.departure.startDate).toLocaleDateString('th-TH') : "N/A"}</span></p>
-                <p className="text-gray-600 flex items-center gap-2 text-sm"><Users className="w-4 h-4 text-gray-400" /> ผู้เดินทางทั้งหมด: <span className="font-bold">{booking.travelers?.length || 0} ท่าน</span></p>
-              </div>
-            </div>
-          </div>
+        {/* LEFT COLUMN: Main Info */}
+        <div className="xl:col-span-2 space-y-6">
+          
+          {/* 1. Tour Card */}
+          <Card className="shadow-sm border-border">
+            <CardHeader className="pb-3 border-b border-border bg-muted/20">
+               <CardTitle className="text-base flex items-center gap-2"><Plane className="w-5 h-5 text-primary" /> ข้อมูลแพ็กเกจทัวร์ (Tour Info)</CardTitle>
+            </CardHeader>
+            <CardContent className="p-5 flex flex-col md:flex-row gap-5">
+               <div className="w-24 h-24 bg-primary-50 rounded-xl shrink-0 flex items-center justify-center border border-primary-100">
+                  <Plane className="w-8 h-8 text-primary" />
+               </div>
+               <div className="flex-1 space-y-3">
+                  <div>
+                     <p className="text-xs text-muted-foreground font-bold uppercase tracking-wider mb-1">Package Name</p>
+                     <p className="font-bold text-lg text-trust-900 leading-tight">{booking.tour?.tourName}</p>
+                  </div>
+                  <div className="flex flex-wrap gap-x-6 gap-y-2">
+                     <div>
+                        <p className="text-[10px] text-muted-foreground uppercase">Departure Date</p>
+                        <p className="text-sm font-bold text-trust-800 flex items-center gap-1.5 mt-0.5"><Calendar className="w-3.5 h-3.5 text-primary" /> {booking.departure?.startDate ? new Date(booking.departure.startDate).toLocaleDateString('th-TH', { dateStyle: 'medium' }) : "N/A"}</p>
+                     </div>
+                     <div>
+                        <p className="text-[10px] text-muted-foreground uppercase">Total Pax</p>
+                        <p className="text-sm font-bold text-trust-800 flex items-center gap-1.5 mt-0.5"><Users className="w-3.5 h-3.5 text-primary" /> {booking.travelers?.length || 0} ท่าน</p>
+                     </div>
+                  </div>
+               </div>
+            </CardContent>
+          </Card>
 
-          {/* Travelers List */}
-          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="font-bold text-gray-900 flex items-center gap-2">
-                <Users className="w-5 h-5 text-emerald-500" /> รายชื่อผู้เดินทาง (Travelers)
-              </h3>
-            </div>
-            
-            <div className="space-y-3">
-              {!booking.travelers || booking.travelers.length === 0 ? (
-                 <p className="text-gray-500 text-sm">ยังไม่ได้กรอกรายชื่อผู้เดินทาง</p>
-              ) : booking.travelers.map((t:any, idx:number) => (
-                <div key={t.id} className="flex justify-between items-center p-3 border border-gray-100 rounded-xl bg-gray-50">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-white border border-gray-200 flex items-center justify-center text-gray-500 font-bold">{idx+1}</div>
-                    <div>
-                      <p className="font-bold text-gray-800">{t.title} {t.firstName} {t.lastName}</p>
-                      <p className="text-xs text-gray-500">{t.paxType}</p>
-                    </div>
+          {/* 2. Customer Card */}
+          <Card className="shadow-sm border-border">
+            <CardHeader className="pb-3 border-b border-border bg-muted/20">
+               <CardTitle className="text-base flex items-center gap-2"><Users className="w-5 h-5 text-emerald-500" /> ข้อมูลผู้จอง (Customer Contact)</CardTitle>
+            </CardHeader>
+            <CardContent className="p-5">
+               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div>
+                     <p className="text-[10px] text-muted-foreground uppercase mb-1">Customer Name</p>
+                     <p className="font-bold text-trust-900">{booking.customer?.firstName} {booking.customer?.lastName}</p>
                   </div>
-                  <div className="text-right">
-                    <p className="text-xs text-gray-400">Passport No.</p>
-                    <p className="font-mono text-sm font-bold text-gray-700">{t.passportNo || "-"}</p>
+                  <div>
+                     <p className="text-[10px] text-muted-foreground uppercase mb-1">Phone Number</p>
+                     <p className="font-bold text-trust-900 flex items-center gap-2"><Phone className="w-3.5 h-3.5 text-muted-foreground" /> {booking.customer?.phone || "-"}</p>
                   </div>
-                </div>
-              ))}
-            </div>
-          </div>
+                  <div>
+                     <p className="text-[10px] text-muted-foreground uppercase mb-1">Email</p>
+                     <p className="font-bold text-trust-900 flex items-center gap-2 truncate"><Mail className="w-3.5 h-3.5 text-muted-foreground shrink-0" /> {booking.customer?.email || "-"}</p>
+                  </div>
+               </div>
+            </CardContent>
+          </Card>
+
+          {/* 3. Travelers List Card */}
+          <Card className="shadow-sm border-border">
+            <CardHeader className="pb-3 border-b border-border bg-muted/20 flex flex-row items-center justify-between">
+               <CardTitle className="text-base flex items-center gap-2"><FileText className="w-5 h-5 text-indigo-500" /> รายชื่อผู้เดินทาง (Traveler Details)</CardTitle>
+               <Button variant="outline" size="sm" className="h-7 text-xs">แก้ไขข้อมูล</Button>
+            </CardHeader>
+            <CardContent className="p-0">
+               <div className="divide-y divide-border">
+                  {!booking.travelers || booking.travelers.length === 0 ? (
+                     <div className="p-6 text-center text-muted-foreground text-sm">ยังไม่ได้กรอกรายชื่อผู้เดินทาง</div>
+                  ) : booking.travelers.map((t:any, idx:number) => {
+                     const isMissingDoc = !t.passportFileUrl;
+                     return (
+                        <div key={t.id} className="p-4 flex flex-col md:flex-row justify-between md:items-center gap-4 hover:bg-muted/10 transition-colors">
+                           <div className="flex items-center gap-4">
+                              <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-trust-500 font-bold text-sm shrink-0">{idx+1}</div>
+                              <div>
+                                 <p className="font-bold text-trust-900">{t.title} {t.firstName} {t.lastName}</p>
+                                 <p className="text-xs text-muted-foreground uppercase tracking-wider mt-0.5">{t.paxType}</p>
+                              </div>
+                           </div>
+                           <div className="flex items-center gap-4 md:text-right pl-12 md:pl-0">
+                              <div>
+                                 <p className="text-[10px] text-muted-foreground uppercase">Passport No.</p>
+                                 <p className="font-mono text-sm font-bold text-trust-800">{t.passportNo || "-"}</p>
+                              </div>
+                              {isMissingDoc ? (
+                                 <Badge variant="destructive" className="bg-destructive/10 text-destructive border-0">รอเอกสาร</Badge>
+                              ) : (
+                                 <Badge variant="success" className="bg-emerald-100 text-emerald-700 border-0">ครบถ้วน</Badge>
+                              )}
+                           </div>
+                        </div>
+                     );
+                  })}
+               </div>
+            </CardContent>
+          </Card>
+          
+          {/* 4. Internal Communication / Notes Timeline */}
+          <Card className="shadow-sm border-border bg-muted/10">
+            <CardHeader className="pb-3 border-b border-border bg-white">
+               <CardTitle className="text-base flex items-center gap-2"><History className="w-5 h-5 text-trust-600" /> Communication & Internal Notes</CardTitle>
+            </CardHeader>
+            <CardContent className="p-5">
+               <div className="space-y-4">
+                  {/* Mock Note 1 */}
+                  <div className="flex gap-3">
+                     <div className="w-8 h-8 rounded-full bg-primary-100 text-primary font-bold flex items-center justify-center text-xs shrink-0">SA</div>
+                     <div className="bg-white border border-border p-3 rounded-tr-xl rounded-b-xl rounded-tl-sm shadow-sm flex-1">
+                        <div className="flex justify-between items-start mb-1">
+                           <p className="text-xs font-bold text-trust-900">Sale Admin</p>
+                           <p className="text-[10px] text-muted-foreground">Today 10:30</p>
+                        </div>
+                        <p className="text-sm text-trust-800">ลูกค้ารอแจ้งชื่อผู้เดินทางเพิ่มเติมพรุ่งนี้เช้าครับ</p>
+                     </div>
+                  </div>
+                  {/* Add Note Input */}
+                  <div className="flex gap-3 mt-4">
+                     <div className="w-8 h-8 rounded-full bg-trust-800 text-white font-bold flex items-center justify-center text-xs shrink-0">ME</div>
+                     <div className="flex-1 flex gap-2">
+                        <Input placeholder="เพิ่มบันทึกภายในสำหรับทีม..." className="bg-white text-sm" />
+                        <Button variant="outline">บันทึก</Button>
+                     </div>
+                  </div>
+               </div>
+            </CardContent>
+          </Card>
+
         </div>
 
-        {/* Sidebar Column */}
+        {/* RIGHT COLUMN: Action Panels (Payment & Wholesale) */}
         <div className="space-y-6">
-          {/* Wholesale Info */}
-          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
-            <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
-               <Plane className="w-5 h-5 text-orange-500" /> ข้อมูลผู้จัด (Supplier)
-            </h3>
-            <div className="space-y-3 text-sm">
-               <p className="flex justify-between"><span className="text-gray-500">ประเภท:</span> <span className="font-bold text-gray-800">{booking.wholesaleType || "ไม่ระบุ"}</span></p>
-               <p className="flex justify-between"><span className="text-gray-500">Supplier ID:</span> <span className="font-mono text-gray-800">{booking.supplierId || "N/A"}</span></p>
-               {booking.supplierId && (
-                 <a 
-                   href={`/wholesale/${booking.supplierId}`}
-                   target="_blank" 
-                   rel="noreferrer"
-                   className="mt-4 w-full bg-orange-50 hover:bg-orange-100 text-orange-600 font-bold py-2 rounded-xl flex items-center justify-center gap-2 transition-colors border border-orange-200"
-                 >
-                   เปิดดูรายการทัวร์ต้นทาง
-                 </a>
-               )}
+          
+          {/* Prominent Wholesale Booking Panel */}
+          <Card className="border-primary ring-1 ring-primary/20 shadow-md bg-white overflow-hidden relative">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-primary rounded-full blur-3xl opacity-10 -translate-y-1/2 translate-x-1/2"></div>
+            <CardHeader className="pb-4 border-b border-border relative z-10 bg-primary/5">
+               <CardTitle className="text-lg flex items-center gap-2"><Briefcase className="w-5 h-5 text-primary" /> Wholesale Panel</CardTitle>
+               <p className="text-xs text-muted-foreground mt-1">จัดการที่นั่งกับผู้จัดทัวร์ต้นทาง</p>
+            </CardHeader>
+            <CardContent className="p-5 space-y-5 relative z-10">
+               <div className="space-y-2">
+                  <div className="flex justify-between items-center text-sm">
+                     <span className="text-muted-foreground">Supplier:</span>
+                     <Badge variant="outline" className="font-bold bg-white">{booking.supplierId?.replace('SUP_', '') || "N/A"}</Badge>
+                  </div>
+                  <div className="flex justify-between items-center text-sm">
+                     <span className="text-muted-foreground">Ext. Status:</span>
+                     {booking.externalRefs?.[0] ? <Badge variant="success">Confirmed</Badge> : <Badge variant="warning">Pending Booking</Badge>}
+                  </div>
+               </div>
 
-               {/* External Booking Ref Input */}
+               {/* Action Buttons */}
+               <div className="space-y-2 pt-3 border-t border-border">
+                  <Button variant="brand" className="w-full gap-2 justify-between" asChild>
+                     <a href={`/wholesale/${booking.supplierId}`} target="_blank">
+                        <span className="flex items-center gap-2"><ExternalLink className="w-4 h-4" /> Open Wholesale Portal</span>
+                     </a>
+                  </Button>
+                  <Button variant="outline" className="w-full gap-2 justify-between bg-white hover:bg-muted">
+                     <span className="flex items-center gap-2"><Copy className="w-4 h-4 text-trust-500" /> Copy Booking Summary</span>
+                  </Button>
+               </div>
+
+               {/* External Ref Input */}
                <form action={async (formData) => {
                  "use server";
                  const ref = formData.get("external_ref") as string;
@@ -177,148 +275,118 @@ export default async function BookingDetailsPage({ params }: { params: { id: str
                  }, { onConflict: 'bookingId' });
                  const { revalidatePath } = require("next/cache");
                  revalidatePath(`/admin/bookings/${booking.id}`);
-               }} className="mt-4 border-t border-gray-100 pt-4">
-                 <label className="text-xs text-gray-500 font-bold uppercase mb-2 block">หมายเลขการจองต้นทาง (External Ref)</label>
+               }} className="pt-4 border-t border-border">
+                 <label className="text-[10px] text-muted-foreground font-bold uppercase mb-2 block">Wholesale Booking Ref.</label>
                  <div className="flex gap-2">
-                   <input type="text" name="external_ref" defaultValue={booking.externalRefs?.[0]?.externalBookingId || ""} placeholder="เช่น PNR หรือ Ref จาก Wholesale" className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-orange-500" />
-                   <button type="submit" className="bg-slate-900 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-slate-800">
-                     บันทึก
-                   </button>
+                   <Input type="text" name="external_ref" defaultValue={booking.externalRefs?.[0]?.externalBookingId || ""} placeholder="e.g. PNR or System Ref" className="text-xs h-9 bg-white" />
+                   <Button type="submit" size="sm" variant="secondary" className="h-9">Save</Button>
                  </div>
                </form>
-            </div>
-          </div>
+               
+               {/* Quick Status Mark */}
+               <div className="flex gap-2 pt-2">
+                  <Button variant="outline" size="sm" className="flex-1 text-[10px] h-7 border-emerald-200 text-emerald-700 bg-emerald-50 hover:bg-emerald-100">Mark Confirmed</Button>
+                  <Button variant="outline" size="sm" className="flex-1 text-[10px] h-7 border-destructive/30 text-destructive bg-destructive/5 hover:bg-destructive/10">Mark Sold Out</Button>
+               </div>
+            </CardContent>
+          </Card>
 
-          {/* RPA Control Panel */}
-          {booking.supplierId && (
-            <RpaBookingManager 
-              bookingId={booking.id} 
-              supplierId={booking.supplierId} 
-              currentSessions={booking.rpaSessions || []} 
-            />
-          )}
-
-          {/* Customer Info */}
-          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
-            <h3 className="font-bold text-gray-900 mb-4 border-b border-gray-100 pb-2">ข้อมูลผู้ติดต่อหลัก</h3>
-            <div className="space-y-3 text-sm">
-              <p className="font-bold text-lg text-gray-800">{booking.customer?.firstName} {booking.customer?.lastName}</p>
-              <p className="text-gray-600 flex items-center gap-2"><CreditCard className="w-4 h-4 text-gray-400" /> {booking.customer?.phone}</p>
-              <p className="text-gray-600 flex items-center gap-2"><MapPin className="w-4 h-4 text-gray-400" /> {booking.customer?.email}</p>
-            </div>
-          </div>
-
-          {/* Payment Summary */}
-          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
-            <h3 className="font-bold text-gray-900 mb-4 border-b border-gray-100 pb-2">สถานะการชำระเงิน</h3>
-            <div className="space-y-3 mb-6">
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-500">ยอดรวมทั้งสิ้น</span>
-                <span className="font-bold text-gray-800">฿{booking.totalPrice?.toLocaleString()}</span>
+          {/* Payment Card */}
+          <Card className="shadow-sm border-border">
+            <CardHeader className="pb-3 border-b border-border bg-muted/20">
+               <CardTitle className="text-base flex items-center gap-2"><Receipt className="w-5 h-5 text-amber-500" /> ข้อมูลการชำระเงิน (Payment)</CardTitle>
+            </CardHeader>
+            <CardContent className="p-5">
+              <div className="space-y-3 mb-5">
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Grand Total</span>
+                  <span className="font-bold text-trust-900">฿{booking.totalPrice?.toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Paid Amount</span>
+                  <span className="font-bold text-emerald-600">฿{totalPaid.toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between items-center pt-3 border-t border-border">
+                  <span className="font-bold text-trust-900">Balance Due</span>
+                  <span className="text-xl font-black text-destructive">฿{balance.toLocaleString()}</span>
+                </div>
               </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-500">ชำระแล้ว</span>
-                <span className="font-bold text-emerald-600">฿{totalPaid.toLocaleString()}</span>
-              </div>
-              <div className="flex justify-between text-lg pt-2 border-t border-gray-100">
-                <span className="font-bold text-gray-800">ยอดค้างชำระ</span>
-                <span className="font-black text-red-600">฿{balance.toLocaleString()}</span>
-              </div>
-            </div>
 
-            <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
-              <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">ประวัติการชำระเงิน</p>
-              {!booking.payments || booking.payments.length === 0 ? (
-                 <p className="text-xs text-gray-500">ยังไม่มีประวัติการชำระเงิน</p>
-              ) : booking.payments.map((h:any, i:number) => (
-                <div key={i} className="flex gap-3 mb-3 last:mb-0">
-                  <div className="mt-1"><AlertCircle className="w-4 h-4 text-blue-500" /></div>
-                  <div>
-                    <p className="text-sm font-bold text-gray-800">฿{h.amount.toLocaleString()} <span className="text-xs font-normal text-blue-600 bg-blue-100 px-2 py-0.5 rounded ml-1">{h.status}</span></p>
-                    <p className="text-xs text-gray-500">{h.paymentMethod} • Ref: {h.paymentRef}</p>
-                    <p className="text-xs text-gray-400">{new Date(h.createdAt).toLocaleString('th-TH')}</p>
+              {/* Payment History */}
+              <div className="bg-muted/30 rounded-lg p-3 border border-border mb-4">
+                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-2">Payment History</p>
+                {!booking.payments || booking.payments.length === 0 ? (
+                   <p className="text-xs text-muted-foreground italic">No payment records yet.</p>
+                ) : booking.payments.map((h:any, i:number) => (
+                  <div key={i} className="flex justify-between items-start mb-2 last:mb-0 bg-white p-2 rounded border border-border/50 shadow-sm">
+                    <div>
+                      <p className="text-xs font-bold text-trust-900">฿{h.amount.toLocaleString()}</p>
+                      <p className="text-[10px] text-muted-foreground font-mono mt-0.5">{h.paymentRef}</p>
+                    </div>
+                    <div className="text-right">
+                       <Badge variant="success" className="h-4 px-1 text-[8px]">{h.status}</Badge>
+                       <p className="text-[9px] text-muted-foreground mt-1">{new Date(h.createdAt).toLocaleDateString('th-TH')}</p>
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
-
-            {balance > 0 && (
-              <form action={async (formData) => {
-                "use server";
-                const amount = parseFloat(formData.get("amount") as string);
-                const { createClient } = require("@supabase/supabase-js");
-                const sb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
-                await sb.from("payments").insert({
-                  bookingId: booking.id,
-                  amount: amount,
-                  status: "COMPLETED",
-                  paymentMethod: "BANK_TRANSFER",
-                  paymentRef: "MANUAL-" + Date.now()
-                });
-                const { revalidatePath } = require("next/cache");
-                revalidatePath(`/admin/bookings/${booking.id}`);
-              }} className="mt-4 border-t border-gray-100 pt-4 flex gap-2">
-                <input type="number" name="amount" defaultValue={balance} className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-blue-500" />
-                <button type="submit" className="bg-emerald-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-emerald-700 whitespace-nowrap">
-                  แจ้งชำระ (Manual)
-                </button>
-              </form>
-            )}
-
-            {booking.status === 'COMPLETED' && (
-              <div className="mt-4 pt-4 border-t border-gray-100">
-                <a 
-                  href={`/api/admin/bookings/${booking.id}/voucher`} 
-                  target="_blank"
-                  className="w-full flex items-center justify-center gap-2 bg-purple-100 text-purple-700 hover:bg-purple-200 px-4 py-3 rounded-xl font-bold transition-colors"
-                >
-                  <FileText className="w-5 h-5" />
-                  สร้าง Voucher / ตั๋วเดินทาง
-                </a>
+                ))}
               </div>
-            )}
-          </div>
 
-          {/* Timeline / Logs */}
-          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 mt-6">
-            <h3 className="font-bold text-gray-900 mb-4 border-b border-gray-100 pb-2">ไทม์ไลน์สถานะ (Timeline)</h3>
-            <div className="space-y-4">
-              <div className="flex gap-4">
-                <div className="mt-1"><div className="w-3 h-3 bg-blue-500 rounded-full"></div></div>
-                <div>
-                  <p className="text-sm font-bold text-gray-800">สร้าง Booking ใหม่</p>
-                  <p className="text-xs text-gray-500">{new Date(booking.createdAt).toLocaleString('th-TH')}</p>
-                </div>
-              </div>
-              {booking.payments?.map((p: any, i: number) => (
-                <div key={`p-${i}`} className="flex gap-4">
-                  <div className="mt-1"><div className="w-3 h-3 bg-emerald-500 rounded-full"></div></div>
-                  <div>
-                    <p className="text-sm font-bold text-gray-800">ชำระเงิน {p.amount.toLocaleString()} บาท</p>
-                    <p className="text-xs text-gray-500">{new Date(p.createdAt).toLocaleString('th-TH')}</p>
-                  </div>
-                </div>
-              ))}
-              {booking.rpaSessions?.map((r: any, i: number) => (
-                <div key={`r-${i}`} className="flex gap-4">
-                  <div className="mt-1"><div className="w-3 h-3 bg-orange-500 rounded-full"></div></div>
-                  <div>
-                    <p className="text-sm font-bold text-gray-800">ระบบ RPA ดำเนินการจอง</p>
-                    <p className="text-xs text-gray-500">{new Date(r.createdAt).toLocaleString('th-TH')}</p>
-                  </div>
-                </div>
-              ))}
-              {booking.externalRefs?.map((e: any, i: number) => (
-                <div key={`e-${i}`} className="flex gap-4">
-                  <div className="mt-1"><div className="w-3 h-3 bg-indigo-500 rounded-full"></div></div>
-                  <div>
-                    <p className="text-sm font-bold text-gray-800">บันทึกรหัส Wholesale: {e.externalBookingId}</p>
-                    <p className="text-xs text-gray-500">{new Date(e.createdAt || booking.updatedAt).toLocaleString('th-TH')}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+              {/* Manual Payment Action */}
+              {balance > 0 && (
+                <form action={async (formData) => {
+                  "use server";
+                  const amount = parseFloat(formData.get("amount") as string);
+                  const { createClient } = require("@supabase/supabase-js");
+                  const sb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
+                  await sb.from("payments").insert({
+                    bookingId: booking.id,
+                    amount: amount,
+                    status: "COMPLETED",
+                    paymentMethod: "BANK_TRANSFER",
+                    paymentRef: "MANUAL-" + Date.now()
+                  });
+                  const { revalidatePath } = require("next/cache");
+                  revalidatePath(`/admin/bookings/${booking.id}`);
+                }} className="flex gap-2">
+                  <Input type="number" name="amount" defaultValue={balance} className="h-9 text-xs" />
+                  <Button type="submit" size="sm" variant="secondary" className="h-9 whitespace-nowrap bg-emerald-100 text-emerald-800 hover:bg-emerald-200">
+                    Add Payment
+                  </Button>
+                </form>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Status Timeline Card */}
+          <Card className="shadow-sm border-border bg-transparent shadow-none border-0">
+             <CardHeader className="pb-2 px-0">
+                <CardTitle className="text-sm text-muted-foreground uppercase tracking-wider font-bold">System Status Timeline</CardTitle>
+             </CardHeader>
+             <CardContent className="px-0">
+               <div className="space-y-4 border-l-2 border-border ml-2 pl-4 py-1">
+                 <div className="relative">
+                   <div className="absolute -left-[21px] top-1 w-2.5 h-2.5 bg-border rounded-full ring-4 ring-muted"></div>
+                   <p className="text-xs font-bold text-trust-900">Booking Created</p>
+                   <p className="text-[10px] text-muted-foreground">{new Date(booking.createdAt).toLocaleString('th-TH')}</p>
+                 </div>
+                 {booking.payments?.map((p: any, i: number) => (
+                   <div key={`p-${i}`} className="relative">
+                     <div className="absolute -left-[21px] top-1 w-2.5 h-2.5 bg-emerald-500 rounded-full ring-4 ring-muted"></div>
+                     <p className="text-xs font-bold text-trust-900">Payment Received (฿{p.amount.toLocaleString()})</p>
+                     <p className="text-[10px] text-muted-foreground">{new Date(p.createdAt).toLocaleString('th-TH')}</p>
+                   </div>
+                 ))}
+                 {booking.externalRefs?.map((e: any, i: number) => (
+                   <div key={`e-${i}`} className="relative">
+                     <div className="absolute -left-[21px] top-1 w-2.5 h-2.5 bg-primary rounded-full ring-4 ring-muted"></div>
+                     <p className="text-xs font-bold text-trust-900">Wholesale Ref Saved</p>
+                     <p className="text-[10px] text-muted-foreground">{new Date(e.createdAt || booking.updatedAt).toLocaleString('th-TH')}</p>
+                   </div>
+                 ))}
+               </div>
+             </CardContent>
+          </Card>
+
         </div>
       </div>
     </div>

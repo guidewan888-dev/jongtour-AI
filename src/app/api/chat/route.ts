@@ -5,12 +5,14 @@ import { cookies } from "next/headers";
 import OpenAI from "openai";
 import { type NextRequest } from "next/server";
 import { calculateFitPrice } from "@/services/pricingEngine";
-import { getSystemPrompt, BOOKING_ASSISTANT_SYSTEM_PROMPT } from "@/services/ai/prompts";
+import { getSystemPrompt } from "@/services/ai/prompts";
+import { getActivePrompt } from "@/services/ai/promptService";
 import { extractIntent } from "@/services/ai/intentExtractor";
 import { searchTours, formatTourSummary } from "@/services/ai/tourSearchService";
 import { runQualityChecker } from "@/services/ai/qualityChecker";
 import { processUserImage, getSearchAgentPrompt } from "@/services/ai/ocrExtractor";
 import { tools } from "@/services/ai/toolsConfig";
+import { checkSensitiveCase, validateAiOutput } from "@/services/ai/guardrails";
 
 export const maxDuration = 60; // Increase Vercel timeout for slow AI generation
 export const dynamic = "force-dynamic";
@@ -60,6 +62,12 @@ export async function POST(request: NextRequest) {
     const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || "sb_publishable_SRwNSJ89mInda5FcuB1W2w_9IEJlSOI";
     const supabase = createClient(supabaseUrl, supabaseKey);
 
+    // STEP 0: Sensitive Case Guardrail
+    const sensitiveCheck = checkSensitiveCase(userMessage);
+    if (sensitiveCheck.isSensitive) {
+      return NextResponse.json({ reply: sensitiveCheck.reason, tours: [] });
+    }
+
     // STEP 1: Intent Extraction (Supplier Alias Matching)
     const { extracted: intentExtracted, shouldReturnEarly, earlyReturnMessage } = await extractIntent(openai, userMessage);
     
@@ -91,8 +99,12 @@ export async function POST(request: NextRequest) {
     }
 
     // Prepare Messages History
+    const dynamicSystemPrompt = await getActivePrompt("BOOKING_ASSISTANT_SYSTEM_PROMPT");
+    const salesStrategyPrompt = await getActivePrompt("SALES_RESPONSE_STRATEGY");
+    const fullSystemPrompt = getSystemPrompt() + "\n\n" + dynamicSystemPrompt + "\n\n" + salesStrategyPrompt + crmContext;
+
     const messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
-      { role: "system", content: getSystemPrompt() + "\n\n" + BOOKING_ASSISTANT_SYSTEM_PROMPT + crmContext },
+      { role: "system", content: fullSystemPrompt },
       ...(chatHistory.slice(-15).filter((m: any) => !(m.role === 'ai' && (m.content.includes("ไม่สามารถ") || m.content.includes("ขอโทษครับ")))).map((m: any) => {
         let content = m.content;
         if (m.role === 'ai' && m.tours && m.tours.length > 0) {
@@ -114,36 +126,49 @@ export async function POST(request: NextRequest) {
     if (userImage) {
       forceTool = true;
       try {
-        extractedDataForSearch = await processUserImage(openai, userImage);
+        extractedDataForSearch = await processUserImage(openai, userImage, userMessage);
+        
         if (extractedDataForSearch) {
-          const dest = extractedDataForSearch.destinations?.find((d: any) => d.confidence >= 0.75)?.name;
-          const code = extractedDataForSearch.tour_code?.confidence >= 0.75 ? extractedDataForSearch.tour_code.value : null;
-          const price = extractedDataForSearch.prices?.find((p: any) => p.confidence >= 0.75)?.amount;
-          const deps = (extractedDataForSearch.dates?.departure_dates || []).filter((d: any) => d.confidence >= 0.75).map((d: any) => `${d.start_date || ''} ถึง ${d.end_date || ''}`).join(", ");
-          const air = extractedDataForSearch.airline?.confidence >= 0.75 ? extractedDataForSearch.airline.value : null;
+          if (extractedDataForSearch.internal_flow === "tour_extraction") {
+             const code = extractedDataForSearch.tour_identity?.tour_code?.value;
+             const dest = extractedDataForSearch.destination?.country || extractedDataForSearch.destination?.city;
+             const price = extractedDataForSearch.pricing?.[0]?.amount;
+             const deps = extractedDataForSearch.departure_dates?.map((d: any) => `${d.start_date} ถึง ${d.end_date}`).join(", ");
+             const air = extractedDataForSearch.airline?.value;
 
-          if (extractedDataForSearch.should_ask_user || (!dest && !code) || !deps) {
-             let fallbackQuestion = extractedDataForSearch.question_to_user;
-             if (!fallbackQuestion) {
-                if (!dest && !deps) fallbackQuestion = "ต้องการไปประเทศหรือเมืองไหน และเดินทางช่วงวันไหนครับ?";
-                else if (!dest) fallbackQuestion = "ต้องการไปประเทศหรือเมืองไหนครับ?";
-                else if (!deps) fallbackQuestion = "ต้องการเดินทางช่วงวันไหนครับ?";
-                else fallbackQuestion = "มีข้อมูลไม่เพียงพอ รบกวนพิมพ์บอกเพิ่มเติมหน่อยครับ";
+             if (extractedDataForSearch.next_action?.should_ask_user) {
+                 const q = extractedDataForSearch.next_action?.question_to_user || "ภาพไม่ชัดเจน รบกวนขอข้อมูลเพิ่มเติมครับ";
+                 processedUserMessage = `[System Note: AI Vision อ่านภาพแล้วพบว่าข้อมูลไม่ชัดเจน ให้คุณตอบลูกค้าด้วยคำถามนี้: "${q}"]`;
+                 forceTool = false;
+             } else {
+                 let extractedText = `จุดหมายปลายทาง: ${dest || 'ไม่ระบุ'}\nรหัสทัวร์: ${code || 'ไม่ระบุ'}\nราคา: ${price || 'ไม่ระบุ'}\nวันเดินทาง: ${deps || 'ไม่ระบุ'}\nสายการบิน: ${air || 'ไม่ระบุ'}`;
+                 const userIntent = userMessage ? `\nข้อความจากลูกค้า: "${userMessage}"` : "";
+                 processedUserMessage = `ผู้ใช้ส่งรูปภาพโปรแกรมทัวร์มาและระบบสกัดข้อมูลได้ดังนี้:\n${extractedText}${userIntent}\n\nจงเรียกใช้เครื่องมือค้นหา (search_tours) ทันทีเพื่อตรวจสอบว่ามีโปรแกรมนี้ในระบบหรือไม่ แล้วสรุปให้ลูกค้าฟัง`;
              }
-             processedUserMessage = `[System Note: ข้อมูลจากรูปภาพไม่เพียงพอ (ห้ามเดาเด็ดขาด) ให้คุณตอบกลับลูกค้าด้วยคำถามนี้เท่านั้น: "${fallbackQuestion}"]`;
+          } 
+          else if (extractedDataForSearch.internal_flow === "visual_destination") {
+             const dest = extractedDataForSearch.visual_destination?.landmark || extractedDataForSearch.visual_destination?.city || extractedDataForSearch.visual_destination?.country;
+             const aiReply = extractedDataForSearch.customer_reply;
+             
+             if (extractedDataForSearch.search_intent?.should_search_tours) {
+                 processedUserMessage = `ผู้ใช้ส่งรูปสถานที่ท่องเที่ยวมา ระบบวิเคราะห์ว่าเป็น: ${dest}\n\nจงค้นหาทัวร์ (search_tours) ไปยัง ${dest} และนำเสนอให้ลูกค้าน่าสนใจครับ`;
+             } else {
+                 processedUserMessage = `[System Note: ระบบ Vision วิเคราะห์รูปสถานที่แล้ว แต่ยังขาดข้อมูลวันเดินทางหรือจำนวนคน ให้คุณนำข้อความนี้ไปคุยกับลูกค้า: "${aiReply || 'สถานที่นี้สวยมากครับ สนใจไปช่วงไหนครับ?'}"]`;
+                 forceTool = false;
+             }
+          }
+          else {
+             // Document flow or unknown
+             processedUserMessage = `[System Note: ผู้ใช้ส่งรูปภาพเอกสารมา ระบบจำแนกได้ว่าคือ: ${extractedDataForSearch.intent?.file_category} โปรดตอบกลับลูกค้าอย่างสุภาพ หรือถ้าเป็นเอกสารการจองให้บอกว่าจะส่งให้แอดมินตรวจสอบ]`;
              forceTool = false;
-          } else {
-             let extractedText = `จุดหมายปลายทาง: ${dest || 'ไม่ระบุ'}\nรหัสทัวร์: ${code || 'ไม่ระบุ'}\nราคาประมาณ: ${price || 'ไม่ระบุ'}\nวันเดินทาง: ${deps || 'ไม่ระบุ'}\nสายการบิน: ${air || 'ไม่ระบุ'}`;
-             const userIntent = userMessage ? `\nและมีข้อความเพิ่มเติม: "${userMessage}"` : "";
-             processedUserMessage = `ผู้ใช้ค้นหาแพ็กเกจทัวร์ด้วยข้อมูลที่สกัดมาได้ดังนี้:\n${extractedText}${userIntent}\n\nช่วยเรียกใช้เครื่องมือค้นหา และอธิบายโปรแกรมที่เจอให้ฟังอย่างน่าสนใจ 1 โปรแกรมครับ`;
           }
         } else {
-           processedUserMessage = `[System Note: OCR Vision Failed or Returned Empty. Reply to the user that the image could not be read clearly and ask them to provide more details about the tour they are looking for.]`;
+           processedUserMessage = `[System Note: Vision API Failed or Returned Empty. Reply to the user that the image could not be read clearly and ask them to provide more details.]`;
            forceTool = false;
         }
       } catch (e) {
         console.error("OCR Error", e);
-        processedUserMessage = `[System Note: OCR Vision Encountered an Error. Reply to the user that there was a technical error reading the image and ask them to type the tour details instead.]`;
+        processedUserMessage = `[System Note: Vision API Encountered an Error. Reply to the user that there was a technical error reading the image.]`;
         forceTool = false;
       }
     } else {
@@ -437,28 +462,39 @@ search_intent: ${JSON.stringify(intentExtracted)}
               finalOutputText
             );
 
+            const guardrailResult = validateAiOutput(finalOutputText, tours);
+            finalOutputText = guardrailResult.sanitizedMessage;
+
             const lines = finalOutputText.split('\n');
             for (const line of lines) {
               controller.enqueue(encoder.encode(line + '\n'));
               await new Promise(r => setTimeout(r, 20)); // Fake streaming
             }
           } else {
-             // Normal Streaming
+             // Normal Streaming -> Converted to Buffered for Guardrails
              const secondResponse = await openai.chat.completions.create({
                model: "gpt-4o-mini",
                temperature: 0.1,
                messages,
-               stream: true,
+               stream: false,
              });
-             for await (const chunk of secondResponse) {
-               const text = chunk.choices[0]?.delta?.content || "";
-               if (text) {
-                 controller.enqueue(encoder.encode(text));
-               }
+             
+             let aiOutput = secondResponse.choices[0]?.message?.content || "";
+             const guardrailResult = validateAiOutput(aiOutput, tours);
+             aiOutput = guardrailResult.sanitizedMessage;
+
+             const lines = aiOutput.split('\n');
+             for (const line of lines) {
+               controller.enqueue(encoder.encode(line + '\n'));
+               await new Promise(r => setTimeout(r, 20)); // Fake streaming
              }
           }
         } else {
-          const lines = (initialMessage.content || "").split('\n');
+          let aiOutput = initialMessage.content || "";
+          const guardrailResult = validateAiOutput(aiOutput, tours);
+          aiOutput = guardrailResult.sanitizedMessage;
+
+          const lines = aiOutput.split('\n');
           for (const line of lines) {
             controller.enqueue(encoder.encode(line + '\n'));
           }

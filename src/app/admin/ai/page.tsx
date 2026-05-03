@@ -1,276 +1,179 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { MessageSquareText, Search, Zap, CheckCircle2, AlertTriangle, TrendingUp, DollarSign } from "lucide-react";
 import Link from "next/link";
-import { Brain, Search, MessageSquare, AlertTriangle, Filter, Database, Activity, ToggleRight } from 'lucide-react';
-import { createClient } from "@supabase/supabase-js";
 
-export const dynamic = 'force-dynamic';
+export default function AIDashboardPage() {
+  const [stats, setStats] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-export default async function AdminAICenterPage({
-  searchParams,
-}: {
-  searchParams: { tab?: string; q?: string };
-}) {
-  const activeTab = searchParams.tab || "search-logs";
-  const searchQuery = searchParams.q || "";
+  useEffect(() => {
+    const fetchDashboardStats = async () => {
+      try {
+        const res = await fetch("/api/admin/ai/dashboard");
+        if (!res.ok) throw new Error("Failed to fetch");
+        const data = await res.json();
+        setStats(data);
+      } catch (err) {
+        console.error("Dashboard fetch error:", err);
+        // Fallback to 0 if error occurs
+        setStats({
+          totalConversations: 0,
+          hotLeads: 0,
+          searchToursCalled: 0,
+          privateGroupDrafts: 0,
+          aiCostToday: 0,
+          conversionRate: 0,
+          hallucinationWarnings: 0,
+          humanTakeovers: 0,
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchDashboardStats();
+  }, []);
 
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!
-  );
-
-  const tabs = [
-    { id: "search-logs", name: "AI Search Logs", icon: Search },
-    { id: "chat-logs", name: "Chat Logs", icon: MessageSquare },
-    { id: "failed-searches", name: "Failed Searches", icon: AlertTriangle },
-    { id: "hallucinations", name: "Hallucination Warnings", icon: Brain },
-    { id: "supplier-filters", name: "Supplier Filter Logs", icon: Filter },
-    { id: "settings", name: "AI Settings", icon: Database },
-  ];
-
-  let activeData: any = null;
-
-  if (activeTab === "search-logs") {
-    const { data: searchLogs } = await supabase
-      .from('ai_search_logs')
-      .select('*')
-      .order('createdAt', { ascending: false })
-      .limit(50);
-    activeData = searchLogs;
-  } else if (activeTab === "chat-logs") {
-    const { data: chatLogs } = await supabase
-      .from('ai_conversations')
-      .select('*, user:users(email)')
-      .order('updatedAt', { ascending: false })
-      .limit(50);
-    activeData = chatLogs;
-  } else if (activeTab === "failed-searches") {
-    const { data: failedLogs } = await supabase
-      .from('ai_search_logs')
-      .select('*')
-      .eq('resultCount', 0)
-      .order('createdAt', { ascending: false })
-      .limit(50);
-    activeData = failedLogs;
-  }
-
-  // Search filter
-  if (searchQuery && activeData) {
-    const q = searchQuery.toLowerCase();
-    activeData = activeData.filter((item: any) => 
-      item.queryText?.toLowerCase().includes(q) || 
-      item.sessionId?.toLowerCase().includes(q) ||
-      item.summary?.toLowerCase().includes(q)
-    );
+  if (isLoading) {
+    return <div className="p-8 text-gray-500 animate-pulse">Loading Dashboard...</div>;
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+    <div className="p-8 max-w-6xl mx-auto">
+      <div className="flex justify-between items-end mb-8">
         <div>
-          <h2 className="text-2xl font-bold text-gray-800">ศูนย์ควบคุม AI (AI Center)</h2>
-          <p className="text-gray-500">ตรวจสอบการทำงานของ AI แชทบอท, Vector Search และบันทึกประวัติการค้นหา</p>
+          <h1 className="text-2xl font-black text-gray-900">AI Dashboard</h1>
+          <p className="text-sm text-gray-500 mt-1">Overview of Jongtour Elite Sales OS performance</p>
         </div>
         <div className="flex gap-2">
-          <span className="flex items-center gap-2 bg-emerald-50 text-emerald-600 px-3 py-1.5 rounded-lg text-sm font-bold border border-emerald-100">
-            <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
-            AI CORE: ONLINE
-          </span>
+          <select className="bg-white border border-gray-200 text-sm rounded-lg px-3 py-2 outline-none">
+            <option>Today</option>
+            <option>Last 7 Days</option>
+            <option>This Month</option>
+          </select>
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden min-h-[600px]">
-        {/* Navigation Tabs */}
-        <div className="flex border-b border-gray-100 overflow-x-auto custom-scrollbar">
-          {tabs.map((tab) => {
-            const isActive = activeTab === tab.id;
-            const Icon = tab.icon;
-            return (
-              <Link 
-                key={tab.id}
-                href={`?tab=${tab.id}`}
-                scroll={false}
-                className={`flex items-center gap-2 px-6 py-4 text-sm font-bold border-b-2 transition-colors whitespace-nowrap
-                  ${isActive ? 'border-orange-500 text-orange-600 bg-orange-50/50' : 'border-transparent text-gray-500 hover:text-gray-800 hover:bg-gray-50'}
-                `}
-              >
-                <Icon className="w-4 h-4" />
-                {tab.name}
-              </Link>
-            );
-          })}
+      {/* KPI Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+          <div className="flex justify-between items-start">
+            <div className="w-10 h-10 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center">
+              <MessageSquareText className="w-5 h-5" />
+            </div>
+            <span className="flex items-center text-xs font-bold text-emerald-500 bg-emerald-50 px-2 py-1 rounded-full">
+              <TrendingUp className="w-3 h-3 mr-1" /> +12%
+            </span>
+          </div>
+          <h3 className="text-3xl font-black text-gray-900 mt-4">{stats.totalConversations}</h3>
+          <p className="text-sm text-gray-500 font-medium">Total AI Chats</p>
         </div>
 
-        {/* Content Area */}
-        {activeTab === 'settings' ? (
-          <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6 bg-gray-50 min-h-[500px]">
-            {/* Semantic Search */}
-            <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 bg-purple-100 text-purple-600 rounded-lg flex items-center justify-center">
-                  <Search size={20} />
-                </div>
+        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+          <div className="flex justify-between items-start">
+            <div className="w-10 h-10 rounded-full bg-orange-50 text-orange-600 flex items-center justify-center">
+              <Zap className="w-5 h-5" />
+            </div>
+            <span className="flex items-center text-xs font-bold text-emerald-500 bg-emerald-50 px-2 py-1 rounded-full">
+              <TrendingUp className="w-3 h-3 mr-1" /> +24%
+            </span>
+          </div>
+          <h3 className="text-3xl font-black text-gray-900 mt-4">{stats.hotLeads}</h3>
+          <p className="text-sm text-gray-500 font-medium">Hot Leads Created</p>
+        </div>
+
+        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+          <div className="flex justify-between items-start">
+            <div className="w-10 h-10 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center">
+              <CheckCircle2 className="w-5 h-5" />
+            </div>
+            <span className="flex items-center text-xs font-bold text-emerald-500 bg-emerald-50 px-2 py-1 rounded-full">
+              <TrendingUp className="w-3 h-3 mr-1" /> +1.2%
+            </span>
+          </div>
+          <h3 className="text-3xl font-black text-gray-900 mt-4">{stats.conversionRate}%</h3>
+          <p className="text-sm text-gray-500 font-medium">Conversion Rate</p>
+        </div>
+
+        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+          <div className="flex justify-between items-start">
+            <div className="w-10 h-10 rounded-full bg-red-50 text-red-600 flex items-center justify-center">
+              <DollarSign className="w-5 h-5" />
+            </div>
+          </div>
+          <h3 className="text-3xl font-black text-gray-900 mt-4">${stats.aiCostToday.toFixed(2)}</h3>
+          <p className="text-sm text-gray-500 font-medium">API Cost Today</p>
+        </div>
+      </div>
+
+      {/* Main Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        {/* System Health */}
+        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm lg:col-span-2">
+          <h2 className="text-lg font-bold text-gray-900 mb-6">System Health & Guardrails</h2>
+          
+          <div className="space-y-4">
+            <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-100">
+              <div className="flex items-center gap-3">
+                <Search className="w-5 h-5 text-gray-400" />
                 <div>
-                  <h2 className="text-lg font-bold text-gray-800">Vector Search Engine</h2>
-                  <p className="text-xs text-gray-500">ควบคุมระบบค้นหาด้วยความหมาย</p>
+                  <p className="text-sm font-bold text-gray-900">search_tours Calls</p>
+                  <p className="text-xs text-gray-500">Number of times AI queried database</p>
                 </div>
               </div>
-              
-              <div className="space-y-4">
-                <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg border border-gray-100">
-                  <div>
-                    <p className="font-bold text-sm text-gray-800">Tour Semantic Search</p>
-                    <p className="text-xs text-gray-500">ใช้งานบน tour.jongtour.com</p>
-                  </div>
-                  <ToggleRight className="text-emerald-500" size={32} />
-                </div>
-                <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg border border-gray-100">
-                  <div>
-                    <p className="font-bold text-sm text-gray-800">Auto-generate Embeddings</p>
-                    <p className="text-xs text-gray-500">ทำงานอัตโนมัติหลังดึง API เสร็จ</p>
-                  </div>
-                  <ToggleRight className="text-emerald-500" size={32} />
-                </div>
-                <button className="w-full text-center text-sm font-bold text-purple-600 bg-purple-50 hover:bg-purple-100 py-2 rounded-lg transition-colors">
-                  Rebuild Vector Index
-                </button>
-              </div>
+              <div className="font-mono font-bold text-gray-900">{stats.searchToursCalled}</div>
             </div>
 
-            {/* Chatbot Prompt */}
-            <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 bg-orange-100 text-orange-600 rounded-lg flex items-center justify-center">
-                  <Brain size={20} />
-                </div>
+            <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-100">
+              <div className="flex items-center gap-3">
+                <AlertTriangle className="w-5 h-5 text-amber-500" />
                 <div>
-                  <h2 className="text-lg font-bold text-gray-800">Elite AI Prompt</h2>
-                  <p className="text-xs text-gray-500">จัดการ System Prompt เริ่มต้นของบอท</p>
+                  <p className="text-sm font-bold text-gray-900">Human Takeovers</p>
+                  <p className="text-xs text-gray-500">Sales staff manually took over the chat</p>
                 </div>
               </div>
+              <div className="font-mono font-bold text-amber-600">{stats.humanTakeovers}</div>
+            </div>
 
-              <div className="space-y-4">
-                <textarea 
-                  className="w-full h-32 p-3 border border-gray-200 rounded-lg text-sm bg-gray-50 focus:outline-none focus:bg-white focus:border-orange-500 resize-none"
-                  defaultValue="You are Jongtour Elite AI Sales Agent..."
-                  readOnly
-                ></textarea>
-                <Link href="/admin/ai/prompts" className="block w-full text-center text-sm font-bold text-orange-600 bg-orange-50 hover:bg-orange-100 py-2 rounded-lg transition-colors">
-                  Edit Prompt
-                </Link>
+            <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-100">
+              <div className="flex items-center gap-3">
+                <ShieldAlert className="w-5 h-5 text-red-500" />
+                <div>
+                  <p className="text-sm font-bold text-gray-900">Hallucination Warnings</p>
+                  <p className="text-xs text-gray-500">Blocked AI from guessing prices</p>
+                </div>
               </div>
+              <div className="font-mono font-bold text-emerald-500">{stats.hallucinationWarnings} (Safe)</div>
             </div>
           </div>
-        ) : activeTab === 'search-logs' || activeTab === 'failed-searches' ? (
-          <div>
-            <form className="p-4 border-b border-gray-100 bg-gray-50 flex gap-4">
-              <input type="hidden" name="tab" value={activeTab} />
-              <div className="relative flex-1 max-w-md">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-                <input 
-                  type="text" 
-                  name="q"
-                  defaultValue={searchQuery}
-                  placeholder={`ค้นหาประวัติ Query...`} 
-                  className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-lg outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
-                />
-              </div>
-              <button type="submit" className="px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-lg text-sm font-bold hover:bg-gray-100">
-                ค้นหา
-              </button>
-            </form>
+        </div>
 
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm">
-                <thead className="bg-gray-50 text-gray-500 border-b border-gray-100">
-                  <tr>
-                    <th className="px-6 py-4 font-bold">Query</th>
-                    <th className="px-6 py-4 font-bold">Result Count</th>
-                    <th className="px-6 py-4 font-bold">Time</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {activeData && activeData.length > 0 ? activeData.map((log: any) => (
-                    <tr key={log.id} className="hover:bg-gray-50 transition-colors">
-                      <td className="px-6 py-4 font-medium text-gray-800">"{log.queryText}"</td>
-                      <td className="px-6 py-4">
-                        <span className={`px-2 py-1 rounded text-xs font-bold ${log.resultCount > 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                          {log.resultCount} found
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-gray-500 text-xs">{new Date(log.createdAt).toLocaleString('th-TH')}</td>
-                    </tr>
-                  )) : (
-                    <tr>
-                      <td colSpan={3} className="p-8 text-center text-gray-500">ไม่มีข้อมูล Search Logs</td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        ) : activeTab === 'chat-logs' ? (
-          <div>
-            <form className="p-4 border-b border-gray-100 bg-gray-50 flex gap-4">
-              <input type="hidden" name="tab" value={activeTab} />
-              <div className="relative flex-1 max-w-md">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-                <input 
-                  type="text" 
-                  name="q"
-                  defaultValue={searchQuery}
-                  placeholder={`ค้นหาในแชท...`} 
-                  className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-lg outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
-                />
+        {/* Action Queue */}
+        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+          <h2 className="text-lg font-bold text-gray-900 mb-6">Pending Action</h2>
+          
+          <div className="flex flex-col gap-3">
+            <Link href="/admin/ai/human-review" className="p-4 bg-red-50 border border-red-100 rounded-xl hover:bg-red-100 transition-colors flex justify-between items-center group">
+              <div>
+                <p className="text-sm font-bold text-red-700">Human Review</p>
+                <p className="text-xs text-red-500/80 mt-0.5">Sensitive cases waiting</p>
               </div>
-              <button type="submit" className="px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-lg text-sm font-bold hover:bg-gray-100">
-                ค้นหา
-              </button>
-            </form>
+              <span className="w-8 h-8 rounded-full bg-red-500 text-white flex items-center justify-center font-bold text-sm shadow-sm group-hover:scale-110 transition-transform">3</span>
+            </Link>
 
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm">
-                <thead className="bg-gray-50 text-gray-500 border-b border-gray-100">
-                  <tr>
-                    <th className="px-6 py-4 font-bold">Session / User</th>
-                    <th className="px-6 py-4 font-bold">Status</th>
-                    <th className="px-6 py-4 font-bold">Summary</th>
-                    <th className="px-6 py-4 font-bold">Last Activity</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {activeData && activeData.length > 0 ? activeData.map((chat: any) => (
-                    <tr key={chat.id} className="hover:bg-gray-50 transition-colors">
-                      <td className="px-6 py-4">
-                        <p className="font-mono text-xs text-gray-500">{chat.sessionId.substring(0, 8)}...</p>
-                        <p className="font-bold text-gray-800">{chat.user?.email || "Guest"}</p>
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className={`px-2 py-1 rounded text-xs font-bold ${chat.status === 'ACTIVE' ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-600'}`}>
-                          {chat.status}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-gray-600 truncate max-w-xs">{chat.summary || "ไม่มีบทสรุป"}</td>
-                      <td className="px-6 py-4 text-gray-500 text-xs">{new Date(chat.updatedAt).toLocaleString('th-TH')}</td>
-                    </tr>
-                  )) : (
-                    <tr>
-                      <td colSpan={4} className="p-8 text-center text-gray-500">ไม่มีข้อมูลแชท</td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
+            <Link href="/admin/ai/private-groups" className="p-4 bg-orange-50 border border-orange-100 rounded-xl hover:bg-orange-100 transition-colors flex justify-between items-center group">
+              <div>
+                <p className="text-sm font-bold text-orange-700">Private Group</p>
+                <p className="text-xs text-orange-500/80 mt-0.5">Drafts waiting for Sale</p>
+              </div>
+              <span className="w-8 h-8 rounded-full bg-orange-500 text-white flex items-center justify-center font-bold text-sm shadow-sm group-hover:scale-110 transition-transform">{stats.privateGroupDrafts}</span>
+            </Link>
           </div>
-        ) : (
-          <div className="p-8 flex flex-col items-center justify-center text-center text-gray-500 h-[500px]">
-            {tabs.find(t => t.id === activeTab)?.icon({ className: "w-16 h-16 text-gray-200 mb-4" })}
-            <h3 className="text-xl font-bold text-gray-700 mb-2">
-              ประวัติ: {tabs.find(t => t.id === activeTab)?.name}
-            </h3>
-            <p className="max-w-md text-sm">
-              กำลังรอทีมพัฒนาต่อเชื่อมข้อมูลในส่วนนี้ <br/><br/>(ระบบได้เตรียม API ไว้แล้ว)
-            </p>
-          </div>
-        )}
+        </div>
+
       </div>
     </div>
   );

@@ -1,86 +1,160 @@
-import { Filter, ChevronDown } from 'lucide-react';
+"use client";
+
+import { Filter, ChevronDown, MapPin, CalendarDays, ArrowRight, Plane, Star, Clock } from 'lucide-react';
+import { Button } from "@/components/ui-new/Button";
+import { Badge } from "@/components/ui-new/Badge";
+import { Card, CardContent } from "@/components/ui-new/Card";
+import AiSearchBar from "@/components/AiSearchBar";
 
 export default function SearchToursPage() {
   return (
-    <div className="bg-slate-50 min-h-screen pb-12">
-      <div className="bg-white border-b border-slate-200 py-4 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto flex justify-between items-center">
-          <h1 className="text-xl font-bold text-slate-800">ค้นหาทัวร์ (All Tours)</h1>
-          <div className="text-sm text-slate-500">พบ 1,245 โปรแกรม</div>
+    <div className="bg-background min-h-screen pb-12 font-sans">
+      
+      {/* Search Header / Hero */}
+      <div className="bg-trust-900 text-white pt-16 pb-24 relative overflow-hidden">
+        <div className="absolute inset-0 bg-primary-gradient opacity-10"></div>
+        <div className="max-w-7xl mx-auto px-4 relative z-10 flex flex-col items-center">
+          <h1 className="text-3xl md:text-5xl font-bold mb-4 text-center">ค้นหาโปรแกรมทัวร์ทั่วโลก</h1>
+          <p className="text-trust-300 mb-8 text-center max-w-2xl">ค้นหาจากกว่า 1,245 โปรแกรมคุณภาพ คัดกรองโดยผู้เชี่ยวชาญ หรือให้ AI ช่วยหาทัวร์ที่เหมาะกับคุณที่สุด</p>
+          <div className="w-full max-w-4xl translate-y-4">
+             <AiSearchBar />
+          </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col md:flex-row gap-8">
+      <div className="max-w-7xl mx-auto px-4 py-8 flex flex-col md:flex-row gap-8 -mt-8 relative z-20">
+        
         {/* Sidebar Filter */}
         <aside className="w-full md:w-64 shrink-0">
-          <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm sticky top-24">
-            <div className="flex items-center gap-2 mb-4 pb-4 border-b border-slate-100">
-              <Filter size={18} className="text-slate-500" />
-              <h2 className="font-bold text-slate-800">ตัวกรอง (Filters)</h2>
+          <div className="bg-white rounded-2xl border border-border p-6 shadow-sm sticky top-24">
+            <div className="flex items-center gap-2 mb-6 pb-4 border-b border-border">
+              <Filter className="w-5 h-5 text-primary" />
+              <h2 className="font-bold text-trust-900 text-lg">ตัวกรอง (Filters)</h2>
             </div>
             
-            <div className="space-y-6">
+            <div className="space-y-8">
               <div>
-                <h3 className="font-semibold text-slate-700 text-sm mb-3">ประเทศปลายทาง</h3>
-                <div className="space-y-2">
-                  <label className="flex items-center gap-2 text-sm text-slate-600"><input type="checkbox" className="rounded text-orange-500 focus:ring-orange-500" /> ญี่ปุ่น (450)</label>
-                  <label className="flex items-center gap-2 text-sm text-slate-600"><input type="checkbox" className="rounded text-orange-500 focus:ring-orange-500" /> เกาหลีใต้ (320)</label>
-                  <label className="flex items-center gap-2 text-sm text-slate-600"><input type="checkbox" className="rounded text-orange-500 focus:ring-orange-500" /> ยุโรป (180)</label>
+                <h3 className="font-semibold text-trust-900 text-sm mb-4 flex items-center gap-2"><MapPin className="w-4 h-4 text-muted-foreground"/> ประเทศปลายทาง</h3>
+                <div className="space-y-3">
+                  <label className="flex items-center gap-3 text-sm text-muted-foreground hover:text-trust-900 cursor-pointer transition-colors"><input type="checkbox" className="w-4 h-4 rounded border-border text-primary focus:ring-primary accent-primary" /> ญี่ปุ่น <span className="ml-auto text-xs text-muted-foreground/50">(450)</span></label>
+                  <label className="flex items-center gap-3 text-sm text-muted-foreground hover:text-trust-900 cursor-pointer transition-colors"><input type="checkbox" className="w-4 h-4 rounded border-border text-primary focus:ring-primary accent-primary" /> เกาหลีใต้ <span className="ml-auto text-xs text-muted-foreground/50">(320)</span></label>
+                  <label className="flex items-center gap-3 text-sm text-muted-foreground hover:text-trust-900 cursor-pointer transition-colors"><input type="checkbox" className="w-4 h-4 rounded border-border text-primary focus:ring-primary accent-primary" /> ยุโรป <span className="ml-auto text-xs text-muted-foreground/50">(180)</span></label>
+                  <label className="flex items-center gap-3 text-sm text-muted-foreground hover:text-trust-900 cursor-pointer transition-colors"><input type="checkbox" className="w-4 h-4 rounded border-border text-primary focus:ring-primary accent-primary" /> ไต้หวัน <span className="ml-auto text-xs text-muted-foreground/50">(90)</span></label>
                 </div>
               </div>
 
               <div>
-                <h3 className="font-semibold text-slate-700 text-sm mb-3">ช่วงราคา</h3>
-                <div className="space-y-2">
-                  <label className="flex items-center gap-2 text-sm text-slate-600"><input type="checkbox" className="rounded text-orange-500 focus:ring-orange-500" /> ต่ำกว่า 20,000 บาท</label>
-                  <label className="flex items-center gap-2 text-sm text-slate-600"><input type="checkbox" className="rounded text-orange-500 focus:ring-orange-500" /> 20,000 - 40,000 บาท</label>
-                  <label className="flex items-center gap-2 text-sm text-slate-600"><input type="checkbox" className="rounded text-orange-500 focus:ring-orange-500" /> 40,000 บาทขึ้นไป</label>
+                <h3 className="font-semibold text-trust-900 text-sm mb-4">ช่วงราคา (ต่อท่าน)</h3>
+                <div className="space-y-3">
+                  <label className="flex items-center gap-3 text-sm text-muted-foreground hover:text-trust-900 cursor-pointer"><input type="checkbox" className="w-4 h-4 rounded border-border text-primary focus:ring-primary accent-primary" /> ต่ำกว่า 20,000 บาท</label>
+                  <label className="flex items-center gap-3 text-sm text-muted-foreground hover:text-trust-900 cursor-pointer"><input type="checkbox" className="w-4 h-4 rounded border-border text-primary focus:ring-primary accent-primary" /> 20,000 - 40,000 บาท</label>
+                  <label className="flex items-center gap-3 text-sm text-muted-foreground hover:text-trust-900 cursor-pointer"><input type="checkbox" className="w-4 h-4 rounded border-border text-primary focus:ring-primary accent-primary" /> 40,000 บาทขึ้นไป</label>
+                </div>
+              </div>
+              
+              <div>
+                <h3 className="font-semibold text-trust-900 text-sm mb-4">สายการบิน</h3>
+                <div className="space-y-3">
+                  <label className="flex items-center gap-3 text-sm text-muted-foreground hover:text-trust-900 cursor-pointer"><input type="checkbox" className="w-4 h-4 rounded border-border text-primary focus:ring-primary accent-primary" /> Thai Airways</label>
+                  <label className="flex items-center gap-3 text-sm text-muted-foreground hover:text-trust-900 cursor-pointer"><input type="checkbox" className="w-4 h-4 rounded border-border text-primary focus:ring-primary accent-primary" /> Air Asia</label>
                 </div>
               </div>
             </div>
+            
+            <Button className="w-full mt-8" variant="secondary">ล้างตัวกรอง</Button>
           </div>
         </aside>
 
         {/* Main Listing */}
-        <div className="flex-1 space-y-4">
+        <div className="flex-1 space-y-6">
           {/* Sorting Bar */}
-          <div className="flex justify-end mb-6">
-            <button className="flex items-center gap-2 text-sm font-medium text-slate-600 bg-white border border-slate-200 px-4 py-2 rounded-lg hover:bg-slate-50">
-              เรียงตาม: ราคา (ต่ำไปสูง) <ChevronDown size={16} />
-            </button>
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-4 rounded-xl border border-border shadow-sm">
+            <div className="text-sm text-muted-foreground">พบ <span className="font-bold text-trust-900">1,245</span> โปรแกรมที่ตรงกับเงื่อนไข</div>
+            <div className="flex items-center gap-3 w-full sm:w-auto">
+               <span className="text-sm text-trust-900 font-medium whitespace-nowrap">เรียงตาม:</span>
+               <select className="w-full sm:w-auto bg-muted border-transparent rounded-lg text-sm px-4 py-2 text-trust-900 focus:ring-2 focus:ring-primary outline-none appearance-none cursor-pointer">
+                 <option>AI แนะนำ (Best Match)</option>
+                 <option>ราคา (ต่ำไปสูง)</option>
+                 <option>ราคา (สูงไปต่ำ)</option>
+                 <option>วันเดินทาง (เร็วที่สุด)</option>
+               </select>
+            </div>
           </div>
 
-          {/* List items */}
+          {/* List items - Using New OTA Standard Design */}
           {[1, 2, 3, 4, 5].map((i) => (
-            <div key={i} className="bg-white rounded-xl border border-slate-200 overflow-hidden flex flex-col sm:flex-row hover:shadow-md transition-shadow">
-              <div className="w-full sm:w-64 h-48 bg-slate-200 relative shrink-0">
-                <div className="absolute top-2 left-2 bg-slate-900/80 text-white text-[10px] font-bold px-2 py-1 rounded backdrop-blur-sm uppercase">6 วัน 4 คืน</div>
-              </div>
-              <div className="p-5 flex-1 flex flex-col justify-between">
-                <div>
-                  <div className="flex gap-2 mb-1">
-                    <span className="text-[10px] font-bold text-orange-600 bg-orange-50 px-2 py-0.5 rounded border border-orange-100">PROMO</span>
-                    <span className="text-[10px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded">JAPAN</span>
-                  </div>
-                  <h3 className="text-lg font-bold text-slate-800 line-clamp-2 hover:text-orange-600 cursor-pointer">แพ็กเกจทัวร์ฮอกไกโด ซัปโปโร โอตารุ ชมทุ่งดอกลาเวนเดอร์ (บินตรง)</h3>
-                  <p className="text-sm text-slate-500 mt-2 line-clamp-2">เดินทางด้วยสายการบิน Thai Airways พักโรงแรม 4 ดาว 3 คืน พร้อมอาหาร 10 มื้อ ออนเซ็น 1 คืนเต็มอิ่ม</p>
-                </div>
-                <div className="mt-4 flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-t border-slate-100 pt-4">
-                  <div className="text-sm text-slate-600">
-                    <span className="block font-medium">วันเดินทางที่ว่าง:</span>
-                    <span className="text-emerald-600 font-semibold">12-17 ต.ค., 20-25 ต.ค.</span>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-xs text-slate-400">เริ่มต้นท่านละ</p>
-                    <p className="text-2xl font-black text-orange-600">฿45,900</p>
-                    <a href="https://booking.jongtour.com" className="mt-2 inline-block px-6 py-2 bg-slate-900 hover:bg-slate-800 text-white text-sm font-bold rounded-lg w-full sm:w-auto text-center">
-                      จองเลย
-                    </a>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <Card key={i} className="overflow-hidden hover:shadow-floating transition-all border-border hover:border-primary/30 group">
+               <div className="flex flex-col sm:flex-row">
+                 {/* Image Section */}
+                 <div className="w-full sm:w-72 h-56 sm:h-auto bg-muted relative shrink-0 overflow-hidden">
+                   <img 
+                      src={`https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?q=80&w=600&auto=format&fit=crop&sig=${i}`} 
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-in-out" 
+                      alt="Tour cover" 
+                   />
+                   <div className="absolute top-3 left-3 flex flex-col gap-2 items-start">
+                     <Badge variant="brand" className="shadow-sm">⭐ AI Recommended</Badge>
+                     <Badge variant="secondary" className="shadow-sm opacity-90"><Clock className="w-3 h-3 mr-1"/> 6 วัน 4 คืน</Badge>
+                   </div>
+                   <div className="absolute bottom-3 right-3">
+                     <Badge variant="outline" className="bg-white/90 backdrop-blur-sm shadow-sm border-transparent text-trust-900">รหัสทัวร์: JP-00{i}</Badge>
+                   </div>
+                 </div>
+                 
+                 {/* Content Section */}
+                 <div className="p-5 sm:p-6 flex-1 flex flex-col justify-between bg-white">
+                   <div className="flex flex-col lg:flex-row justify-between gap-4">
+                     <div className="flex-1">
+                       <div className="flex items-center gap-2 mb-2">
+                         <span className="text-xs font-bold text-muted-foreground tracking-wider uppercase">JAPAN</span>
+                         <span className="w-1 h-1 rounded-full bg-border"></span>
+                         <span className="text-xs text-primary font-medium">Let's Go Group</span>
+                       </div>
+                       <h3 className="text-lg md:text-xl font-bold text-trust-900 line-clamp-2 leading-tight group-hover:text-primary transition-colors">แพ็กเกจทัวร์ฮอกไกโด ซัปโปโร โอตารุ ชมทุ่งดอกลาเวนเดอร์ ฟาร์มโทมิตะ (บินตรง)</h3>
+                       
+                       <div className="mt-4 flex flex-col gap-2">
+                         <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <Plane className="w-4 h-4 text-trust-400" />
+                            <span>Thai Airways (TG) • น้ำหนักกระเป๋า 30kg</span>
+                         </div>
+                         <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <Star className="w-4 h-4 text-trust-400" />
+                            <span>โรงแรมระดับ 4 ดาว • อาหาร 10 มื้อ • พรีเมียมออนเซ็น</span>
+                         </div>
+                       </div>
+                     </div>
+
+                     {/* Price & Action Section */}
+                     <div className="flex flex-col items-start lg:items-end justify-between border-t lg:border-t-0 lg:border-l border-border pt-4 lg:pt-0 lg:pl-6 shrink-0 lg:w-48">
+                        <div className="w-full flex justify-between lg:block lg:text-right mb-4">
+                           <p className="text-xs text-muted-foreground mb-1">ราคาเริ่มต้น/ท่าน</p>
+                           <p className="text-2xl md:text-3xl font-black text-primary leading-none">฿45,900</p>
+                        </div>
+                        
+                        <div className="w-full space-y-2 mt-auto">
+                           <Button className="w-full rounded-lg font-bold" variant="default">ดูโปรแกรม <ArrowRight className="w-4 h-4 ml-1" /></Button>
+                           <Button className="w-full rounded-lg" variant="secondary">เปรียบเทียบ</Button>
+                        </div>
+                     </div>
+                   </div>
+
+                   {/* Departure Dates Footer */}
+                   <div className="mt-5 bg-muted/50 rounded-lg p-3 flex flex-wrap items-center gap-x-4 gap-y-2 border border-border/50">
+                      <span className="text-xs font-semibold text-trust-900 flex items-center gap-1"><CalendarDays className="w-3.5 h-3.5" /> วันเดินทางถัดไป:</span>
+                      <div className="flex flex-wrap gap-2">
+                         <Badge variant="success" className="font-medium text-[11px] py-1 shadow-sm">12-17 ต.ค. (ว่าง 5 ที่)</Badge>
+                         <Badge variant="success" className="font-medium text-[11px] py-1 shadow-sm">20-25 ต.ค. (ว่าง 12 ที่)</Badge>
+                         <Badge variant="warning" className="font-medium text-[11px] py-1 shadow-sm">01-06 พ.ย. (เหลือ 2 ที่)</Badge>
+                      </div>
+                   </div>
+                 </div>
+               </div>
+            </Card>
           ))}
+          
+          <div className="flex justify-center pt-8">
+             <Button variant="outline" className="rounded-full px-8 bg-white">โหลดเพิ่มเติม</Button>
+          </div>
         </div>
       </div>
     </div>

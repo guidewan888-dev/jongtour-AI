@@ -87,7 +87,7 @@ export function buildTourCarousel(tours: any[], lineUserId?: string) {
                 action: {
                   type: "uri",
                   label: "ดูรายละเอียด / จอง",
-                  uri: `https://jongtour.vercel.app/tours/${tour.id}${lineUserId ? `?ref=line_${lineUserId}` : ''}`,
+                  uri: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://tour.jongtour.com'}/tour/${tour.id}${lineUserId ? `?ref=line_${lineUserId}` : ''}`,
                 },
               },
             ],

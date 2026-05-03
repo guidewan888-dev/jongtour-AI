@@ -1,360 +1,306 @@
 import Link from "next/link";
-import { createClient } from '@supabase/supabase-js';
-import { MapPin, Calendar, Star, Clock, ChevronRight } from "lucide-react";
+import { ChevronRight, MapPin, Calendar, Clock, Plane, Filter, ChevronDown, Building2, Flame, CheckCircle2, AlertCircle, MessageSquare, Search, Sparkles, HelpCircle, Users } from "lucide-react";
+import { createClient } from "@supabase/supabase-js";
 import { notFound } from "next/navigation";
+import { Card, CardContent } from "@/components/ui-new/Card";
+import { Badge } from "@/components/ui-new/Badge";
+import { Button } from "@/components/ui-new/Button";
+import AiSearchBar from "@/components/AiSearchBar";
 
-// ใช้ ISR Cache 1 นาที เพื่อให้เว็บเร็วขึ้น และข้อมูลยังอัปเดตอยู่
-export const dynamic = "force-dynamic";
+export const dynamic = 'force-dynamic';
 
-const wholesaleConfig: Record<string, { name: string, logo: string, source: string, description: string, coverImage: string }> = {
-  "letsgo": {
-    name: "Let's Go Group",
-    logo: "/images/wholesales/download.png",
-    source: "API_ZEGO",
-    description: "โฮลเซลล์ทัวร์ชั้นนำผู้เชี่ยวชาญเส้นทางเอเชีย จัดเต็มทุกความประทับใจในราคาคุ้มค่า พร้อมบริการที่ได้มาตรฐาน",
-    coverImage: "https://images.unsplash.com/photo-1436491865332-7a61a109cc05?q=80&w=2000"
-  },
-  "go365": {
-    name: "GO 365 Travel",
-    logo: "/images/wholesales/download.jfif",
-    source: "API_GO365",
-    description: "ผู้ให้บริการทัวร์คุณภาพ ครอบคลุมหลากหลายเส้นทางทั่วโลก พาคุณเที่ยวครบ จบในที่เดียว เที่ยวได้ทุกวัน 365 วัน",
-    coverImage: "https://images.unsplash.com/photo-1506012787146-f92b2d7d6d96?q=80&w=2000"
-  },
-  "checkingroup": {
-    name: "Check In Group",
-    logo: "/images/wholesales/CH7.jpg",
-    source: "CHECKIN",
-    description: "พาคุณเช็คอินทุกจุดหมายยอดฮิต จัดทริปสบายๆ ในสไตล์ที่คุณชอบ ตอบโจทย์ทุกไลฟ์สไตล์การเดินทาง",
-    coverImage: "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?q=80&w=2000"
-  },
-  "tourfactory": {
-    name: "Tour Factory",
-    logo: "/images/wholesales/Tour-Factory.jpg",
-    source: "TOUR_FACTORY",
-    description: "โรงงานผลิตความสุขทางการท่องเที่ยว สร้างสรรค์ทริปในฝันของคุณด้วยแพ็กเกจทัวร์สุดพิเศษ",
-    coverImage: "https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?q=80&w=2000"
-  }
-};
+export async function generateMetadata({ params }: { params: { slug: string } }) {
+  const supplierName = params.slug === 'letgo-group' ? "Let's Go Group" : 
+                       params.slug === 'go365' ? "Go365" : 
+                       params.slug === 'check-in-group' ? "Check In Group" : 
+                       params.slug === 'tour-factory' ? "Tour Factory" : params.slug;
+  return {
+    title: `แพ็กเกจทัวร์ ${supplierName} (Wholesale) | จองทัวร์ราคาส่ง - Jongtour`,
+    description: `รวมแพ็กเกจทัวร์จาก ${supplierName} ทั้งหมด ทัวร์ไฟไหม้ ทัวร์คอนเฟิร์มเดินทาง จองตรงราคาถูกกว่า ปลอดภัย 100%`,
+  };
+}
 
-const countryMap: Record<string, { th: string, flag: string }> = {
-  "CHINA": { th: "จีน", flag: "🇨🇳" },
-  "EGYPT": { th: "อียิปต์", flag: "🇪🇬" },
-  "ENGLAND": { th: "อังกฤษ", flag: "🇬🇧" },
-  "EUROPE": { th: "ยุโรป", flag: "🇪🇺" },
-  "FRANCE": { th: "ฝรั่งเศส", flag: "🇫🇷" },
-  "GEORGIA": { th: "จอร์เจีย", flag: "🇬🇪" },
-  "HONG KONG": { th: "ฮ่องกง", flag: "🇭🇰" },
-  "INDIA": { th: "อินเดีย", flag: "🇮🇳" },
-  "ITALY": { th: "อิตาลี", flag: "🇮🇹" },
-  "JAPAN": { th: "ญี่ปุ่น", flag: "🇯🇵" },
-  "SINGAPORE": { th: "สิงคโปร์", flag: "🇸🇬" },
-  "TAIWAN": { th: "ไต้หวัน", flag: "🇹🇼" },
-  "TURKIYE": { th: "ตุรกี", flag: "🇹🇷" },
-  "VIETNAM": { th: "เวียดนาม", flag: "🇻🇳" },
-  "SOUTH KOREA": { th: "เกาหลีใต้", flag: "🇰🇷" },
-  "MACAU": { th: "มาเก๊า", flag: "🇲🇴" },
-  "MALAYSIA": { th: "มาเลเซีย", flag: "🇲🇾" },
-  "INDONESIA": { th: "อินโดนีเซีย", flag: "🇮🇩" },
-  "MALDIVES": { th: "มัลดีฟส์", flag: "🇲🇻" },
-  "SWITZERLAND": { th: "สวิตเซอร์แลนด์", flag: "🇨🇭" },
-  "UK": { th: "สหราชอาณาจักร", flag: "🇬🇧" },
-  "GERMANY": { th: "เยอรมนี", flag: "🇩🇪" },
-  "AUSTRIA": { th: "ออสเตรีย", flag: "🇦🇹" },
-  "CZECH": { th: "เช็ก", flag: "🇨🇿" },
-  "SPAIN": { th: "สเปน", flag: "🇪🇸" },
-  "NETHERLANDS": { th: "เนเธอร์แลนด์", flag: "🇳🇱" },
-  "FINLAND": { th: "ฟินแลนด์", flag: "🇫🇮" },
-  "JORDAN": { th: "จอร์แดน", flag: "🇯🇴" },
-  "MOROCCO": { th: "โมร็อกโก", flag: "🇲🇦" }
-};
+export default async function WholesalePage({ params }: { params: { slug: string } }) {
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!
+  );
 
-export default async function WholesaleLandingPage({ params, searchParams }: { params: { slug: string }, searchParams?: { dest?: string } }) {
-  const wholesale = wholesaleConfig[params.slug];
-  if (!wholesale) {
+  // Map slug to actual supplier_id
+  const supplierMap: Record<string, string> = {
+    'letgo-group': 'SUP_LETGO',
+    'go365': 'SUP_GO365',
+    'check-in-group': 'SUP_CHECKIN',
+    'tour-factory': 'SUP_TOURFACTORY'
+  };
+
+  const supplierId = supplierMap[params.slug];
+  
+  if (!supplierId) {
     notFound();
   }
 
-  const supplierAliasMap: Record<string, string> = {
-    "API_ZEGO": "let'sgo",
-    "API_GO365": "go365",
-    "CHECKIN": "checkingroup",
-    "TOUR_FACTORY": "tourfactory"
-  };
-  const supplierAlias = supplierAliasMap[wholesale.source] || wholesale.source.toLowerCase();
-  
-  let toursData: any[] = [];
-  let prismaError: string | null = null;
-  
-  try {
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://qterfftaebnoawnzkfgu.supabase.co',
-      process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || 'sb_publishable_SRwNSJ89mInda5FcuB1W2w_9IEJlSOI'
-    );
+  // Fetch Supplier Info
+  const { data: supplier } = await supabase
+    .from('suppliers')
+    .select('*')
+    .eq('id', supplierId)
+    .single();
 
-    const { data, error } = await supabase
-      .from('tours')
-      .select(`
-        *,
-        supplier:suppliers(*),
-        departures(*, prices(*)),
-        destinations:tour_destinations(*),
-        images:tour_images(*)
-      `)
-      .eq('status', 'PUBLISHED')
-      .order('createdAt', { ascending: false });
+  const fallbackName = params.slug === 'letgo-group' ? "Let's Go Group" : 
+                       params.slug === 'go365' ? "Go365" : 
+                       params.slug === 'check-in-group' ? "Check In Group" : 
+                       params.slug === 'tour-factory' ? "Tour Factory" : params.slug;
 
-    if (error) throw error;
+  const supplierName = supplier?.name || fallbackName;
+  const supplierLogo = `/images/wholesales/${params.slug === 'letgo-group' ? 'download.png' : params.slug === 'go365' ? 'download.jfif' : params.slug === 'check-in-group' ? 'CH7.jpg' : 'Tour-Factory.jpg'}`;
 
-    const today = new Date();
-    toursData = (data || [])
-      .filter((t: any) => t.supplier && t.supplier.canonicalName === supplierAlias)
-      .map((t: any) => {
-        const futureDeps = (t.departures || []).filter((d: any) => new Date(d.startDate) >= today);
-        futureDeps.sort((a: any, b: any) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime());
-        return { ...t, departures: futureDeps };
-      }).filter((t: any) => t.departures.length > 0);
+  // Fetch Tours strictly filtered by supplierId
+  const { data: tourData } = await supabase
+    .from('tours')
+    .select(`
+      id, tourName, tourCode, durationDays,
+      images:tour_images(imageUrl),
+      departures(startDate, remainingSeats, prices(sellingPrice), status),
+      supplier:suppliers(name)
+    `)
+    .eq('supplierId', supplierId)
+    .limit(20);
 
-  } catch (error: any) {
-    console.error("Supabase error in wholesale:", error);
-    prismaError = error?.message || String(error);
-  }
+  let tours = tourData || [];
 
-  if (prismaError) {
-    return (
-      <div className="bg-red-50 p-6 rounded-lg m-10 text-red-800 font-mono text-xs whitespace-pre-wrap">
-        <h2>Database Connection Error</h2>
-        <p>{prismaError}</p>
-      </div>
-    );
-  }
+  // Categorize tours
+  const allTours = tours.map((t: any) => {
+    const validDeps = t.departures?.filter((d: any) => new Date(d.startDate) > new Date()) || [];
+    const minPrice = validDeps.length > 0 ? Math.min(...validDeps.map((d: any) => d.prices?.[0]?.sellingPrice || 999999)) : 0;
+    
+    const isFlashSale = validDeps.some((d: any) => new Date(d.startDate).getTime() - new Date().getTime() < 14 * 24 * 60 * 60 * 1000);
+    const isConfirmed = validDeps.some((d: any) => d.status === 'CONFIRMED' || d.remainingSeats < 10);
+    const lowSeats = validDeps.some((d: any) => d.remainingSeats > 0 && d.remainingSeats <= 5);
 
-  const validTours = toursData.map(t => ({
-    id: t.id,
-    title: t.tourName,
-    description: "แพ็กเกจทัวร์คุณภาพ ออกเดินทางแน่นอน",
-    durationDays: t.durationDays,
-    destination: t.destinations?.[0]?.country || "ไม่ระบุ",
-    imageUrl: t.images?.[0]?.imageUrl || "https://images.unsplash.com/photo-1436491865332-7a61a109cc05",
-    departures: t.departures.map(d => ({
-      id: d.id,
-      startDate: d.startDate,
-      endDate: d.endDate,
-      price: d.prices?.[0]?.sellingPrice || 0
-    })),
-    price: 0
-  }));
+    return {
+      id: t.id,
+      title: t.tourName,
+      code: t.tourCode,
+      days: t.durationDays,
+      image: t.images?.[0]?.imageUrl || "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e",
+      price: minPrice,
+      supplier: t.supplier?.name || supplierName,
+      isFlashSale,
+      isConfirmed,
+      lowSeats,
+      bookingUrl: `/tour/${t.id}`
+    };
+  }).filter((t: any) => t.price > 0);
 
-  // Group tours by destination
-  const toursByDestination = validTours.reduce((acc: Record<string, any[]>, tour: any) => {
-    const dest = tour.destination || 'จุดหมายปลายทางอื่นๆ';
-    if (!acc[dest]) acc[dest] = [];
-    acc[dest].push(tour);
-    return acc;
-  }, {});
-
-  const destParam = Array.isArray(searchParams?.dest) ? searchParams.dest[0] : searchParams?.dest;
-  const activeDest = destParam?.toUpperCase();
-  const allDestinationKeys = Object.keys(toursByDestination).sort();
-  
-  let matchedKeys: string[] = [];
-  if (activeDest) {
-    matchedKeys = allDestinationKeys.filter(k => {
-       const mapped = countryMap[k.toUpperCase()];
-       const upperK = k.toUpperCase();
-       return upperK === activeDest || upperK.includes(activeDest) || activeDest.includes(upperK) || (mapped && mapped.th === activeDest) || (mapped && mapped.th.includes(activeDest));
-    });
-  }
-
-  const destinationKeysToRender = matchedKeys.length > 0
-    ? matchedKeys 
-    : allDestinationKeys;
+  const flashSaleTours = allTours.filter(t => t.isFlashSale);
+  const confirmedTours = allTours.filter(t => t.isConfirmed);
 
   return (
-    <main className="min-h-screen bg-[#f8f9fa] pb-20">
+    <main className="min-h-screen bg-background pb-20 font-sans">
       
-      {/* Hero Banner */}
-      <div className="relative h-[300px] md:h-[400px] w-full flex items-center justify-center overflow-hidden">
-        <div 
-          className="absolute inset-0 bg-cover bg-center"
-          style={{ backgroundImage: `url(${wholesale.coverImage})` }}
-        ></div>
-        <div className="absolute inset-0 bg-gradient-to-t from-gray-900/95 via-gray-900/60 to-transparent"></div>
-        
-        <div className="relative z-10 flex flex-col items-center text-center px-4 max-w-4xl mx-auto mt-10">
-          <div className="w-24 h-24 md:w-32 md:h-32 bg-white rounded-full p-2 mb-6 shadow-xl border-4 border-white/20 overflow-hidden flex items-center justify-center">
-             <img src={wholesale.logo} alt={wholesale.name} className="max-w-[80%] max-h-[80%] object-contain" />
-          </div>
-          <h1 className="text-4xl md:text-6xl font-black text-white mb-4 drop-shadow-lg">
-            {wholesale.name}
-          </h1>
-          <p className="text-base md:text-lg text-gray-200 max-w-2xl mx-auto font-medium">
-            {wholesale.description}
-          </p>
+      {/* Wholesale Hero Section */}
+      <div className="bg-trust-900 pt-16 pb-12">
+        <div className="max-w-7xl mx-auto px-4 flex flex-col md:flex-row items-center gap-8">
+           <div className="w-32 h-32 md:w-48 md:h-48 bg-white rounded-2xl p-4 shadow-xl shrink-0 flex items-center justify-center border-4 border-trust-800">
+              <img src={supplierLogo} alt={supplierName} className="max-w-full max-h-full object-contain" />
+           </div>
+           <div className="flex-1 text-center md:text-left text-white">
+              <div className="flex items-center justify-center md:justify-start gap-2 text-trust-300 text-xs font-bold tracking-wider mb-4">
+                <Link href="/" className="hover:text-white transition-colors">หน้าหลัก</Link>
+                <ChevronRight className="w-3.5 h-3.5" />
+                <span className="text-white">Wholesale</span>
+                <ChevronRight className="w-3.5 h-3.5" />
+                <span className="text-white">{supplierName}</span>
+              </div>
+              <Badge variant="outline" className="text-trust-300 border-trust-700 mb-3 bg-trust-800/50">Official Wholesale Partner</Badge>
+              <h1 className="text-3xl md:text-5xl font-black mb-4">{supplierName}</h1>
+              <p className="text-trust-200 text-sm md:text-base max-w-2xl mb-6">ผู้จัดจำหน่ายแพ็กเกจทัวร์ (Wholesale) ระดับแนวหน้า ที่มีโปรแกรมทัวร์ครอบคลุมเส้นทางยอดฮิต ทั้งเอเชีย ยุโรป และทั่วโลก มั่นใจได้ในคุณภาพและราคาที่เป็นมาตรฐาน</p>
+              
+              <div className="flex flex-wrap items-center justify-center md:justify-start gap-4">
+                 <div className="bg-trust-800/50 backdrop-blur-md px-4 py-2 rounded-xl border border-trust-700 text-center">
+                    <p className="text-[10px] text-trust-400 uppercase tracking-wider">โปรแกรมทั้งหมด</p>
+                    <p className="text-xl font-black text-white">{allTours.length}</p>
+                 </div>
+                 <div className="bg-trust-800/50 backdrop-blur-md px-4 py-2 rounded-xl border border-trust-700 text-center">
+                    <p className="text-[10px] text-trust-400 uppercase tracking-wider">เส้นทางยอดฮิต</p>
+                    <p className="text-sm font-bold text-white mt-1">ญี่ปุ่น, จีน, เกาหลี</p>
+                 </div>
+                 <Button variant="brand" className="shadow-lg" asChild>
+                    <Link href="#contact">ติดต่อขอใบเสนอราคา</Link>
+                 </Button>
+              </div>
+           </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 -mt-6 relative z-20">
-        
-        {/* Breadcrumbs */}
-        <div className="bg-white px-6 py-4 rounded-xl shadow-sm mb-8 flex items-center gap-2 text-sm text-gray-500 overflow-x-auto whitespace-nowrap border border-gray-100">
-          <Link href="/" className="hover:text-orange-600 font-medium transition-colors">หน้าหลัก</Link>
-          <ChevronRight className="w-4 h-4 text-gray-400" />
-          <span className="text-gray-800 font-bold">{wholesale.name}</span>
-        </div>
-
-        {validTours.length === 0 ? (
-          <div className="bg-white p-12 rounded-2xl border border-gray-100 text-center shadow-sm max-w-3xl mx-auto">
-            <div className="w-24 h-24 bg-orange-50 rounded-full flex items-center justify-center mx-auto mb-6">
-              <MapPin className="w-12 h-12 text-orange-400" />
+      {/* AI Search Locked to Supplier */}
+      <div className="max-w-4xl mx-auto px-4 -mt-8 relative z-20">
+         <div className="bg-white rounded-2xl shadow-floating border border-border p-6 mb-12">
+            <div className="flex items-center justify-between mb-4">
+               <div className="flex items-center gap-2 text-trust-900 font-bold">
+                  <span className="text-xl">✨ ค้นหาทัวร์เฉพาะของ {supplierName}</span>
+               </div>
+               <Badge variant="outline" className="font-mono text-[10px] text-muted-foreground">{supplierId}</Badge>
             </div>
-            <h3 className="text-2xl font-bold text-gray-800 mb-3">แพ็กเกจทัวร์กำลังทยอยอัปเดต</h3>
-            <p className="text-gray-500 text-base">สำหรับโฮลเซลล์นี้ ระบบกำลังทำการเชื่อมต่อและดึงข้อมูลแพ็กเกจทัวร์ล่าสุด โปรดรอติดตามเร็วๆ นี้</p>
-            <Link href="/" className="mt-8 inline-block px-6 py-3 bg-orange-500 text-white font-bold rounded-xl hover:bg-orange-600 transition-colors">
-               กลับสู่หน้าหลัก
-            </Link>
-          </div>
-        ) : (
-          <div className="space-y-12">
-            {/* Nav Links for Destinations */}
-            {allDestinationKeys.length > 1 && (
-              <div className="flex flex-wrap items-center gap-3 bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
-                <span className="text-sm font-bold text-gray-700">เลือกเส้นทาง:</span>
-                <Link 
-                  href={`/wholesale/${params.slug}`} 
-                  className={`px-4 py-2 text-sm font-bold rounded-xl border transition-colors ${!activeDest ? 'bg-orange-500 text-white border-orange-500' : 'bg-gray-50 hover:bg-orange-50 text-gray-600 border-gray-200'}`}
-                >
-                  ดูทั้งหมด ({validTours.length})
-                </Link>
-                {allDestinationKeys.map(dest => {
-                  const mapped = countryMap[dest.toUpperCase()];
-                  const displayName = mapped ? `${mapped.flag} ${mapped.th}` : dest;
-                  const isActive = activeDest === dest;
+            {/* The AI Search Bar will receive supplierId context via its implementation or URL params */}
+            <AiSearchBar placeholder={`พิมพ์โจทย์ เช่น "อยากไปจางเจียเจี้ยเดือนหน้า" แล้วให้ AI หาโปรแกรมของ ${supplierName} ให้...`} />
+         </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-4">
+         
+         {/* Popular Countries for this Wholesale */}
+         <div className="mb-16">
+            <h2 className="text-2xl font-black text-trust-900 mb-6 text-center">เส้นทางยอดฮิตของ {supplierName}</h2>
+            <div className="flex flex-wrap justify-center gap-4">
+               {['ญี่ปุ่น', 'จีน', 'เกาหลี', 'ไต้หวัน', 'ฮ่องกง', 'ยุโรป'].map(country => {
+                  const countrySlugMap: Record<string, string> = {
+                     'ญี่ปุ่น': 'japan', 'จีน': 'china', 'เกาหลี': 'korea', 'ไต้หวัน': 'taiwan', 'ฮ่องกง': 'hongkong', 'ยุโรป': 'europe'
+                  };
                   return (
-                    <Link 
-                      key={dest} 
-                      href={`/wholesale/${params.slug}?dest=${encodeURIComponent(dest)}`} 
-                      className={`px-4 py-2 text-sm font-bold rounded-xl border transition-colors ${isActive ? 'bg-orange-500 text-white border-orange-500' : 'bg-gray-50 hover:bg-orange-50 text-gray-600 border-gray-200'}`}
-                    >
-                      {displayName} ({toursByDestination[dest].length})
-                    </Link>
+                     <Link key={country} href={`/country/${countrySlugMap[country] || 'other'}`} className="group flex items-center gap-3 bg-white px-5 py-3 rounded-2xl border border-border shadow-sm hover:border-primary hover:shadow-md transition-all">
+                     <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center overflow-hidden">
+                        <img src="https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e" className="w-full h-full object-cover group-hover:scale-110 transition-transform" />
+                     </div>
+                     <span className="font-bold text-trust-900 group-hover:text-primary transition-colors">ทัวร์{country}</span>
+                  </Link>
                   );
-                })}
-              </div>
-            )}
+               })}
+            </div>
+         </div>
+         
+         {/* Flash Sale Section */}
+         {flashSaleTours.length > 0 && (
+            <div className="mb-16">
+               <div className="flex items-center gap-3 mb-6">
+                  <Flame className="w-8 h-8 text-destructive" />
+                  <h2 className="text-2xl font-black text-trust-900">ทัวร์ไฟไหม้ {supplierName}</h2>
+               </div>
+               <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                  {flashSaleTours.slice(0, 4).map((tour: any) => (
+                     <TourCard key={tour.id} tour={tour} />
+                  ))}
+               </div>
+            </div>
+         )}
 
-            {destinationKeysToRender.map((dest) => {
-              // try to find reverse map if dest is in Thai
-              let mapped = countryMap[dest.toUpperCase()];
-              if (!mapped) {
-                 const foundKey = Object.keys(countryMap).find(k => dest.includes(countryMap[k].th));
-                 if (foundKey) mapped = countryMap[foundKey];
-              }
+         {/* Confirmed Tours Section */}
+         {confirmedTours.length > 0 && (
+            <div className="mb-16">
+               <div className="flex items-center gap-3 mb-6">
+                  <CheckCircle2 className="w-8 h-8 text-emerald-500" />
+                  <h2 className="text-2xl font-black text-trust-900">ทัวร์คอนเฟิร์มเดินทางแน่นอน</h2>
+               </div>
+               <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                  {confirmedTours.slice(0, 4).map((tour: any) => (
+                     <TourCard key={tour.id} tour={tour} />
+                  ))}
+               </div>
+            </div>
+         )}
 
-              const displayTitle = mapped ? `ทัวร์${mapped.th} ${mapped.flag}` : `ทัวร์${dest}`;
-              
-              return (
-              <div key={dest} id={dest} className="scroll-mt-24">
-                <div className="flex items-center gap-3 mb-6 pb-2 border-b-2 border-orange-100">
-                  <h2 className="text-2xl md:text-3xl font-black text-gray-800">{displayTitle}</h2>
-                  <span className="bg-orange-100 text-orange-700 font-bold px-3 py-1 rounded-full text-sm">
-                    {toursByDestination[dest].length} โปรแกรม
-                  </span>
-                </div>
-                
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-                  {toursByDestination[dest].map((tour: any) => {
-                    // Calculate dates
-                    let dateDisplay = "เร็วๆ นี้";
-                    if (tour.departures && tour.departures.length > 0) {
-                      const sorted = [...tour.departures].sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime());
-                      const firstDate = new Date(sorted[0].startDate);
-                      const lastDate = new Date(sorted[sorted.length - 1].startDate);
-                      
-                      const formatMonth = (d: Date) => d.toLocaleDateString("th-TH", { month: "short", year: "2-digit" });
-                      const m1 = formatMonth(firstDate);
-                      const m2 = formatMonth(lastDate);
-                      
-                      if (m1 === m2) {
-                        dateDisplay = `เดินทาง ${m1}`;
-                      } else {
-                        dateDisplay = `เดินทาง ${m1} - ${m2}`;
-                      }
-                    }
+         {/* All Tours */}
+         <div className="flex justify-between items-center mb-6">
+            <h2 className="text-2xl font-black text-trust-900 flex items-center gap-2">
+               <Building2 className="w-6 h-6 text-primary" /> โปรแกรมทัวร์ทั้งหมดของ {supplierName}
+            </h2>
+         </div>
 
-                    // Find lowest price
-                    const lowestPrice = tour.departures && tour.departures.length > 0 
-                      ? Math.min(...tour.departures.map((d: any) => d.price)) 
-                      : tour.price;
+         {allTours.length === 0 ? (
+            <div className="text-center py-16 px-4 bg-white rounded-3xl border border-border shadow-sm max-w-4xl mx-auto">
+               <div className="w-24 h-24 bg-muted rounded-full flex items-center justify-center mx-auto mb-6">
+                  <Plane className="w-12 h-12 text-muted-foreground opacity-50" />
+               </div>
+               <h3 className="text-2xl font-black text-trust-900 mb-3">ยังไม่มีโปรแกรมทัวร์เปิดรับจองสำหรับ Wholesale นี้</h3>
+               <p className="text-trust-600 mb-8 max-w-lg mx-auto">
+                  ขออภัยครับ ขณะนี้ทางระบบยังไม่ได้รับข้อมูลโปรแกรมใหม่จาก {supplierName} 
+                  คุณสามารถให้ AI ค้นหาจาก Wholesale เจ้าอื่นแทน หรือฝากข้อมูลติดต่อไว้ให้เราแจ้งเตือนได้ครับ
+               </p>
+               <div className="flex justify-center gap-4">
+                  <Button variant="brand" className="gap-2"><Sparkles className="w-4 h-4" /> ใช้ AI ค้นหาทัวร์ทั้งหมด</Button>
+                  <Button variant="outline" className="gap-2"><MessageSquare className="w-4 h-4" /> แจ้งเตือนเมื่อมีโปรแกรม</Button>
+               </div>
+            </div>
+         ) : (
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+               {allTours.map((tour: any) => (
+                  <TourCard key={tour.id} tour={tour} />
+               ))}
+            </div>
+         )}
 
-                    return (
-                      <div key={tour.id} className="bg-white rounded-xl overflow-hidden shadow-[0_2px_8px_rgba(0,0,0,0.08)] hover:shadow-[0_8px_20px_rgba(0,0,0,0.12)] transition-all group flex flex-col h-full border border-gray-200">
-                        
-                        {/* Tour Image */}
-                        <div className="relative bg-gray-100 overflow-hidden flex items-center justify-center">
-                          {tour.price > lowestPrice && (
-                            <div className="absolute top-0 left-0 bg-orange-600 text-white px-3 py-1 rounded-br-lg text-xs font-bold z-10 shadow-sm flex items-center gap-1">
-                              <Star className="w-3 h-3 fill-white" /> ได้รับรางวัล
-                            </div>
-                          )}
-                          <img 
-                            src={tour.imageUrl || "https://images.unsplash.com/photo-1436491865332-7a61a109cc05"} 
-                            alt={tour.title} 
-                            className="w-full aspect-square object-contain bg-white"
-                          />
-                          
-                          {/* Map Pin Badge */}
-                          <div className="absolute bottom-3 left-3 bg-black/60 backdrop-blur-sm px-2 py-1 rounded text-[10px] font-bold text-white flex items-center gap-1">
-                            <MapPin className="w-3 h-3 text-white" /> {tour.destination}
-                          </div>
-                        </div>
+         {/* FAQ Section */}
+         <div className="mt-20 mb-10 max-w-4xl mx-auto">
+            <h2 className="text-2xl font-black text-trust-900 mb-8 text-center flex items-center justify-center gap-2"><HelpCircle className="w-6 h-6 text-primary" /> คำถามที่พบบ่อย (FAQ)</h2>
+            <div className="space-y-4">
+               {[
+                  { q: `จองแพ็กเกจของ ${supplierName} ผ่าน Jongtour ปลอดภัยไหม?`, a: "ปลอดภัย 100% ครับ เราเป็นพันธมิตรอย่างเป็นทางการกับ Wholesale โดยตรง การจองทุกครั้งจะออกเอกสารใบแจ้งหนี้จากระบบที่เชื่อมต่อกับโฮลเซลล์โดยตรง" },
+                  { q: `ราคาที่แสดงเป็นราคาที่ดีที่สุดหรือไม่?`, a: "ราคาหน้าเว็บถูกดึงมาจากระบบของ Wholesale โดยตรง และมักจะเป็นราคาโปรโมชันหรือทัวร์ไฟไหม้ที่อัปเดตแบบเรียลไทม์" },
+                  { q: `หากสนใจจัดกรุ๊ปเหมาส่วนตัว (Private Group) ทำได้หรือไม่?`, a: `ทำได้ครับ หากท่านชื่นชอบบริการของ ${supplierName} สามารถติดต่อเจ้าหน้าที่ของเราเพื่อขอใบเสนอราคาแบบจัดกรุ๊ปเหมาในเส้นทางที่ต้องการได้ทันที` }
+               ].map((faq, idx) => (
+                  <div key={idx} className="bg-white p-6 rounded-2xl border border-border shadow-sm">
+                     <p className="font-bold text-trust-900 mb-2 flex gap-2"><span className="text-primary">Q:</span> {faq.q}</p>
+                     <p className="text-muted-foreground text-sm flex gap-2"><span className="text-trust-400">A:</span> {faq.a}</p>
+                  </div>
+               ))}
+            </div>
+         </div>
 
-                        {/* Tour Content */}
-                        <div className="p-4 flex-1 flex flex-col">
-                          <Link href={`/tour/${tour.id}`} className="block flex-1">
-                            <h3 className="font-bold text-orange-600 text-base leading-snug mb-1 group-hover:underline transition-colors line-clamp-2">
-                              {tour.title}
-                            </h3>
-                            <div className="flex gap-0.5 mb-2">
-                              {[1,2,3,4,5].map(i => <Star key={i} className="w-3 h-3 text-yellow-400 fill-yellow-400" />)}
-                            </div>
-                            <p className="text-xs text-gray-500 mb-3 line-clamp-2">
-                              {tour.description}
-                            </p>
-                          </Link>
+         {/* CTA Section */}
+         <div id="contact" className="mt-20 bg-gradient-to-br from-trust-900 to-slate-900 rounded-3xl p-10 text-center text-white overflow-hidden relative shadow-2xl">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-primary rounded-full blur-[100px] opacity-30 -translate-y-1/2 translate-x-1/2"></div>
+            <h2 className="text-3xl font-black mb-4 relative z-10">สนใจแพ็กเกจของ {supplierName} ?</h2>
+            <p className="text-trust-200 mb-8 max-w-2xl mx-auto relative z-10">ให้ทีมงานมืออาชีพของเราช่วยคุณจัดการจอง หรือขอใบเสนอราคาสำหรับกรุ๊ปเหมาของ Wholesale เจ้านี้โดยเฉพาะ</p>
+            <div className="flex flex-col sm:flex-row justify-center gap-4 relative z-10">
+               <Button variant="brand" size="lg" className="gap-2 shadow-lg shadow-primary/30 text-base h-12 px-8">
+                  <Users className="w-5 h-5" /> ขอใบเสนอราคากรุ๊ปเหมา
+               </Button>
+               <Button variant="outline" size="lg" className="gap-2 bg-transparent border-white/20 text-white hover:bg-white/10 h-12 px-8">
+                  <MessageSquare className="w-5 h-5" /> ติดต่อแอดมิน
+               </Button>
+            </div>
+         </div>
 
-                          <div className="flex flex-wrap gap-1.5 mb-4">
-                            <div className="bg-gray-100 text-gray-700 px-2 py-1 rounded text-[10px] font-medium flex items-center gap-1 border border-gray-200">
-                              <Clock className="w-3 h-3" /> {tour.durationDays} วัน {tour.durationDays > 1 ? tour.durationDays - 1 : 0} คืน
-                            </div>
-                            <div className="bg-green-50 text-green-700 px-2 py-1 rounded text-[10px] font-medium flex items-center gap-1 border border-green-200">
-                               <Calendar className="w-3 h-3" /> {dateDisplay}
-                            </div>
-                          </div>
-
-                          {/* Footer / Price Box */}
-                          <div className="flex justify-between items-end pt-3 border-t border-gray-100 mt-auto">
-                            <div className="flex flex-col">
-                              <img src={wholesale.logo} alt={wholesale.name} className="h-8 md:h-10 w-auto object-contain mb-1" />
-                            </div>
-
-                            <div className="text-right">
-                              <p className="text-lg font-black text-gray-900 leading-none">
-                                ฿ {lowestPrice.toLocaleString()}
-                              </p>
-                              <p className="text-[9px] text-gray-400 mt-1">รวมภาษีและค่าธรรมเนียมแล้ว</p>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )})}
-          </div>
-        )}
       </div>
     </main>
   );
+}
+
+function TourCard({ tour }: { tour: any }) {
+   return (
+      <Link href={tour.bookingUrl} className="group h-full">
+         <Card className="h-full border-border hover:border-primary/50 hover:shadow-floating transition-all duration-300 overflow-hidden flex flex-col">
+            <div className="relative h-48 overflow-hidden bg-muted">
+               <img src={tour.image} alt={tour.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+               <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-md px-2 py-1 rounded text-xs font-bold text-trust-900 flex items-center gap-1 shadow-sm">
+                  <Clock className="w-3.5 h-3.5 text-primary" /> {tour.days} วัน
+               </div>
+               <div className="absolute top-3 left-3 flex flex-col gap-1">
+                  {tour.isFlashSale && <Badge variant="brand" className="shadow-md text-[10px] px-1.5 py-0">🔥 ไฟไหม้</Badge>}
+                  {tour.isConfirmed && <Badge variant="success" className="shadow-md text-[10px] px-1.5 py-0 bg-emerald-500 hover:bg-emerald-600 border-0">✅ คอนเฟิร์มเดินทาง</Badge>}
+                  {tour.lowSeats && <Badge variant="destructive" className="shadow-md text-[10px] px-1.5 py-0 bg-red-500 border-0">⏳ ที่นั่งเหลือน้อย</Badge>}
+               </div>
+            </div>
+            <CardContent className="p-4 flex-1 flex flex-col">
+               <div className="flex justify-between items-start mb-1">
+                  <div className="text-[10px] font-bold text-muted-foreground font-mono">{tour.code}</div>
+               </div>
+               <h3 className="font-bold text-trust-900 text-[15px] leading-snug line-clamp-2 mb-3 group-hover:text-primary transition-colors">{tour.title}</h3>
+               
+               <div className="mt-auto pt-3 border-t border-border flex justify-between items-end">
+                  <div>
+                     <p className="text-[10px] text-muted-foreground">ราคาเริ่มต้น</p>
+                     <p className="font-black text-lg text-primary">฿{tour.price.toLocaleString()}</p>
+                  </div>
+                  <div className="text-right">
+                     <p className="text-[9px] text-muted-foreground mb-0.5">Wholesale</p>
+                     <p className="text-[10px] font-bold text-trust-700 max-w-[100px] truncate">{tour.supplier}</p>
+                  </div>
+               </div>
+               <Button variant="outline" className="w-full mt-3 h-8 text-xs font-bold group-hover:bg-primary group-hover:text-white group-hover:border-primary transition-colors">ดูรายละเอียด</Button>
+            </CardContent>
+         </Card>
+      </Link>
+   );
 }

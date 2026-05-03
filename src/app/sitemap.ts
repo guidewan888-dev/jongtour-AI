@@ -7,14 +7,31 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Basic static routes
   const staticRoutes = [
     '',
-    '/destinations',
-    '/last-minute',
+    '/tour/search',
+    '/deals/flash-sale',
     '/ai-planner',
+    '/compare',
+    '/blog/guides',
+    '/blog/destinations',
+    '/faq',
+    '/contact',
   ].map((route) => ({
     url: `${baseUrl}${route}`,
     lastModified: new Date(),
     changeFrequency: 'daily' as const,
     priority: route === '' ? 1 : 0.8,
+  }));
+
+  // Dynamic Landing Pages configuration (Phase 6 UI layer)
+  const landingPages = [
+    '/country/japan', '/country/japan/tokyo', '/country/japan/osaka', '/country/japan/hokkaido', '/country/japan/sakura',
+    '/country/china', '/country/china/beijing', '/country/china/shanghai', '/country/china/zhangjiajie', '/country/china/flash-sale',
+    '/wholesale/letgo-group', '/wholesale/go365', '/wholesale/check-in-group', '/wholesale/tour-factory',
+  ].map((route) => ({
+    url: `${baseUrl}${route}`,
+    lastModified: new Date(),
+    changeFrequency: 'daily' as const,
+    priority: 0.9,
   }));
 
   try {
@@ -36,7 +53,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.9,
     }));
 
-    return [...staticRoutes, ...tourRoutes];
+    return [...staticRoutes, ...landingPages, ...tourRoutes];
   } catch (error) {
     console.error('Error generating sitemap:', error);
     return staticRoutes;
