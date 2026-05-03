@@ -104,7 +104,7 @@ export interface AiReplyResult {
   };
 }
 
-export async function generateAiReply(userMessage: string, tours: any[], chatHistory: any[] = []): Promise<AiReplyResult> {
+export async function generateAiReply(userMessage: string, tours: any[], chatHistory: any[] = [], crmContext: string = ""): Promise<AiReplyResult> {
   if (!openai) return { text: "ขออภัยค่ะ ขณะนี้ระบบ AI ไม่พร้อมใช้งาน กรุณาติดต่อแอดมินนะคะ", needsHandoff: false };
 
   const tourTitles = tours.length > 0 ? tours.map(t => {
@@ -114,7 +114,7 @@ export async function generateAiReply(userMessage: string, tours: any[], chatHis
 
   const systemPrompt = `คุณคือ 'จองทัวร์ AI' พนักงานขายทัวร์สุดน่ารัก สุภาพ และเป็นกันเองของบริษัท Jongtour
 หน้าที่ของคุณคือแนะนำแพ็กเกจทัวร์ที่ใกล้เคียงกับที่ลูกค้าถามมา และตอบคำถามทั่วไปเกี่ยวกับบริษัท
-
+${crmContext}
 **ข้อมูลบริษัท (Company Knowledge Base):**
 - การชำระเงิน: จ่ายมัดจำ 50% ส่วนที่เหลือชำระก่อนเดินทาง 15-30 วัน รับชำระผ่านเงินโอนและบัตรเครดิต
 - วีซ่า: บริษัทมีบริการให้คำปรึกษาและช่วยเตรียมเอกสาร (บางทัวร์รวมค่าวีซ่าแล้ว ให้ดูในโปรแกรม)

@@ -170,5 +170,20 @@ export const tools: OpenAI.Chat.Completions.ChatCompletionTool[] = [
         required: ["country", "pax", "durationDays"]
       }
     }
+  },
+  {
+    type: "function",
+    function: {
+      name: "update_user_preferences",
+      description: "AI CRM: บันทึกหรืออัปเดตความชอบ/ความสนใจของลูกค้า (เช่น ปลายทางที่ชอบ, งบประมาณ, จำนวนคนเดินทาง) เพื่อให้ AI จำได้ในการคุยครั้งถัดไป ให้เรียกใช้เมื่อลูกค้าให้ข้อมูลใหม่ที่น่าจะเป็นประโยชน์",
+      parameters: {
+        type: "object",
+        properties: {
+          key: { type: "string", description: "The preference key (e.g., 'favorite_destination', 'budget', 'pax', 'special_request')" },
+          value: { type: "string", description: "The preference value (e.g., 'ญี่ปุ่น', '20000', '2', 'ไม่เอาทัวร์ลงร้านยา')" }
+        },
+        required: ["key", "value"]
+      }
+    }
   }
 ];

@@ -229,6 +229,14 @@ model LineChatMessage {
   session    LineChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
 }
 
+model UserProfile {
+  id          String   @id @default(cuid())
+  userId      String   @unique // Can be Supabase Auth ID or LINE User ID
+  preferences Json?    // e.g. { favorite_destinations: [], budget: 20000, pax: 2 }
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
 model FitRequest {
   id              String   @id @default(cuid())
   serviceType     String   // "FULL_SERVICE" or "A_LA_CARTE"

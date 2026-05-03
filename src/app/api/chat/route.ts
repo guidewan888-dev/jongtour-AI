@@ -29,8 +29,27 @@ export async function POST(request: NextRequest) {
     const supabaseUserClient = createServerClient(cookieStore);
     const { data: { user } } = await supabaseUserClient.auth.getUser();
     let userName = "คุณลูกค้า";
+    let crmContext = "";
+    
     if (user && user.user_metadata?.full_name) {
       userName = `คุณ ${user.user_metadata.full_name.split(" ")[0]}`;
+    }
+    
+    // AI CRM (User Profiling)
+    if (user) {
+      const { prisma } = await import("@/lib/prisma");
+      try {
+        let userProfile = await prisma.userProfile.findUnique({ where: { userId: user.id } });
+        if (!userProfile) {
+          userProfile = await prisma.userProfile.create({ data: { userId: user.id, preferences: {} } });
+        }
+        
+        if (userProfile && userProfile.preferences && Object.keys(userProfile.preferences).length > 0) {
+          crmContext = `\n\n[CRM DATA: คุณมีข้อมูลความชอบของลูกค้ารายนี้จากประวัติเก่า: ${JSON.stringify(userProfile.preferences)} โปรดนำข้อมูลเหล่านี้มาช่วยในการสนทนาและปิดการขายอย่างแนบเนียน]`;
+        }
+      } catch (err) {
+        console.error("CRM Fetch Error:", err);
+      }
     }
 
     if (!isOpenAIAvailable || !openai) {
@@ -50,7 +69,7 @@ export async function POST(request: NextRequest) {
 
     // Prepare Messages History
     const messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
-      { role: "system", content: getSystemPrompt() },
+      { role: "system", content: getSystemPrompt() + crmContext },
       ...(chatHistory.slice(-15).filter((m: any) => !(m.role === 'ai' && (m.content.includes("ไม่สามารถ") || m.content.includes("ขอโทษครับ")))).map((m: any) => {
         let content = m.content;
         if (m.role === 'ai' && m.tours && m.tours.length > 0) {
@@ -211,6 +230,38 @@ search_intent: ${JSON.stringify(intentExtracted)}
               itinerary_generated: true
             })
           });
+        }
+        else if (toolCall.function.name === "update_user_preferences") {
+          const args = JSON.parse(toolCall.function.arguments);
+          if (user) {
+            const { prisma } = await import("@/lib/prisma");
+            try {
+              const profile = await prisma.userProfile.findUnique({ where: { userId: user.id } });
+              const currentPrefs = (profile?.preferences as any) || {};
+              currentPrefs[args.key] = args.value;
+              await prisma.userProfile.update({
+                where: { userId: user.id },
+                data: { preferences: currentPrefs }
+              });
+              messages.push({
+                role: "tool",
+                tool_call_id: toolCall.id,
+                content: JSON.stringify({ success: true, message: `CRM updated: ${args.key} = ${args.value}` })
+              });
+            } catch (err) {
+              messages.push({
+                role: "tool",
+                tool_call_id: toolCall.id,
+                content: JSON.stringify({ success: false, error: "DB Error" })
+              });
+            }
+          } else {
+            messages.push({
+              role: "tool",
+              tool_call_id: toolCall.id,
+              content: JSON.stringify({ success: false, error: "User not logged in" })
+            });
+          }
         }
         else {
           // Mock generic tools

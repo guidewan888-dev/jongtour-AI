@@ -106,8 +106,24 @@ export async function POST(request: Request) {
           // 3. Process query and find relevant tours using RAG
           const tours = await processAiQuery(userMessage);
 
+          // CRM Integration for LINE
+          let crmContext = "";
+          if (lineUserId) {
+            try {
+              let userProfile = await prisma.userProfile.findUnique({ where: { userId: lineUserId } });
+              if (!userProfile) {
+                userProfile = await prisma.userProfile.create({ data: { userId: lineUserId, preferences: {} } });
+              }
+              if (userProfile && userProfile.preferences && Object.keys(userProfile.preferences).length > 0) {
+                crmContext = `\n[CRM DATA: คุณมีข้อมูลความชอบของลูกค้ารายนี้จากประวัติเก่า: ${JSON.stringify(userProfile.preferences)} โปรดนำข้อมูลเหล่านี้มาช่วยในการสนทนา]`;
+              }
+            } catch (err) {
+              console.error("CRM Fetch Error:", err);
+            }
+          }
+
           // 4. Generate a conversational reply using GPT-4o and Company Knowledge Base
-          const aiReply = await generateAiReply(userMessage, tours, chatHistory);
+          const aiReply = await generateAiReply(userMessage, tours, chatHistory, crmContext);
           const replyText = aiReply.text;
           const needsHandoff = aiReply.needsHandoff;
 
