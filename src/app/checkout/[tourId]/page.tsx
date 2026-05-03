@@ -3,6 +3,15 @@ import { cookies } from "next/headers";
 import { createClient as createSupabaseClient } from '@supabase/supabase-js';
 import { notFound, redirect } from "next/navigation";
 import CheckoutClient from "./CheckoutClient";
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'ดำเนินการชำระเงิน - Jongtour',
+  robots: {
+    index: false,
+    follow: false,
+  },
+};
 
 export default async function CheckoutPage({ params }: { params: { tourId: string } }) {
   const cookieStore = await cookies();

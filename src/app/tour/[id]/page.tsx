@@ -9,6 +9,41 @@ import { createClient } from '@supabase/supabase-js';
 
 export const dynamic = "force-dynamic";
 
+export async function generateMetadata({ params }: { params: { id: string } }) {
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://qterfftaebnoawnzkfgu.supabase.co',
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || 'sb_publishable_SRwNSJ89mInda5FcuB1W2w_9IEJlSOI'
+  );
+
+  const { data: tour } = await supabase
+    .from('tours')
+    .select('tourName, destinations:tour_destinations(country), images:tour_images(imageUrl)')
+    .eq('id', params.id)
+    .single();
+
+  if (!tour) return { title: 'Not Found - Jongtour' };
+
+  const dest = tour.destinations?.[0]?.country || 'ทัวร์ต่างประเทศ';
+  const imgUrl = tour.images?.[0]?.imageUrl || 'https://jongtour.com/images/wholesales/CH7.jpg';
+
+  return {
+    title: `${tour.tourName} | จองทัวร์${dest} - Jongtour`,
+    description: `แพ็กเกจทัวร์${dest} ${tour.tourName} จองง่าย คุ้มค่าที่สุดกับ Jongtour AI`,
+    openGraph: {
+      title: `${tour.tourName} | จองทัวร์${dest} - Jongtour`,
+      description: `แพ็กเกจทัวร์${dest} ${tour.tourName} จองง่าย คุ้มค่าที่สุดกับ Jongtour AI`,
+      images: [
+        {
+          url: imgUrl,
+          width: 800,
+          height: 600,
+          alt: tour.tourName,
+        },
+      ],
+    },
+  };
+}
+
 export async function TourDetailsContent({ params, agentId }: { params: { id: string }, agentId?: string }) {
   // ดึงข้อมูลทัวร์จาก Database
   const supabase = createClient(

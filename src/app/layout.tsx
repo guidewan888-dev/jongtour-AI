@@ -15,6 +15,22 @@ export const metadata: Metadata = {
   alternates: {
     canonical: '/',
   },
+  openGraph: {
+    title: "Jongtour AI - จองทัวร์อัจฉริยะ",
+    description: "แพลตฟอร์มค้นหาและจองทัวร์ที่ดีที่สุด ด้วยเทคโนโลยี AI",
+    url: 'https://jongtour.com',
+    siteName: 'Jongtour',
+    images: [
+      {
+        url: 'https://jongtour.com/images/wholesales/CH7.jpg', // Placeholder Default OG Image
+        width: 1200,
+        height: 630,
+        alt: 'Jongtour Cover',
+      },
+    ],
+    locale: 'th_TH',
+    type: 'website',
+  },
 };
 
 export default function RootLayout({
