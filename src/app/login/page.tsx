@@ -172,7 +172,7 @@ function LoginContent() {
       </div>
 
       <div className="mt-8 text-center text-[11px] text-gray-500 leading-relaxed px-4">
-        ท่านยอมรับ <a href="#" className="text-blue-600 hover:underline">ข้อกำหนดการใช้งาน</a> และ <a href="#" className="text-blue-600 hover:underline">นโยบายความเป็นส่วนตัว</a> ของ Jongtour AI เมื่อดำเนินการต่อ
+        ท่านยอมรับ <a href="/terms" className="text-blue-600 hover:underline">ข้อกำหนดการใช้งาน</a> และ <a href="/privacy" className="text-blue-600 hover:underline">นโยบายความเป็นส่วนตัว</a> ของ Jongtour AI เมื่อดำเนินการต่อ
       </div>
 
       <div className="mt-6 text-center text-sm text-gray-400">

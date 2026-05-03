@@ -75,7 +75,7 @@ export default function WholesaleAdminPage() {
         <div className="flex items-center gap-2 text-sm text-gray-500 mb-6">
           <Link href="/admin" className="hover:text-blue-600">แดชบอร์ด</Link>
           <ChevronRight className="w-4 h-4" />
-          <Link href="#" className="hover:text-blue-600">รายการจองทั้งหมด</Link>
+          <Link href="/admin/bookings" className="hover:text-blue-600">รายการจองทั้งหมด</Link>
           <ChevronRight className="w-4 h-4" />
           <span className="font-medium text-gray-900">เอกสาร Booking #{bookingData.id}</span>
         </div>
