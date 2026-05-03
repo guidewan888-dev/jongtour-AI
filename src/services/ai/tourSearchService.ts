@@ -112,23 +112,6 @@ export async function searchTours(
   }
 
   let strictInstruction = "";
-  if (intentExtracted?.supplier_filter_required && intentExtracted?.matched_supplier?.canonical_name) {
-    const sName = intentExtracted.matched_supplier.canonical_name;
-    strictInstruction = `
-*** STRICT RESPONSE FORMAT REQUIRED ***
-You MUST format your response EXACTLY like this (do not use generic formats or list emojis):
-
-พบโปรแกรมของ ${sName} ตามเงื่อนไขที่ค้นหาครับ
-
-1. **{{tour_name}}** (รหัส: {{tour_code}})
-- ราคาเริ่มต้น: {{price_from}} บาท
-- วันเดินทาง: {{departure_date}}
-- สายการบิน: {{airline}}
-
-หมายเหตุ:
-แสดงเฉพาะโปรแกรมของ ${sName} เท่านั้น ไม่รวมโปรแกรมจาก Supplier อื่น
-`;
-  }
 
   return { tours, strictInstruction };
 }
