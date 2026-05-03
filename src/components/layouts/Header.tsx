@@ -3,8 +3,6 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ChevronDown } from "lucide-react";
-import { useEffect, useState } from "react";
-import { createClient } from "@/utils/supabase/client";
 import AuthButtons from "@/components/AuthButtons";
 
 export default function Header() {
@@ -160,9 +158,9 @@ export default function Header() {
             </div>
           </div>
 
-          {/* Wholesale Mega Menu - Temporarily Hidden */}
-          {/* <div className="group py-8 relative">
-            <button className="flex items-center gap-1 px-4 py-2 text-gray-600 group-hover:text-blue-600 font-medium transition-colors whitespace-nowrap">
+          {/* Wholesale Mega Menu */}
+          <div className="group py-8 relative">
+            <button className="flex items-center gap-1 px-4 py-2 text-gray-600 group-hover:text-orange-500 font-medium transition-colors whitespace-nowrap">
               โฮลเซลล์ (Wholesale)
               <ChevronDown className="w-4 h-4 group-hover:rotate-180 transition-transform duration-300" />
             </button>
@@ -177,14 +175,14 @@ export default function Header() {
                 ].map((ws) => (
                   <div key={ws.slug} className="flex flex-col">
                     <Link href={`/wholesale/${ws.slug}`} className="flex items-center gap-3 mb-3 group/ws">
-                      <div className="w-14 h-14 bg-white rounded-xl border border-gray-100 p-1.5 flex items-center justify-center shadow-sm group-hover/ws:border-blue-500 group-hover/ws:shadow-md transition-all shrink-0">
+                      <div className="w-14 h-14 bg-white rounded-xl border border-gray-100 p-1.5 flex items-center justify-center shadow-sm group-hover/ws:border-orange-500 group-hover/ws:shadow-md transition-all shrink-0">
                         <img src={ws.logo} alt={ws.name} className="max-w-full max-h-full object-contain" />
                       </div>
-                      <span className="font-bold text-gray-800 text-lg group-hover/ws:text-blue-600 transition-colors">{ws.name}</span>
+                      <span className="font-bold text-gray-800 text-lg group-hover/ws:text-orange-500 transition-colors">{ws.name}</span>
                     </Link>
                     <div className="flex flex-wrap gap-1.5 pl-[68px] mt-auto">
                       {ws.dests.map(dest => (
-                         <Link key={dest} href={`/wholesale/${ws.slug}?dest=${encodeURIComponent(dest)}`} className="text-[11px] font-medium text-gray-500 hover:text-blue-600 hover:bg-blue-50 px-2 py-1 rounded-md transition-colors bg-gray-50 border border-gray-100">
+                         <Link key={dest} href={`/wholesale/${ws.slug}?dest=${encodeURIComponent(dest)}`} className="text-[11px] font-medium text-gray-500 hover:text-orange-600 hover:bg-orange-50 px-2 py-1 rounded-md transition-colors bg-gray-50 border border-gray-100">
                            {dest}
                          </Link>
                       ))}
@@ -193,7 +191,7 @@ export default function Header() {
                 ))}
               </div>
             </div>
-          </div> */}
+          </div>
 
           <Link href="/last-minute" className="px-2 lg:px-4 py-2 text-rose-600 hover:text-rose-700 font-bold transition-colors flex items-center gap-1 whitespace-nowrap">
             🔥 ทัวร์ไฟไหม้

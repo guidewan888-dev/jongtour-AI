@@ -31,11 +31,13 @@ export default async function DestinationPage({ params }: { params: { slug?: str
     ]
   }));
 
+  const whereClause: any = { status: 'PUBLISHED' };
+  if (keywordConditions.length > 0) {
+    whereClause.OR = keywordConditions;
+  }
+
   const toursData = await prisma.tour.findMany({
-    where: {
-      status: 'PUBLISHED',
-      OR: keywordConditions as any
-    },
+    where: whereClause,
     include: {
       departures: {
         where: { startDate: { gte: new Date() } },
