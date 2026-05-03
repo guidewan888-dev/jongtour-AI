@@ -1,0 +1,13 @@
+{
+  "tour_link_audit": {
+    "total_tours": 277,
+    "valid_tour_links": 277,
+    "broken_tour_links": 0,
+    "wrong_supplier_links": 0,
+    "wrong_booking_links": 0,
+    "missing_booking_urls": 277,
+    "broken_pdf_links": 0,
+    "broken_image_links": 0,
+    "critical_issues": []
+  }
+}

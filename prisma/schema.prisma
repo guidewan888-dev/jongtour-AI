@@ -675,3 +675,88 @@ model ActivityPriceCache {
 
   @@index([destinationCountry, category])
 }
+
+// -----------------------------------------------------
+// Link Health Monitor Models
+// -----------------------------------------------------
+
+model LinkAuditRun {
+  id              String   @id @default(cuid())
+  startedAt       DateTime @default(now())
+  finishedAt      DateTime?
+  status          String   @default("RUNNING") // RUNNING, COMPLETED, FAILED
+  totalLinks      Int      @default(0)
+  brokenLinks     Int      @default(0)
+  criticalIssues  Int      @default(0)
+  summaryJson     Json?
+  errorMessage    String?  @db.Text
+
+  items           LinkAuditItem[]
+
+  @@map("link_audit_runs")
+}
+
+model LinkAuditItem {
+  id                String   @id @default(cuid())
+  runId             String
+  pageUrl           String   @db.Text
+  linkText          String?  @db.Text
+  href              String   @db.Text
+  normalizedUrl     String?  @db.Text
+  linkType          String   // INTERNAL, EXTERNAL, BOOKING, IMAGE, PDF
+  httpStatus        Int?
+  issueType         String   // 404, 500, WRONG_SUPPLIER, MISSING_SLUG, INVALID_TOUR_ID, REDIRECT_LOOP, etc.
+  severity          String   // CRITICAL, HIGH, MEDIUM, LOW
+  
+  relatedTourId     String?
+  relatedSupplierId String?
+  relatedBookingId  String?
+  expectedUrl       String?  @db.Text
+  suggestedFix      String?  @db.Text
+  canAutoFix        Boolean  @default(false)
+  
+  fixedAt           DateTime?
+  fixedBy           String?  // SYSTEM, ADMIN_ID
+  status            String   @default("UNRESOLVED") // UNRESOLVED, AUTO_FIXED, MANUAL_FIXED, IGNORED
+  createdAt         DateTime @default(now())
+
+  run               LinkAuditRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+
+  @@index([runId, severity])
+  @@map("link_audit_items")
+}
+
+model LinkFix {
+  id            String   @id @default(cuid())
+  auditItemId   String   @unique
+  originalUrl   String   @db.Text
+  newUrl        String   @db.Text
+  fixMethod     String   // AUTO_REPLACE, REDIRECT, REMOVE
+  createdAt     DateTime @default(now())
+
+  @@map("link_fixes")
+}
+
+model RedirectRule {
+  id          String   @id @default(cuid())
+  sourcePath  String   @unique
+  targetPath  String
+  statusCode  Int      @default(301)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("redirect_rules")
+}
+
+model UrlHealthStatus {
+  id            String   @id @default(cuid())
+  url           String   @unique @db.Text
+  lastStatus    Int?
+  responseTime  Int?     // milliseconds
+  isAlive       Boolean  @default(true)
+  lastCheckedAt DateTime @default(now())
+  failCount     Int      @default(0)
+
+  @@map("url_health_status")
+}
