@@ -1,53 +1,87 @@
-import { LayoutTemplate, FileEdit, Image as ImageIcon, Send } from 'lucide-react';
+import Link from "next/link";
+import { FileText, Image as ImageIcon, Map, HelpCircle, LayoutTemplate, Send, Search, Link as LinkIcon, MapPin, ExternalLink } from "lucide-react";
 
-export default function CMSManagementPage() {
+export const dynamic = 'force-dynamic';
+
+export default function AdminCMSPage({
+  searchParams,
+}: {
+  searchParams: { tab?: string };
+}) {
+  const activeTab = searchParams.tab || "pages";
+
+  const tabs = [
+    { id: "pages", name: "Pages", icon: FileText },
+    { id: "blog", name: "Blog", icon: FileText },
+    { id: "destination-guide", name: "Destination Guide", icon: Map },
+    { id: "faq", name: "FAQ", icon: HelpCircle },
+    { id: "banners", name: "Banners", icon: ImageIcon },
+    { id: "landing-pages", name: "Landing Pages", icon: Send },
+    { id: "seo", name: "SEO", icon: Search },
+    { id: "redirects", name: "Redirects", icon: LinkIcon },
+    { id: "sitemap", name: "Sitemap", icon: MapPin },
+  ];
+
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-800">CMS Management (info.jongtour.com)</h1>
-          <p className="text-sm text-gray-500">ระบบจัดการเนื้อหา บทความ แบนเนอร์ และหน้า Landing Page ของเว็บไซต์หลัก</p>
+          <h2 className="text-2xl font-bold text-gray-800">จัดการเนื้อหา (CMS)</h2>
+          <p className="text-gray-500">ระบบจัดการเนื้อหา บทความ และหน้าเว็บไซต์สำหรับ info.jongtour.com</p>
         </div>
-        <a href="https://info.jongtour.com" target="_blank" className="bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 px-4 py-2 rounded-lg font-bold shadow-sm transition-colors flex items-center gap-2 text-sm">
+        <a href="https://info.jongtour.com" target="_blank" className="bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 px-4 py-2 rounded-xl font-bold shadow-sm transition-colors flex items-center gap-2 text-sm">
           <ExternalLink size={16} /> View Live Site
         </a>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        
-        {/* Module 1 */}
-        <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow cursor-pointer">
-          <div className="w-12 h-12 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center mb-4">
-            <LayoutTemplate size={24} />
-          </div>
-          <h2 className="text-lg font-bold text-gray-800 mb-2">Homepage & Banners</h2>
-          <p className="text-sm text-gray-500 mb-4">จัดการแบนเนอร์หน้าแรก โปรโมชั่นเด่น และรูปภาพสไลด์</p>
-          <button className="text-blue-600 font-bold text-sm flex items-center gap-1 hover:text-blue-800">Manage Content <ArrowRight size={14}/></button>
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden min-h-[600px]">
+        {/* Navigation Tabs */}
+        <div className="flex border-b border-gray-100 overflow-x-auto custom-scrollbar">
+          {tabs.map((tab) => {
+            const isActive = activeTab === tab.id;
+            const Icon = tab.icon;
+            return (
+              <Link 
+                key={tab.id}
+                href={`?tab=${tab.id}`}
+                scroll={false}
+                className={`flex items-center gap-2 px-6 py-4 text-sm font-bold border-b-2 transition-colors whitespace-nowrap
+                  ${isActive ? 'border-orange-500 text-orange-600 bg-orange-50/50' : 'border-transparent text-gray-500 hover:text-gray-800 hover:bg-gray-50'}
+                `}
+              >
+                <Icon className="w-4 h-4" />
+                {tab.name}
+              </Link>
+            );
+          })}
         </div>
 
-        {/* Module 2 */}
-        <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow cursor-pointer">
-          <div className="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-lg flex items-center justify-center mb-4">
-            <FileEdit size={24} />
+        {/* Filters */}
+        <div className="p-4 border-b border-gray-100 bg-gray-50 flex gap-4 justify-between">
+          <div className="relative flex-1 max-w-md">
+            <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+            <input 
+              type="text" 
+              placeholder={`ค้นหาใน ${tabs.find(t => t.id === activeTab)?.name}...`} 
+              className="w-full pl-9 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-orange-500 bg-white" 
+            />
           </div>
-          <h2 className="text-lg font-bold text-gray-800 mb-2">Blog & Travel Guides</h2>
-          <p className="text-sm text-gray-500 mb-4">เขียนบทความท่องเที่ยว ข่าวสาร และเคล็ดลับ (เพื่อ SEO)</p>
-          <button className="text-emerald-600 font-bold text-sm flex items-center gap-1 hover:text-emerald-800">Manage Articles <ArrowRight size={14}/></button>
+          <button className="bg-orange-600 hover:bg-orange-500 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-sm">
+            + เพิ่มรายการใหม่
+          </button>
         </div>
 
-        {/* Module 3 */}
-        <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow cursor-pointer">
-          <div className="w-12 h-12 bg-purple-100 text-purple-600 rounded-lg flex items-center justify-center mb-4">
-            <Send size={24} />
-          </div>
-          <h2 className="text-lg font-bold text-gray-800 mb-2">Landing Pages</h2>
-          <p className="text-sm text-gray-500 mb-4">สร้างหน้าแคมเปญโฆษณา (Lead Generation Form)</p>
-          <button className="text-purple-600 font-bold text-sm flex items-center gap-1 hover:text-purple-800">Manage Pages <ArrowRight size={14}/></button>
+        {/* Tab Content Area */}
+        <div className="p-8 flex flex-col items-center justify-center text-center text-gray-500 h-[400px]">
+          {tabs.find(t => t.id === activeTab)?.icon({ className: "w-16 h-16 text-gray-200 mb-4" })}
+          <h3 className="text-xl font-bold text-gray-700 mb-2">
+            โมดูล: {tabs.find(t => t.id === activeTab)?.name}
+          </h3>
+          <p className="max-w-md text-sm">
+            ระบบสำหรับจัดการข้อมูล Content Management System สำหรับนำไปแสดงบนหน้าเว็บไซต์หลัก
+          </p>
         </div>
-
       </div>
     </div>
   );
 }
-// Note: Missing imports fix
-import { ExternalLink, ArrowRight } from 'lucide-react';

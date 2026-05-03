@@ -1,4 +1,5 @@
 import { supplierMaster } from './supplierConfig';
+export { BOOKING_ASSISTANT_SYSTEM_PROMPT } from './prompts/bookingAssistantPrompt';
 
 export const getSystemPrompt = () => `คุณคือ AI Tour Search Assistant สำหรับเว็บไซต์ขายทัวร์ออนไลน์
 

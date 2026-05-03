@@ -5,10 +5,14 @@ import {
   RefreshCw, 
   GitMerge, 
   Eye, 
-  AlertCircle,
   FileSearch,
   Settings,
-  Bell
+  Bell,
+  Key,
+  ListTree,
+  FileCode2,
+  ScanText,
+  AlertCircle
 } from 'lucide-react';
 
 export const metadata = {
@@ -39,18 +43,25 @@ export default function B2BAdminLayout({
           <nav className="space-y-1 mb-8">
             <NavItem href="/b2badmin" icon={<Database size={16} />} label="API Dashboard" active />
             <NavItem href="/b2badmin/errors" icon={<AlertCircle size={16} />} label="Error Logs" badge="12" />
+            <NavItem href="/b2badmin/sync/logs" icon={<FileCode2 size={16} />} label="Sync Logs" />
           </nav>
 
           <div className="text-[10px] font-bold text-slate-600 uppercase tracking-widest mb-3 px-3">Wholesale Master</div>
           <nav className="space-y-1 mb-8">
-            <NavItem href="/b2badmin/suppliers" icon={<Building2 size={16} />} label="Supplier Config" />
+            <NavItem href="/b2badmin/suppliers" icon={<Building2 size={16} />} label="Suppliers" />
+            <NavItem href="/b2badmin/suppliers/credentials" icon={<Key size={16} />} label="API Credentials" />
+            <NavItem href="/b2badmin/suppliers/aliases" icon={<ListTree size={16} />} label="Supplier Aliases" />
+            <NavItem href="/b2badmin/raw-data" icon={<FileCode2 size={16} />} label="Raw Supplier Data" />
           </nav>
 
           <div className="text-[10px] font-bold text-slate-600 uppercase tracking-widest mb-3 px-3">ETL & Integration</div>
           <nav className="space-y-1 mb-8">
-            <NavItem href="/b2badmin/sync" icon={<RefreshCw size={16} />} label="Sync Center" />
-            <NavItem href="/b2badmin/mapping" icon={<GitMerge size={16} />} label="Schema Mapping" />
+            <NavItem href="/b2badmin/sync" icon={<RefreshCw size={16} />} label="API Sync" />
+            <NavItem href="/b2badmin/sync/departures" icon={<RefreshCw size={16} />} label="Departure Sync" />
+            <NavItem href="/b2badmin/sync/prices" icon={<RefreshCw size={16} />} label="Price & Avail Sync" />
+            <NavItem href="/b2badmin/mapping" icon={<GitMerge size={16} />} label="Tour Mapping" />
             <NavItem href="/b2badmin/import" icon={<FileSearch size={16} />} label="Manual Import" />
+            <NavItem href="/b2badmin/import/ocr" icon={<ScanText size={16} />} label="OCR Import" />
           </nav>
 
           <div className="text-[10px] font-bold text-slate-600 uppercase tracking-widest mb-3 px-3">Quality Control</div>

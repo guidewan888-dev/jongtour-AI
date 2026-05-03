@@ -30,11 +30,15 @@ export default async function AdminBookingsPage({
     .order("createdAt", { ascending: false });
 
   if (activeTab === "pending") {
-    query = query.in("status", ["PENDING", "AWAITING_CONFIRMATION"]);
-  } else if (activeTab === "processing") {
-    query = query.in("status", ["MISSING_DOCS", "FULL_PAID", "AWAITING_APPOINTMENT"]);
-  } else if (activeTab === "done") {
-    query = query.in("status", ["READY_TO_TRAVEL", "COMPLETED", "CANCELLED"]);
+    query = query.in("status", ["PENDING"]);
+  } else if (activeTab === "confirmed") {
+    query = query.in("status", ["AWAITING_CONFIRMATION", "CONFIRMED"]);
+  } else if (activeTab === "paid") {
+    query = query.in("status", ["FULL_PAID", "READY_TO_TRAVEL"]);
+  } else if (activeTab === "cancelled") {
+    query = query.in("status", ["CANCELLED"]);
+  } else if (activeTab === "refund") {
+    query = query.in("status", ["REFUNDED"]);
   }
 
   const { data: bookingsRaw, error } = await query;
@@ -80,9 +84,11 @@ export default async function AdminBookingsPage({
         <div className="p-4 border-b border-gray-100 flex flex-col md:flex-row justify-between items-center gap-4">
           <div className="flex bg-gray-50 p-1 rounded-xl w-full md:w-auto">
             <Link href="?tab=all" scroll={false} className={`flex-1 text-center md:flex-none px-4 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'all' ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500 hover:text-gray-700'}`}>ทั้งหมด</Link>
-            <Link href="?tab=pending" scroll={false} className={`flex-1 text-center md:flex-none px-4 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'pending' ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500 hover:text-gray-700'}`}>รอชำระเงิน</Link>
-            <Link href="?tab=processing" scroll={false} className={`flex-1 text-center md:flex-none px-4 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'processing' ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500 hover:text-gray-700'}`}>กำลังดำเนินการ</Link>
-            <Link href="?tab=done" scroll={false} className={`flex-1 text-center md:flex-none px-4 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'done' ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500 hover:text-gray-700'}`}>สำเร็จแล้ว</Link>
+            <Link href="?tab=pending" scroll={false} className={`flex-1 text-center md:flex-none px-4 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'pending' ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500 hover:text-gray-700'}`}>Pending</Link>
+            <Link href="?tab=confirmed" scroll={false} className={`flex-1 text-center md:flex-none px-4 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'confirmed' ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500 hover:text-gray-700'}`}>Confirmed</Link>
+            <Link href="?tab=paid" scroll={false} className={`flex-1 text-center md:flex-none px-4 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'paid' ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500 hover:text-gray-700'}`}>Paid</Link>
+            <Link href="?tab=cancelled" scroll={false} className={`flex-1 text-center md:flex-none px-4 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'cancelled' ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500 hover:text-gray-700'}`}>Cancelled</Link>
+            <Link href="?tab=refund" scroll={false} className={`flex-1 text-center md:flex-none px-4 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'refund' ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500 hover:text-gray-700'}`}>Refund</Link>
           </div>
 
           <form className="flex gap-2 w-full md:w-auto">

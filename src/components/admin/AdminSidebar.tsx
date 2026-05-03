@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, Ticket, Users, FileText, Settings, LogOut, RefreshCcw, Activity } from "lucide-react";
+import { LayoutDashboard, Ticket, Users, FileText, Settings, LogOut, Activity, BarChart, Bot, FileEdit, Building, PlaneTakeoff, ShieldCheck } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
 
 export default function AdminSidebar() {
@@ -14,37 +14,30 @@ export default function AdminSidebar() {
     {
       title: "OVERVIEW",
       items: [
-        { name: "แดชบอร์ดรวม (Dashboard)", href: "/admin", icon: LayoutDashboard },
-        { name: "รายงานวิเคราะห์ (Reports)", href: "/admin/reports", icon: Activity },
+        { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
+        { name: "Bookings", href: "/admin/bookings", icon: Ticket },
+        { name: "Operations", href: "/admin/operations", icon: PlaneTakeoff },
+        { name: "Finance", href: "/admin/finance", icon: FileText },
       ]
     },
     {
       title: "MANAGEMENT",
       items: [
-        { name: "ผู้ใช้งาน & สิทธิ์ (Users)", href: "/admin/users", icon: Users },
-        { name: "ตัวแทนจำหน่าย (Agents)", href: "/admin/agents", icon: Users },
+        { name: "CMS Content", href: "/admin/cms", icon: FileEdit },
+        { name: "Users & Permissions", href: "/admin/users", icon: ShieldCheck },
       ]
     },
     {
-      title: "OPERATIONS",
+      title: "AI & REPORTS",
       items: [
-        { name: "การจองทั้งหมด (Bookings)", href: "/admin/bookings", icon: Ticket },
-        { name: "การเงิน & เอกสาร (Finance)", href: "/admin/finance", icon: FileText },
-      ]
-    },
-    {
-      title: "CONTENT & AI",
-      items: [
-        { name: "จัดการเนื้อหา (CMS)", href: "/admin/cms", icon: FileText },
-        { name: "ศูนย์ควบคุม AI (AI Center)", href: "/admin/ai", icon: Activity },
+        { name: "AI Center", href: "/admin/ai", icon: Bot },
+        { name: "Reports Hub", href: "/admin/reports", icon: BarChart },
       ]
     },
     {
       title: "SYSTEM",
       items: [
-        { name: "Audit Logs", href: "/admin/audit-logs", icon: FileText },
-        { name: "Link Monitor", href: "/admin/link-monitor", icon: Activity },
-        { name: "ตั้งค่าระบบ (Settings)", href: "/admin/settings", icon: Settings },
+        { name: "Settings", href: "/admin/settings", icon: Settings },
       ]
     }
   ];

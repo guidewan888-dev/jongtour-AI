@@ -8,7 +8,12 @@ import {
   Search,
   Bell,
   MessageCircle,
-  PhoneCall
+  PhoneCall,
+  Calendar,
+  BarChart,
+  ClipboardList,
+  GitMerge,
+  Headset
 } from 'lucide-react';
 
 export const metadata = {
@@ -43,19 +48,24 @@ export default function SaleLayout({
           <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2 px-3">Overview</div>
           <nav className="space-y-1 mb-8">
             <NavItem href="/sale" icon={<LayoutDashboard size={18} />} label="Dashboard" />
+            <NavItem href="/sale/calendar" icon={<Calendar size={18} />} label="Calendar" />
             <NavItem href="/sale/tasks" icon={<CalendarCheck size={18} />} label="My Tasks" badge="3" />
+            <NavItem href="/sale/follow-ups" icon={<PhoneCall size={18} />} label="Follow-up" badge="5" />
           </nav>
 
-          <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2 px-3">Pipeline</div>
+          <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2 px-3">Pipeline & Deals</div>
           <nav className="space-y-1 mb-8">
-            <NavItem href="/sale/leads" icon={<Target size={18} />} label="Leads Pipeline" active />
+            <NavItem href="/sale/leads" icon={<Target size={18} />} label="Leads Kanban" active />
+            <NavItem href="/sale/pipeline" icon={<GitMerge size={18} />} label="Sales Pipeline" />
             <NavItem href="/sale/customers" icon={<Users size={18} />} label="Customers" />
+            <NavItem href="/sale/booking-requests" icon={<ClipboardList size={18} />} label="Booking Requests" />
           </nav>
 
-          <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2 px-3">Sales Tools</div>
+          <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2 px-3">Sales Tools & Reports</div>
           <nav className="space-y-1 mb-8">
             <NavItem href="/sale/tours" icon={<Search size={18} />} label="Find Tours" />
             <NavItem href="/sale/quotations" icon={<FileText size={18} />} label="Quotations" />
+            <NavItem href="/sale/reports" icon={<BarChart size={18} />} label="Sales Report" />
           </nav>
         </div>
 

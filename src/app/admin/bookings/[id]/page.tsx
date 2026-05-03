@@ -3,6 +3,7 @@ import { ChevronLeft, Calendar, Users, MapPin, CreditCard, Clock, FileText, Chec
 import { createClient } from "@supabase/supabase-js";
 import { notFound } from "next/navigation";
 import { updateBookingStatus } from "@/actions/admin-booking";
+import RpaBookingManager from "./RpaBookingManager";
 
 export const dynamic = 'force-dynamic';
 
@@ -20,7 +21,8 @@ export default async function BookingDetailsPage({ params }: { params: { id: str
       tour:tours(tourName),
       departure:departures(startDate, endDate),
       travelers:booking_travelers(*),
-      payments(*)
+      payments(*),
+      rpaSessions:wholesale_rpa_sessions(*)
     `)
     .eq("id", params.id)
     .single();
@@ -141,6 +143,15 @@ export default async function BookingDetailsPage({ params }: { params: { id: str
 
         {/* Sidebar Column */}
         <div className="space-y-6">
+          {/* RPA Control Panel */}
+          {booking.supplierId && (
+            <RpaBookingManager 
+              bookingId={booking.id} 
+              supplierId={booking.supplierId} 
+              currentSessions={booking.rpaSessions || []} 
+            />
+          )}
+
           {/* Customer Info */}
           <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
             <h3 className="font-bold text-gray-900 mb-4 border-b border-gray-100 pb-2">ข้อมูลผู้ติดต่อหลัก</h3>

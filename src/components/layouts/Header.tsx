@@ -5,7 +5,12 @@ import { usePathname } from "next/navigation";
 import { ChevronDown } from "lucide-react";
 import AuthButtons from "@/components/AuthButtons";
 
-export default function Header() {
+interface HeaderProps {
+  agentLogo?: string | null;
+  agentName?: string | null;
+}
+
+export default function Header({ agentLogo, agentName }: HeaderProps) {
   const pathname = usePathname();
 
   if (pathname === "/" || pathname.startsWith("/admin")) {
@@ -15,19 +20,25 @@ export default function Header() {
   return (
     <nav className="bg-white shadow-sm border-b border-gray-100 relative z-50">
       <div className="max-w-7xl mx-auto px-4 flex items-center justify-between h-20">
-        <Link href="/" className="text-3xl font-bold tracking-tight text-gray-800">
-          <span className="text-orange-500">Jong</span>tour AI
+        <Link href="/" className="flex items-center gap-2">
+          {agentLogo ? (
+            <img src={agentLogo} alt={agentName || "Agent Logo"} className="h-10 object-contain" />
+          ) : (
+            <span className="text-3xl font-bold tracking-tight text-gray-800">
+              <span className="text-[var(--brand-color,theme(colors.orange.500))]">Jong</span>tour AI
+            </span>
+          )}
         </Link>
 
         <div className="hidden md:flex items-center gap-4">
           
-          <Link href="/" className="px-2 lg:px-4 py-2 text-gray-600 hover:text-orange-500 font-medium transition-colors whitespace-nowrap">
+          <Link href="/" className="px-2 lg:px-4 py-2 text-gray-600 hover:text-[var(--brand-color,theme(colors.orange.500))] font-medium transition-colors whitespace-nowrap">
             หน้าแรก
           </Link>
 
           {/* Mega Menu Item */}
           <div className="group py-8">
-            <button className="flex items-center gap-1 px-2 lg:px-4 py-2 text-gray-600 group-hover:text-orange-500 font-medium transition-colors whitespace-nowrap">
+            <button className="flex items-center gap-1 px-2 lg:px-4 py-2 text-gray-600 group-hover:text-[var(--brand-color,theme(colors.orange.500))] font-medium transition-colors whitespace-nowrap">
               ทัวร์ต่างประเทศ
               <ChevronDown className="w-4 h-4 group-hover:rotate-180 transition-transform duration-300" />
             </button>

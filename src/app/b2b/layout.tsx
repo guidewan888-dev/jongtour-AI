@@ -11,7 +11,12 @@ import {
   Wallet,
   Settings,
   LogOut,
-  Bell
+  Bell,
+  Ticket,
+  BadgeDollarSign,
+  HelpCircle,
+  FileBadge,
+  Building2
 } from 'lucide-react';
 
 export default async function B2BLayout({
@@ -27,14 +32,17 @@ export default async function B2BLayout({
     redirect("/auth/login");
   }
 
-  // Fetch user role using email instead of ID because Prisma uses CUID while Supabase uses UUID
+  // Fetch user role and agent details
   const { data: dbUser } = await supabase
-    .from("User")
-    .select("*, company:Company(*)")
+    .from("users")
+    .select("*, role:roles(name), agent:agents(*)")
     .eq("email", user.email || "")
     .single();
 
-  if (!dbUser || (dbUser.role !== "AGENT" && dbUser.role !== "SUPPLIER" && dbUser.role !== "ADMIN")) {
+  const userRole = dbUser?.role?.name || "CUSTOMER";
+
+  // Check access: AGENT_OWNER, AGENT_STAFF, or ADMIN
+  if (userRole !== "AGENT_OWNER" && userRole !== "AGENT_STAFF" && userRole !== "SUPER_ADMIN" && userRole !== "ADMIN") {
     redirect("/auth/login?error=unauthorized");
   }
 
@@ -43,37 +51,49 @@ export default async function B2BLayout({
       {/* Sidebar */}
       <aside className="w-64 bg-slate-900 text-slate-300 flex flex-col hidden md:flex print:hidden">
         <div className="h-16 flex items-center px-6 border-b border-slate-800">
-          <span className="text-xl font-bold text-white tracking-tight">Jongtour B2B</span>
-          <span className="ml-2 px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-500/20 text-indigo-400 border border-indigo-500/30">PRO</span>
+          <Building2 className="text-orange-500 mr-2" size={24} />
+          <span className="text-xl font-bold text-white tracking-tight">Agent Portal</span>
         </div>
         
-        <div className="p-4 flex-1 overflow-y-auto">
-          <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2 px-3">Overview</div>
-          <nav className="space-y-1 mb-8">
+        <div className="p-4 flex-1 overflow-y-auto custom-scrollbar">
+          <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2 px-3">Overview</div>
+          <nav className="space-y-1 mb-6">
             <NavItem href="/b2b" icon={<LayoutDashboard size={18} />} label="Agent Dashboard" />
             <NavItem href="/b2b/bookings" icon={<Receipt size={18} />} label="Booking History" />
           </nav>
 
-          <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2 px-3">Sales & Products</div>
-          <nav className="space-y-1 mb-8">
-            <NavItem href="/b2b/tours" icon={<Package size={18} />} label="Search Tours (B2B)" />
+          <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2 px-3">Sales & Products</div>
+          <nav className="space-y-1 mb-6">
+            <NavItem href="/b2b/tours" icon={<Package size={18} />} label="Search Tours" />
             <NavItem href="/b2b/quotations" icon={<FileText size={18} />} label="My Quotations" />
+            <NavItem href="/b2b/vouchers" icon={<Ticket size={18} />} label="Vouchers" />
           </nav>
 
-          <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2 px-3">Management</div>
-          <nav className="space-y-1 mb-8">
-            <NavItem href="/b2b/finance" icon={<Wallet size={18} />} label="Finance & Credit" />
-            <NavItem href="/b2b/agents" icon={<Users size={18} />} label="Sub-agents" />
+          <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2 px-3">Management</div>
+          <nav className="space-y-1 mb-6">
+            <NavItem href="/b2b/finance" icon={<Wallet size={18} />} label="Credit Limit & Billing" />
+            <NavItem href="/b2b/invoices" icon={<FileBadge size={18} />} label="Invoices" />
+            {/* Show Sub-agents only to Owners or Admins */}
+            {(userRole === "AGENT_OWNER" || userRole === "SUPER_ADMIN") && (
+              <NavItem href="/b2b/agents" icon={<Users size={18} />} label="Sub-agents" />
+            )}
+          </nav>
+
+          <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2 px-3">Help & Support</div>
+          <nav className="space-y-1 mb-6">
+            <NavItem href="/b2b/support" icon={<HelpCircle size={18} />} label="Support Center" />
           </nav>
         </div>
 
         <div className="p-4 border-t border-slate-800">
           <nav className="space-y-1">
-            <NavItem href="/b2b/settings" icon={<Settings size={18} />} label="Settings" />
-            <button className="w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium hover:bg-slate-800 hover:text-white transition-colors text-slate-400">
-              <LogOut size={18} />
-              Sign Out
-            </button>
+            <NavItem href="/b2b/settings" icon={<Settings size={18} />} label="Agent Profile" />
+            <form action="/api/auth/signout" method="POST">
+              <button type="submit" className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-bold hover:bg-slate-800 hover:text-white transition-colors text-slate-400">
+                <LogOut size={18} />
+                Sign Out
+              </button>
+            </form>
           </nav>
         </div>
       </aside>
@@ -83,22 +103,26 @@ export default async function B2BLayout({
         {/* Topbar */}
         <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6 z-10 shrink-0 print:hidden">
           <div className="flex items-center gap-4">
-            <h1 className="text-xl font-semibold text-slate-800 hidden md:block">B2B Management Platform</h1>
-            {/* Mobile menu button could go here */}
+            <h1 className="text-xl font-bold text-slate-800 hidden md:block">{dbUser?.agent?.companyName || "Jongtour B2B"}</h1>
+            {dbUser?.agent?.tier && (
+              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-orange-100 text-orange-700 border border-orange-200 uppercase">
+                {dbUser.agent.tier}
+              </span>
+            )}
           </div>
           
           <div className="flex items-center gap-4">
-            <button className="p-2 rounded-full hover:bg-slate-100 relative text-slate-500">
+            <button className="p-2 rounded-full hover:bg-slate-100 relative text-slate-500 transition-colors">
               <Bell size={20} />
-              <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
+              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
             </button>
             <div className="flex items-center gap-3 pl-4 border-l border-slate-200">
-              <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-white font-bold text-sm">
-                {dbUser.name ? dbUser.name.charAt(0).toUpperCase() : 'U'}
+              <div className="w-8 h-8 rounded-full bg-slate-900 flex items-center justify-center text-white font-bold text-sm shadow-sm">
+                {dbUser.email ? dbUser.email.charAt(0).toUpperCase() : 'A'}
               </div>
               <div className="hidden sm:block">
-                <p className="text-sm font-medium text-slate-700 leading-none">{dbUser.name || "B2B User"}</p>
-                <p className="text-xs text-slate-500 mt-1">{dbUser.company?.name || dbUser.role}</p>
+                <p className="text-sm font-bold text-slate-700 leading-none">{dbUser.email}</p>
+                <p className="text-[10px] text-slate-500 mt-1 uppercase font-bold">{userRole}</p>
               </div>
             </div>
           </div>
@@ -116,10 +140,9 @@ export default async function B2BLayout({
 }
 
 function NavItem({ href, icon, label }: { href: string, icon: React.ReactNode, label: string }) {
-  // Simple NavItem for MVP without active state logic
   return (
-    <Link href={href} className="flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium hover:bg-slate-800 hover:text-white transition-colors">
-      <span className="text-slate-400">{icon}</span>
+    <Link href={href} className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-bold hover:bg-slate-800 hover:text-white transition-colors text-slate-400">
+      {icon}
       {label}
     </Link>
   );

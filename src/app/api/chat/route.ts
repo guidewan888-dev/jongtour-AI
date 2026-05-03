@@ -5,7 +5,7 @@ import { cookies } from "next/headers";
 import OpenAI from "openai";
 import { type NextRequest } from "next/server";
 import { calculateFitPrice } from "@/services/pricingEngine";
-import { getSystemPrompt } from "@/services/ai/prompts";
+import { getSystemPrompt, BOOKING_ASSISTANT_SYSTEM_PROMPT } from "@/services/ai/prompts";
 import { extractIntent } from "@/services/ai/intentExtractor";
 import { searchTours, formatTourSummary } from "@/services/ai/tourSearchService";
 import { runQualityChecker } from "@/services/ai/qualityChecker";
@@ -92,7 +92,7 @@ export async function POST(request: NextRequest) {
 
     // Prepare Messages History
     const messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
-      { role: "system", content: getSystemPrompt() + crmContext },
+      { role: "system", content: getSystemPrompt() + "\n\n" + BOOKING_ASSISTANT_SYSTEM_PROMPT + crmContext },
       ...(chatHistory.slice(-15).filter((m: any) => !(m.role === 'ai' && (m.content.includes("ไม่สามารถ") || m.content.includes("ขอโทษครับ")))).map((m: any) => {
         let content = m.content;
         if (m.role === 'ai' && m.tours && m.tours.length > 0) {
@@ -324,6 +324,33 @@ search_intent: ${JSON.stringify(intentExtracted)}
               role: "tool",
               tool_call_id: toolCall.id,
               content: JSON.stringify({ success: false, error: "ไม่สามารถดึงราคากลางได้ในขณะนี้ ให้เสนอราคาทัวร์ปกติไปก่อน" })
+            });
+          }
+        }
+        else if (toolCall.function.name === "prepare_rpa_booking") {
+          const args = JSON.parse(toolCall.function.arguments);
+          try {
+            const rpaRes = await fetch('http://localhost:4000/run/start', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ bookingId: args.bookingId, supplierId: args.supplierId })
+            });
+            const rpaData = await rpaRes.json();
+            
+            messages.push({
+              role: "tool",
+              tool_call_id: toolCall.id,
+              content: JSON.stringify({ 
+                success: true, 
+                message: "ระบบได้สั่งการให้ AI Bot ไปดำเนินการจองที่หน้าเว็บของ Wholesale แล้ว กรุณารอรับภาพ Screenshot และกด Approve ในหน้าจอ Admin RPA Dashboard" 
+              })
+            });
+          } catch (err) {
+            console.error("RPA Bot Service Error:", err);
+            messages.push({
+              role: "tool",
+              tool_call_id: toolCall.id,
+              content: JSON.stringify({ success: false, error: "ไม่สามารถเชื่อมต่อกับ RPA Bot Service ได้ กรุณาตรวจสอบว่า bot.jongtour.com ทำงานอยู่หรือไม่" })
             });
           }
         }

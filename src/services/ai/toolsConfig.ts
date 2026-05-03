@@ -67,6 +67,21 @@ export const tools: OpenAI.Chat.Completions.ChatCompletionTool[] = [
   {
     type: "function",
     function: {
+      name: "prepare_rpa_booking",
+      description: "Prepare an RPA booking session. Use this ONLY when an admin asks to start the automated booking process for a specific tour departure.",
+      parameters: {
+        type: "object",
+        properties: {
+          bookingId: { type: "string", description: "The ID of the booking to automate" },
+          supplierId: { type: "string", description: "The ID of the supplier" }
+        },
+        required: ["bookingId", "supplierId"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
       name: "get_departure_dates",
       description: "Get all available departure dates for a tour.",
       parameters: {

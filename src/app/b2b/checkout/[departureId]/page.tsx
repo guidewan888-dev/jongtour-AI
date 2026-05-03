@@ -1,4 +1,3 @@
-import { prisma } from '@/lib/prisma';
 import { createClient } from '@/utils/supabase/server';
 import { cookies } from 'next/headers';
 import { notFound, redirect } from 'next/navigation';
@@ -13,29 +12,35 @@ export default async function B2BCheckoutPage({ params }: { params: { departureI
 
   if (!user) redirect('/auth/login');
 
-  const dbUser = await prisma.user.findUnique({
-    where: { email: user.email || "" },
-    include: { agent: true }
-  });
+  const { data: dbUser } = await supabase
+    .from('users')
+    .select('*, agent:agents(*)')
+    .eq('email', user.email || '')
+    .single();
 
   if (!dbUser?.agent) {
     redirect('/b2b');
   }
   const agent = dbUser.agent;
 
-  const departure = await prisma.departure.findUnique({
-    where: { id: params.departureId },
-    include: {
-      tour: true,
-      prices: true
-    }
-  });
+  const { data: departure } = await supabase
+    .from('departures')
+    .select('*, tour:tours(*)')
+    .eq('id', params.departureId)
+    .single();
+
+  // Fetch prices manually
+  const { data: prices } = await supabase
+    .from('departure_prices')
+    .select('*')
+    .eq('departureId', params.departureId);
 
   if (!departure || departure.remainingSeats <= 0) {
     notFound(); // Or redirect to error page
   }
 
-  const adultPrice = departure.prices.find(p => p.paxType === 'ADULT')?.price || 0;
+  // Find adult price from related prices table or fallback
+  const adultPrice = prices?.find(p => p.paxType === 'ADULT')?.price || departure.adultPrice || 0;
   
   // Calculate B2B Net Price
   const discountAmount = adultPrice * (agent.discountRate / 100);

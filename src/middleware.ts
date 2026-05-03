@@ -79,6 +79,8 @@ export async function middleware(req: NextRequest) {
     }
   }
 
+  response.headers.set('x-agent-subdomain', subdomain || '');
+
   const isAdminSubdomain = subdomain === 'admin';
   const isB2bAdminSubdomain = subdomain === 'b2badmin';
   const isSupplierSubdomain = subdomain === 'supplier';

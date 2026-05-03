@@ -12,16 +12,16 @@ export default async function AdminDashboard() {
 
   // ใช้ Supabase JS แทน Prisma เพื่อหลีกเลี่ยง Vercel IPv6 Panic
   const { data: bookingsData, error } = await supabase
-    .from('Booking')
+    .from('bookings')
     .select(`
       *,
-      user:User(*),
-      departure:TourDeparture(
+      customer:customers(*),
+      departure:departures(
         *,
-        tour:Tour(*)
+        tour:tours(*)
       ),
-      travelers:Traveler(*),
-      payments:Payment(*)
+      travelers:booking_travelers(*),
+      payments:payments(*)
     `)
     .order('createdAt', { ascending: false });
 
@@ -31,9 +31,9 @@ export default async function AdminDashboard() {
 
   // Fetch real sync logs
   const { data: syncLogsData } = await supabase
-    .from('ApiSyncLog')
+    .from('supplier_sync_logs')
     .select('*')
-    .order('createdAt', { ascending: false })
+    .order('startedAt', { ascending: false })
     .limit(5);
 
   const liveBookings = bookingsData || [];
@@ -81,8 +81,8 @@ export default async function AdminDashboard() {
 
       return {
         id: b.id,
-        customer: b.user?.name || b.user?.email || "Unknown",
-        tour: b.departure?.tour?.title || "Unknown Tour",
+        customer: b.customer ? `${b.customer.firstName} ${b.customer.lastName}` : "Unknown",
+        tour: b.departure?.tour?.tourName || "Unknown Tour",
         amount: `${(b.totalPrice || 0).toLocaleString()} ฿`,
         statusText,
         color,
@@ -131,7 +131,7 @@ export default async function AdminDashboard() {
         <StatCard 
           title="สถานะ API Sync ล่าสุด" 
           value={syncLogsData && syncLogsData.length > 0 ? (syncLogsData[0].status === 'SUCCESS' ? 'Success' : syncLogsData[0].status === 'RUNNING' ? 'Running' : 'Failed') : "No Data"} 
-          subtitle={syncLogsData && syncLogsData.length > 0 ? `ซิงค์ข้อมูลล่าสุดเมื่อ ${new Date(syncLogsData[0].createdAt).toLocaleTimeString('th-TH', { timeZone: 'Asia/Bangkok' })} น.` : "ยังไม่มีข้อมูลซิงค์"} 
+          subtitle={syncLogsData && syncLogsData.length > 0 ? `ซิงค์ข้อมูลล่าสุดเมื่อ ${new Date(syncLogsData[0].startedAt).toLocaleTimeString('th-TH', { timeZone: 'Asia/Bangkok' })} น.` : "ยังไม่มีข้อมูลซิงค์"} 
           icon={RefreshCcw} 
           color={syncLogsData && syncLogsData.length > 0 ? (syncLogsData[0].status === 'SUCCESS' ? "bg-emerald-500" : syncLogsData[0].status === 'RUNNING' ? "bg-blue-500" : "bg-red-500") : "bg-gray-500"} 
         />
