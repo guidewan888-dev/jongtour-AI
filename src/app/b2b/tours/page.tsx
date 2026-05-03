@@ -121,9 +121,14 @@ export default async function TourManagementPage() {
                               ว่าง {dep.remainingSeats} ที่
                             </span>
                           </div>
-                          <Link href={`/b2b/checkout/${dep.id}`} className={`block w-full text-center py-1.5 rounded text-xs font-bold transition-colors ${dep.remainingSeats > 0 ? 'bg-indigo-600 text-white hover:bg-indigo-700' : 'bg-slate-200 text-slate-500 pointer-events-none'}`}>
-                            {dep.remainingSeats > 0 ? 'จองทัวร์นี้' : 'เต็มแล้ว'}
-                          </Link>
+                          <div className="flex gap-2">
+                            <Link href={`/b2b/checkout/${dep.id}`} className={`block w-full text-center py-1.5 rounded text-xs font-bold transition-colors ${dep.remainingSeats > 0 ? 'bg-indigo-600 text-white hover:bg-indigo-700' : 'bg-slate-200 text-slate-500 pointer-events-none'}`}>
+                              {dep.remainingSeats > 0 ? 'จองทัวร์' : 'เต็มแล้ว'}
+                            </Link>
+                            <Link href={`/b2b/quotations/create/${dep.id}`} className={`block w-full text-center py-1.5 rounded text-xs font-bold transition-colors bg-white text-indigo-600 border border-indigo-200 hover:bg-indigo-50`}>
+                              เสนอราคา
+                            </Link>
+                          </div>
                         </div>
                       ))}
                     </div>
