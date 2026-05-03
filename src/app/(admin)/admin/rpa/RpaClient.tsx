@@ -20,7 +20,8 @@ export default function RpaClient({ initialSessions }: { initialSessions: any[] 
   const handleApprove = async (sessionId: string) => {
     setLoadingId(sessionId);
     try {
-      const res = await fetch("http://localhost:4000/run/submit", {
+      const botUrl = process.env.NEXT_PUBLIC_BOT_SERVICE_URL || '/api/admin/rpa';
+      const res = await fetch(`${botUrl}/run/submit`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ sessionId })

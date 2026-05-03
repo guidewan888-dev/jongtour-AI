@@ -143,6 +143,27 @@ export default async function BookingDetailsPage({ params }: { params: { id: str
 
         {/* Sidebar Column */}
         <div className="space-y-6">
+          {/* Wholesale Info */}
+          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
+            <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
+               <Plane className="w-5 h-5 text-orange-500" /> ข้อมูลผู้จัด (Supplier)
+            </h3>
+            <div className="space-y-3 text-sm">
+               <p className="flex justify-between"><span className="text-gray-500">ประเภท:</span> <span className="font-bold text-gray-800">{booking.wholesaleType || "ไม่ระบุ"}</span></p>
+               <p className="flex justify-between"><span className="text-gray-500">Supplier ID:</span> <span className="font-mono text-gray-800">{booking.supplierId || "N/A"}</span></p>
+               {booking.supplierId && (
+                 <a 
+                   href={`/wholesale/${booking.supplierId}`}
+                   target="_blank" 
+                   rel="noreferrer"
+                   className="mt-4 w-full bg-orange-50 hover:bg-orange-100 text-orange-600 font-bold py-2 rounded-xl flex items-center justify-center gap-2 transition-colors border border-orange-200"
+                 >
+                   เปิดดูรายการทัวร์ต้นทาง
+                 </a>
+               )}
+            </div>
+          </div>
+
           {/* RPA Control Panel */}
           {booking.supplierId && (
             <RpaBookingManager 
@@ -195,6 +216,42 @@ export default async function BookingDetailsPage({ params }: { params: { id: str
                 </div>
               ))}
             </div>
+
+            {balance > 0 && (
+              <form action={async (formData) => {
+                "use server";
+                const amount = parseFloat(formData.get("amount") as string);
+                const { createClient } = require("@supabase/supabase-js");
+                const sb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
+                await sb.from("payments").insert({
+                  bookingId: booking.id,
+                  amount: amount,
+                  status: "COMPLETED",
+                  paymentMethod: "BANK_TRANSFER",
+                  paymentRef: "MANUAL-" + Date.now()
+                });
+                const { revalidatePath } = require("next/cache");
+                revalidatePath(`/admin/bookings/${booking.id}`);
+              }} className="mt-4 border-t border-gray-100 pt-4 flex gap-2">
+                <input type="number" name="amount" defaultValue={balance} className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-blue-500" />
+                <button type="submit" className="bg-emerald-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-emerald-700 whitespace-nowrap">
+                  แจ้งชำระ (Manual)
+                </button>
+              </form>
+            )}
+
+            {booking.status === 'COMPLETED' && (
+              <div className="mt-4 pt-4 border-t border-gray-100">
+                <a 
+                  href={`/api/admin/bookings/${booking.id}/voucher`} 
+                  target="_blank"
+                  className="w-full flex items-center justify-center gap-2 bg-purple-100 text-purple-700 hover:bg-purple-200 px-4 py-3 rounded-xl font-bold transition-colors"
+                >
+                  <FileText className="w-5 h-5" />
+                  สร้าง Voucher / ตั๋วเดินทาง
+                </a>
+              </div>
+            )}
           </div>
         </div>
       </div>

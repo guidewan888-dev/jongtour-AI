@@ -88,7 +88,19 @@ export default function BookingWidget({ lowestPrice, tourId, departures }: { low
           </div>
 
           <div>
-            <a href="https://line.me/ti/p/~@jongtour" target="_blank" rel="noreferrer" className="flex items-center justify-center gap-2 w-full bg-[#00B900] text-white py-3 rounded-md font-bold hover:bg-[#009900] transition-colors">
+            <a 
+              href="https://line.me/ti/p/~@jongtour" 
+              target="_blank" 
+              rel="noreferrer" 
+              onClick={() => {
+                fetch('/api/leads/track', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ source: 'TOUR_WIDGET', tourId })
+                }).catch(e => console.error(e));
+              }}
+              className="flex items-center justify-center gap-2 w-full bg-[#00B900] text-white py-3 rounded-md font-bold hover:bg-[#009900] transition-colors"
+            >
               <MessageCircle className="w-5 h-5" />
               สอบถามทาง LINE
             </a>

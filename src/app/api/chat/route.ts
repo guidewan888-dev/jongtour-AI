@@ -330,7 +330,8 @@ search_intent: ${JSON.stringify(intentExtracted)}
         else if (toolCall.function.name === "prepare_rpa_booking") {
           const args = JSON.parse(toolCall.function.arguments);
           try {
-            const rpaRes = await fetch('http://localhost:4000/run/start', {
+            const botUrl = process.env.BOT_SERVICE_URL || 'https://bot.jongtour.com';
+            const rpaRes = await fetch(`${botUrl}/run/start`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ bookingId: args.bookingId, supplierId: args.supplierId })

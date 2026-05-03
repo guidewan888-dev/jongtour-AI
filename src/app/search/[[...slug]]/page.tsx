@@ -4,8 +4,16 @@ import { Map, Calendar, Users, Star, Filter } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
-export default async function SearchPage({ params }: { params: { slug?: string[] } }) {
+export default async function SearchPage({ 
+  params,
+  searchParams 
+}: { 
+  params: { slug?: string[] },
+  searchParams: { [key: string]: string | string[] | undefined }
+}) {
   const slug = params?.slug || [];
+  const supplierId = typeof searchParams?.supplier_id === 'string' ? searchParams.supplier_id : undefined;
+  
   let destinationFilter = undefined;
 
   if (slug.includes("japan") || slug.includes("thailand")) {
@@ -32,7 +40,11 @@ export default async function SearchPage({ params }: { params: { slug?: string[]
     `)
     .eq('status', 'PUBLISHED')
     .order('createdAt', { ascending: false })
-    .limit(12);
+    .limit(30);
+
+  if (supplierId) {
+    query = query.eq('supplierId', supplierId);
+  }
 
   const { data, error } = await query;
   let toursData = data || [];
