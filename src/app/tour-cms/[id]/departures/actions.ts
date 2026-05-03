@@ -29,18 +29,42 @@ export async function createDeparture(tourId: string, formData: FormData) {
   const startDate = new Date(startDateStr);
   const endDate = new Date(endDateStr);
 
-  await prisma.tourDeparture.create({
+  const tour = await prisma.tour.findUnique({
+    where: { id: tourId },
+    select: { supplierId: true }
+  });
+
+  if (!tour) {
+    throw new Error("Tour not found");
+  }
+
+  const departure = await prisma.departure.create({
     data: {
       tourId,
+      supplierId: tour.supplierId,
       startDate,
       endDate,
-      price,
-      netPrice,
-      childPrice,
-      singleRoomPrice,
-      depositPrice,
       totalSeats,
-      availableSeats: totalSeats // Initially all seats are available
+      remainingSeats: totalSeats,
+      prices: {
+        create: [
+          {
+            paxType: "ADULT",
+            sellingPrice: price,
+            netPrice: netPrice,
+          },
+          ...(childPrice ? [{
+            paxType: "CHILD",
+            sellingPrice: childPrice,
+            netPrice: null,
+          }] : []),
+          ...(singleRoomPrice ? [{
+            paxType: "SINGLE_SUPP",
+            sellingPrice: singleRoomPrice,
+            netPrice: null,
+          }] : []),
+        ]
+      }
     }
   });
 
@@ -58,7 +82,7 @@ export async function deleteDeparture(departureId: string, tourId: string) {
     throw new Error("Cannot delete departure because it already has bookings.");
   }
 
-  await prisma.tourDeparture.delete({
+  await prisma.departure.delete({
     where: { id: departureId }
   });
 

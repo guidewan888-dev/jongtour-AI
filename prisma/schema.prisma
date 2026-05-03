@@ -3,175 +3,559 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
 }
 
-model Company {
-  id          String      @id @default(cuid())
-  name        String
-  type        CompanyType @default(AGENT)
-  creditLimit Float       @default(0)
-  balance     Float       @default(0)
-  subdomain   String?     @unique
-  logoUrl     String?
-  themeColor  String?
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
+// 1. suppliers
+model Supplier {
+  id            String   @id @default(cuid())
+  canonicalName String   @unique
+  displayName   String
+  status        String   @default("ACTIVE") // ACTIVE, INACTIVE, MAINTENANCE
+  bookingMethod String   @default("API") // API, EMAIL, PORTAL
+  syncFrequency String   @default("HOURLY") // HOURLY, DAILY, MANUAL
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
-  users       User[]
-  tours       Tour[]      @relation("SupplierTours")
-  bookings    Booking[]   @relation("AgentBookings")
+  aliases        SupplierAlias[]
+  apiCredentials SupplierApiCredential?
+  syncLogs       SupplierSyncLog[]
+  rawSources     TourRawSource[]
+  tours          Tour[]
+  departures     Departure[]
+  bookings       Booking[]
+  users          User[]
+
+  @@map("suppliers")
 }
 
-enum CompanyType {
-  ADMIN
-  SUPPLIER
-  AGENT
+// 2. supplier_aliases
+model SupplierAlias {
+  id              String   @id @default(cuid())
+  supplierId      String
+  aliasName       String
+  normalizedAlias String   @unique
+  createdAt       DateTime @default(now())
+
+  supplier Supplier @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+
+  @@map("supplier_aliases")
 }
 
-model User {
+// 3. supplier_api_credentials
+model SupplierApiCredential {
+  id              String    @id @default(cuid())
+  supplierId      String    @unique
+  apiBaseUrl      String
+  authType        String    @default("BEARER") // BEARER, BASIC, OAUTH2, API_KEY
+  encryptedApiKey String?
+  encryptedSecret String?
+  tokenExpiredAt  DateTime?
+  status          String    @default("ACTIVE")
+
+  supplier Supplier @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+
+  @@map("supplier_api_credentials")
+}
+
+// 4. supplier_sync_logs
+model SupplierSyncLog {
+  id             String    @id @default(cuid())
+  supplierId     String
+  syncType       String // FULL, INCREMENTAL, PRICE, AVAILABILITY
+  status         String // RUNNING, SUCCESS, FAILED
+  startedAt      DateTime  @default(now())
+  finishedAt     DateTime?
+  totalRecords   Int       @default(0)
+  successRecords Int       @default(0)
+  failedRecords  Int       @default(0)
+  errorMessage   String?   @db.Text
+
+  supplier Supplier @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+
+  @@map("supplier_sync_logs")
+}
+
+// 5. tour_raw_sources
+model TourRawSource {
+  id             String   @id @default(cuid())
+  supplierId     String
+  externalTourId String
+  rawPayload     Json
+  rawHash        String
+  sourceType     String // API, CSV, SCRAPE
+  syncedAt       DateTime @default(now())
+
+  supplier Supplier @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+
+  @@unique([supplierId, externalTourId])
+  @@map("tour_raw_sources")
+}
+
+// 6. tours
+model Tour {
+  id             String    @id @default(cuid())
+  supplierId     String
+  externalTourId String
+  tourCode       String    @unique
+  tourName       String
+  slug           String    @unique
+  tourType       String    @default("GROUP") // GROUP, FIT, PRIVATE
+  durationDays   Int
+  durationNights Int
+  status         String    @default("DRAFT") // DRAFT, PUBLISHED, ARCHIVED
+  sourceUrl      String?
+  bookingUrl     String?
+  lastSyncedAt   DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  supplier     Supplier          @relation(fields: [supplierId], references: [id], onDelete: Restrict)
+  destinations TourDestination[]
+  images       TourImage[]
+  itineraries  Itinerary[]
+  meals        TourMeal[]
+  included     TourIncluded[]
+  excluded     TourExcluded[]
+  policies     TourPolicy[]
+  departures   Departure[]
+  bookings     Booking[]
+
+  @@unique([supplierId, externalTourId])
+  @@map("tours")
+}
+
+// 7. tour_destinations
+model TourDestination {
   id        String   @id @default(cuid())
-  email     String   @unique
-  password  String
-  role      Role     @default(CUSTOMER)
-  name      String?
-  phone     String?
-  companyId String?
+  tourId    String
+  country   String
+  city      String?
+  createdAt DateTime @default(now())
+
+  tour Tour @relation(fields: [tourId], references: [id], onDelete: Cascade)
+
+  @@map("tour_destinations")
+}
+
+// 8. tour_images
+model TourImage {
+  id        String   @id @default(cuid())
+  tourId    String
+  imageUrl  String
+  isCover   Boolean  @default(false)
+  altText   String?
+  createdAt DateTime @default(now())
+
+  tour Tour @relation(fields: [tourId], references: [id], onDelete: Cascade)
+
+  @@map("tour_images")
+}
+
+// 9. itineraries
+model Itinerary {
+  id          String   @id @default(cuid())
+  tourId      String
+  dayNumber   Int
+  title       String
+  description String   @db.Text
+  createdAt   DateTime @default(now())
+
+  tour Tour @relation(fields: [tourId], references: [id], onDelete: Cascade)
+
+  @@map("itineraries")
+}
+
+// 10. tour_meals
+model TourMeal {
+  id        String   @id @default(cuid())
+  tourId    String
+  dayNumber Int
+  mealType  String // BREAKFAST, LUNCH, DINNER
+  details   String?
+  createdAt DateTime @default(now())
+
+  tour Tour @relation(fields: [tourId], references: [id], onDelete: Cascade)
+
+  @@map("tour_meals")
+}
+
+// 11. tour_included
+model TourIncluded {
+  id          String   @id @default(cuid())
+  tourId      String
+  description String
+  createdAt   DateTime @default(now())
+
+  tour Tour @relation(fields: [tourId], references: [id], onDelete: Cascade)
+
+  @@map("tour_included")
+}
+
+// 12. tour_excluded
+model TourExcluded {
+  id          String   @id @default(cuid())
+  tourId      String
+  description String
+  createdAt   DateTime @default(now())
+
+  tour Tour @relation(fields: [tourId], references: [id], onDelete: Cascade)
+
+  @@map("tour_excluded")
+}
+
+// 13. tour_policies
+model TourPolicy {
+  id          String   @id @default(cuid())
+  tourId      String
+  policyType  String // CANCELLATION, REFUND, VISA
+  description String   @db.Text
+  createdAt   DateTime @default(now())
+
+  tour Tour @relation(fields: [tourId], references: [id], onDelete: Cascade)
+
+  @@map("tour_policies")
+}
+
+// 14. departures
+model Departure {
+  id                  String   @id @default(cuid())
+  tourId              String
+  supplierId          String
+  externalDepartureId String?
+  startDate           DateTime
+  endDate             DateTime
+  totalSeats          Int      @default(0)
+  remainingSeats      Int      @default(0)
+  status              String   @default("AVAILABLE") // AVAILABLE, FULL, CANCELLED, ON_REQUEST
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  tour             Tour              @relation(fields: [tourId], references: [id], onDelete: Cascade)
+  supplier         Supplier          @relation(fields: [supplierId], references: [id], onDelete: Restrict)
+  availabilityLogs AvailabilityLog[]
+  prices           Price[]
+  bookings         Booking[]
+
+  @@unique([tourId, externalDepartureId])
+  @@map("departures")
+}
+
+// 15. availability_logs
+model AvailabilityLog {
+  id            String   @id @default(cuid())
+  departureId   String
+  previousSeats Int
+  newSeats      Int
+  changedAt     DateTime @default(now())
+  reason        String?
+
+  departure Departure @relation(fields: [departureId], references: [id], onDelete: Cascade)
+
+  @@map("availability_logs")
+}
+
+// 16. prices
+model Price {
+  id           String   @id @default(cuid())
+  departureId  String
+  paxType      String   @default("ADULT") // ADULT, CHILD, INFANT, SINGLE_SUPP
+  sellingPrice Float
+  netPrice     Float?
+  currency     String   @default("THB")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  departure Departure @relation(fields: [departureId], references: [id], onDelete: Cascade)
+
+  @@map("prices")
+}
+
+// 17. price_snapshots
+model PriceSnapshot {
+  id           String   @id @default(cuid())
+  bookingId    String
+  paxType      String
+  sellingPrice Float
+  netPrice     Float?
+  currency     String   @default("THB")
+  createdAt    DateTime @default(now())
+
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@map("price_snapshots")
+}
+
+// 18. customers
+model Customer {
+  id        String   @id @default(cuid())
+  userId    String?  @unique // Link to users table if registered
+  firstName String
+  lastName  String
+  email     String
+  phone     String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  company   Company? @relation(fields: [companyId], references: [id])
-  bookings  Booking[]
+  user     User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+  bookings Booking[]
+
+  @@map("customers")
 }
 
-enum Role {
-  CUSTOMER
-  ADMIN
-  SALES
-  OPS
-  SUPPLIER
-  AGENT
+// 19. agents
+model Agent {
+  id          String   @id @default(cuid())
+  companyName String
+  taxId       String?
+  contactName String
+  email       String   @unique
+  phone       String
+  creditLimit Float    @default(0)
+  balance     Float    @default(0)
+  status      String   @default("ACTIVE")
+  subdomain   String?  @unique
+  logoUrl     String?
+  themeColor  String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  users    User[]
+  bookings Booking[]
+
+  @@map("agents")
 }
 
-model Tour {
-  id             String          @id @default(cuid())
-  source         TourSource      @default(MANUAL)
-  providerId     String?         // ID จาก API (เช่น Zego, Go365)
-  supplierId     String?
-  title          String
-  destination    String
-  durationDays   Int
-  price          Float
-  imageUrl       String?
-  description    String?
-  airlineCode    String?         // IATA code สายการบิน (เช่น TG, XJ)
-  
-  // New API fields
-  pdfUrl         String?         // URL for PDF download
-  itinerary      Json?           // Array of day-by-day itinerary
-  flights        Json?           // Array of flight details
-  embedding      Unsupported("vector(1536)")? // OpenAI Embeddings for Vector Search
-  
-  createdAt      DateTime        @default(now())
-  updatedAt      DateTime        @updatedAt
-
-  supplier       Company?        @relation("SupplierTours", fields: [supplierId], references: [id])
-  departures     TourDeparture[]
-}
-
-enum TourSource {
-  MANUAL
-  API_ZEGO
-  API_GO365
-  CHECKIN
-  TOUR_FACTORY
-}
-
-model TourDeparture {
-  id             String    @id @default(cuid())
-  tourId         String
-  startDate      DateTime
-  endDate        DateTime
-  price          Float
-  netPrice       Float?
-  childPrice     Float?
-  singleRoomPrice Float?
-  depositPrice   Float?
-  availableSeats Int
-  totalSeats     Int
-  
-  tour           Tour      @relation(fields: [tourId], references: [id])
-  bookings       Booking[]
-}
-
+// 20. bookings
 model Booking {
-  id            String        @id @default(cuid())
-  userId        String
+  id            String   @id @default(cuid())
+  bookingRef    String   @unique
+  supplierId    String
+  tourId        String
   departureId   String
+  customerId    String
   agentId       String?
-  status        BookingStatus @default(PENDING)
+  status        String   @default("PENDING") // PENDING, CONFIRMED, CANCELLED
   totalPrice    Float
-  contactName   String?
-  contactPhone  String?
-  pax           Int           @default(1)
-  adults        Int           @default(1)
-  children      Int           @default(0)
-  singleRooms   Int           @default(0)
-  paymentType   String        @default("full")
-  depositAmount Float?
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
+  totalNetPrice Float?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
-  user          User          @relation(fields: [userId], references: [id])
-  departure     TourDeparture @relation(fields: [departureId], references: [id])
-  agent         Company?      @relation("AgentBookings", fields: [agentId], references: [id])
-  travelers     Traveler[]
-  payments      Payment[]
+  supplier  Supplier  @relation(fields: [supplierId], references: [id], onDelete: Restrict)
+  tour      Tour      @relation(fields: [tourId], references: [id], onDelete: Restrict)
+  departure Departure @relation(fields: [departureId], references: [id], onDelete: Restrict)
+  customer  Customer  @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  agent     Agent?    @relation(fields: [agentId], references: [id], onDelete: SetNull)
+
+  travelers      BookingTraveler[]
+  items          BookingItem[]
+  externalRefs   BookingExternalRef?
+  payments       Payment[]
+  invoices       Invoice[]
+  vouchers       Voucher[]
+  priceSnapshots PriceSnapshot[]
+
+  @@map("bookings")
 }
 
-enum BookingStatus {
-  PENDING
-  AWAITING_CONFIRMATION
-  DEPOSIT_PAID
-  FULL_PAID
-  CANCELLED
+// 21. booking_travelers
+model BookingTraveler {
+  id         String    @id @default(cuid())
+  bookingId  String
+  paxType    String    @default("ADULT") // ADULT, CHILD, INFANT
+  title      String?
+  firstName  String
+  lastName   String
+  passportNo String?
+  dob        DateTime?
+  createdAt  DateTime  @default(now())
+
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@map("booking_travelers")
 }
 
-model Traveler {
-  id              String   @id @default(cuid())
-  bookingId       String
-  name            String
-  passportNo      String?
-  dob             DateTime?
-  passportFileUrl String?
-  visaFileUrl     String?
-
-  booking     Booking  @relation(fields: [bookingId], references: [id])
-}
-
-model Payment {
-  id          String        @id @default(cuid())
+// 22. booking_items
+model BookingItem {
+  id          String   @id @default(cuid())
   bookingId   String
-  amount      Float
-  slipUrl     String?
-  status      PaymentStatus @default(PENDING)
-  type        PaymentType   @default(FULL)
-  createdAt   DateTime      @default(now())
+  itemType    String // TOUR, EXTRA_BED, VISA, INSURANCE
+  description String
+  quantity    Int
+  unitPrice   Float
+  totalPrice  Float
+  createdAt   DateTime @default(now())
 
-  booking     Booking       @relation(fields: [bookingId], references: [id])
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@map("booking_items")
 }
 
-enum PaymentStatus {
-  PENDING
-  APPROVED
-  REJECTED
+// 23. booking_external_refs
+model BookingExternalRef {
+  id                String   @id @default(cuid())
+  bookingId         String   @unique
+  externalBookingId String
+  status            String // CONFIRMED_BY_SUPPLIER, REJECTED
+  rawResponse       Json?
+  createdAt         DateTime @default(now())
+
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@map("booking_external_refs")
 }
 
-enum PaymentType {
-  DEPOSIT
-  FULL
+// 24. payments
+model Payment {
+  id            String    @id @default(cuid())
+  bookingId     String
+  paymentRef    String    @unique
+  amount        Float
+  paymentMethod String // CREDIT_CARD, BANK_TRANSFER, PROMPT_PAY
+  status        String    @default("PENDING") // PENDING, COMPLETED, FAILED, REFUNDED
+  paidAt        DateTime?
+  createdAt     DateTime  @default(now())
+
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@map("payments")
+}
+
+// 25. invoices
+model Invoice {
+  id          String   @id @default(cuid())
+  bookingId   String
+  invoiceNo   String   @unique
+  issueDate   DateTime @default(now())
+  dueDate     DateTime
+  totalAmount Float
+  status      String   @default("UNPAID") // UNPAID, PARTIAL, PAID, VOID
+  createdAt   DateTime @default(now())
+
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@map("invoices")
+}
+
+// 26. vouchers
+model Voucher {
+  id        String   @id @default(cuid())
+  bookingId String
+  voucherNo String   @unique
+  issueDate DateTime @default(now())
+  pdfUrl    String?
+  status    String   @default("ACTIVE") // ACTIVE, USED, REVOKED
+  createdAt DateTime @default(now())
+
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@map("vouchers")
+}
+
+// 27. ai_conversations
+model AiConversation {
+  id        String   @id @default(cuid())
+  userId    String? // Can be null for anonymous guests
+  sessionId String   @unique
+  status    String   @default("ACTIVE") // ACTIVE, CLOSED
+  summary   String?  @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@map("ai_conversations")
+}
+
+// 28. ai_search_logs
+model AiSearchLog {
+  id            String   @id @default(cuid())
+  sessionId     String
+  queryText     String
+  extractedJson Json?
+  resultCount   Int      @default(0)
+  createdAt     DateTime @default(now())
+
+  @@map("ai_search_logs")
+}
+
+// 29. users
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  roleId       String
+  agentId      String?
+  supplierId   String?
+  status       String   @default("ACTIVE")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  role          Role             @relation(fields: [roleId], references: [id], onDelete: Restrict)
+  agent         Agent?           @relation(fields: [agentId], references: [id], onDelete: SetNull)
+  supplier      Supplier?        @relation(fields: [supplierId], references: [id], onDelete: SetNull)
+  customer      Customer?
+  conversations AiConversation[]
+  auditLogs     AuditLog[]
+
+  @@map("users")
+}
+
+// 30. roles
+model Role {
+  id          String   @id @default(cuid())
+  name        String   @unique // ADMIN, AGENT_ADMIN, AGENT_USER, CUSTOMER
+  description String?
+  createdAt   DateTime @default(now())
+
+  users       User[]
+  permissions Permission[]
+
+  @@map("roles")
+}
+
+// 31. permissions
+model Permission {
+  id        String   @id @default(cuid())
+  roleId    String
+  action    String // e.g., create:booking, read:tour
+  resource  String // e.g., bookings, tours
+  createdAt DateTime @default(now())
+
+  role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@unique([roleId, action, resource])
+  @@map("permissions")
+}
+
+// 32. audit_logs
+model AuditLog {
+  id         String   @id @default(cuid())
+  userId     String?
+  action     String // CREATE, UPDATE, DELETE
+  resource   String // bookings, prices, availability
+  resourceId String
+  oldValues  Json?
+  newValues  Json?
+  createdAt  DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@map("audit_logs")
+}
+
+// 33. settings
+model Setting {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  value       String   @db.Text
+  type        String   @default("STRING") // STRING, JSON, BOOLEAN, NUMBER
+  description String?
+  updatedAt   DateTime @updatedAt
+
+  @@map("settings")
 }
 
 model ApiSyncLog {
@@ -183,29 +567,6 @@ model ApiSyncLog {
   recordsUpdated Int     @default(0)
   errorMessage  String?
   createdAt     DateTime @default(now())
-}
-
-model SupplierApiCredential {
-  id          String   @id @default(cuid())
-  supplierId  String   @unique
-  baseUrl     String
-  apiKey      String   // Encrypted
-  apiSecret   String?  // Encrypted
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-}
-
-model TourRawData {
-  id             String   @id @default(cuid())
-  externalTourId String
-  supplierId     String
-  rawPayload     Json     // ข้อมูลดิบจาก Supplier
-  syncStatus     String   @default("PENDING") // 'PENDING', 'PROCESSED', 'FAILED'
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-  
-  @@unique([supplierId, externalTourId])
 }
 
 model LineChatSession {

@@ -19,60 +19,33 @@ export default async function B2BDashboardPage() {
   if (user) {
     dbUser = await prisma.user.findUnique({
       where: { email: user.email || "" },
-      include: { company: true }
+      include: { agent: true }
     });
     
-    if (dbUser?.company) {
-      company = dbUser.company;
-      if (company.type === 'SUPPLIER') {
-        tourCount = await prisma.tour.count({
-          where: { supplierId: company.id }
-        });
-        
-        // Supplier sees bookings for their tours
-        const supplierTours = await prisma.tour.findMany({
-          where: { supplierId: company.id },
-          select: { id: true }
-        });
-        const tourIds = supplierTours.map(t => t.id);
-        
-        totalBookings = await prisma.booking.count({
-          where: { departure: { tourId: { in: tourIds } } }
-        });
-        
-        recentBookings = await prisma.booking.findMany({
-          where: { departure: { tourId: { in: tourIds } } },
-          orderBy: { createdAt: 'desc' },
-          take: 5,
-          include: {
-            departure: { include: { tour: true } },
-            agent: true
-          }
-        });
-      } else {
-        tourCount = await prisma.tour.count(); // Agent sees all tours
-        
-        // Agent sees their own bookings
-        totalBookings = await prisma.booking.count({
-          where: { agentId: company.id }
-        });
-        
-        recentBookings = await prisma.booking.findMany({
-          where: { agentId: company.id },
-          orderBy: { createdAt: 'desc' },
-          take: 5,
-          include: {
-            departure: { include: { tour: true } }
-          }
-        });
-      }
+    if (dbUser?.agent) {
+      company = dbUser.agent;
+      tourCount = await prisma.tour.count(); // Agent sees all tours
+      
+      // Agent sees their own bookings
+      totalBookings = await prisma.booking.count({
+        where: { agentId: company.id }
+      });
+      
+      recentBookings = await prisma.booking.findMany({
+        where: { agentId: company.id },
+        orderBy: { createdAt: 'desc' },
+        take: 5,
+        include: {
+          departure: { include: { tour: true } }
+        }
+      });
     }
   }
 
   const stats = [
     { label: "Total Bookings", value: totalBookings.toString(), change: "0%", icon: <Receipt className="text-blue-500" /> },
-    { label: company?.type === 'SUPPLIER' ? "My Tours" : "Available Tours", value: tourCount.toString(), change: "-", icon: <Package className="text-indigo-500" /> },
-    { label: "Status", value: company?.type || "AGENT", change: "Active", icon: <Building2 className="text-emerald-500" /> },
+    { label: "Available Tours", value: tourCount.toString(), change: "-", icon: <Package className="text-indigo-500" /> },
+    { label: "Status", value: company?.status || "ACTIVE", change: "Active", icon: <Building2 className="text-emerald-500" /> },
     { label: "Credit Limit (THB)", value: `฿${(company?.creditLimit || 0).toLocaleString()}`, change: "-", icon: <TrendingUp className="text-amber-500" /> },
   ];
 
@@ -80,8 +53,8 @@ export default async function B2BDashboardPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight text-slate-800">Welcome, {dbUser?.name || 'Partner'}</h2>
-          <p className="text-sm text-slate-500">{company?.name || 'Jongtour B2B Portal'}</p>
+          <h2 className="text-2xl font-bold tracking-tight text-slate-800">Welcome, {dbUser?.email || 'Partner'}</h2>
+          <p className="text-sm text-slate-500">{company?.companyName || 'Jongtour B2B Portal'}</p>
         </div>
         <div className="flex items-center gap-2">
           <select className="bg-white border border-slate-200 text-sm rounded-md px-3 py-2 text-slate-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
@@ -150,8 +123,8 @@ export default async function B2BDashboardPage() {
                     return (
                       <tr key={booking.id} className="hover:bg-slate-50 transition-colors">
                         <td className="px-6 py-4 font-medium text-slate-900">{booking.id.substring(0,8).toUpperCase()}</td>
-                        <td className="px-6 py-4 text-slate-600">{booking.agent?.name || company?.name || 'Direct'}</td>
-                        <td className="px-6 py-4 text-slate-600">{booking.departure?.tour?.title || 'Unknown Tour'}</td>
+                        <td className="px-6 py-4 text-slate-600">{booking.agent?.companyName || company?.companyName || 'Direct'}</td>
+                        <td className="px-6 py-4 text-slate-600">{booking.departure?.tour?.tourName || 'Unknown Tour'}</td>
                         <td className="px-6 py-4 text-slate-600">{new Date(booking.createdAt).toLocaleDateString('th-TH')}</td>
                         <td className="px-6 py-4 font-medium text-slate-900">฿{booking.totalPrice.toLocaleString()}</td>
                         <td className="px-6 py-4">

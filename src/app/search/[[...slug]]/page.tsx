@@ -1,6 +1,5 @@
 import Link from "next/link";
-import { createClient } from "@/utils/supabase/server";
-import { cookies } from "next/headers";
+import { prisma } from "@/lib/prisma";
 import { Map, Calendar, Users, Star, Filter } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -19,16 +18,46 @@ export default async function SearchPage({ params }: { params: { slug?: string[]
     destinationFilter = "South Korea";
   }
 
-  const cookieStore = await cookies();
-  const supabase = createClient(cookieStore);
-
-  let query = supabase.from('Tour').select(`*, departures:TourDeparture(*)`);
+  let whereClause: any = { status: 'PUBLISHED' };
   if (destinationFilter) {
-    query = query.eq('destination', destinationFilter);
+    whereClause.destinations = {
+      some: {
+        country: { contains: destinationFilter, mode: 'insensitive' }
+      }
+    };
   }
-  
-  const { data: toursData } = await query.order('createdAt', { ascending: false });
-  const tours = toursData || [];
+
+  const toursData = await prisma.tour.findMany({
+    where: whereClause,
+    include: {
+      departures: {
+        where: { startDate: { gte: new Date() } },
+        orderBy: { startDate: 'asc' },
+        include: { prices: true }
+      },
+      destinations: true,
+      images: { take: 1 },
+      supplier: true
+    },
+    orderBy: { createdAt: 'desc' }
+  });
+
+  const tours = toursData.map(t => ({
+    id: t.id,
+    title: t.tourName,
+    description: "แพ็กเกจทัวร์คุณภาพ ออกเดินทางแน่นอน",
+    durationDays: t.durationDays,
+    destination: t.destinations?.[0]?.country || "ไม่ระบุ",
+    imageUrl: t.images?.[0]?.imageUrl || "https://images.unsplash.com/photo-1436491865332-7a61a109cc05",
+    source: t.supplier?.bookingMethod || "UNKNOWN",
+    departures: t.departures.map(d => ({
+      id: d.id,
+      startDate: d.startDate,
+      endDate: d.endDate,
+      price: d.prices?.[0]?.sellingPrice || 0
+    })),
+    price: t.departures.length > 0 ? Math.min(...t.departures.map(d => d.prices?.[0]?.sellingPrice || 0)) : 0
+  }));
 
   return (
     <main className="min-h-screen bg-gray-50 pb-20">

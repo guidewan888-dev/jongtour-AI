@@ -1,5 +1,6 @@
 import { createClient } from "@/utils/supabase/server";
 import { cookies } from "next/headers";
+import { prisma } from "@/lib/prisma";
 import { notFound, redirect } from "next/navigation";
 import CheckoutClient from "./CheckoutClient";
 
@@ -12,24 +13,39 @@ export default async function CheckoutPage({ params }: { params: { tourId: strin
     redirect('/login?redirect=/checkout/' + params.tourId);
   }
 
-  const { data: tour, error } = await supabase
-    .from('Tour')
-    .select(`
-      *,
-      departures:TourDeparture(*)
-    `)
-    .eq('id', params.tourId)
-    .single();
+  const tourData = await prisma.tour.findUnique({
+    where: { id: params.tourId },
+    include: {
+      departures: {
+        where: { startDate: { gte: new Date() } },
+        orderBy: { startDate: 'asc' },
+        include: { prices: true }
+      },
+      destinations: true,
+      images: { take: 1 }
+    }
+  });
 
-  if (error || !tour) {
-    console.error("Tour not found for checkout:", error);
+  if (!tourData) {
+    console.error("Tour not found for checkout");
     notFound();
   }
 
-  // Sort departures by date
-  const sortedDepartures = tour.departures?.sort((a: any, b: any) => 
-    new Date(a.startDate).getTime() - new Date(b.startDate).getTime()
-  ) || [];
+  const tour = {
+    id: tourData.id,
+    title: tourData.tourName,
+    durationDays: tourData.durationDays,
+    destination: tourData.destinations?.[0]?.country || "ไม่ระบุ",
+    imageUrl: tourData.images?.[0]?.imageUrl || "https://images.unsplash.com/photo-1436491865332-7a61a109cc05",
+    departures: tourData.departures.map(d => ({
+      id: d.id,
+      startDate: d.startDate,
+      endDate: d.endDate,
+      price: d.prices?.[0]?.sellingPrice || 0
+    }))
+  };
+
+  const sortedDepartures = tour.departures;
 
   return (
     <main className="min-h-screen bg-gray-50 pb-20 pt-8">

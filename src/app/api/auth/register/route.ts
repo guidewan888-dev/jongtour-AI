@@ -33,17 +33,25 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: false, message: 'เกิดข้อผิดพลาดในการสร้างบัญชี' }, { status: 500 });
     }
 
-    // 2. Create Company & User in Prisma
-    // Start transaction since we are creating both
+    // 2. Create Agent & User in Prisma
     const { PrismaClient } = await import('@prisma/client');
     const db = new PrismaClient();
 
     await db.$transaction(async (tx) => {
-      // Create Company (AGENT)
-      const company = await tx.company.create({
+      // Find or Create Role
+      let role = await tx.role.findUnique({ where: { name: 'AGENT_ADMIN' } });
+      if (!role) {
+        role = await tx.role.create({ data: { name: 'AGENT_ADMIN', description: 'Agent Administrator' } });
+      }
+
+      // Create Agent
+      const agent = await tx.agent.create({
         data: {
-          name: companyName,
-          type: 'AGENT',
+          companyName: companyName,
+          contactName: name,
+          email: email,
+          phone: phone,
+          status: 'ACTIVE',
         }
       });
 
@@ -52,11 +60,10 @@ export async function POST(req: Request) {
         data: {
           id: authData.user!.id, // Link Supabase UUID
           email: email,
-          password: '', // Handled by Supabase
-          name: name,
-          phone: phone,
-          role: 'AGENT',
-          companyId: company.id,
+          passwordHash: '', // Handled by Supabase
+          roleId: role.id,
+          agentId: agent.id,
+          status: 'ACTIVE',
         }
       });
     });

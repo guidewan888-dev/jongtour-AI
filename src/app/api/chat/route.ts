@@ -167,6 +167,7 @@ search_intent: ${JSON.stringify(intentExtracted)}
 
     const initialResponse = await openai.chat.completions.create({
       model: "gpt-4o-mini", 
+      temperature: 0.1,
       messages,
       tools,
       tool_choice: forceTool ? { type: "function", function: { name: "search_tours" } } : "auto",
@@ -188,7 +189,7 @@ search_intent: ${JSON.stringify(intentExtracted)}
           const args = JSON.parse(toolCall.function.arguments);
           if (userImage) args.userImage = true;
           
-          const searchResult = await searchTours(supabase, args, intentExtracted, semanticMatchedTourIds);
+          const searchResult = await searchTours(args, intentExtracted, semanticMatchedTourIds);
           tours = searchResult.tours;
           
           messages.push({
@@ -197,6 +198,7 @@ search_intent: ${JSON.stringify(intentExtracted)}
             content: JSON.stringify({ 
               tours_found: tours.length, 
               STRICT_INSTRUCTION: searchResult.strictInstruction || undefined,
+              GUARDRAIL: "ห้ามแต่งรหัสทัวร์ขึ้นมาเองเด็ดขาด อนุญาตให้สร้างลิงก์จองทัวร์เฉพาะจากรายการที่แสดงใน tours_summary เท่านั้น หากไม่พบทัวร์ให้ตอบว่าไม่มี",
               tours_summary: formatTourSummary(tours)
             })
           });
@@ -212,8 +214,11 @@ search_intent: ${JSON.stringify(intentExtracted)}
                   if (tc.type !== "function") continue;
                   if (tc.function.name === "get_tour_detail" || tc.function.name === "check_availability") {
                     const tArgs = JSON.parse(tc.function.arguments);
-                    let { data: tData } = await supabase.from('Tour').select('*, departures:TourDeparture(*)').eq('code', tArgs.tourCode).single();
-                    messages.push({ role: "tool", tool_call_id: tc.id, content: JSON.stringify(tData ? { code: tData.code, title: tData.title, highlights: tData.highlights, itinerary: tData.itinerary, departures: tData.departures } : { error: "Tour not found" }) });
+                    let tData = await (await import("@/lib/prisma")).prisma.tour.findFirst({
+                      where: { tourCode: tArgs.tourCode },
+                      include: { departures: { include: { prices: true } }, itineraries: true }
+                    });
+                    messages.push({ role: "tool", tool_call_id: tc.id, content: JSON.stringify(tData ? { code: tData.tourCode, title: tData.tourName, highlights: tData.itineraries?.[0]?.description, departures: tData.departures } : { error: "Tour not found" }) });
                   } else {
                     messages.push({ role: "tool", tool_call_id: tc.id, content: "{ \"status\": \"Tool executed but skipped deep logic for OCR flow\" }" });
                   }
@@ -302,8 +307,8 @@ search_intent: ${JSON.stringify(intentExtracted)}
               includeInsurance: false
             });
             
-            const flightCost = fitCost.summary.flightPriceTotal;
-            const hotelCost = fitCost.summary.hotelPriceTotal;
+            const flightCost = fitCost.breakdownPerPax.cache.flight;
+            const hotelCost = fitCost.breakdownPerPax.cache.hotel;
             const totalFitCost = fitCost.sellingPricePerPax;
             
             messages.push({
@@ -347,6 +352,7 @@ search_intent: ${JSON.stringify(intentExtracted)}
             // Quality Checker Pipeline (No Stream, buffer and validate)
             const fullResponse = await openai.chat.completions.create({
               model: "gpt-4o-mini",
+              temperature: 0.1,
               messages,
               stream: false,
             });
@@ -369,6 +375,7 @@ search_intent: ${JSON.stringify(intentExtracted)}
              // Normal Streaming
              const secondResponse = await openai.chat.completions.create({
                model: "gpt-4o-mini",
+               temperature: 0.1,
                messages,
                stream: true,
              });

@@ -7,84 +7,93 @@ async function main() {
 
   // 0. Clean up existing data (Optional, useful for clean seeding)
   await prisma.payment.deleteMany({});
-  await prisma.traveler.deleteMany({});
+  await prisma.bookingTraveler.deleteMany({});
   await prisma.booking.deleteMany({});
-  await prisma.tourDeparture.deleteMany({});
+  await prisma.price.deleteMany({});
+  await prisma.departure.deleteMany({});
   await prisma.tour.deleteMany({});
+  await prisma.supplier.deleteMany({});
+  await prisma.user.deleteMany({});
+  await prisma.customer.deleteMany({});
+  await prisma.agent.deleteMany({});
+  await prisma.role.deleteMany({});
 
-  // 1. สร้างลูกค้า (User)
-  const user1 = await prisma.user.upsert({
-    where: { email: "customer1@example.com" },
-    update: {},
-    create: {
+  // 1. Roles
+  const adminRole = await prisma.role.create({ data: { name: "ADMIN", description: "Super Admin" } });
+  const customerRole = await prisma.role.create({ data: { name: "CUSTOMER", description: "Customer User" } });
+
+  // 2. Customers
+  const cust1 = await prisma.customer.create({
+    data: {
+      firstName: "Somchai",
+      lastName: "Jaidee",
       email: "customer1@example.com",
-      password: "hashed_password",
-      name: "คุณสมชาย ใจดี",
-      phone: "0812345678",
-      role: "CUSTOMER",
-    },
+      phone: "0812345678"
+    }
   });
-
-  const user2 = await prisma.user.upsert({
-    where: { email: "customer2@example.com" },
-    update: {},
-    create: {
+  
+  const cust2 = await prisma.customer.create({
+    data: {
+      firstName: "Wipawan",
+      lastName: "Somboon",
       email: "customer2@example.com",
-      password: "hashed_password",
-      name: "คุณวิภาวรรณ สมบูรณ์",
-      phone: "0898765432",
-      role: "CUSTOMER",
+      phone: "0898765432"
+    }
+  });
+
+  // 3. Users
+  const user1 = await prisma.user.create({
+    data: {
+      email: "customer1@example.com",
+      passwordHash: "hashed_password",
+      roleId: customerRole.id,
+      customer: { connect: { id: cust1.id } }
     },
   });
 
-  const admin = await prisma.user.upsert({
-    where: { email: "admin@jongtour.com" },
-    update: {},
-    create: {
+  const user2 = await prisma.user.create({
+    data: {
+      email: "customer2@example.com",
+      passwordHash: "hashed_password",
+      roleId: customerRole.id,
+      customer: { connect: { id: cust2.id } }
+    },
+  });
+
+  const admin = await prisma.user.create({
+    data: {
       email: "admin@jongtour.com",
-      password: "hashed_password",
-      name: "Super Admin",
-      role: "ADMIN",
+      passwordHash: "hashed_password",
+      roleId: adminRole.id,
     },
   });
 
-  // 2. สร้างแพ็กเกจทัวร์ (Tours) แบบ Mock Data
+  // 4. Supplier
+  const supplier1 = await prisma.supplier.create({
+    data: {
+      canonicalName: "zego",
+      displayName: "Zego API",
+      bookingMethod: "API_ZEGO"
+    }
+  });
+
+  // 5. Tours
   const tours = [
     {
-      title: "ทัวร์ญี่ปุ่น โตเกียว ฟูจิ โอซาก้า (พิเศษ บุฟเฟต์ขาปูยักษ์)",
-      destination: "Japan",
+      tourCode: "JP001",
+      tourName: "ทัวร์ญี่ปุ่น โตเกียว ฟูจิ โอซาก้า (พิเศษ บุฟเฟต์ขาปูยักษ์)",
+      slug: "tour-jp001",
       durationDays: 5,
-      price: 35900,
-      imageUrl: "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=800&q=80",
-      description: "สัมผัสประสบการณ์เที่ยวญี่ปุ่นแบบจัดเต็ม ช้อปปิ้งชินจูกุ",
-      source: "API_ZEGO"
+      durationNights: 4,
+      externalTourId: "EXT-JP001"
     },
     {
-      title: "ทัวร์เกาหลีใต้ โซล เกาะนามิ สวนสนุกเอเวอร์แลนด์",
-      destination: "South Korea",
+      tourCode: "KR001",
+      tourName: "ทัวร์เกาหลีใต้ โซล เกาะนามิ สวนสนุกเอเวอร์แลนด์",
+      slug: "tour-kr001",
       durationDays: 4,
-      price: 18900,
-      imageUrl: "https://images.unsplash.com/photo-1517154421773-0529f29ea451?w=800&q=80",
-      description: "เที่ยวเกาหลีสุดชิค ถ่ายรูปเกาะนามิ เล่นสวนสนุก",
-      source: "API_ZEGO"
-    },
-    {
-      title: "ทัวร์ยุโรปตะวันออก ออสเตรีย เช็ก ฮังการี",
-      destination: "Europe",
-      durationDays: 8,
-      price: 55900,
-      imageUrl: "https://images.unsplash.com/photo-1467269204594-9661b134dd2b?w=800&q=80",
-      description: "สัมผัสความโรแมนติกแห่งยุโรปตะวันออก",
-      source: "API_GO365"
-    },
-    {
-      title: "ทัวร์ไต้หวัน ไทเป ทะเลสาบสุริยันจันทรา",
-      destination: "Taiwan",
-      durationDays: 4,
-      price: 15900,
-      imageUrl: "https://images.unsplash.com/photo-1558235284-48f57f4fb0a4?w=800&q=80",
-      description: "เที่ยวไต้หวันสุดคุ้ม ชิมชานมไข่มุกต้นตำรับ",
-      source: "MANUAL"
+      durationNights: 3,
+      externalTourId: "EXT-KR001"
     }
   ];
 
@@ -93,13 +102,17 @@ async function main() {
   for (const t of tours) {
     const tour = await prisma.tour.create({
       data: {
-        title: t.title,
-        destination: t.destination,
+        tourCode: t.tourCode,
+        tourName: t.tourName,
+        slug: t.slug,
         durationDays: t.durationDays,
-        price: t.price,
-        imageUrl: t.imageUrl,
-        description: t.description,
-        source: t.source as any,
+        durationNights: t.durationNights,
+        externalTourId: t.externalTourId,
+        supplierId: supplier1.id,
+        status: "PUBLISHED",
+        images: {
+          create: [{ imageUrl: "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=800&q=80", isCover: true }]
+        }
       }
     });
 
@@ -107,48 +120,58 @@ async function main() {
     const nextMonth = new Date(today);
     nextMonth.setMonth(nextMonth.getMonth() + 1);
 
-    const departure = await prisma.tourDeparture.create({
+    const departure = await prisma.departure.create({
       data: {
         tourId: tour.id,
+        supplierId: supplier1.id,
         startDate: nextMonth,
         endDate: new Date(nextMonth.getTime() + (t.durationDays * 24 * 60 * 60 * 1000)),
-        price: t.price,
         totalSeats: 30,
-        availableSeats: 15,
+        remainingSeats: 15,
+        prices: {
+          create: [{
+            paxType: "ADULT",
+            sellingPrice: 35900,
+            currency: "THB"
+          }]
+        }
       }
     });
 
     createdTours.push({ tour, departure });
   }
 
-  // 3. สร้าง Bookings จำลองหลากหลายสถานะ
-  const statuses = ["PENDING", "PAYMENT_UPLOADED", "FULL_PAID", "COMPLETED", "CANCELLED"];
+  // 6. Bookings
+  const statuses = ["PENDING", "CONFIRMED", "CANCELLED"];
   
-  for (let i = 0; i < 5; i++) {
+  for (let i = 0; i < 3; i++) {
     const td = createdTours[i % createdTours.length];
-    const user = i % 2 === 0 ? user1 : user2;
+    const customer = i % 2 === 0 ? cust1 : cust2;
     const travelerCount = (i % 3) + 1;
-    const totalPrice = td.tour.price * travelerCount;
+    const totalPrice = 35900 * travelerCount;
     
-    // Make created dates span over the last few days
     const createdAt = new Date();
     createdAt.setHours(createdAt.getHours() - (i * 12));
 
     await prisma.booking.create({
       data: {
-        userId: user.id,
+        bookingRef: `BKG-${Date.now()}-${i}`,
+        supplierId: supplier1.id,
+        tourId: td.tour.id,
         departureId: td.departure.id,
-        status: statuses[i] as any,
+        customerId: customer.id,
+        status: statuses[i],
         totalPrice: totalPrice,
         createdAt: createdAt,
         travelers: {
           create: Array.from({ length: travelerCount }).map((_, idx) => ({
-            name: `${user.name} ผู้ติดตาม ${idx + 1}`
+            firstName: customer.firstName,
+            lastName: `Follower ${idx + 1}`
           }))
         },
         payments: {
           create: statuses[i] !== "PENDING" && statuses[i] !== "CANCELLED" ? [
-            { amount: totalPrice, status: statuses[i] === "PAYMENT_UPLOADED" ? "PENDING" : "APPROVED", type: "FULL" }
+            { paymentRef: `PAY-${Date.now()}-${i}`, amount: totalPrice, paymentMethod: "BANK_TRANSFER", status: "COMPLETED" }
           ] : []
         }
       }

@@ -11,9 +11,13 @@ export default async function EditTourCmsPage({ params }: { params: { id: string
   const tour = await prisma.tour.findUnique({
     where: { id },
     include: {
+      supplier: true,
+      destinations: true,
+      images: { take: 1 },
       departures: {
         orderBy: { startDate: 'asc' },
-        take: 5
+        take: 5,
+        include: { prices: true }
       }
     }
   });
@@ -22,7 +26,7 @@ export default async function EditTourCmsPage({ params }: { params: { id: string
     notFound();
   }
 
-  const isApiTour = tour.source.includes("API");
+  const isApiTour = tour.supplier?.bookingMethod?.includes("API") || false;
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
@@ -44,7 +48,7 @@ export default async function EditTourCmsPage({ params }: { params: { id: string
         
         {isApiTour && (
           <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-bold tracking-wide">
-            {tour.source} (Read-only)
+            {tour.supplier?.bookingMethod} (Read-only)
           </span>
         )}
       </div>
@@ -62,7 +66,7 @@ export default async function EditTourCmsPage({ params }: { params: { id: string
             </label>
             <input
               type="text"
-              defaultValue={tour.title}
+              defaultValue={tour.tourName}
               disabled={isApiTour}
               className="block w-full rounded-md border-gray-300 border focus:ring-indigo-500 focus:border-indigo-500 px-4 py-2 sm:text-sm disabled:bg-slate-50 disabled:text-slate-500"
             />
@@ -76,7 +80,7 @@ export default async function EditTourCmsPage({ params }: { params: { id: string
               </label>
               <input
                 type="text"
-                defaultValue={tour.destination}
+                defaultValue={tour.destinations?.[0]?.country || ""}
                 disabled={isApiTour}
                 className="block w-full rounded-md border-gray-300 border focus:ring-indigo-500 focus:border-indigo-500 px-4 py-2 sm:text-sm disabled:bg-slate-50 disabled:text-slate-500"
               />
@@ -113,7 +117,7 @@ export default async function EditTourCmsPage({ params }: { params: { id: string
                 </div>
                 <input
                   type="number"
-                  defaultValue={tour.price}
+                  defaultValue={tour.departures?.[0]?.prices?.[0]?.sellingPrice || 0}
                   disabled={isApiTour}
                   className="block w-full rounded-md border-gray-300 border focus:ring-indigo-500 focus:border-indigo-500 pl-8 pr-4 py-2 sm:text-sm disabled:bg-slate-50 disabled:text-slate-500"
                 />
@@ -126,7 +130,7 @@ export default async function EditTourCmsPage({ params }: { params: { id: string
               </label>
               <input
                 type="url"
-                defaultValue={tour.imageUrl || ""}
+                defaultValue={tour.images?.[0]?.imageUrl || ""}
                 disabled={isApiTour}
                 className="block w-full rounded-md border-gray-300 border focus:ring-indigo-500 focus:border-indigo-500 px-4 py-2 sm:text-sm disabled:bg-slate-50 disabled:text-slate-500"
               />
@@ -139,7 +143,7 @@ export default async function EditTourCmsPage({ params }: { params: { id: string
               รายละเอียดแบบย่อ (Description)
             </label>
             <textarea
-              defaultValue={tour.description || ""}
+              defaultValue={tour.slug || ""}
               disabled={isApiTour}
               rows={4}
               className="block w-full rounded-md border-gray-300 border focus:ring-indigo-500 focus:border-indigo-500 px-4 py-2 sm:text-sm disabled:bg-slate-50 disabled:text-slate-500"
@@ -193,10 +197,10 @@ export default async function EditTourCmsPage({ params }: { params: { id: string
                     <td className="px-6 py-3">{new Date(dep.startDate).toLocaleDateString('th-TH')}</td>
                     <td className="px-6 py-3">{new Date(dep.endDate).toLocaleDateString('th-TH')}</td>
                     <td className="px-6 py-3">
-                      <span className="font-medium text-slate-900">{dep.availableSeats}</span> / {dep.totalSeats}
+                      <span className="font-medium text-slate-900">{dep.remainingSeats}</span> / {dep.totalSeats}
                     </td>
                     <td className="px-6 py-3 text-right font-medium text-indigo-600">
-                      ฿{dep.price.toLocaleString()}
+                      ฿{(dep.prices?.[0]?.sellingPrice || 0).toLocaleString()}
                     </td>
                   </tr>
                 ))

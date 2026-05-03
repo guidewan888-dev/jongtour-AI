@@ -79,7 +79,7 @@ export const tools: OpenAI.Chat.Completions.ChatCompletionTool[] = [
   {
     type: "function",
     function: {
-      name: "get_price",
+      name: "get_latest_price",
       description: "Get pricing details for a tour.",
       parameters: {
         type: "object",
@@ -115,7 +115,7 @@ export const tools: OpenAI.Chat.Completions.ChatCompletionTool[] = [
   {
     type: "function",
     function: {
-      name: "get_supplier_by_alias",
+      name: "resolve_supplier_alias",
       description: "ค้นหา Supplier จากชื่อหรือ alias ที่ลูกค้าพิมพ์",
       parameters: {
         type: "object",

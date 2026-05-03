@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { createClient } from "@supabase/supabase-js";
+import { prisma } from "@/lib/prisma";
 import { MapPin, Calendar, Star, ChevronRight, CheckCircle2, Clock } from "lucide-react";
 import { destinationConfig, getDestinationData } from "@/lib/destinations";
 import { notFound } from "next/navigation";
@@ -23,26 +23,47 @@ export default async function DestinationPage({ params }: { params: { slug?: str
     notFound();
   }
 
-  // 2. ดึงข้อมูลจาก Supabase API โดยตรงแทน Prisma (เพื่อเลี่ยงปัญหา Vercel IPv6)
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://qterfftaebnoawnzkfgu.supabase.co";
-  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || "sb_publishable_SRwNSJ89mInda5FcuB1W2w_9IEJlSOI";
-  const supabase = createClient(supabaseUrl, supabaseKey);
+  // 2. ดึงข้อมูลจาก Prisma
+  const keywordConditions = node.keywords.map(kw => ({
+    OR: [
+      { destinations: { some: { country: { contains: kw, mode: 'insensitive' } } } },
+      { tourName: { contains: kw, mode: 'insensitive' } }
+    ]
+  }));
 
-  // สร้าง Filter สำหรับค้นหา destination หรือ title
-  const orFilter = node.keywords.map(kw => `destination.ilike.*${kw}*,title.ilike.*${kw}*`).join(',');
+  const toursData = await prisma.tour.findMany({
+    where: {
+      status: 'PUBLISHED',
+      OR: keywordConditions as any
+    },
+    include: {
+      departures: {
+        where: { startDate: { gte: new Date() } },
+        orderBy: { startDate: 'asc' },
+        include: { prices: true }
+      },
+      destinations: true,
+      images: { take: 1 },
+      supplier: true
+    },
+    orderBy: { createdAt: 'desc' }
+  });
 
-  const { data: tours, error } = await supabase
-    .from('Tour')
-    .select('*, departures:TourDeparture(*)')
-    .or(orFilter)
-    .order('createdAt', { ascending: false });
-
-  if (error) {
-    console.error("Supabase Error:", error);
-    throw new Error("Failed to fetch tours");
-  }
-
-  const validTours = tours || [];
+  const validTours = toursData.map(t => ({
+    id: t.id,
+    title: t.tourName,
+    durationDays: t.durationDays,
+    destination: t.destinations?.[0]?.country || "ไม่ระบุ",
+    imageUrl: t.images?.[0]?.imageUrl || "https://images.unsplash.com/photo-1436491865332-7a61a109cc05",
+    source: t.supplier?.bookingMethod || "MANUAL",
+    departures: t.departures.map(d => ({
+      id: d.id,
+      startDate: d.startDate,
+      endDate: d.endDate,
+      price: d.prices?.[0]?.sellingPrice || 0
+    })),
+    price: t.departures.length > 0 ? Math.min(...t.departures.map(d => d.prices?.[0]?.sellingPrice || 0)) : 0
+  }));
   
   const wholesaleMap: Record<string, { slug: string, name: string, logo: string }> = {
     "API_ZEGO": { slug: "letsgo", name: "Let's Go Group", logo: "/images/wholesales/download.png" },
@@ -119,7 +140,7 @@ export default async function DestinationPage({ params }: { params: { slug?: str
                 {Object.keys(wholesaleMap).filter(k => k !== 'MANUAL').map(wsKey => {
                   const wsConfig = wholesaleMap[wsKey];
                   if (!wsConfig || !wsConfig.slug) return null;
-                  const count = tours.filter((t: any) => t.source === wsKey).length;
+                  const count = validTours.filter((t: any) => t.source === wsKey).length;
                   
                   return (
                     <Link href={`/wholesale/${wsConfig.slug}`} key={wsKey} className="flex items-center gap-3 cursor-pointer group">

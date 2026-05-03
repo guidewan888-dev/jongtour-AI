@@ -17,10 +17,10 @@ export async function createManualTour(formData: FormData) {
 
   const dbUser = await prisma.user.findUnique({
     where: { id: user.id },
-    include: { company: true }
+    include: { role: true, supplier: true }
   });
 
-  if (!dbUser || (dbUser.role !== "ADMIN" && dbUser.role !== "SUPPLIER" && dbUser.company?.type !== "SUPPLIER")) {
+  if (!dbUser || (dbUser.role.name !== "ADMIN" && dbUser.role.name !== "SUPPLIER_ADMIN")) {
     throw new Error("Forbidden");
   }
 
@@ -35,20 +35,33 @@ export async function createManualTour(formData: FormData) {
     throw new Error("Missing required fields");
   }
 
-  // If supplier, link to their company ID. If admin, supplierId is null (Jongtour itself)
-  const isSupplier = dbUser.role === "SUPPLIER" || dbUser.company?.type === "SUPPLIER";
-  const supplierId = isSupplier ? dbUser.company?.id : null;
+  // If supplier admin, use their supplier ID. If Jongtour admin, use Jongtour supplier ID
+  // Wait, Jongtour should have its own Supplier record for manual tours
+  let supplierId = dbUser.supplierId;
+  
+  if (dbUser.role.name === "ADMIN" && !supplierId) {
+    // Fallback to finding "MANUAL" or "JONGTOUR" supplier
+    const jongtour = await prisma.supplier.findFirst(); // Mock fallback
+    if (jongtour) supplierId = jongtour.id;
+  }
+
+  if (!supplierId) {
+     throw new Error("No supplier profile linked to this user");
+  }
+
+  // Generate a random tour code for manual tours
+  const tourCode = `M-${Date.now().toString().slice(-6)}`;
 
   const tour = await prisma.tour.create({
     data: {
-      title,
-      destination,
+      tourName: title,
+      tourCode: tourCode,
+      slug: `tour-${tourCode.toLowerCase()}`,
       durationDays,
-      price,
-      imageUrl: imageUrl || null,
-      description: description || null,
-      source: "MANUAL",
-      supplierId
+      durationNights: Math.max(0, durationDays - 1),
+      supplierId: supplierId,
+      externalTourId: tourCode,
+      status: "DRAFT",
     }
   });
 

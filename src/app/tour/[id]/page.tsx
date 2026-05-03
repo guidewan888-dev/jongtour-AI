@@ -5,35 +5,47 @@ import DeparturesTable from "./DeparturesTable";
 import BookingWidget from "./BookingWidget";
 import { destinationConfig, findPathByKeyword, getDestinationData } from "@/lib/destinations";
 
+import { prisma } from "@/lib/prisma";
+
 export const dynamic = "force-dynamic";
 
 export async function TourDetailsContent({ params, agentId }: { params: { id: string }, agentId?: string }) {
   // ดึงข้อมูลทัวร์จาก Database
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://qterfftaebnoawnzkfgu.supabase.co";
-  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || "sb_publishable_SRwNSJ89mInda5FcuB1W2w_9IEJlSOI";
-  
-  const res = await fetch(`${supabaseUrl}/rest/v1/Tour?id=eq.${params.id}&select=*,departures:TourDeparture(*)`, {
-    headers: { "apikey": supabaseKey, "Authorization": `Bearer ${supabaseKey}` },
-    cache: "no-store"
+  const tour = await prisma.tour.findUnique({
+    where: { id: params.id },
+    include: {
+      supplier: true,
+      destinations: true,
+      images: { take: 1 },
+      departures: {
+        where: { startDate: { gte: new Date() } },
+        orderBy: { startDate: 'asc' },
+        include: { prices: true }
+      }
+    }
   });
-  
-  if (!res.ok) {
-    console.error("FETCH ERROR:", res.status, res.statusText, await res.text());
-    notFound();
-  }
-  const tours = await res.json();
-  const tour = tours[0];
 
   if (!tour) {
     notFound(); // 404 page
   }
 
-  // หาวันเดินทางที่ถูกที่สุด
-  const lowestPrice = (tour.departures?.length || 0) > 0 
-    ? Math.min(...(tour.departures || []).map((d: any) => d.price)) 
-    : tour.price;
+  const mappedDepartures = tour.departures.map(d => ({
+    id: d.id,
+    startDate: d.startDate,
+    endDate: d.endDate,
+    totalSeats: d.totalSeats,
+    availableSeats: d.remainingSeats,
+    price: d.prices?.[0]?.sellingPrice || 0
+  }));
 
-  const destPath = findPathByKeyword(tour.destination || "");
+  // หาวันเดินทางที่ถูกที่สุด
+  // หาวันเดินทางที่ถูกที่สุด
+  const lowestPrice = mappedDepartures.length > 0 
+    ? Math.min(...mappedDepartures.map((d: any) => d.price)) 
+    : 0;
+
+  const tourDestination = tour.destinations?.[0]?.country || "";
+  const destPath = findPathByKeyword(tourDestination);
   const { breadcrumbs } = destPath ? getDestinationData(destPath) : { breadcrumbs: [] };
 
   const wholesaleMap: Record<string, { slug: string, name: string, logo: string }> = {
@@ -64,12 +76,12 @@ export async function TourDetailsContent({ params, agentId }: { params: { id: st
         ) : (
           // ถ้าหาไม่เจอ ให้ fallback
           <div className="flex items-center gap-2">
-            <span className="text-gray-500">{tour.destination || "ไม่ระบุ"}</span>
+            <span className="text-gray-500">{tourDestination || "ไม่ระบุ"}</span>
             <ChevronRight className="w-4 h-4 shrink-0" />
           </div>
         )}
         
-        <span className="text-gray-800 font-medium truncate max-w-[200px] sm:max-w-md lg:max-w-xl">{tour.title}</span>
+        <span className="text-gray-800 font-medium truncate max-w-[200px] sm:max-w-md lg:max-w-xl">{tour.tourName}</span>
       </div>
 
       <div className="max-w-[1440px] mx-auto px-4 flex flex-col xl:flex-row gap-6">
@@ -227,42 +239,33 @@ export async function TourDetailsContent({ params, agentId }: { params: { id: st
           <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mb-6">
             <div className="flex items-center gap-3 mb-4">
               <span className="bg-gray-100 text-gray-700 px-3 py-1 rounded text-xs font-bold border border-gray-200">
-                รหัสทัวร์: {tour.id.substring(0, 8).toUpperCase()}
+                รหัสทัวร์: {tour.tourCode}
               </span>
-              {tour.source === "API_ZEGO" && (
+              {tour.supplier?.bookingMethod === "API_ZEGO" && (
                 <div className="h-6 w-auto flex items-center">
                   <img src="/images/wholesales/download.png" alt="LET'S GO" className="h-full w-auto object-contain" />
                 </div>
               )}
-              {tour.source === "API_GO365" && (
+              {tour.supplier?.bookingMethod === "API_GO365" && (
                 <div className="h-6 w-auto flex items-center">
                   <img src="/images/wholesales/download.jfif" alt="GO365" className="h-full w-auto object-contain" />
                 </div>
               )}
             </div>
             
-            <h1 className="text-2xl md:text-3xl font-bold text-gray-900 leading-snug mb-4">{tour.title}</h1>
+            <h1 className="text-2xl md:text-3xl font-bold text-gray-900 leading-snug mb-4">{tour.tourName}</h1>
             
             <div className="flex flex-wrap items-center gap-6 text-sm text-gray-700 bg-gray-50 p-4 rounded-md border border-gray-100">
               <div className="flex items-center gap-2">
                 <MapPin className="w-5 h-5 text-orange-600" />
-                <span className="font-medium">{tour.destination}</span>
+                <span className="font-medium">{tourDestination}</span>
               </div>
               <div className="w-px h-6 bg-gray-300 hidden sm:block"></div>
               <div className="flex items-center gap-2">
                 <Clock className="w-5 h-5 text-orange-600" />
                 <span className="font-medium">{tour.durationDays} วัน {tour.durationDays - 1 > 0 ? tour.durationDays - 1 : 0} คืน</span>
               </div>
-              {tour.airlineCode && (
-                <>
-                  <div className="w-px h-6 bg-gray-300 hidden sm:block"></div>
-                  <div className="flex items-center gap-2">
-                    <img src={`https://images.kiwi.com/airlines/64x64/${tour.airlineCode}.png`} alt={tour.airlineCode} className="w-6 h-6 object-contain rounded-full shadow-sm bg-white" /> 
-                    <span className="font-medium font-mono">{tour.airlineCode}</span>
-                  </div>
-                </>
-              )}
-            </div>
+              </div>
           </div>
 
           {/* Tour Image & Highlights (Side by Side) */}
@@ -271,8 +274,8 @@ export async function TourDetailsContent({ params, agentId }: { params: { id: st
             {/* Left: Tour Image */}
             <div className="w-full md:w-[280px] shrink-0">
               <img 
-                src={tour.imageUrl || "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e"} 
-                alt={tour.title} 
+                src={tour.images?.[0]?.imageUrl || "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e"} 
+                alt={tour.tourName} 
                 className="w-full h-auto aspect-auto object-contain rounded border border-gray-100 shadow-sm bg-gray-50"
               />
             </div>
@@ -283,65 +286,22 @@ export async function TourDetailsContent({ params, agentId }: { params: { id: st
                 <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2 shrink-0">
                   <Info className="w-5 h-5 text-orange-600" /> ไฮไลท์แพ็กเกจ
                 </h2>
-                <a 
-                  href={tour.pdfUrl || "#"}
-                  target={tour.pdfUrl ? "_blank" : "_self"}
-                  rel={tour.pdfUrl ? "noopener noreferrer" : ""}
-                  className={`flex items-center justify-center gap-2 px-4 py-2 rounded-md font-bold text-xs transition-colors shrink-0 ${
-                    tour.pdfUrl 
-                      ? "bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100" 
-                      : "bg-gray-100 text-gray-400 border border-gray-200 cursor-default"
-                  }`}
-                  title={tour.pdfUrl ? "ดาวน์โหลดโปรแกรมทัวร์ (PDF)" : "ไม่มีไฟล์ PDF สำหรับโปรแกรมนี้"}
-                  style={{ pointerEvents: tour.pdfUrl ? "auto" : "none" }}
-                >
-                  <FileText className="w-4 h-4" />
-                  ดาวน์โหลดโปรแกรมทัวร์
-                </a>
               </div>
               
               <div className="text-gray-700 leading-relaxed text-sm max-h-[350px] overflow-y-auto pr-3 custom-scrollbar bg-gray-50/50 p-4 rounded-md border border-gray-50">
-                {tour.description ? (
-                  tour.description.includes('<') && tour.description.includes('>') ? (
-                    <div dangerouslySetInnerHTML={{ __html: tour.description }} className="text-gray-700 [&>p]:mb-3 [&>ul]:list-disc [&>ul]:pl-5 [&>ol]:list-decimal [&>ol]:pl-5 [&>h1]:text-xl [&>h1]:font-bold [&>h1]:mb-2 [&>h2]:text-lg [&>h2]:font-bold [&>h2]:mb-2 [&>h3]:text-base [&>h3]:font-bold [&>h3]:mb-1 [&>strong]:font-bold" />
-                  ) : (
-                    <div className="whitespace-pre-line">{tour.description}</div>
-                  )
-                ) : (
-                  "สัมผัสประสบการณ์การเดินทางที่เหนือกว่า พร้อมไกด์ผู้เชี่ยวชาญดูแลตลอดการเดินทาง พักสบาย เดินทางสะดวก คุ้มค่าทุกวินาที"
-                )}
+                สัมผัสประสบการณ์การเดินทางที่เหนือกว่า พร้อมไกด์ผู้เชี่ยวชาญดูแลตลอดการเดินทาง พักสบาย เดินทางสะดวก คุ้มค่าทุกวินาที
               </div>
             </div>
-            
           </div>
 
           {/* Departures Table (Client Component) */}
-          <DeparturesTable departures={tour.departures || []} tourId={tour.id} />
-
-          {/* PDF Viewer (แทนที่แผนการเดินทางแบบตัวหนังสือ) */}
-          {tour.pdfUrl && (
-            <div className="bg-white p-4 md:p-6 rounded-lg shadow-sm border border-gray-200 mb-6" id="program-pdf">
-              <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-                <FileText className="w-5 h-5 text-orange-600" /> โปรแกรมทัวร์ (PDF)
-              </h2>
-              <div className="w-full aspect-[1/1.4] md:aspect-auto md:h-[800px] rounded-lg overflow-hidden border border-gray-300 bg-gray-50">
-                <iframe 
-                  src={`https://docs.google.com/gview?url=${encodeURIComponent(tour.pdfUrl)}&embedded=true`} 
-                  className="w-full h-full border-none"
-                  title="Tour Program PDF"
-                  loading="lazy"
-                >
-                  <p>เบราว์เซอร์ของคุณไม่รองรับการแสดงผล PDF หรือถูกบล็อกโดยเซิร์ฟเวอร์ กรุณา <a href={tour.pdfUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">คลิกที่นี่เพื่อเปิดไฟล์ PDF</a> แทน</p>
-                </iframe>
-              </div>
-            </div>
-          )}
+          <DeparturesTable departures={mappedDepartures} tourId={tour.id} />
 
         </div>
 
         {/* Right Column: Formal Booking Panel (ไม่ทับแบนเนอร์) */}
         <aside className="w-full lg:w-[350px] shrink-0">
-          <BookingWidget lowestPrice={lowestPrice} tourId={tour.id} departures={tour.departures || []} />
+          <BookingWidget lowestPrice={lowestPrice} tourId={tour.id} departures={mappedDepartures} />
         </aside>
 
       </div>

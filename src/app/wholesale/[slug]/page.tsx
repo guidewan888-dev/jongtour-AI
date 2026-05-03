@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { createClient } from "@supabase/supabase-js";
+import { prisma } from "@/lib/prisma";
 import { MapPin, Calendar, Star, Clock, ChevronRight } from "lucide-react";
 import { notFound } from "next/navigation";
 
@@ -75,22 +75,37 @@ export default async function WholesaleLandingPage({ params, searchParams }: { p
     notFound();
   }
 
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://qterfftaebnoawnzkfgu.supabase.co";
-  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || "sb_publishable_SRwNSJ89mInda5FcuB1W2w_9IEJlSOI";
-  const supabase = createClient(supabaseUrl, supabaseKey);
-
-  let query = supabase.from('Tour').select('*, departures:TourDeparture(*)').order('createdAt', { ascending: false });
-
-  // Now that all sources are officially mapped to TourSource enum in Prisma/Supabase, we can filter directly by source
-  query = query.eq('source', wholesale.source);
-
-  const { data: tours, error } = await query;
+  const supplierAlias = wholesale.source.toLowerCase();
   
-  if (error) {
-    console.error("Supabase Fetch Error:", error);
-  }
+  const toursData = await prisma.tour.findMany({
+    where: { supplier: { canonicalName: supplierAlias }, status: 'PUBLISHED' },
+    include: {
+      destinations: true,
+      images: { take: 1 },
+      departures: {
+        where: { startDate: { gte: new Date() } },
+        orderBy: { startDate: 'asc' },
+        include: { prices: true }
+      }
+    },
+    orderBy: { createdAt: 'desc' }
+  });
 
-  const validTours = tours || [];
+  const validTours = toursData.map(t => ({
+    id: t.id,
+    title: t.tourName,
+    description: "แพ็กเกจทัวร์คุณภาพ ออกเดินทางแน่นอน",
+    durationDays: t.durationDays,
+    destination: t.destinations?.[0]?.country || "ไม่ระบุ",
+    imageUrl: t.images?.[0]?.imageUrl || "https://images.unsplash.com/photo-1436491865332-7a61a109cc05",
+    departures: t.departures.map(d => ({
+      id: d.id,
+      startDate: d.startDate,
+      endDate: d.endDate,
+      price: d.prices?.[0]?.sellingPrice || 0
+    })),
+    price: 0
+  }));
 
   // Group tours by destination
   const toursByDestination = validTours.reduce((acc: Record<string, any[]>, tour: any) => {

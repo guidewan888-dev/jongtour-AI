@@ -844,35 +844,15 @@ export function getDestinationData(slug: string[]): { node: DestinationNode | nu
   return { node: currentNode, breadcrumbs };
 }
 
-/**
- * ค้นหาเส้นทาง (slugs) จาก keyword หรือชื่อสถานที่
- */
-export function findPathByKeyword(keyword: string): string[] | null {
-  if (!keyword) return null;
-  const search = keyword.toUpperCase().trim();
-  
-  function searchNode(node: DestinationNode, path: string[]): string[] | null {
-    // กรณีที่ keyword ตรงกับ name หรือใน keywords array (แบบ case-insensitive)
-    if (
-      node.name.toUpperCase() === search || 
-      (node.keywords && node.keywords.some(k => k.toUpperCase().includes(search) || search.includes(k.toUpperCase())))
-    ) {
-      return path;
+export function findPathByKeyword(keyword: string, node: Record<string, DestinationNode> = destinationConfig, currentPath: string[] = []): string[] | null {
+  for (const [key, value] of Object.entries(node)) {
+    if (value.keywords.includes(keyword)) {
+      return [...currentPath, key];
     }
-    
-    // ค้นหาในลูกๆ
-    if (node.children) {
-      for (const [key, child] of Object.entries(node.children)) {
-        const found = searchNode(child, [...path, key]);
-        if (found) return found;
-      }
+    if (value.children) {
+      const childPath = findPathByKeyword(keyword, value.children, [...currentPath, key]);
+      if (childPath) return childPath;
     }
-    return null;
-  }
-
-  for (const [key, node] of Object.entries(destinationConfig)) {
-    const found = searchNode(node, [key]);
-    if (found) return found;
   }
   return null;
 }

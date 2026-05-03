@@ -23,8 +23,8 @@ export async function POST(request: Request) {
 
     // Fetch tours that do NOT have an embedding yet
     const { data: tours, error: fetchError } = await supabase
-      .from('Tour')
-      .select('id, title, destination, durationDays, price, description, itinerary')
+      .from('tours')
+      .select('id, tourName, durationDays, itineraries')
       .is('embedding', null)
       .limit(limit);
 
@@ -44,18 +44,15 @@ export async function POST(request: Request) {
       try {
         // Construct a rich text representation of the tour for embedding
         let itineraryText = "";
-        if (tour.itinerary && Array.isArray(tour.itinerary)) {
-          itineraryText = tour.itinerary.map((day: any, i: number) => 
-            `Day ${i + 1}: ${day.title || day.detail || ''}`
+        if (tour.itineraries && Array.isArray(tour.itineraries)) {
+          itineraryText = tour.itineraries.map((day: any, i: number) => 
+            `Day ${i + 1}: ${day.title || day.description || ''}`
           ).join(" | ");
         }
 
         const textToEmbed = `
-          Tour Title: ${tour.title}
-          Destination: ${tour.destination}
+          Tour Title: ${tour.tourName}
           Duration: ${tour.durationDays} days
-          Price: ${tour.price} THB
-          Description: ${tour.description || "No description"}
           Itinerary: ${itineraryText}
         `.trim().replace(/\n/g, " ");
 
@@ -70,7 +67,7 @@ export async function POST(request: Request) {
 
         // Update the tour with the new embedding
         const { error: updateError } = await supabase
-          .from('Tour')
+          .from('tours')
           .update({ embedding })
           .eq('id', tour.id);
 

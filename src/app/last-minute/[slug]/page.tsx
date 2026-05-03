@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { createClient } from "@supabase/supabase-js";
+import { prisma } from "@/lib/prisma";
 import { MapPin, Calendar, Star, Clock, ChevronRight, Flame } from "lucide-react";
 import { notFound } from "next/navigation";
 
@@ -75,30 +75,53 @@ export default async function WholesaleLastMinutePage({ params, searchParams }: 
     notFound();
   }
 
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://qterfftaebnoawnzkfgu.supabase.co";
-  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || "sb_publishable_SRwNSJ89mInda5FcuB1W2w_9IEJlSOI";
-  const supabase = createClient(supabaseUrl, supabaseKey);
-
   const today = new Date();
   const next30Days = new Date();
   next30Days.setDate(today.getDate() + 30);
 
-  let query = supabase.from('Tour')
-    .select('*, departures:TourDeparture!inner(*)')
-    .gte('departures.startDate', today.toISOString())
-    .lte('departures.startDate', next30Days.toISOString())
-    .order('createdAt', { ascending: false });
+  const supplierAlias = wholesale.source.toLowerCase();
 
-  // Now that all sources are officially mapped to TourSource enum in Prisma/Supabase, we can filter directly by source
-  query = query.eq('source', wholesale.source);
+  const toursData = await prisma.tour.findMany({
+    where: {
+      supplier: { canonicalName: supplierAlias },
+      status: 'PUBLISHED',
+      departures: {
+        some: {
+          startDate: {
+            gte: today,
+            lte: next30Days
+          }
+        }
+      }
+    },
+    include: {
+      departures: {
+        where: { startDate: { gte: today, lte: next30Days } },
+        orderBy: { startDate: 'asc' },
+        include: { prices: true }
+      },
+      destinations: true,
+      images: { take: 1 },
+      supplier: true
+    },
+    orderBy: { createdAt: 'desc' }
+  });
 
-  const { data: tours, error } = await query;
-  
-  if (error) {
-    console.error("Supabase Fetch Error:", error);
-  }
-
-  const validTours = tours || [];
+  const validTours = toursData.map(t => ({
+    id: t.id,
+    title: t.tourName,
+    durationDays: t.durationDays,
+    destination: t.destinations?.[0]?.country || "ไม่ระบุ",
+    imageUrl: t.images?.[0]?.imageUrl || "https://images.unsplash.com/photo-1436491865332-7a61a109cc05",
+    source: t.supplier?.bookingMethod || "UNKNOWN",
+    departures: t.departures.map(d => ({
+      id: d.id,
+      startDate: d.startDate,
+      endDate: d.endDate,
+      price: d.prices?.[0]?.sellingPrice || 0
+    })),
+    price: t.departures.length > 0 ? Math.min(...t.departures.map(d => d.prices?.[0]?.sellingPrice || 0)) : 0
+  }));
 
   // Group tours by destination
   const toursByDestination = validTours.reduce((acc: Record<string, any[]>, tour: any) => {

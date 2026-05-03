@@ -15,40 +15,22 @@ export default async function B2BBookingsPage() {
 
   const dbUser = await prisma.user.findUnique({
     where: { id: user.id },
-    include: { company: true }
+    include: { agent: true, role: true }
   });
 
-  if (!dbUser || !dbUser.company) return null;
-  const company = dbUser.company;
+  if (!dbUser || !dbUser.agent) return null;
+  const agent = dbUser.agent;
 
   let bookings: any[] = [];
 
-  if (company.type === 'SUPPLIER') {
-    const supplierTours = await prisma.tour.findMany({
-      where: { supplierId: company.id },
-      select: { id: true }
-    });
-    const tourIds = supplierTours.map(t => t.id);
-    
-    bookings = await prisma.booking.findMany({
-      where: { departure: { tourId: { in: tourIds } } },
-      orderBy: { createdAt: 'desc' },
-      include: {
-        departure: { include: { tour: true } },
-        agent: true,
-        user: true
-      }
-    });
-  } else {
-    bookings = await prisma.booking.findMany({
-      where: { agentId: company.id },
-      orderBy: { createdAt: 'desc' },
-      include: {
-        departure: { include: { tour: true } },
-        user: true
-      }
-    });
-  }
+  bookings = await prisma.booking.findMany({
+    where: { agentId: agent.id },
+    orderBy: { createdAt: 'desc' },
+    include: {
+      departure: { include: { tour: true } },
+      customer: true
+    }
+  });
 
   return (
     <div className="space-y-6">
@@ -59,9 +41,7 @@ export default async function B2BBookingsPage() {
             ระบบจัดการการจอง (Bookings)
           </h2>
           <p className="text-sm text-slate-500">
-            {company.type === 'SUPPLIER' 
-              ? 'รายการจองทั้งหมดจากทัวร์ของคุณ' 
-              : 'รายการจองทั้งหมดที่เกิดขึ้นผ่านหน้าร้านของคุณ'}
+            รายการจองทั้งหมดที่เกิดขึ้นผ่านหน้าร้านของคุณ ({agent.companyName})
           </p>
         </div>
         
@@ -138,17 +118,11 @@ export default async function B2BBookingsPage() {
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        <div className="font-bold text-slate-800">{b.contactName || b.user.name}</div>
-                        <div className="text-xs text-slate-500">{b.contactPhone}</div>
-                        <div className="text-xs text-slate-500 mt-1">จำนวน {b.pax} ท่าน</div>
+                        <div className="font-bold text-slate-800">{b.customer?.firstName} {b.customer?.lastName}</div>
+                        <div className="text-xs text-slate-500">{b.customer?.phone}</div>
                       </td>
                       <td className="px-6 py-4">
-                        <div className="font-medium text-slate-800 line-clamp-1">{b.departure?.tour?.title}</div>
-                        {company.type === 'SUPPLIER' && b.agent && (
-                          <div className="text-xs text-indigo-600 mt-1 font-medium bg-indigo-50 px-2 py-0.5 rounded inline-block">
-                            Agent: {b.agent.name}
-                          </div>
-                        )}
+                        <div className="font-medium text-slate-800 line-clamp-1">{b.departure?.tour?.tourName}</div>
                       </td>
                       <td className="px-6 py-4">
                         <div className="text-slate-800 font-medium">
@@ -160,11 +134,6 @@ export default async function B2BBookingsPage() {
                       </td>
                       <td className="px-6 py-4">
                         <div className="font-bold text-slate-900">฿{b.totalPrice.toLocaleString()}</div>
-                        {b.depositAmount && (
-                          <div className="text-xs text-slate-500 mt-1">
-                            มัดจำ: ฿{b.depositAmount.toLocaleString()}
-                          </div>
-                        )}
                       </td>
                       <td className="px-6 py-4">
                         <span className={`px-3 py-1 rounded-full text-xs font-bold ${statusColor}`}>

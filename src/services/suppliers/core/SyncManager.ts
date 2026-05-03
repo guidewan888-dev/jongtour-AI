@@ -12,6 +12,11 @@ const generateId = () => {
 };
 
 // Simple factory pattern concept
+import { LetgoAdapter } from '../adapters/LetgoAdapter';
+import { CheckinAdapter } from '../adapters/CheckinAdapter';
+import { TourFactoryAdapter } from '../adapters/TourFactoryAdapter';
+import { Go365Adapter } from '../adapters/Go365Adapter';
+
 export class AdapterFactory {
   static adapters: Record<string, SupplierAdapter> = {};
 
@@ -25,6 +30,12 @@ export class AdapterFactory {
     return adapter;
   }
 }
+
+// Auto-register available adapters
+AdapterFactory.register(new LetgoAdapter());
+AdapterFactory.register(new CheckinAdapter());
+AdapterFactory.register(new TourFactoryAdapter());
+AdapterFactory.register(new Go365Adapter());
 
 export class SyncManager {
   private supabase: SupabaseClient;

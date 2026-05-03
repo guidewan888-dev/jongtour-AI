@@ -8,11 +8,11 @@ export default async function AgentCheckoutPage({ params }: { params: { subdomai
   const { subdomain, tourId } = params;
 
   // Verify the agent exists
-  const agentCompany = await prisma.company.findUnique({
+  const agentCompany = await prisma.agent.findUnique({
     where: { subdomain }
   });
 
-  if (!agentCompany || agentCompany.type !== 'AGENT') {
+  if (!agentCompany || agentCompany.status !== 'ACTIVE') {
     notFound();
   }
 
@@ -24,24 +24,39 @@ export default async function AgentCheckoutPage({ params }: { params: { subdomai
     redirect(`/auth/login?redirect=/checkout/${tourId}`);
   }
 
-  const { data: tour, error } = await supabase
-    .from('Tour')
-    .select(`
-      *,
-      departures:TourDeparture(*)
-    `)
-    .eq('id', tourId)
-    .single();
+  const tourData = await prisma.tour.findUnique({
+    where: { id: tourId },
+    include: {
+      departures: {
+        where: { startDate: { gte: new Date() } },
+        orderBy: { startDate: 'asc' },
+        include: { prices: true }
+      },
+      destinations: true,
+      images: { take: 1 }
+    }
+  });
 
-  if (error || !tour) {
-    console.error("Tour not found for checkout:", error);
+  if (!tourData) {
+    console.error("Tour not found for checkout");
     notFound();
   }
 
-  // Sort departures by date
-  const sortedDepartures = tour.departures?.sort((a: any, b: any) => 
-    new Date(a.startDate).getTime() - new Date(b.startDate).getTime()
-  ) || [];
+  const tour = {
+    id: tourData.id,
+    title: tourData.tourName,
+    durationDays: tourData.durationDays,
+    destination: tourData.destinations?.[0]?.country || "ไม่ระบุ",
+    imageUrl: tourData.images?.[0]?.imageUrl || "https://images.unsplash.com/photo-1436491865332-7a61a109cc05",
+    departures: tourData.departures.map(d => ({
+      id: d.id,
+      startDate: d.startDate,
+      endDate: d.endDate,
+      price: d.prices?.[0]?.sellingPrice || 0
+    }))
+  };
+
+  const sortedDepartures = tour.departures;
 
   return (
     <main className="min-h-screen bg-gray-50 pb-20 pt-8">

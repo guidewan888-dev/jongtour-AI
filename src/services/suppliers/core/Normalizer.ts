@@ -29,6 +29,14 @@ export class Normalizer {
       pdfUrl = rawData.payload?.FilePDF || null;
       itinerary = rawData.payload?.Itinerary ? JSON.parse(JSON.stringify(rawData.payload.Itinerary)) : null;
       flights = rawData.payload?.Flights ? JSON.parse(JSON.stringify(rawData.payload.Flights)) : null;
+    } else if (supplierId === 'SUP_GO365') {
+      destination = Array.isArray(rawData.payload?.Destinations) && rawData.payload.Destinations.length > 0 
+        ? rawData.payload.Destinations[0] 
+        : 'Unknown';
+      durationDays = parseInt(rawData.payload?.DurationDay) || 1;
+      price = rawData.payload?.MinPrice || 0;
+      imageUrl = rawData.payload?.ImageThumb || null;
+      description = rawData.payload?.Description || null;
     } else {
       // TourFactory and CheckInGroup have identical schema
       destination = Array.isArray(rawData.payload?.countries) && rawData.payload.countries.length > 0 
@@ -46,6 +54,7 @@ export class Normalizer {
 
     return {
       supplierId,
+      externalTourId: rawData.externalId,
       providerId: rawData.externalId,
       title: rawData.name,
       destination,
@@ -57,6 +66,7 @@ export class Normalizer {
       pdfUrl,
       itinerary,
       flights,
+      isActive: true,
     };
   }
 
@@ -74,6 +84,7 @@ export class Normalizer {
         departures.push({
           id: `zego_period_${p.PeriodID}`,
           tourId: tourId,
+          externalDepartureId: p.PeriodID.toString(),
           startDate: new Date(p.PeriodStartDate).toISOString(),
           endDate: new Date(p.PeriodEndDate).toISOString(),
           price: p.Price || 0,
@@ -82,8 +93,14 @@ export class Normalizer {
           depositPrice: p.Deposit || null,
           totalSeats: p.GroupSize || 0,
           availableSeats: p.Seat || 0,
+          status: p.Seat > 0 ? "AVAILABLE" : "FULL",
         });
       }
+    } else if (supplierId === 'SUP_GO365') {
+      // Logic for Go365 departures would be mapped if fetched deeply.
+      // Assuming departures are not inside payload for getTours, they come from getDepartures.
+      // But SyncManager maps from `rawTours` which means we might need a deep sync later.
+      // Mock for now.
     } else {
       // TourFactory and CheckInGroup
       const periods = payload.periods || [];
@@ -93,6 +110,7 @@ export class Normalizer {
         departures.push({
           id: `${prefix}_period_${p.id}`,
           tourId: tourId,
+          externalDepartureId: p.id.toString(),
           startDate: new Date(p.start).toISOString(),
           endDate: new Date(p.end).toISOString(),
           price: p.price || 0,
@@ -101,6 +119,7 @@ export class Normalizer {
           depositPrice: p.deposit || null,
           totalSeats: p.seat || 0,
           availableSeats: p.available || 0,
+          status: p.available > 0 ? "AVAILABLE" : "FULL",
         });
       }
     }

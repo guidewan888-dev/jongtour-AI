@@ -12,9 +12,11 @@ export default async function TourDeparturesCmsPage({ params }: { params: { id: 
   const tour = await prisma.tour.findUnique({
     where: { id },
     include: {
+      supplier: true,
       departures: {
         orderBy: { startDate: 'asc' },
         include: {
+          prices: true,
           _count: {
             select: { bookings: true }
           }
@@ -27,7 +29,7 @@ export default async function TourDeparturesCmsPage({ params }: { params: { id: 
     notFound();
   }
 
-  const isApiTour = tour.source.includes("API");
+  const isApiTour = tour.supplier?.bookingMethod?.includes("API") || false;
 
   return (
     <div className="max-w-6xl mx-auto space-y-6">
@@ -43,7 +45,7 @@ export default async function TourDeparturesCmsPage({ params }: { params: { id: 
             <CalendarDays className="w-6 h-6 text-indigo-500" />
             จัดการรอบวันเดินทาง (Departures)
           </h2>
-          <p className="text-sm text-slate-500">ทัวร์: {tour.title}</p>
+          <p className="text-sm text-slate-500">ทัวร์: {tour.tourName}</p>
         </div>
       </div>
 
@@ -82,17 +84,17 @@ export default async function TourDeparturesCmsPage({ params }: { params: { id: 
                       </div>
                     </td>
                     <td className="px-6 py-4 font-medium text-indigo-600">
-                      ฿{dep.price.toLocaleString()}
+                      ฿{(dep.prices?.[0]?.sellingPrice || 0).toLocaleString()}
                     </td>
                     <td className="px-6 py-4 text-slate-500">
-                      {dep.netPrice ? `฿${dep.netPrice.toLocaleString()}` : '-'}
+                      {dep.prices?.[0]?.netPrice ? `฿${dep.prices[0].netPrice.toLocaleString()}` : '-'}
                     </td>
                     <td className="px-6 py-4 text-slate-500">
-                      {dep.depositPrice ? `฿${dep.depositPrice.toLocaleString()}` : '-'}
+                      -
                     </td>
                     <td className="px-6 py-4 text-center">
-                      <span className={`font-bold ${dep.availableSeats <= 5 ? 'text-orange-500' : 'text-emerald-600'}`}>
-                        {dep.availableSeats}
+                      <span className={`font-bold ${dep.remainingSeats <= 5 ? 'text-orange-500' : 'text-emerald-600'}`}>
+                        {dep.remainingSeats}
                       </span> / {dep.totalSeats}
                     </td>
                     <td className="px-6 py-4 text-center">

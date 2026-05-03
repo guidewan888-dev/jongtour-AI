@@ -1,4 +1,4 @@
-import { extractIntent } from '../src/services/ai/intentExtractor.ts';
+import { extractIntent } from '../src/services/ai/intentExtractor';
 import OpenAI from 'openai';
 
 const openai = new OpenAI({

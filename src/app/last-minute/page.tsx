@@ -1,32 +1,54 @@
 import Link from "next/link";
-import { createClient } from "@supabase/supabase-js";
+import { prisma } from "@/lib/prisma";
 import { MapPin, Calendar, Star, ChevronRight, Clock, Flame } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
 export default async function LastMinutePage() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://qterfftaebnoawnzkfgu.supabase.co";
-  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || "sb_publishable_SRwNSJ89mInda5FcuB1W2w_9IEJlSOI";
-  const supabase = createClient(supabaseUrl, supabaseKey);
-
   const today = new Date();
   const next30Days = new Date();
   next30Days.setDate(today.getDate() + 30);
 
-  // ดึงทัวร์ที่มีรอบเดินทางภายใน 30 วันข้างหน้า (Last Minute Deals)
-  const { data: tours, error } = await supabase
-    .from('Tour')
-    .select('*, departures:TourDeparture!inner(*)')
-    .gte('departures.startDate', today.toISOString())
-    .lte('departures.startDate', next30Days.toISOString())
-    .order('createdAt', { ascending: false });
+  const toursData = await prisma.tour.findMany({
+    where: {
+      status: 'PUBLISHED',
+      departures: {
+        some: {
+          startDate: {
+            gte: today,
+            lte: next30Days
+          }
+        }
+      }
+    },
+    include: {
+      departures: {
+        where: { startDate: { gte: today, lte: next30Days } },
+        orderBy: { startDate: 'asc' },
+        include: { prices: true }
+      },
+      destinations: true,
+      images: { take: 1 },
+      supplier: true
+    },
+    orderBy: { createdAt: 'desc' }
+  });
 
-  if (error) {
-    console.error("Supabase Error:", error);
-    throw new Error("Failed to fetch fire tours");
-  }
-
-  const validTours = tours || [];
+  const validTours = toursData.map(t => ({
+    id: t.id,
+    title: t.tourName,
+    durationDays: t.durationDays,
+    destination: t.destinations?.[0]?.country || "ไม่ระบุ",
+    imageUrl: t.images?.[0]?.imageUrl || "https://images.unsplash.com/photo-1436491865332-7a61a109cc05",
+    source: t.supplier?.bookingMethod || "UNKNOWN",
+    departures: t.departures.map(d => ({
+      id: d.id,
+      startDate: d.startDate,
+      endDate: d.endDate,
+      price: d.prices?.[0]?.sellingPrice || 0
+    })),
+    price: t.departures.length > 0 ? Math.min(...t.departures.map(d => d.prices?.[0]?.sellingPrice || 0)) : 0
+  }));
   
   const wholesaleMap: Record<string, { slug: string, name: string, logo: string }> = {
     "API_ZEGO": { slug: "letsgo", name: "Let's Go Group", logo: "/images/wholesales/download.png" },

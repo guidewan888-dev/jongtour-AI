@@ -1,9 +1,9 @@
-import { SupabaseClient } from '@supabase/supabase-js';
 import { IntentExtractionResult } from './intentExtractor';
 import { supplierMaster } from './supplierConfig';
+import { prisma } from '@/lib/prisma';
+import { Prisma } from '@prisma/client';
 
 export async function searchTours(
-  supabase: SupabaseClient,
   args: any,
   intentExtracted: IntentExtractionResult | null,
   semanticMatchedTourIds: string[] = []
@@ -18,72 +18,104 @@ export async function searchTours(
     delete args.supplier_id;
   }
 
-  let query = supabase.from('Tour').select('*, departures:TourDeparture(*)');
-  
+  const whereClause: Prisma.TourWhereInput = { status: 'PUBLISHED' };
+
   if (args.isLastMinute) {
     const today = new Date();
     const next30Days = new Date();
     next30Days.setDate(today.getDate() + 30);
-    query = supabase.from('Tour').select('*, departures:TourDeparture!inner(*)').gte('departures.startDate', today.toISOString()).lte('departures.startDate', next30Days.toISOString());
+    whereClause.departures = { some: { startDate: { gte: today, lte: next30Days } } };
   }
 
-  // If we have semantic matched tours, we want to retrieve them too!
+  const orConditions: Prisma.TourWhereInput[] = [];
+
   if (semanticMatchedTourIds.length > 0) {
      if (args.destination) {
-        // Find by destination OR by semantic match
         const destParts = args.destination.split(/[\s-]+/).filter((p: string) => p.trim().length > 0);
-        let orStrings = destParts.map((part: string) => `title.ilike.%${part}%,description.ilike.%${part}%,destination.ilike.%${part}%`);
-        orStrings.push(`id.in.(${semanticMatchedTourIds.join(',')})`);
-        query = query.or(orStrings.join(','));
+        for (const part of destParts) {
+           orConditions.push({ tourName: { contains: part, mode: 'insensitive' } });
+           orConditions.push({ destinations: { some: { country: { contains: part, mode: 'insensitive' } } } });
+        }
+        orConditions.push({ id: { in: semanticMatchedTourIds } });
      } else {
-        query = query.or(`id.in.(${semanticMatchedTourIds.join(',')})`);
+        whereClause.id = { in: semanticMatchedTourIds };
      }
   } else if (args.destination) {
     const destParts = args.destination.split(/[\s-]+/).filter((p: string) => p.trim().length > 0);
     for (const part of destParts) {
-      query = query.or(`title.ilike.%${part}%,description.ilike.%${part}%,destination.ilike.%${part}%`);
+       orConditions.push({ tourName: { contains: part, mode: 'insensitive' } });
+       orConditions.push({ destinations: { some: { country: { contains: part, mode: 'insensitive' } } } });
     }
   }
 
-  if (args.date_from) {
-    query = query.gte('departures.startDate', args.date_from);
+  if (orConditions.length > 0) {
+    whereClause.OR = orConditions;
   }
-  if (args.date_to) {
-    query = query.lte('departures.startDate', args.date_to);
+
+  if (args.date_from || args.date_to) {
+    const startFilters: any = {};
+    if (args.date_from) startFilters.gte = new Date(args.date_from);
+    if (args.date_to) startFilters.lte = new Date(args.date_to);
+    
+    whereClause.departures = {
+      ...((whereClause.departures as any) || {}),
+      some: {
+        ...((whereClause.departures as any)?.some || {}),
+        startDate: startFilters
+      }
+    };
   }
+
+  // supplier_id filtering
   if (args.supplier_id) {
-    query = query.or(`source.eq.${args.supplier_id},providerId.ilike.%${args.supplier_id}%`);
+    whereClause.supplier = { canonicalName: args.supplier_id.toLowerCase() };
   }
-  if (args.budget_max) {
-    query = query.lte('price', args.budget_max);
-  }
-  if (args.budget_min) {
-    query = query.gte('price', args.budget_min);
-  }
-  if (args.maxPrice) {
-    query = query.lte('price', args.maxPrice);
-  }
-  
+
   let limit = args.limit || 10;
   if (args.userImage) {
     limit = 1; // Limit to 1 if image provided
   }
   
   // Fetch up to 50 to allow shuffling/mixing
-  query = query.order('createdAt', { ascending: false }).limit(50);
+  let toursData = await prisma.tour.findMany({
+    where: whereClause,
+    include: {
+      departures: {
+        where: { startDate: { gte: new Date() } },
+        orderBy: { startDate: 'asc' },
+        include: { prices: true }
+      },
+      destinations: true,
+      supplier: true
+    },
+    orderBy: { createdAt: 'desc' },
+    take: 50
+  });
 
-  let { data: rawTours } = await query;
+  let tours = toursData.map((t: any) => ({
+    id: t.id,
+    title: t.tourName,
+    code: t.tourCode,
+    price: t.departures.length > 0 ? Math.min(...t.departures.map((d: any) => d.prices?.[0]?.sellingPrice || 0)) : 0,
+    source: t.supplier?.canonicalName || 'UNKNOWN',
+    providerId: t.supplier?.canonicalName,
+    destination: t.destinations?.[0]?.country || 'ไม่ระบุ',
+    departures: t.departures.map((d: any) => ({
+      startDate: d.startDate,
+      endDate: d.endDate,
+      price: d.prices?.[0]?.sellingPrice || 0,
+      availableSeats: d.availableSeats
+    }))
+  }));
   
-  let tours = rawTours || [];
-  
-  // Strict Validation Rule
-  if (args.supplier_id) {
-    tours = tours.filter((t: any) => 
-      t.source === args.supplier_id || 
-      t.providerId === args.supplier_id || 
-      t.source?.toLowerCase() === args.supplier_id.toLowerCase() || 
-      t.providerId?.toLowerCase() === args.supplier_id.toLowerCase()
-    );
+  if (args.budget_max) {
+    tours = tours.filter((t: any) => t.price <= args.budget_max);
+  }
+  if (args.budget_min) {
+    tours = tours.filter((t: any) => t.price >= args.budget_min);
+  }
+  if (args.maxPrice) {
+    tours = tours.filter((t: any) => t.price <= args.maxPrice);
   }
   
   if (args.keyword && semanticMatchedTourIds.length === 0) {

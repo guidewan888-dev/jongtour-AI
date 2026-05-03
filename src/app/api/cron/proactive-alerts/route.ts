@@ -23,14 +23,30 @@ export async function GET(request: Request) {
   try {
     const { prisma } = await import('@/lib/prisma');
 
-    // 2. Find "Fire Sale" tours (e.g., price < 20000 or updated recently)
-    // For MVP, just get random 1 cheap tour as a test
-    const { data: cheapTours } = await supabase
-      .from('Tour')
-      .select('*, departures:TourDeparture(*)')
-      .lt('price', 20000)
-      .order('price', { ascending: true })
-      .limit(5);
+    // 2. Find "Fire Sale" tours
+    const cheapToursData = await prisma.tour.findMany({
+      where: { status: 'PUBLISHED' },
+      include: {
+        departures: {
+          where: { startDate: { gte: new Date() } },
+          include: { prices: true }
+        },
+        destinations: true,
+        images: { take: 1 }
+      },
+      take: 20
+    });
+
+    const cheapToursRaw = cheapToursData.map((t: any) => ({
+      id: t.id,
+      title: t.tourName,
+      code: t.tourCode,
+      price: t.departures.length > 0 ? Math.min(...t.departures.map((d: any) => d.prices?.[0]?.sellingPrice || 0)) : 0,
+      destination: t.destinations?.[0]?.country || 'ไม่ระบุ',
+      imageUrl: t.images?.[0]?.imageUrl || 'https://images.unsplash.com/photo-1436491865332-7a61a109cc05?auto=format&fit=crop&w=800&q=80',
+    }));
+
+    const cheapTours = cheapToursRaw.filter(t => t.price > 0 && t.price < 20000).sort((a, b) => a.price - b.price).slice(0, 5);
 
     if (!cheapTours || cheapTours.length === 0) {
       return NextResponse.json({ message: 'No fire sale tours found' });

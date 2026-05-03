@@ -17,10 +17,10 @@ export default async function B2BSettingsPage() {
 
   const dbUser = await prisma.user.findUnique({
     where: { id: user.id },
-    include: { company: true }
+    include: { agent: true }
   });
 
-  const company = dbUser?.company;
+  const company = dbUser?.agent;
 
   if (!company) {
     return <div>No company found.</div>;

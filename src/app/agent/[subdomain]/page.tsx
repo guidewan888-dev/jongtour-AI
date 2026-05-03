@@ -11,10 +11,12 @@ export default async function AgentHomePage({ params }: { params: { subdomain: s
     take: 6,
     orderBy: { createdAt: 'desc' },
     include: {
+      images: { take: 1 },
       departures: {
         where: { startDate: { gte: new Date() } },
         orderBy: { startDate: 'asc' },
-        take: 1
+        take: 1,
+        include: { prices: true }
       }
     }
   });
@@ -67,10 +69,10 @@ export default async function AgentHomePage({ params }: { params: { subdomain: s
               <Link href={`/agent/${subdomain}/tour/${tour.id}`} key={tour.id} className="group flex flex-col bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300">
                 {/* Image */}
                 <div className="relative aspect-[4/3] bg-gray-100 overflow-hidden">
-                  {tour.imageUrl ? (
+                  {tour.images?.[0]?.imageUrl ? (
                     <img 
-                      src={tour.imageUrl} 
-                      alt={tour.title} 
+                      src={tour.images[0].imageUrl} 
+                      alt={tour.tourName} 
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     />
                   ) : (
@@ -87,14 +89,14 @@ export default async function AgentHomePage({ params }: { params: { subdomain: s
                 {/* Content */}
                 <div className="p-5 flex-1 flex flex-col">
                   <h3 className="font-bold text-gray-900 text-lg line-clamp-2 mb-2 group-hover:text-blue-600 transition-colors">
-                    {tour.title}
+                    {tour.tourName}
                   </h3>
                   
                   <div className="mt-auto pt-4 border-t border-gray-100 flex items-end justify-between">
                     <div>
                       <p className="text-xs text-gray-500 mb-0.5">ราคาเริ่มต้น</p>
                       <p className="text-xl font-black" style={{ color: 'var(--theme-color)' }}>
-                        ฿{tour.price.toLocaleString()}
+                        ฿{(tour.departures?.[0]?.prices?.[0]?.sellingPrice || 0).toLocaleString()}
                       </p>
                     </div>
                     {nextDeparture && (

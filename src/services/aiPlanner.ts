@@ -1,5 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 import OpenAI from 'openai';
+import { prisma } from '@/lib/prisma';
+import { Prisma } from '@prisma/client';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://qterfftaebnoawnzkfgu.supabase.co";
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || "sb_publishable_SRwNSJ89mInda5FcuB1W2w_9IEJlSOI";
@@ -39,7 +41,8 @@ export async function processAiQuery(userMessage: string) {
     }
   }
 
-  let query = supabase.from('Tour').select('*, departures:TourDeparture(*)');
+  const whereClause: Prisma.TourWhereInput = { status: 'PUBLISHED' };
+  const orConditions: Prisma.TourWhereInput[] = [];
 
   if (!isSemanticSearch) {
     const commonDestinations = [
@@ -54,20 +57,48 @@ export async function processAiQuery(userMessage: string) {
     }
 
     if (keywords.length > 0) {
-      const orConditions = keywords.map(kw => `destination.ilike.*${kw}*,title.ilike.*${kw}*`);
-      query = query.or(orConditions.join(','));
+      keywords.forEach(kw => {
+        orConditions.push({ tourName: { contains: kw, mode: 'insensitive' } });
+        orConditions.push({ destinations: { some: { country: { contains: kw, mode: 'insensitive' } } } });
+      });
+      whereClause.OR = orConditions;
     }
   }
 
   if (isSemanticSearch && matchedTourIds.length > 0) {
-    query = query.in('id', matchedTourIds);
+    whereClause.id = { in: matchedTourIds };
   }
 
-  // Fetch a larger pool to shuffle
-  query = query.order('createdAt', { ascending: false }).limit(60);
+  let toursData = await prisma.tour.findMany({
+    where: whereClause,
+    include: {
+      departures: {
+        where: { startDate: { gte: new Date() } },
+        orderBy: { startDate: 'asc' },
+        include: { prices: true }
+      },
+      destinations: true,
+      supplier: true
+    },
+    orderBy: { createdAt: 'desc' },
+    take: 60
+  });
 
-  const { data: rawTours } = await query;
-  let tours = rawTours || [];
+  let tours = toursData.map((t: any) => ({
+    id: t.id,
+    title: t.tourName,
+    code: t.tourCode,
+    price: t.departures.length > 0 ? Math.min(...t.departures.map((d: any) => d.prices?.[0]?.sellingPrice || 0)) : 0,
+    source: t.supplier?.canonicalName || 'UNKNOWN',
+    providerId: t.supplier?.canonicalName,
+    destination: t.destinations?.[0]?.country || 'ไม่ระบุ',
+    departures: t.departures.map((d: any) => ({
+      startDate: d.startDate,
+      endDate: d.endDate,
+      price: d.prices?.[0]?.sellingPrice || 0,
+      availableSeats: d.availableSeats
+    }))
+  }));
 
   if (isSemanticSearch && matchedTourIds.length > 0) {
     tours.sort((a, b) => matchedTourIds.indexOf(a.id) - matchedTourIds.indexOf(b.id));

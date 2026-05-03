@@ -7,11 +7,11 @@ export default async function AgentTourDetailsPage({ params }: { params: { subdo
   const { subdomain, id } = params;
 
   // Verify the agent exists
-  const agentCompany = await prisma.company.findUnique({
+  const agentCompany = await prisma.agent.findUnique({
     where: { subdomain }
   });
 
-  if (!agentCompany || agentCompany.type !== 'AGENT') {
+  if (!agentCompany || agentCompany.status !== 'ACTIVE') {
     notFound();
   }
 

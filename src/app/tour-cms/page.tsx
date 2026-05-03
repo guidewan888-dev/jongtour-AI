@@ -16,12 +16,12 @@ export default async function TourCmsPage({
   const where: any = {};
   if (query) {
     where.OR = [
-      { title: { contains: query, mode: "insensitive" } },
-      { destination: { contains: query, mode: "insensitive" } },
+      { tourName: { contains: query, mode: "insensitive" } },
+      { destinations: { some: { country: { contains: query, mode: "insensitive" } } } },
     ];
   }
   if (sourceFilter !== "ALL") {
-    where.source = sourceFilter;
+    where.supplier = { bookingMethod: sourceFilter };
   }
 
   const tours = await prisma.tour.findMany({
@@ -29,6 +29,12 @@ export default async function TourCmsPage({
     orderBy: { createdAt: "desc" },
     include: {
       supplier: true,
+      destinations: true,
+      images: { take: 1 },
+      departures: {
+        take: 1,
+        include: { prices: true }
+      },
       _count: {
         select: { departures: true }
       }
@@ -114,34 +120,34 @@ export default async function TourCmsPage({
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
                         <div className="w-12 h-12 rounded-lg bg-slate-100 border border-slate-200 overflow-hidden shrink-0 flex items-center justify-center">
-                          {tour.imageUrl ? (
-                            <img src={tour.imageUrl} alt={tour.title} className="w-full h-full object-cover" />
+                          {tour.images[0]?.imageUrl ? (
+                            <img src={tour.images[0].imageUrl} alt={tour.tourName} className="w-full h-full object-cover" />
                           ) : (
                             <MapPin className="w-5 h-5 text-slate-400" />
                           )}
                         </div>
                         <div>
-                          <p className="font-medium text-slate-900 line-clamp-1 group-hover:text-indigo-600 transition-colors" title={tour.title}>
-                            {tour.title}
+                          <p className="font-medium text-slate-900 line-clamp-1 group-hover:text-indigo-600 transition-colors" title={tour.tourName}>
+                            {tour.tourName}
                           </p>
                           <p className="text-xs text-slate-500 mt-0.5">
-                            {tour.supplier?.name || "Jongtour"}
+                            {tour.supplier?.displayName || "Jongtour"}
                           </p>
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4 text-slate-600">{tour.destination}</td>
+                    <td className="px-6 py-4 text-slate-600">{tour.destinations?.map(d => d.country).join(', ') || '-'}</td>
                     <td className="px-6 py-4 text-slate-600">{tour.durationDays} วัน</td>
                     <td className="px-6 py-4 font-medium text-slate-900">
-                      ฿{tour.price.toLocaleString()}
+                      ฿{(tour.departures?.[0]?.prices?.[0]?.sellingPrice || 0).toLocaleString()}
                     </td>
                     <td className="px-6 py-4">
                       <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold tracking-wide uppercase ${
-                        tour.source === 'MANUAL' ? 'bg-purple-100 text-purple-700' :
-                        tour.source.includes('ZEGO') ? 'bg-orange-100 text-orange-700' :
+                        tour.supplier?.bookingMethod === 'MANUAL' ? 'bg-purple-100 text-purple-700' :
+                        tour.supplier?.bookingMethod?.includes('API') ? 'bg-orange-100 text-orange-700' :
                         'bg-blue-100 text-blue-700'
                       }`}>
-                        {tour.source.replace('API_', '')}
+                        {tour.supplier?.bookingMethod || 'N/A'}
                       </span>
                     </td>
                     <td className="px-6 py-4 text-slate-600">
@@ -156,7 +162,7 @@ export default async function TourCmsPage({
                         >
                           <Edit className="w-4 h-4" />
                         </Link>
-                        {tour.source === 'MANUAL' && (
+                        {tour.supplier?.bookingMethod === 'MANUAL' && (
                           <button 
                             className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors"
                             title="ลบทัวร์"

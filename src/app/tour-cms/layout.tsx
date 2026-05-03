@@ -19,15 +19,15 @@ export default async function TourCmsLayout({ children }: { children: ReactNode 
 
   const dbUser = await prisma.user.findUnique({
     where: { id: user.id },
-    include: { company: true }
+    include: { role: true, supplier: true }
   });
 
   // Only allow ADMIN or SUPPLIER to access Tour CMS
-  if (!dbUser || (dbUser.role !== "ADMIN" && dbUser.role !== "SUPPLIER" && dbUser.company?.type !== "SUPPLIER")) {
+  if (!dbUser || (dbUser.role.name !== "ADMIN" && dbUser.role.name !== "SUPPLIER_ADMIN")) {
     redirect("/b2b");
   }
 
-  const isSupplier = dbUser.role === "SUPPLIER" || dbUser.company?.type === "SUPPLIER";
+  const isSupplier = dbUser.role.name === "SUPPLIER_ADMIN";
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
@@ -38,7 +38,7 @@ export default async function TourCmsLayout({ children }: { children: ReactNode 
             <span className="bg-indigo-500 text-white px-2 py-1 rounded-md text-sm">TOUR</span>
             CMS Portal
           </div>
-          <p className="text-xs text-slate-400 mt-2">{dbUser.company?.name || 'Jongtour Network'}</p>
+          <p className="text-xs text-slate-400 mt-2">{dbUser.supplier?.displayName || 'Jongtour Network'}</p>
         </div>
 
         <nav className="flex-1 py-6 px-4 space-y-2 overflow-y-auto">
@@ -94,9 +94,9 @@ export default async function TourCmsLayout({ children }: { children: ReactNode 
         <header className="bg-white h-16 border-b border-gray-200 flex items-center justify-between px-8 sticky top-0 z-10">
           <h1 className="text-lg font-semibold text-gray-800">ระบบจัดการสินค้า (Product Management)</h1>
           <div className="flex items-center gap-3">
-            <span className="text-sm font-medium text-slate-600">{dbUser.name}</span>
+            <span className="text-sm font-medium text-slate-600">{dbUser.email}</span>
             <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold text-sm">
-              {dbUser.name?.charAt(0) || 'U'}
+              {dbUser.email?.charAt(0).toUpperCase() || 'U'}
             </div>
           </div>
         </header>
