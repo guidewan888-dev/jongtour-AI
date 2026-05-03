@@ -1,100 +1,79 @@
-import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
-import { MapPin, Phone, Mail } from 'lucide-react';
+import { MapPin, Phone, Mail, Clock, MessageCircle } from 'lucide-react';
+
+export const metadata = {
+  title: 'ติดต่อเรา (Contact Us) | Jongtour',
+  description: 'ติดต่อทีมงาน Jongtour สอบถามข้อมูลทัวร์ โปรโมชัน หรือแจ้งปัญหาการใช้งาน',
+};
 
 export default function ContactPage() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-      <div className="text-center mb-16">
-        <h1 className="text-4xl md:text-5xl font-black text-slate-900 tracking-tight mb-4">ติดต่อเรา (Contact Us)</h1>
-        <p className="text-xl text-slate-600">ยินดีรับฟังทุกข้อเสนอแนะและพร้อมให้ความช่วยเหลือ</p>
+      {/* Header */}
+      <div className="text-center max-w-3xl mx-auto mb-16">
+        <h1 className="text-4xl md:text-5xl font-black text-slate-900 mb-6 tracking-tight">ติดต่อเรา</h1>
+        <p className="text-lg text-slate-500 font-medium">ทีมงาน Jongtour ยินดีให้บริการและพร้อมตอบทุกข้อสงสัยของคุณเกี่ยวกับการเดินทาง</p>
       </div>
 
-      <div className="grid lg:grid-cols-2 gap-16">
-        {/* Contact Info */}
-        <div>
-          <h2 className="text-2xl font-bold text-slate-900 mb-8">ข้อมูลการติดต่อบริษัท</h2>
-          
-          <div className="space-y-8">
-            <div className="flex gap-4">
-              <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center shrink-0">
-                <MapPin className="w-6 h-6" />
-              </div>
-              <div>
-                <h3 className="font-bold text-slate-900 mb-1">สำนักงานใหญ่</h3>
-                <p className="text-slate-600 leading-relaxed text-sm">
-                  บริษัท จงทัวร์ คอร์ปอเรชั่น จำกัด<br />
-                  123/45 อาคาร ABC Tower ชั้น 15 ถนนสุขุมวิท<br />
-                  แขวงคลองเตยเหนือ เขตวัฒนา กรุงเทพฯ 10110
-                </p>
-              </div>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
+        {/* Contact Info Cards */}
+        <div className="lg:col-span-1 space-y-6">
+          <div className="bg-indigo-50 rounded-3xl p-8 border border-indigo-100 flex flex-col items-center text-center">
+            <div className="w-14 h-14 bg-indigo-600 text-white rounded-2xl flex items-center justify-center mb-4 shadow-md">
+              <Phone className="w-6 h-6" />
             </div>
-
-            <div className="flex gap-4">
-              <div className="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center shrink-0">
-                <Phone className="w-6 h-6" />
-              </div>
-              <div>
-                <h3 className="font-bold text-slate-900 mb-1">เบอร์โทรศัพท์</h3>
-                <p className="text-slate-600 text-sm">02-XXX-XXXX (จันทร์ - ศุกร์ 09:00 - 18:00 น.)</p>
-              </div>
-            </div>
-
-            <div className="flex gap-4">
-              <div className="w-12 h-12 bg-purple-50 text-purple-600 rounded-full flex items-center justify-center shrink-0">
-                <Mail className="w-6 h-6" />
-              </div>
-              <div>
-                <h3 className="font-bold text-slate-900 mb-1">อีเมลติดต่อ</h3>
-                <p className="text-slate-600 text-sm">General: info@jongtour.com<br />Support: support@jongtour.com</p>
-              </div>
-            </div>
+            <h3 className="font-bold text-slate-900 text-lg mb-2">โทรศัพท์</h3>
+            <p className="text-slate-600 mb-1">ติดต่อฝ่ายขายและจองทัวร์</p>
+            <a href="tel:021234567" className="text-xl font-black text-indigo-600 hover:text-indigo-700">02-123-4567</a>
           </div>
 
-          <div className="mt-12 w-full h-64 bg-slate-200 rounded-3xl overflow-hidden">
-            {/* Embedded Google Map placeholder */}
-            <div className="w-full h-full flex items-center justify-center bg-slate-100 text-slate-400">
-              [Google Map Embed Area]
+          <div className="bg-green-50 rounded-3xl p-8 border border-green-100 flex flex-col items-center text-center">
+            <div className="w-14 h-14 bg-green-500 text-white rounded-2xl flex items-center justify-center mb-4 shadow-md">
+              <MessageCircle className="w-6 h-6" />
             </div>
+            <h3 className="font-bold text-slate-900 text-lg mb-2">LINE Official</h3>
+            <p className="text-slate-600 mb-1">แชทกับแอดมิน (ตอบไวสุด)</p>
+            <a href="https://line.me/R/ti/p/@jongtour" target="_blank" rel="noreferrer" className="text-xl font-black text-green-600 hover:text-green-700">@jongtour</a>
+          </div>
+
+          <div className="bg-slate-50 rounded-3xl p-8 border border-slate-200 flex flex-col items-center text-center">
+            <div className="w-14 h-14 bg-slate-800 text-white rounded-2xl flex items-center justify-center mb-4 shadow-md">
+              <Mail className="w-6 h-6" />
+            </div>
+            <h3 className="font-bold text-slate-900 text-lg mb-2">อีเมล</h3>
+            <p className="text-slate-600 mb-1">สำหรับติดต่อธุรกิจ / แจ้งปัญหา</p>
+            <a href="mailto:support@jongtour.com" className="text-lg font-black text-slate-800 hover:text-slate-900">support@jongtour.com</a>
           </div>
         </div>
 
-        {/* Contact Form */}
-        <div className="bg-white rounded-3xl p-8 border border-slate-200 shadow-xl shadow-slate-200/50">
-          <h2 className="text-2xl font-bold text-slate-900 mb-6">ส่งข้อความถึงเรา</h2>
-          <form className="space-y-5">
-            <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-1.5">ชื่อ-นามสกุล <span className="text-rose-500">*</span></label>
-              <Input placeholder="กรอกชื่อของคุณ" />
+        {/* Map & Office Address */}
+        <div className="lg:col-span-2 flex flex-col">
+          <div className="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-sm flex-1 flex flex-col">
+            <div className="p-8 pb-0">
+              <h2 className="text-2xl font-bold text-slate-900 mb-6 flex items-center gap-2">
+                <MapPin className="text-indigo-600" /> ที่ตั้งสำนักงานใหญ่
+              </h2>
+              <p className="text-slate-600 leading-relaxed font-medium mb-6">
+                <strong>บริษัท จงทัวร์ จำกัด (สำนักงานใหญ่)</strong><br />
+                เลขที่ 99/9 อาคารจงทัวร์ ชั้น 5 ถนนรัชดาภิเษก แขวงดินแดง เขตดินแดง กรุงเทพมหานคร 10400
+              </p>
+              
+              <div className="flex items-center gap-2 text-sm text-slate-500 mb-8 font-medium bg-slate-50 p-4 rounded-xl">
+                <Clock className="w-5 h-5 text-amber-500" />
+                <span><strong>เวลาทำการ:</strong> จันทร์ - ศุกร์ (09:00 - 18:00 น.) / หยุดวันเสาร์-อาทิตย์ และนักขัตฤกษ์</span>
+              </div>
             </div>
-            <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-1.5">อีเมล <span className="text-rose-500">*</span></label>
-              <Input type="email" placeholder="example@email.com" />
+            
+            {/* Google Map Embed */}
+            <div className="w-full h-80 bg-slate-100 flex-1 relative">
+              <iframe 
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1m2!1s0x30e29e8d3ba1a1a1%3A0x8b1a8d11b2b88b0a!2sRatchadaphisek%20Rd%2C%20Bangkok!5e0!3m2!1sen!2sth!4v1650000000000!5m2!1sen!2sth" 
+                className="absolute inset-0 w-full h-full border-0" 
+                allowFullScreen={true} 
+                loading="lazy" 
+                referrerPolicy="no-referrer-when-downgrade"
+              ></iframe>
             </div>
-            <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-1.5">เบอร์โทรศัพท์</label>
-              <Input type="tel" placeholder="08X-XXX-XXXX" />
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-1.5">เรื่องที่ต้องการติดต่อ <span className="text-rose-500">*</span></label>
-              <select className="w-full rounded-xl border border-slate-200 bg-transparent px-3 py-2 text-sm outline-none focus-visible:border-blue-500 focus-visible:ring-2 focus-visible:ring-blue-100">
-                <option>สอบถามแพ็กเกจทัวร์</option>
-                <option>แจ้งปัญหาการจอง</option>
-                <option>ขอใบเสนอราคากรุ๊ปเหมา</option>
-                <option>ติดต่อสมัครตัวแทน (Agent)</option>
-                <option>อื่นๆ</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-1.5">ข้อความ <span className="text-rose-500">*</span></label>
-              <textarea 
-                rows={4} 
-                className="w-full rounded-xl border border-slate-200 bg-transparent px-3 py-2 text-sm outline-none focus-visible:border-blue-500 focus-visible:ring-2 focus-visible:ring-blue-100 resize-none"
-                placeholder="ระบุรายละเอียด..."
-              ></textarea>
-            </div>
-            <Button type="button" className="w-full h-12 text-base">ส่งข้อความ</Button>
-          </form>
+          </div>
         </div>
       </div>
     </div>
