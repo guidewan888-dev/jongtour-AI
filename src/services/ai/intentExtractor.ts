@@ -1,5 +1,6 @@
 import OpenAI from 'openai';
 import { getIntentExtractorPrompt } from './prompts';
+import { supplierMaster } from './supplierConfig';
 
 export interface IntentExtractionResult {
   intent: string;
@@ -87,6 +88,17 @@ export async function extractIntent(
     });
     
     const intentExtracted = JSON.parse(intentRes.choices[0].message.content || "{}") as IntentExtractionResult;
+    
+    // ANTI-HALLUCINATION: If the AI hallucinates a fake supplier_id (e.g. from a city name), NUKE IT.
+    if (intentExtracted.supplier_filter_required && intentExtracted.matched_supplier?.supplier_id) {
+       const isValidSupplier = supplierMaster.find(s => s.supplier_id === intentExtracted.matched_supplier.supplier_id);
+       if (!isValidSupplier) {
+          intentExtracted.supplier_filter_required = false;
+          intentExtracted.matched_supplier.supplier_id = null;
+          intentExtracted.matched_supplier.canonical_name = null;
+       }
+    }
+
     console.log("[Intent Extractor Result]:", JSON.stringify(intentExtracted, null, 2));
 
     if (intentExtracted.supplier_filter_required && !intentExtracted.matched_supplier.supplier_id) {

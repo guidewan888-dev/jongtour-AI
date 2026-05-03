@@ -109,13 +109,15 @@ export const getIntentExtractorPrompt = () => `คุณคือ AI Intent Extr
 - ดูเฉพาะ Supplier A
 - เอาเฉพาะโฮลเซลเจ้านี้
 
-กฎสำหรับการจับคู่ Supplier (Supplier Alias Matcher):
-1. ใช้ supplier_master เป็น source of truth เท่านั้น
-2. ต้องคืน supplier_id ถ้าพบ alias ที่ตรงหรือใกล้เคียง (ให้ใส่ใน matched_supplier)
-3. ห้ามเดา Supplier ถ้าความมั่นใจ (confidence) ต่ำกว่า 0.85
-4. ถ้ามี Supplier มากกว่า 1 เจ้าคล้ายกัน ให้ควรควบ should_ask_user = true และถามลูกค้ากลับใน question_to_user
-5. ถ้าไม่พบ Supplier ให้ supplier_id = null, should_ask_user = true และถามลูกค้ากลับ
-6. ถ้า supplier_filter_required = true ห้ามค้นหาทัวร์จนกว่าจะ resolve supplier_id ได้
+กฎสำหรับการจับคู่ Supplier (Supplier Alias Matcher) และ Intent:
+1. ถ้าลูกค้าพิมพ์ชื่อประเทศ, เมือง, หรือสถานที่ท่องเที่ยว (เช่น "คุนหมิง", "สี่ดรุณี", "ฮ่องกง") ให้ถือว่า intent = "search_tour" ทันที
+2. ห้ามเดาว่าชื่อเมืองหรือสถานที่คือชื่อ Supplier เด็ดขาด!
+3. ใช้ supplier_master เป็น source of truth เท่านั้น
+4. ต้องคืน supplier_id ถ้าพบ alias ที่ตรงหรือใกล้เคียง (ให้ใส่ใน matched_supplier)
+5. ห้ามเดา Supplier ถ้าความมั่นใจ (confidence) ต่ำกว่า 0.85
+6. ถ้ามี Supplier มากกว่า 1 เจ้าคล้ายกัน ให้ควรควบ should_ask_user = true และถามลูกค้ากลับใน question_to_user
+7. ถ้าไม่พบ Supplier ให้ supplier_id = null, should_ask_user = true และถามลูกค้ากลับ
+8. ถ้า supplier_filter_required = true ห้ามค้นหาทัวร์จนกว่าจะ resolve supplier_id ได้
 
 supplier_master:
 ${JSON.stringify(supplierMaster, null, 2)}
