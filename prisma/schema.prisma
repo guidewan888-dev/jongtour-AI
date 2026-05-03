@@ -115,6 +115,8 @@ model Tour {
   supplier     Supplier          @relation(fields: [supplierId], references: [id], onDelete: Restrict)
   destinations TourDestination[]
   images       TourImage[]
+  pdfs         TourPdf[]
+  mapping      TourMapping?
   itineraries  Itinerary[]
   meals        TourMeal[]
   included     TourIncluded[]
@@ -358,6 +360,8 @@ model Booking {
   externalRefs   BookingExternalRef?
   payments       Payment[]
   invoices       Invoice[]
+  receipts       Receipt[]
+  refunds        Refund[]
   vouchers       Voucher[]
   priceSnapshots PriceSnapshot[]
 
@@ -503,6 +507,7 @@ model User {
   customer      Customer?
   conversations AiConversation[]
   auditLogs     AuditLog[]
+  saleLeads     Lead[]           @relation("SaleLeads")
 
   @@map("users")
 }
@@ -818,4 +823,174 @@ model Quotation {
   departure Departure @relation(fields: [departureId], references: [id], onDelete: Cascade)
 
   @@map("quotations")
+}
+
+// -----------------------------------------------------
+// CRM Module additions
+// -----------------------------------------------------
+model Lead {
+  id              String   @id @default(cuid())
+  saleId          String?
+  customerName    String
+  contactInfo     String
+  source          String   @default("WEB") // WEB, LINE, FB, CALL
+  status          String   @default("NEW") // NEW, CONTACTED, QUOTED, WON, LOST
+  estimatedValue  Float?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  sale            User?    @relation("SaleLeads", fields: [saleId], references: [id], onDelete: SetNull)
+  activities      LeadActivity[]
+
+  @@map("leads")
+}
+
+model LeadActivity {
+  id        String   @id @default(cuid())
+  leadId    String
+  type      String   @default("CALL") // CALL, CHAT, EMAIL
+  note      String   @db.Text
+  createdAt DateTime @default(now())
+
+  lead      Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  @@map("lead_activities")
+}
+
+// -----------------------------------------------------
+// Wholesale & Tour Additions
+// -----------------------------------------------------
+model TourMapping {
+  id          String   @id @default(cuid())
+  tourId      String   @unique
+  mappingRules Json
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  tour        Tour     @relation(fields: [tourId], references: [id], onDelete: Cascade)
+
+  @@map("tour_mappings")
+}
+
+model TourPdf {
+  id        String   @id @default(cuid())
+  tourId    String
+  pdfUrl    String
+  title     String?
+  createdAt DateTime @default(now())
+
+  tour      Tour     @relation(fields: [tourId], references: [id], onDelete: Cascade)
+
+  @@map("tour_pdfs")
+}
+
+// -----------------------------------------------------
+// Finance Additions
+// -----------------------------------------------------
+model Receipt {
+  id          String   @id @default(cuid())
+  bookingId   String
+  receiptNo   String   @unique
+  issueDate   DateTime @default(now())
+  amount      Float
+  pdfUrl      String?
+  createdAt   DateTime @default(now())
+
+  booking     Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@map("receipts")
+}
+
+model Refund {
+  id          String   @id @default(cuid())
+  bookingId   String
+  refundNo    String   @unique
+  amount      Float
+  reason      String   @db.Text
+  status      String   @default("PENDING") // PENDING, PROCESSED, REJECTED
+  createdAt   DateTime @default(now())
+
+  booking     Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@map("refunds")
+}
+
+// -----------------------------------------------------
+// CMS Additions
+// -----------------------------------------------------
+model CmsPage {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  title       String
+  content     String   @db.Text
+  seoTitle    String?
+  status      String   @default("DRAFT") // DRAFT, PUBLISHED
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("cms_pages")
+}
+
+model BlogPost {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  title       String
+  content     String   @db.Text
+  seoTitle    String?
+  status      String   @default("DRAFT") // DRAFT, PUBLISHED
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("blog_posts")
+}
+
+model DestinationGuide {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  country     String
+  city        String?
+  title       String
+  content     String   @db.Text
+  status      String   @default("DRAFT") // DRAFT, PUBLISHED
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("destination_guides")
+}
+
+model Faq {
+  id          String   @id @default(cuid())
+  question    String
+  answer      String   @db.Text
+  category    String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("faqs")
+}
+
+model Banner {
+  id          String   @id @default(cuid())
+  imageUrl    String
+  linkUrl     String?
+  position    String   @default("HOME_HERO")
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("banners")
+}
+
+model LandingPage {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  title       String
+  content     String   @db.Text
+  seoTitle    String?
+  status      String   @default("DRAFT") // DRAFT, PUBLISHED
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("landing_pages")
 }
