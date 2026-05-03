@@ -85,10 +85,11 @@ export class SyncManager {
       const rawTours = await this.withRetry(() => adapter.getTours());
 
       // 3. Pre-fetch existing records to map IDs for fast upserting
+      const expectedSource = supplierId === 'SUP_LETGO' ? 'API_ZEGO' : (supplierId === 'SUP_TOURFACTORY' ? 'TOUR_FACTORY' : 'CHECKIN');
       const { data: existingTours } = await this.supabase
         .from('Tour')
         .select('id, providerId')
-        .eq('supplierId', supplierId);
+        .eq('source', expectedSource);
       const existingTourMap = new Map((existingTours || []).map(t => [t.providerId, t.id]));
 
       const { data: existingRaw } = await this.supabase
