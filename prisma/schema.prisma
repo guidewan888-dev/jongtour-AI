@@ -27,6 +27,8 @@ model Supplier {
   departures     Departure[]
   bookings       Booking[]
   users          User[]
+  wholesaleRefs  BookingWholesaleRef[]
+  wholesaleActions BookingWholesaleAction[]
 
   @@map("suppliers")
 }
@@ -385,6 +387,8 @@ model Booking {
   refunds        Refund[]
   vouchers       Voucher[]
   priceSnapshots PriceSnapshot[]
+  wholesaleRef   BookingWholesaleRef?
+  wholesaleActions BookingWholesaleAction[]
 
   @@map("bookings")
 }
@@ -1026,4 +1030,51 @@ model LandingPage {
   updatedAt   DateTime @updatedAt
 
   @@map("landing_pages")
+}
+
+// -----------------------------------------------------
+// Wholesale & Audit Additions
+// -----------------------------------------------------
+
+model BookingWholesaleRef {
+  id                      String    @id @default(cuid())
+  bookingId               String    @unique
+  supplierId              String
+  externalBookingRef      String?
+  wholesaleTourUrl        String?
+  wholesaleBookingUrl     String?
+  supplierContactName     String?
+  supplierContactChannel  String?
+  supplierConfirmedStatus String?
+  supplierConfirmedPrice  Float?
+  supplierConfirmedAt     DateTime?
+  supplierNote            String?   @db.Text
+  confirmationFileUrl     String?
+  createdBy               String
+  createdAt               DateTime  @default(now())
+  updatedAt               DateTime  @updatedAt
+
+  booking  Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  supplier Supplier @relation(fields: [supplierId], references: [id], onDelete: Restrict)
+
+  @@map("booking_wholesale_refs")
+}
+
+model BookingWholesaleAction {
+  id           String   @id @default(cuid())
+  bookingId    String
+  supplierId   String
+  actionType   String   // OPEN_LINK, COPY_LINK, MARK_SENT, UPLOAD_DOC
+  actionLabel  String?
+  actionUrl    String?
+  clickedBy    String
+  clickedAt    DateTime @default(now())
+  resultStatus String   // SUCCESS, FAILED
+  note         String?  @db.Text
+  createdAt    DateTime @default(now())
+
+  booking  Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  supplier Supplier @relation(fields: [supplierId], references: [id], onDelete: Restrict)
+
+  @@map("booking_wholesale_actions")
 }
