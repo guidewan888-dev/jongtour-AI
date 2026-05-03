@@ -80,12 +80,14 @@ export async function middleware(req: NextRequest) {
   }
 
   const isAdminSubdomain = subdomain === 'admin';
+  const isB2bAdminSubdomain = subdomain === 'b2badmin';
   const isBookingSubdomain = subdomain === 'booking' || subdomain === 'b2b' || subdomain === 'agent';
   const isTourSubdomain = subdomain === 'tour';
-  const isAgentSubdomain = subdomain && !isAdminSubdomain && !isBookingSubdomain && !isTourSubdomain && subdomain !== 'www';
+  const isAgentSubdomain = subdomain && !isAdminSubdomain && !isB2bAdminSubdomain && !isBookingSubdomain && !isTourSubdomain && subdomain !== 'www';
 
   // Check path rules
   const isAdminPath = url.pathname.startsWith('/admin') || isAdminSubdomain;
+  const isB2bAdminPath = url.pathname.startsWith('/b2badmin') || isB2bAdminSubdomain;
   const isB2bPath = url.pathname.startsWith('/b2b') || isBookingSubdomain;
   const isTourCmsPath = url.pathname.startsWith('/tour-cms') || isTourSubdomain;
   const isAuthPath = url.pathname.startsWith('/auth') || url.pathname.startsWith('/login') || url.pathname.startsWith('/admin-login');
@@ -99,8 +101,8 @@ export async function middleware(req: NextRequest) {
   }
 
   // Authentication Guards
-  if ((isAdminSubdomain || isBookingSubdomain) && (url.pathname === '/login' || url.pathname === '/auth/login')) {
-    if (isAdminSubdomain && url.pathname !== '/auth/admin-login') {
+  if ((isAdminSubdomain || isBookingSubdomain || isB2bAdminSubdomain) && (url.pathname === '/login' || url.pathname === '/auth/login')) {
+    if ((isAdminSubdomain || isB2bAdminSubdomain) && url.pathname !== '/auth/admin-login') {
       url.pathname = '/auth/admin-login';
       return NextResponse.redirect(url);
     } else if (isBookingSubdomain && url.pathname !== '/auth/login') {
@@ -109,9 +111,9 @@ export async function middleware(req: NextRequest) {
     }
   }
 
-  if ((isAdminPath || isB2bPath || isTourCmsPath) && !isAuthPath && !user) {
+  if ((isAdminPath || isB2bAdminPath || isB2bPath || isTourCmsPath) && !isAuthPath && !user) {
     // Not logged in -> Redirect to login
-    url.pathname = isAdminPath ? '/auth/admin-login' : '/auth/login';
+    url.pathname = (isAdminPath || isB2bAdminPath) ? '/auth/admin-login' : '/auth/login';
     return NextResponse.redirect(url);
   }
 
@@ -138,7 +140,12 @@ export async function middleware(req: NextRequest) {
       return NextResponse.rewrite(url);
     }
 
-    if (!isAdminSubdomain && !isBookingSubdomain && !isTourSubdomain && url.pathname.startsWith('/admin')) {
+    if (isB2bAdminSubdomain && !url.pathname.startsWith('/b2badmin')) {
+      url.pathname = `/b2badmin${url.pathname === '/' ? '' : url.pathname}`;
+      return NextResponse.rewrite(url);
+    }
+
+    if (!isAdminSubdomain && !isB2bAdminSubdomain && !isBookingSubdomain && !isTourSubdomain && url.pathname.startsWith('/admin')) {
       url.hostname = `admin.${hostname.replace('www.', '')}`;
       url.pathname = url.pathname.replace(/^\/admin/, '') || '/';
       return NextResponse.redirect(url);

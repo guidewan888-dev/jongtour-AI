@@ -760,5 +760,37 @@ model UrlHealthStatus {
   lastCheckedAt DateTime @default(now())
   failCount     Int      @default(0)
 
-  @@map("url_health_status")
+}
+
+// Pricing Engine Tables
+
+model Promotion {
+  id          String   @id @default(cuid())
+  code        String   @unique
+  name        String
+  description String?
+  type        String   @default("PERCENTAGE") // PERCENTAGE, FLAT
+  value       Float
+  validFrom   DateTime
+  validUntil  DateTime
+  minSpend    Float?
+  maxDiscount Float?
+  combinable  Boolean  @default(false)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("promotions")
+}
+
+model PricingRule {
+  id          String   @id @default(cuid())
+  name        String
+  type        String   @default("MARKUP_PERCENT") // MARKUP_PERCENT, MARKUP_FLAT
+  value       Float
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("pricing_rules")
 }
