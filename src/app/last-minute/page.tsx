@@ -32,7 +32,7 @@ export default async function LastMinutePage() {
       supplier: true
     },
     orderBy: { createdAt: 'desc' },
-    take: 100
+    take: 12
   });
 
   const validTours = toursData.map(t => ({

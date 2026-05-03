@@ -40,7 +40,7 @@ export default async function SearchPage({ params }: { params: { slug?: string[]
       supplier: true
     },
     orderBy: { createdAt: 'desc' },
-    take: 100
+    take: 12
   });
 
   const tours = toursData.map(t => ({

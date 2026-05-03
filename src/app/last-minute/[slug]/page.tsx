@@ -105,7 +105,7 @@ export default async function WholesaleLastMinutePage({ params, searchParams }: 
       supplier: true
     },
     orderBy: { createdAt: 'desc' },
-    take: 100
+    take: 12
   });
 
   const validTours = toursData.map(t => ({

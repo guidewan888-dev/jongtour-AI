@@ -89,7 +89,7 @@ export default async function WholesaleLandingPage({ params, searchParams }: { p
       }
     },
     orderBy: { createdAt: 'desc' },
-    take: 100
+    take: 12
   });
 
   const validTours = toursData.map(t => ({

@@ -49,7 +49,7 @@ export default async function DestinationPage({ params }: { params: { slug?: str
       supplier: true
     },
     orderBy: { createdAt: 'desc' },
-    take: 100
+    take: 12
   });
 
   const validTours = toursData.map(t => ({
