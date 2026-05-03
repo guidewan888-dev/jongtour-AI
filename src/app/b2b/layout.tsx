@@ -5,10 +5,10 @@ import { redirect } from "next/navigation";
 import { 
   LayoutDashboard, 
   Package, 
-  CalendarDays, 
+  FileText, 
   Users, 
-  Building2, 
   Receipt,
+  Wallet,
   Settings,
   LogOut,
   Bell
@@ -50,20 +50,20 @@ export default async function B2BLayout({
         <div className="p-4 flex-1 overflow-y-auto">
           <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2 px-3">Overview</div>
           <nav className="space-y-1 mb-8">
-            <NavItem href="/b2b" icon={<LayoutDashboard size={18} />} label="Dashboard" />
-            <NavItem href="/b2b/bookings" icon={<Receipt size={18} />} label="Bookings" />
+            <NavItem href="/b2b" icon={<LayoutDashboard size={18} />} label="Agent Dashboard" />
+            <NavItem href="/b2b/bookings" icon={<Receipt size={18} />} label="Booking History" />
           </nav>
 
-          <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2 px-3">Inventory</div>
+          <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2 px-3">Sales & Products</div>
           <nav className="space-y-1 mb-8">
-            <NavItem href="/b2b/tours" icon={<Package size={18} />} label="Tour Packages" />
-            <NavItem href="/b2b/departures" icon={<CalendarDays size={18} />} label="Departures & Avail" />
+            <NavItem href="/b2b/tours" icon={<Package size={18} />} label="Search Tours (B2B)" />
+            <NavItem href="/b2b/quotations" icon={<FileText size={18} />} label="My Quotations" />
           </nav>
 
-          <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2 px-3">Partners</div>
+          <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2 px-3">Management</div>
           <nav className="space-y-1 mb-8">
-            <NavItem href="/b2b/agents" icon={<Users size={18} />} label="Agents" />
-            <NavItem href="/b2b/suppliers" icon={<Building2 size={18} />} label="Suppliers" />
+            <NavItem href="/b2b/finance" icon={<Wallet size={18} />} label="Finance & Credit" />
+            <NavItem href="/b2b/agents" icon={<Users size={18} />} label="Sub-agents" />
           </nav>
         </div>
 
