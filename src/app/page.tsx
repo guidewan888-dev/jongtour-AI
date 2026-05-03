@@ -46,6 +46,9 @@ export default async function Home() {
           <span className="text-xs bg-gray-100 text-gray-500 px-2 py-1 rounded-full">v2.1</span>
         </div>
         <div className="flex gap-4 items-center">
+          <Link href="https://info.jongtour.com/contact" className="hidden sm:block text-gray-600 hover:text-orange-500 font-medium transition-colors">
+            ติดต่อเรา
+          </Link>
           <AuthButtons serverUser={user} />
         </div>
       </nav>
@@ -100,6 +103,18 @@ export default async function Home() {
           </div>
         )}
       </div>
+
+      {/* Simple Footer */}
+      <footer className="w-full mt-24 py-8 border-t border-gray-100 flex flex-col items-center gap-4 text-sm text-gray-500">
+        <div className="flex gap-6">
+          <a href="https://info.jongtour.com/about" className="hover:text-orange-500">เกี่ยวกับเรา</a>
+          <a href="https://info.jongtour.com/contact" className="hover:text-orange-500">ติดต่อเรา</a>
+          <a href="https://info.jongtour.com/terms" className="hover:text-orange-500">เงื่อนไขการให้บริการ</a>
+          <a href="https://info.jongtour.com/privacy-policy" className="hover:text-orange-500">นโยบายความเป็นส่วนตัว</a>
+          <a href="https://info.jongtour.com/pdpa" className="hover:text-orange-500">PDPA</a>
+        </div>
+        <p>&copy; {new Date().getFullYear()} Jongtour Platform. All rights reserved.</p>
+      </footer>
     </main>
   );
 }

@@ -210,6 +210,10 @@ export default function Header({ agentLogo, agentName }: HeaderProps) {
           <Link href="/ai-planner" className="bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white px-4 lg:px-5 py-2 rounded-full font-bold transition-all shadow-md hover:shadow-lg flex items-center gap-2 transform hover:-translate-y-0.5 ml-1 lg:ml-2 whitespace-nowrap text-sm lg:text-base">
             ✨ AI จัดทริปส่วนตัว
           </Link>
+
+          <Link href="https://info.jongtour.com/contact" className="px-2 lg:px-4 py-2 text-gray-600 hover:text-[var(--brand-color,theme(colors.orange.500))] font-medium transition-colors whitespace-nowrap">
+            ติดต่อเรา
+          </Link>
         </div>
 
         <div className="flex gap-4 items-center">
