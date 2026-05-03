@@ -103,17 +103,10 @@ You MUST format your response EXACTLY like this (do not use generic formats or l
 
 พบโปรแกรมของ ${sName} ตามเงื่อนไขที่ค้นหาครับ
 
-1. {{tour_name}}
-รหัสทัวร์: {{tour_code}}
-Supplier: ${sName}
-supplier_id: {{supplier_id}}
-ประเทศ/เมือง: {{destination}}
-วันเดินทาง: {{departure_date}}
-สถานะ: {{availability_status}}
-ราคาเริ่มต้น: {{price_from}} บาท
-สายการบิน: {{airline}}
-ลิงก์รายละเอียด: {{source_url}}
-ลิงก์จอง: {{booking_url}}
+1. **{{tour_name}}** (รหัส: {{tour_code}})
+- ราคาเริ่มต้น: {{price_from}} บาท
+- วันเดินทาง: {{departure_date}}
+- สายการบิน: {{airline}}
 
 หมายเหตุ:
 แสดงเฉพาะโปรแกรมของ ${sName} เท่านั้น ไม่รวมโปรแกรมจาก Supplier อื่น
