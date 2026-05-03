@@ -29,21 +29,29 @@ export async function middleware(req: NextRequest) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://qterfftaebnoawnzkfgu.supabase.co';
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || 'sb_publishable_SRwNSJ89mInda5FcuB1W2w_9IEJlSOI';
 
+  const cookieDomain = process.env.NEXT_PUBLIC_COOKIE_DOMAIN || (process.env.NODE_ENV === 'production' ? '.jongtour.com' : undefined);
+
   const supabase = createServerClient(
     supabaseUrl,
     supabaseKey,
     {
+      cookieOptions: {
+        domain: cookieDomain,
+        path: '/',
+        sameSite: 'lax',
+        secure: process.env.NODE_ENV === 'production',
+      },
       cookies: {
         getAll() {
           return req.cookies.getAll();
         },
         setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value }) => req.cookies.set(name, value));
+          cookiesToSet.forEach(({ name, value, options }) => req.cookies.set(name, value, { ...options, domain: cookieDomain || options.domain }));
           response = NextResponse.next({
             request: req,
           });
           cookiesToSet.forEach(({ name, value, options }) =>
-            response.cookies.set(name, value, options)
+            response.cookies.set(name, value, { ...options, domain: cookieDomain || options.domain })
           );
         },
       },
@@ -80,7 +88,7 @@ export async function middleware(req: NextRequest) {
   const isAdminPath = url.pathname.startsWith('/admin') || isAdminSubdomain;
   const isB2bPath = url.pathname.startsWith('/b2b') || isBookingSubdomain;
   const isTourCmsPath = url.pathname.startsWith('/tour-cms') || isTourSubdomain;
-  const isAuthPath = url.pathname.startsWith('/auth') || url.pathname.startsWith('/login');
+  const isAuthPath = url.pathname.startsWith('/auth') || url.pathname.startsWith('/login') || url.pathname.startsWith('/admin-login');
 
   // Paths that should not be rewritten or blocked
   const excludePaths = ['/api', '/_next', '/favicon.ico', '/images'];
@@ -91,14 +99,19 @@ export async function middleware(req: NextRequest) {
   }
 
   // Authentication Guards
-  if ((isAdminSubdomain || isBookingSubdomain) && url.pathname.startsWith('/login')) {
-    url.pathname = '/auth/login';
-    return NextResponse.redirect(url);
+  if ((isAdminSubdomain || isBookingSubdomain) && (url.pathname === '/login' || url.pathname === '/auth/login')) {
+    if (isAdminSubdomain && url.pathname !== '/auth/admin-login') {
+      url.pathname = '/auth/admin-login';
+      return NextResponse.redirect(url);
+    } else if (isBookingSubdomain && url.pathname !== '/auth/login') {
+      url.pathname = '/auth/login';
+      return NextResponse.redirect(url);
+    }
   }
 
   if ((isAdminPath || isB2bPath || isTourCmsPath) && !isAuthPath && !user) {
     // Not logged in -> Redirect to login
-    url.pathname = '/auth/login';
+    url.pathname = isAdminPath ? '/auth/admin-login' : '/auth/login';
     return NextResponse.redirect(url);
   }
 

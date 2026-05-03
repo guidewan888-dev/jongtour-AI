@@ -55,6 +55,11 @@ export default function UserMenu({ user }: { user: any }) {
           
           {/* Main Links */}
           <div className="py-2 flex flex-col">
+            {user.email === 'admin@jongtour.com' && (
+              <Link href="/admin/bookings" className="px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors flex items-center justify-between border-b border-gray-100 font-bold">
+                <span>⚡ ระบบจัดการ (Admin)</span>
+              </Link>
+            )}
             <Link href="/user/bookings" className="px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center justify-between">
               <span>รายการจอง</span>
             </Link>

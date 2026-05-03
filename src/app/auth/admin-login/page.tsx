@@ -3,9 +3,9 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
-import { Loader2, Lock, Mail } from "lucide-react";
+import { Loader2, ShieldCheck, Mail } from "lucide-react";
 
-export default function LoginPage() {
+export default function AdminLoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -26,8 +26,6 @@ export default function LoginPage() {
 
       if (error) throw error;
 
-      // Check user role from Prisma by calling an API or we can just redirect and let middleware handle it
-      // Let the server middleware handle the exact routing based on subdomain and authentication
       window.location.href = "/";
       
     } catch (error: any) {
@@ -40,25 +38,26 @@ export default function LoginPage() {
   return (
     <div className="sm:mx-auto sm:w-full sm:max-w-md">
       <div className="text-center mb-8">
-        <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-orange-100 text-orange-600 mb-4">
-          <Lock className="w-8 h-8" />
+        <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-red-100 text-red-600 mb-4">
+          <ShieldCheck className="w-8 h-8" />
         </div>
-        <h2 className="text-3xl font-extrabold text-gray-900">Jongtour B2B</h2>
+        <h2 className="text-3xl font-extrabold text-gray-900">Jongtour Admin</h2>
         <p className="mt-2 text-sm text-gray-600">
-          เข้าสู่ระบบสำหรับ Partner B2B
+          ระบบจัดการหลังบ้านสำหรับผู้ดูแลระบบ
         </p>
       </div>
 
-      <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10 border border-gray-100">
+      <div className="bg-white py-8 px-4 shadow-xl sm:rounded-2xl sm:px-10 border border-gray-100 relative overflow-hidden">
+        <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-red-500 to-red-600"></div>
         <form className="space-y-6" onSubmit={handleLogin}>
           {error && (
-            <div className="bg-red-50 text-red-500 p-3 rounded-lg text-sm border border-red-100">
+            <div className="bg-red-50 text-red-500 p-3 rounded-lg text-sm border border-red-100 font-medium">
               {error}
             </div>
           )}
           
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email address</label>
+            <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email Address (Admin)</label>
             <div className="mt-1 relative rounded-md shadow-sm">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <Mail className="h-5 w-5 text-gray-400" />
@@ -71,8 +70,8 @@ export default function LoginPage() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="pl-10 block w-full sm:text-sm border-gray-300 rounded-md py-2 border focus:ring-orange-500 focus:border-orange-500"
-                placeholder="partner@company.com"
+                className="pl-10 block w-full sm:text-sm border-gray-300 rounded-md py-3 border focus:ring-red-500 focus:border-red-500 bg-gray-50/50"
+                placeholder="admin@jongtour.com"
               />
             </div>
           </div>
@@ -81,7 +80,7 @@ export default function LoginPage() {
             <label htmlFor="password" className="block text-sm font-medium text-gray-700">Password</label>
             <div className="mt-1 relative rounded-md shadow-sm">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Lock className="h-5 w-5 text-gray-400" />
+                <ShieldCheck className="h-5 w-5 text-gray-400" />
               </div>
               <input
                 id="password"
@@ -91,49 +90,33 @@ export default function LoginPage() {
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="pl-10 block w-full sm:text-sm border-gray-300 rounded-md py-2 border focus:ring-orange-500 focus:border-orange-500"
+                className="pl-10 block w-full sm:text-sm border-gray-300 rounded-md py-3 border focus:ring-red-500 focus:border-red-500 bg-gray-50/50"
                 placeholder="••••••••"
               />
-            </div>
-          </div>
-
-          <div className="flex items-center justify-between">
-            <div className="flex items-center">
-              <input
-                id="remember-me"
-                name="remember-me"
-                type="checkbox"
-                className="h-4 w-4 text-orange-600 focus:ring-orange-500 border-gray-300 rounded"
-              />
-              <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900">
-                Remember me
-              </label>
-            </div>
-
-            <div className="text-sm">
-              <a href="#" className="font-medium text-orange-600 hover:text-orange-500">
-                ลืมรหัสผ่าน?
-              </a>
             </div>
           </div>
 
           <div>
             <button
               type="submit"
-              className="w-full flex justify-center items-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-orange-600 hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 disabled:bg-orange-400 disabled:cursor-not-allowed"
+              className="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-md shadow-lg text-sm font-bold text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:bg-red-400 disabled:cursor-not-allowed transition-all"
               disabled={isLoading}
             >
               {isLoading ? (
                 <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  กำลังเข้าสู่ระบบ...
+                  <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                  กำลังตรวจสอบสิทธิ์...
                 </>
               ) : (
-                "เข้าสู่ระบบ"
+                "เข้าสู่ระบบ Admin"
               )}
             </button>
           </div>
         </form>
+      </div>
+      
+      <div className="mt-8 text-center text-xs text-gray-400">
+        Unauthorized access is strictly prohibited.
       </div>
     </div>
   );
