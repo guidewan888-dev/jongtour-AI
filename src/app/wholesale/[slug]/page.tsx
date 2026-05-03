@@ -113,7 +113,7 @@ export default async function WholesaleLandingPage({ params, searchParams }: { p
         const futureDeps = (t.departures || []).filter((d: any) => new Date(d.startDate) >= today);
         futureDeps.sort((a: any, b: any) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime());
         return { ...t, departures: futureDeps };
-      }).filter((t: any) => t.departures.length > 0).slice(0, 12);
+      }).filter((t: any) => t.departures.length > 0);
 
   } catch (error: any) {
     console.error("Supabase error in wholesale:", error);
