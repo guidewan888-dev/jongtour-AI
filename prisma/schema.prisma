@@ -108,9 +108,19 @@ model Tour {
   status         String    @default("DRAFT") // DRAFT, PUBLISHED, ARCHIVED
   sourceUrl      String?
   bookingUrl     String?
-  lastSyncedAt   DateTime?
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+  lastSyncedAt           DateTime?
+  wholesaleTourUrl       String?
+  wholesaleBookingUrl    String?
+  wholesaleLoginUrl      String?
+  wholesaleSearchUrl     String?
+  supplierProgramCode    String?
+  supplierBookingNote    String?   @db.Text
+  linkHealthStatus       String    @default("UNVERIFIED") // HEALTHY, BROKEN, UNVERIFIED, MISSING
+  lastLinkCheckedAt      DateTime?
+  linkVerifiedBy         String?
+  linkVerifiedAt         DateTime?
+  createdAt              DateTime  @default(now())
+  updatedAt              DateTime  @updatedAt
 
   supplier     Supplier          @relation(fields: [supplierId], references: [id], onDelete: Restrict)
   destinations TourDestination[]
@@ -342,12 +352,22 @@ model Booking {
   tourId        String
   departureId   String
   customerId    String
-  agentId       String?
-  bookingSource String   @default("ONLINE") // ONLINE, MANUAL, SALE, AGENT, AI_CHATBOT
-  status        String   @default("PENDING") // PENDING, CONFIRMED, CANCELLED
-  totalPrice    Float
-  totalNetPrice Float?
-  createdAt     DateTime @default(now())
+  agentId                String?
+  bookingSource          String    @default("ONLINE") // ONLINE, MANUAL, SALE, AGENT, AI_CHATBOT
+  status                 String    @default("PENDING") // pending, waiting_admin_review, waiting_wholesale_booking, waiting_wholesale_confirm, wholesale_confirmed, confirmed, payment_pending, paid, voucher_issued, completed, cancelled, rejected, failed
+  wholesaleBookingMethod String    @default("UNKNOWN") // API_BOOKING, MANUAL_WEBSITE, MANUAL_LINE, MANUAL_EMAIL, MANUAL_PHONE, ON_REQUEST, UNKNOWN
+  wholesaleStatus        String    @default("NOT_STARTED") // NOT_STARTED, LINK_READY, MISSING_LINK, OPENED_BY_ADMIN, SENT_TO_WHOLESALE, WAITING_CONFIRM, CONFIRMED, REJECTED, SOLD_OUT, PRICE_CHANGED, MANUAL_FOLLOW_UP_REQUIRED, SUPPLIER_NOT_AVAILABLE
+  supplierContactName    String?
+  supplierContactChannel String?
+  supplierConfirmedPrice Float?
+  supplierConfirmedStatus String?
+  supplierConfirmedAt    DateTime?
+  supplierNote           String?   @db.Text
+  internalNote           String?   @db.Text
+  uploadedConfirmationFile String?
+  totalPrice             Float
+  totalNetPrice          Float?
+  createdAt              DateTime  @default(now())
   updatedAt     DateTime @updatedAt
 
   supplier  Supplier  @relation(fields: [supplierId], references: [id], onDelete: Restrict)
