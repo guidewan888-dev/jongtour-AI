@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { LayoutDashboard, Plane, CalendarDays, RefreshCw, LogOut, Flame, Tags } from 'lucide-react';
+import { LayoutDashboard, Plane, CalendarDays, RefreshCw, LogOut, Flame, Tags, Calculator, Building2, Activity } from 'lucide-react';
 
 export default function TourAdminLayout({
   children,
@@ -38,6 +38,10 @@ export default function TourAdminLayout({
             <CalendarDays className="w-5 h-5" />
             รอบเดินทาง & ราคา
           </Link>
+          <Link href="/admin/pricing" className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-800 transition-colors">
+            <Calculator className="w-5 h-5" />
+            กฎการตั้งราคา (Pricing)
+          </Link>
           
           <div className="pt-4 pb-2 px-4">
             <span className="text-xs font-bold text-slate-600 uppercase tracking-wider">Deals & Automation</span>
@@ -64,6 +68,18 @@ export default function TourAdminLayout({
           <Link href="/admin/tags" className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-800 transition-colors">
             <Tags className="w-5 h-5" />
             หมวดหมู่ & แท็ก
+          </Link>
+
+          <div className="pt-4 pb-2 px-4">
+            <span className="text-xs font-bold text-slate-600 uppercase tracking-wider">System & Config</span>
+          </div>
+          <Link href="/admin/suppliers" className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-800 transition-colors">
+            <Building2 className="w-5 h-5" />
+            ซัพพลายเออร์ & API
+          </Link>
+          <Link href="/admin/health" className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-800 transition-colors">
+            <Activity className="w-5 h-5" />
+            Link Health Monitor
           </Link>
         </nav>
 
