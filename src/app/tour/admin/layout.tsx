@@ -49,6 +49,10 @@ export default function TourAdminLayout({
             </div>
             <span className="flex h-2 w-2 rounded-full bg-rose-500 animate-pulse"></span>
           </Link>
+          <Link href="/admin/promotions" className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-amber-400 hover:text-white hover:bg-amber-500/20 bg-amber-500/5 transition-colors border border-amber-500/10">
+            <Tags className="w-5 h-5" />
+            คูปอง & โปรโมชั่น
+          </Link>
           <Link href="/admin/sync" className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-emerald-400 hover:text-white hover:bg-emerald-500/20 bg-emerald-500/5 transition-colors border border-emerald-500/10">
             <RefreshCw className="w-5 h-5" />
             Wholesale Sync
