@@ -56,7 +56,8 @@ export async function searchTours(
     limit = 1; // Limit to 1 if image provided
   }
   
-  query = query.order('createdAt', { ascending: false }).limit(limit);
+  // Fetch up to 50 to allow shuffling/mixing
+  query = query.order('createdAt', { ascending: false }).limit(50);
 
   let { data: rawTours } = await query;
   
@@ -95,6 +96,19 @@ export async function searchTours(
     };
     const aliases = map[m] || [m];
     tours = tours.filter((tour: any) => aliases.some((a:string) => ((tour.periodText||"")+" "+(tour.departures?.map((d:any)=>d.dateText).join(" ")||"")).toLowerCase().includes(a)));
+  }
+
+  // Shuffle tours if no specific supplier was requested to "mix" results
+  if (!args.supplier_id && tours.length > 0) {
+    for (let i = tours.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [tours[i], tours[j]] = [tours[j], tours[i]];
+    }
+  }
+
+  // Enforce final limit for UI
+  if (tours.length > limit) {
+    tours = tours.slice(0, limit);
   }
 
   let strictInstruction = "";
