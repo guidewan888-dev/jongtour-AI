@@ -6,16 +6,12 @@ import { Input } from '@/components/ui/Input';
 import { 
   FileText, Send, CheckCircle2, Download, Clock, CreditCard, Ticket, Bot, 
   MoreVertical, FileDown, Paperclip, MessageCircle, Link as LinkIcon, ExternalLink, 
-  CheckSquare, Save, Search, MapPin, Building2, UploadCloud
+  CheckSquare, Save, Search, MapPin, Building2, UploadCloud, Copy, Edit3
 } from 'lucide-react';
 
 export default function BookingDetailPage({ params }: { params: { id: string } }) {
   const bookingRef = 'JT-2605-001';
-  const [activeTab, setActiveTab] = useState('wholesale'); // Set Wholesale as default for now
-
-  // Dummy Wholesale Data
-  const wholesaleBookingMethod = 'manual_website'; // api_booking, manual_website, manual_line, manual_email, manual_phone
-  const wholesaleStatus = 'waiting_confirm'; // not_started, link_ready, opened_by_admin, sent_to_wholesale, waiting_confirm, confirmed
+  const [activeTab, setActiveTab] = useState('billing'); 
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 max-w-7xl mx-auto h-full pb-10">
@@ -24,16 +20,81 @@ export default function BookingDetailPage({ params }: { params: { id: string } }
         <div>
           <div className="flex items-center gap-3 mb-2">
             <h1 className="text-3xl font-black text-white">{bookingRef}</h1>
-            <Badge variant="warning">รอตรวจสอบจาก Wholesale</Badge>
             <span className="text-xs px-2 py-1 bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded font-medium">ONLINE (B2C)</span>
           </div>
-          <p className="text-slate-400 font-medium text-sm">ทัวร์ญี่ปุ่น โตเกียว ฟูจิ (5D3N) • เดินทาง 10-15 ตุลาคม 2026 • 2 ผู้ใหญ่</p>
-          <div className="flex items-center gap-2 mt-3 text-sm">
-            <span className="text-slate-500">ลูกค้า:</span>
-            <span className="font-bold text-white">คุณสมชาย ใจดี</span>
-            <span className="text-slate-500 mx-2">|</span>
-            <span className="text-slate-500">ยอดสุทธิ:</span>
-            <span className="font-bold text-emerald-400">฿71,800</span>
+          <p className="text-slate-400 font-medium text-sm">ลูกค้า: <strong className="text-white">คุณสมชาย ใจดี</strong> • ยอดสุทธิ: <strong className="text-emerald-400">฿71,800</strong></p>
+        </div>
+        <div className="flex gap-2">
+          <Button variant="outline" className="border-slate-700 text-slate-300">
+            <MessageCircle className="w-4 h-4 mr-2" /> แชท LINE
+          </Button>
+          <Button className="bg-slate-700 hover:bg-slate-600 text-white">
+            จัดการผู้เดินทาง
+          </Button>
+        </div>
+      </div>
+
+      {/* TOP PRIORITY: Wholesale Booking Box */}
+      <div className="bg-slate-800 border-2 border-purple-500/30 rounded-2xl p-6 shadow-[0_0_20px_rgba(168,85,247,0.1)] relative overflow-hidden">
+        <div className="absolute top-0 right-0 bg-purple-600 text-white text-xs font-bold px-4 py-1 rounded-bl-xl">ระบบส่งจองคู่ค้า (Wholesale Booking)</div>
+        
+        <div className="flex flex-col lg:flex-row gap-6 mt-2">
+          {/* Left: Info & Badges */}
+          <div className="flex-1 space-y-4">
+            <div className="flex flex-wrap gap-2 mb-4">
+              <Badge className="bg-slate-700 text-white hover:bg-slate-600 border border-slate-600">Supplier: Let'go Group</Badge>
+              <Badge variant="warning">Method: Manual Website</Badge>
+              <Badge variant="success">Link Status: Valid</Badge>
+              <Badge variant="info" className="animate-pulse">Status: Waiting Wholesale Booking</Badge>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-y-3 text-sm">
+              <div className="flex flex-col">
+                <span className="text-slate-500 font-medium">Tour Code (รหัสโปรแกรม):</span>
+                <span className="font-bold text-white text-base">JP-TYO-5D3N</span>
+              </div>
+              <div className="flex flex-col">
+                <span className="text-slate-500 font-medium">Departure (วันเดินทาง):</span>
+                <span className="font-bold text-white text-base">10-15 พ.ค. 2026</span>
+              </div>
+              <div className="flex flex-col">
+                <span className="text-slate-500 font-medium">Pax (ผู้เดินทาง):</span>
+                <span className="font-bold text-white text-base">2 Adult</span>
+              </div>
+              <div className="flex flex-col">
+                <span className="text-slate-500 font-medium">External Tour ID:</span>
+                <span className="text-slate-300">EXT-LG-8891</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Right: Action Buttons */}
+          <div className="w-full lg:w-80 flex flex-col gap-2 border-t lg:border-t-0 lg:border-l border-slate-700 pt-4 lg:pt-0 lg:pl-6">
+            <Button className="w-full bg-purple-600 hover:bg-purple-700 shadow-lg shadow-purple-500/20 py-6 text-base font-bold">
+              <ExternalLink className="w-5 h-5 mr-2" /> เปิดหน้าโปรแกรม Wholesale
+            </Button>
+            
+            <div className="grid grid-cols-2 gap-2 mt-2">
+              <Button size="sm" variant="outline" className="border-slate-600 text-slate-300 hover:bg-slate-700 h-9">
+                <Copy className="w-3 h-3 mr-2" /> Copy รหัสทัวร์
+              </Button>
+              <Button size="sm" variant="outline" className="border-slate-600 text-slate-300 hover:bg-slate-700 h-9">
+                <Copy className="w-3 h-3 mr-2" /> Copy ข้อมูลลูกค้า
+              </Button>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2 mt-2">
+              <Button size="sm" className="bg-amber-500/20 text-amber-400 hover:bg-amber-500/30 border border-amber-500/30 h-9">
+                <Clock className="w-3 h-3 mr-2" /> Mark Waiting
+              </Button>
+              <Button size="sm" className="bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 border border-emerald-500/30 h-9">
+                <CheckCircle2 className="w-3 h-3 mr-2" /> Mark Confirmed
+              </Button>
+            </div>
+
+            <Button variant="outline" className="w-full mt-2 border-blue-500/50 text-blue-400 hover:bg-blue-500/10 border-dashed">
+              <Edit3 className="w-4 h-4 mr-2" /> บันทึกเลขจอง Wholesale
+            </Button>
           </div>
         </div>
       </div>
@@ -52,156 +113,60 @@ export default function BookingDetailPage({ params }: { params: { id: string } }
         >
           ใบนัดหมาย (Vouchers & Docs)
         </button>
-        <button 
-          onClick={() => setActiveTab('wholesale')}
-          className={`px-6 py-3 font-bold text-sm transition-colors border-b-2 flex items-center gap-2 ${activeTab === 'wholesale' ? 'border-purple-500 text-purple-400' : 'border-transparent text-slate-500 hover:text-slate-300'}`}
-        >
-          <Building2 className="w-4 h-4" /> ระบบส่งจอง Wholesale
-        </button>
       </div>
 
       {/* Tab Contents */}
-      {activeTab === 'wholesale' && (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          
-          {/* Wholesale Info Box */}
-          <div className="lg:col-span-5 space-y-6">
-            <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
-              <h3 className="text-lg font-bold text-white flex items-center gap-2 mb-6">
-                <LinkIcon className="w-5 h-5 text-purple-400" /> ข้อมูลโปรแกรม (Wholesale Link)
+      {activeTab === 'billing' && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Installment Plan */}
+          <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                <CreditCard className="w-5 h-5 text-blue-500" />
+                แผนการชำระเงิน (Installments)
               </h3>
-              
-              <div className="space-y-4">
-                <div className="grid grid-cols-3 gap-2 text-sm border-b border-slate-700/50 pb-3">
-                  <span className="text-slate-500">รหัสคู่ค้า (Supplier):</span>
-                  <span className="col-span-2 font-bold text-white">Zego Travel (ZG-1099)</span>
-                </div>
-                <div className="grid grid-cols-3 gap-2 text-sm border-b border-slate-700/50 pb-3">
-                  <span className="text-slate-500">รหัสโปรแกรม:</span>
-                  <span className="col-span-2 font-bold text-blue-400">EXT-JP-5D3N-XJ</span>
-                </div>
-                <div className="grid grid-cols-3 gap-2 text-sm border-b border-slate-700/50 pb-3">
-                  <span className="text-slate-500">วิธีการจอง:</span>
-                  <span className="col-span-2">
-                    <Badge variant="warning">MANUAL_WEBSITE</Badge>
-                  </span>
-                </div>
-                <div className="grid grid-cols-3 gap-2 text-sm border-b border-slate-700/50 pb-3">
-                  <span className="text-slate-500">สถานะล่าสุด:</span>
-                  <span className="col-span-2">
-                    <Badge variant="info">WAITING_WHOLESALE_CONFIRM</Badge>
-                  </span>
-                </div>
-              </div>
-
-              <div className="mt-6 pt-4 border-t border-slate-700 space-y-3">
-                {wholesaleBookingMethod === 'manual_website' && (
-                  <Button className="w-full bg-purple-600 hover:bg-purple-700">
-                    <ExternalLink className="w-4 h-4 mr-2" /> เปิดหน้าเว็บ Wholesale เพื่อจอง
-                  </Button>
-                )}
-                {wholesaleBookingMethod === 'manual_line' && (
-                  <div className="p-4 bg-slate-900 border border-[#00B900]/30 rounded-xl flex items-center justify-between">
-                    <span className="text-sm font-bold text-[#00B900]">LINE ID: @zegotravel</span>
-                    <Button size="sm" variant="outline" className="border-[#00B900] text-[#00B900]">Copy LINE ID</Button>
-                  </div>
-                )}
-
-                {/* Dropdown Actions */}
-                <div className="relative group">
-                  <Button variant="outline" className="w-full border-slate-600 text-slate-300 justify-between">
-                    <span>จัดการสถานะ Wholesale (Actions)</span>
-                    <MoreVertical className="w-4 h-4" />
-                  </Button>
-                  <div className="absolute left-0 top-full mt-2 w-full bg-slate-800 border border-slate-700 rounded-xl shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 p-2">
-                    <button className="w-full text-left px-3 py-2 text-sm text-slate-300 hover:bg-slate-700 hover:text-white rounded">Mark as Sent to Wholesale</button>
-                    <button className="w-full text-left px-3 py-2 text-sm text-slate-300 hover:bg-slate-700 hover:text-white rounded">Mark Waiting Wholesale Confirm</button>
-                    <div className="border-t border-slate-700 my-1"></div>
-                    <button className="w-full text-left px-3 py-2 text-sm text-emerald-400 hover:bg-emerald-500/10 rounded font-bold">Mark Wholesale Confirmed</button>
-                    <button className="w-full text-left px-3 py-2 text-sm text-rose-400 hover:bg-rose-500/10 rounded font-bold">Mark Sold Out / Rejected</button>
-                    <div className="border-t border-slate-700 my-1"></div>
-                    <button className="w-full text-left px-3 py-2 text-sm text-slate-300 hover:bg-slate-700 hover:text-white rounded">Copy Wholesale Link</button>
-                    <button className="w-full text-left px-3 py-2 text-sm text-slate-300 hover:bg-slate-700 hover:text-white rounded">Recheck Wholesale Link</button>
-                  </div>
-                </div>
-              </div>
             </div>
-
-            {/* Note Panel */}
-            <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
-              <h3 className="text-sm font-bold text-slate-400 mb-3">คำแนะนำการจองเจ้านี้ (Supplier Note)</h3>
-              <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg text-sm text-amber-200">
-                ** เจ้านี้ต้องกดจ่ายเงินมัดจำทันทีในเว็บ 5,000 บาท/ที่นั่ง ไม่งั้นหลุดจอง **
+            <div className="space-y-4">
+              <div className="p-4 bg-slate-900 border border-emerald-500/30 rounded-xl relative overflow-hidden">
+                <div className="absolute top-0 right-0 bg-emerald-500 text-white text-[10px] font-bold px-2 py-1 rounded-bl-lg">PAID</div>
+                <div className="flex justify-between items-start mb-2">
+                  <div>
+                    <h4 className="font-bold text-white text-sm">งวดที่ 1 (มัดจำ 50%)</h4>
+                  </div>
+                  <span className="font-black text-lg text-emerald-400">฿35,900</span>
+                </div>
               </div>
             </div>
           </div>
 
-          {/* Checklist Panel */}
-          <div className="lg:col-span-7 bg-slate-800/50 border border-slate-700 rounded-2xl p-6 flex flex-col">
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="text-xl font-bold text-white flex items-center gap-2">
-                <CheckSquare className="w-5 h-5 text-emerald-500" />
-                Manual Wholesale Checklist
-              </h3>
-              <Badge variant="neutral">ผู้รับผิดชอบ: Admin01</Badge>
-            </div>
-
-            <div className="space-y-3 mb-8">
-              {[
-                { id: 1, text: "ตรวจสอบโปรแกรมที่ลูกค้าจอง (จำนวนคน, ราคา, วันที่)", done: true },
-                { id: 2, text: "เปิดหน้าโปรแกรมของ Wholesale", done: true },
-                { id: 3, text: "ตรวจสอบวันเดินทางและจำนวนที่นั่งในเว็บคู่ค้า", done: true },
-                { id: 4, text: "กดจองในเว็บ Wholesale (หรือทัก LINE)", done: true },
-                { id: 5, text: "บันทึกเลขอ้างอิงจาก Wholesale (Booking Ref)", done: false },
-                { id: 6, text: "อัปโหลดเอกสารยืนยันจาก Wholesale (Confirmation PDF)", done: false },
-                { id: 7, text: "เปลี่ยนสถานะ Booking เป็น Confirmed หรือ Waiting Confirm", done: false },
-              ].map((task) => (
-                <div key={task.id} className="flex items-start gap-3 p-3 bg-slate-900 border border-slate-800 rounded-xl hover:border-slate-700 transition-colors cursor-pointer">
-                  <div className={`mt-0.5 w-5 h-5 rounded flex items-center justify-center border ${task.done ? 'bg-emerald-500 border-emerald-500' : 'border-slate-600'}`}>
-                    {task.done && <CheckCircle2 className="w-4 h-4 text-white" />}
-                  </div>
-                  <span className={`text-sm ${task.done ? 'text-slate-400 line-through' : 'text-slate-200 font-medium'}`}>
-                    {task.id}. {task.text}
-                  </span>
-                </div>
-              ))}
-            </div>
-
-            {/* Admin Input Form */}
-            <div className="bg-slate-900 border border-slate-700 rounded-xl p-6 mt-auto">
-              <h4 className="font-bold text-white mb-4">บันทึกข้อมูลการจองกับคู่ค้า</h4>
-              <div className="grid grid-cols-2 gap-4 mb-4">
-                <div>
-                  <label className="text-xs font-bold text-slate-500 block mb-1">Wholesale Booking Ref (เลขอ้างอิงคู่ค้า)</label>
-                  <Input placeholder="เช่น ZG-BK-99912" className="bg-slate-800 border-slate-700 text-white" />
-                </div>
-                <div>
-                  <label className="text-xs font-bold text-slate-500 block mb-1">Confirmed Price (ยอดต้นทุนยืนยัน)</label>
-                  <Input type="number" placeholder="ยอดต้นทุนสุทธิ" className="bg-slate-800 border-slate-700 text-white" />
-                </div>
-              </div>
-              <div className="mb-4">
-                <label className="text-xs font-bold text-slate-500 block mb-1">อัปโหลดเอกสารยืนยัน (Confirmation Document)</label>
-                <div className="border-2 border-dashed border-slate-700 rounded-lg p-4 text-center hover:bg-slate-800 transition-colors cursor-pointer text-slate-400 hover:text-blue-400">
-                  <UploadCloud className="w-6 h-6 mx-auto mb-2" />
-                  <span className="text-sm">คลิกอัปโหลดไฟล์ PDF/JPG</span>
-                </div>
-              </div>
-              <div className="mb-6">
-                <label className="text-xs font-bold text-slate-500 block mb-1">Internal Note (บันทึกภายใน)</label>
-                <Input placeholder="โน้ตเพิ่มเติมสำหรับแอดมินด้วยกัน..." className="bg-slate-800 border-slate-700 text-white" />
-              </div>
-              <div className="flex justify-end gap-3">
-                <Button className="bg-emerald-600 hover:bg-emerald-700">
-                  <Save className="w-4 h-4 mr-2" /> บันทึกและยืนยันการจอง
-                </Button>
+          {/* Invoices */}
+          <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
+            <h3 className="text-xl font-bold text-white flex items-center gap-2 mb-6">
+              <FileText className="w-5 h-5 text-indigo-500" />
+              เอกสารทางบัญชี (Invoices & Receipts)
+            </h3>
+            <div className="space-y-3">
+              <div className="p-3 bg-slate-900 rounded-lg border border-slate-800 flex items-center justify-between">
+                <p className="text-sm font-bold text-white">INV-26040001 (มัดจำ)</p>
+                <Button size="sm" variant="outline" className="h-8 border-slate-700 text-blue-400 px-2"><Send className="w-4 h-4" /></Button>
               </div>
             </div>
           </div>
         </div>
       )}
-      
-      {/* Keeping previous tabs structure intact but omitted logic to save space and focus on Wholesale Tab */}
+
+      {activeTab === 'documents' && (
+        <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
+          <h3 className="text-xl font-bold text-white flex items-center gap-2 mb-6">
+            <Ticket className="w-5 h-5 text-amber-500" />
+            ใบนัดหมาย (e-Voucher)
+          </h3>
+          <div className="p-3 bg-slate-900 rounded-lg border border-slate-700 flex items-center justify-between">
+            <p className="text-sm font-bold text-white">Voucher_JT2605001.pdf</p>
+            <Button size="sm" variant="outline" className="h-8 border-slate-600 text-slate-300"><Send className="w-4 h-4 mr-2" /> ส่งด่วนตอนนี้</Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
