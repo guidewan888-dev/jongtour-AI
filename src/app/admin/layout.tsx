@@ -18,8 +18,8 @@ export default async function AdminLayout({ children }: { children: ReactNode })
 
   // ใช้ Supabase JS แทน Prisma เพื่อหลีกเลี่ยง Vercel IPv6 Panic
   const { data: dbUser } = await supabase
-    .from("User")
-    .select("*")
+    .from("users")
+    .select("*, role:roles(*)")
     .eq("email", user.email || "")
     .single();
 
@@ -27,20 +27,29 @@ export default async function AdminLayout({ children }: { children: ReactNode })
 
   // Auto-create user if it doesn't exist
   if (!finalUser && user.email) {
-    const { data: newUser } = await supabase
-      .from("User")
-      .insert({
-        email: user.email,
-        role: "CUSTOMER", // Default role
-        password: "OAUTH_USER", // Dummy password since auth is handled by Supabase
-      })
-      .select()
+    // Get CUSTOMER role ID
+    const { data: customerRole } = await supabase
+      .from("roles")
+      .select("id")
+      .eq("name", "CUSTOMER")
       .single();
-    finalUser = newUser;
+
+    if (customerRole) {
+      const { data: newUser } = await supabase
+        .from("users")
+        .insert({
+          email: user.email,
+          roleId: customerRole.id,
+          passwordHash: "OAUTH_USER", // Dummy password since auth is handled by Supabase
+        })
+        .select("*, role:roles(*)")
+        .single();
+      finalUser = newUser;
+    }
   }
 
   // Prevent non-admins from accessing the admin panel
-  if (!finalUser || finalUser.role !== "ADMIN") {
+  if (!finalUser || !finalUser.role || finalUser.role.name !== "ADMIN") {
     // Redirect to main domain using absolute URL to avoid subdomain rewrite issues
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://jongtour.com";
     redirect(`${siteUrl}/user/bookings`);
