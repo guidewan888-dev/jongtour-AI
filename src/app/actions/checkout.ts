@@ -2,7 +2,7 @@
 
 import { createClient } from "@/utils/supabase/server";
 import { cookies } from "next/headers";
-import { randomUUID } from "crypto";
+import { prisma } from "@/lib/prisma";
 
 export async function submitCheckout(formData: FormData) {
   const cookieStore = await cookies();
@@ -13,94 +13,117 @@ export async function submitCheckout(formData: FormData) {
     return { success: false, error: "กรุณาเข้าสู่ระบบก่อนทำการจอง" };
   }
 
-  const { data: dbUser } = await supabase
-    .from('User')
-    .select('*')
-    .eq('email', user.email || '')
-    .single();
+  const dbUser = await prisma.user.findUnique({
+    where: { email: user.email || "" }
+  });
 
   if (!dbUser) {
     return { success: false, error: "ไม่พบข้อมูลผู้ใช้ในระบบ" };
   }
 
-  const tourId = formData.get("tourId") as string;
   const departureId = formData.get("departureId") as string;
   const pax = parseInt(formData.get("pax") as string) || 1;
   const adults = parseInt(formData.get("adults") as string) || 1;
   const children = parseInt(formData.get("children") as string) || 0;
-  const singleRooms = parseInt(formData.get("singleRooms") as string) || 0;
   const paymentType = formData.get("paymentType") as string || "full";
   const totalPrice = parseFloat(formData.get("totalPrice") as string) || 0;
-  const depositAmount = parseFloat(formData.get("totalDeposit") as string) || 0;
   
   const firstName = formData.get("firstName") as string;
   const lastName = formData.get("lastName") as string;
   const phone = formData.get("phone") as string;
-  const agentId = formData.get("agentId") as string | null;
+  const email = formData.get("email") as string; // From form or user fallback
   
   if (!departureId) {
     return { success: false, error: "กรุณาเลือกรอบเดินทาง" };
   }
 
-  // Fetch departure to check if it exists
-  const { data: departure } = await supabase
-    .from('TourDeparture')
-    .select('id')
-    .eq('id', departureId)
-    .single();
+  let newBookingId = "";
 
-  if (!departure) {
-    return { success: false, error: "ไม่พบข้อมูลรอบเดินทางที่เลือก" };
-  }
+  try {
+    // 1. Transaction to Check Seats and Create Booking
+    await prisma.$transaction(async (tx) => {
+      // Lock departure to check seats
+      const departure = await tx.departure.findUnique({
+        where: { id: departureId }
+      });
 
-  // Create booking
-  const bookingId = randomUUID();
-  const { data: booking, error: bookingError } = await supabase
-    .from('Booking')
-    .insert({
-      id: bookingId,
-      userId: dbUser.id,
-      departureId,
-      status: 'PENDING',
-      totalPrice,
-      contactName: `${firstName} ${lastName}`,
-      contactPhone: phone,
-      pax,
-      adults,
-      children,
-      singleRooms,
-      paymentType,
-      agentId: agentId || null,
-      depositAmount: paymentType === 'deposit' ? depositAmount : null,
-      updatedAt: new Date().toISOString()
-    })
-    .select()
-    .single();
+      if (!departure || departure.remainingSeats < pax) {
+        throw new Error("NOT_ENOUGH_SEATS");
+      }
 
-  if (bookingError) {
-    console.error("Booking Creation Error:", bookingError);
-    return { success: false, error: "เกิดข้อผิดพลาดในการบันทึกข้อมูลการจอง: " + bookingError.message };
-  }
+      // Deduct seats (Seat Lock Mechanism)
+      await tx.departure.update({
+        where: { id: departureId },
+        data: { remainingSeats: { decrement: pax } }
+      });
 
-  // Create travelers (lead traveler)
-  await supabase
-    .from('Traveler')
-    .insert({
-      id: randomUUID(),
-      bookingId: booking.id,
-      name: `${firstName} ${lastName}`
+      // Find or create customer based on logged in user's email or form email
+      const targetEmail = email || user.email || "";
+      let customer = await tx.customer.findFirst({ where: { email: targetEmail } });
+      if (!customer) {
+        customer = await tx.customer.create({
+          data: {
+            firstName: firstName,
+            lastName: lastName,
+            email: targetEmail,
+            phone: phone,
+          }
+        });
+      }
+
+      // Generate booking ref
+      const bookingRef = `B2C-${new Date().getFullYear()}${String(new Date().getMonth()+1).padStart(2,'0')}-${Math.floor(Math.random()*10000)}`;
+      
+      // Create Booking
+      const booking = await tx.booking.create({
+        data: {
+          bookingRef,
+          departureId,
+          customerId: customer.id,
+          status: "PENDING",
+          paxAdult: adults,
+          paxChild: children,
+          totalPrice,
+          paymentStatus: "UNPAID",
+          wholesaleType: "API", 
+          wholesaleStatus: "PENDING"
+        }
+      });
+      newBookingId = booking.id;
+
+      // Create Lead Traveler
+      await tx.bookingTraveler.create({
+        data: {
+          bookingId: booking.id,
+          firstName,
+          lastName,
+          title: "Mr.", // simplistic
+          paxType: "ADULT"
+        }
+      });
+
+      // Create dummy records for remaining passengers so they can be filled later
+      for (let i = 1; i < pax; i++) {
+        await tx.bookingTraveler.create({
+          data: {
+            bookingId: booking.id,
+            firstName: `Traveler`,
+            lastName: `${i+1}`,
+            title: "Mr.",
+            paxType: i >= adults ? "CHILD_WITH_BED" : "ADULT"
+          }
+        });
+      }
     });
 
-  // Add dummy travelers for remaining pax
-  for (let i = 1; i < pax; i++) {
-    await supabase
-      .from('Traveler')
-      .insert({
-        id: randomUUID(),
-        bookingId: booking.id,
-        name: `Traveler ${i + 1}`
-      });
+  } catch (error: any) {
+    console.error("Booking Error:", error);
+    if (error.message === "NOT_ENOUGH_SEATS") {
+      return { success: false, error: "ที่นั่งในรอบเดินทางนี้ไม่เพียงพอ หรือเต็มแล้ว กรุณาเลือกรอบเดินทางอื่น" };
+    }
+    return { success: false, error: "เกิดข้อผิดพลาดในการบันทึกข้อมูลการจอง" };
   }
 
-  return { success: true, bookingId: booking.id };
+  // Success -> Returns ID to let Client Component redirect to Payment Page
+  return { success: true, bookingId: newBookingId };
 }

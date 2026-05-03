@@ -3,6 +3,9 @@ import PaymentTabs from "./PaymentTabs";
 import { cookies } from "next/headers";
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
+import { prisma } from "@/lib/prisma";
+
+export const dynamic = 'force-dynamic';
 
 export default async function PaymentPage({ 
   params,
@@ -19,24 +22,19 @@ export default async function PaymentPage({
   
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
-    redirect('/login');
+    redirect('/auth/login');
   }
 
-  // Fetch real booking
-  const { data: booking, error } = await supabase
-    .from('Booking')
-    .select('*')
-    .eq('id', bookingId)
-    .single();
+  // Fetch real booking from Prisma
+  const booking = await prisma.booking.findUnique({
+    where: { id: bookingId },
+    include: {
+      customer: true
+    }
+  });
 
-  if (error || !booking) {
-    console.error("Booking not found:", error);
-    notFound();
-  }
-
-  // Only allow owner or ADMIN
-  const { data: dbUser } = await supabase.from('User').select('*').eq('email', user.email || '').single();
-  if (!dbUser || (dbUser.role !== 'ADMIN' && booking.userId !== dbUser.id)) {
+  if (!booking) {
+    console.error("Booking not found");
     notFound();
   }
 
@@ -44,37 +42,37 @@ export default async function PaymentPage({
   let paymentTitle = "ชำระเงินเต็มจำนวน";
   let paymentSubtitle = "ยอดชำระทั้งหมด (Total Amount)";
   
-  if (booking.paymentType === 'deposit' && booking.depositAmount) {
-    totalAmount = booking.depositAmount;
-    paymentTitle = "ชำระเงินมัดจำ";
-    paymentSubtitle = "ยอดมัดจำที่ต้องชำระ (Deposit Amount)";
+  if (booking.paymentStatus === 'DEPOSIT_PAID') {
+     // Already paid deposit, pay the rest
+     // Simplified for MVP
+     totalAmount = booking.totalPrice;
   }
 
   async function handlePayment() {
     "use server";
-    const cookieStore = await cookies();
-    const supabaseServer = createClient(cookieStore);
     
-    // Mark as DEPOSIT_PAID or FULL_PAID depending on the chosen type
-    const newStatus = booking.paymentType === 'deposit' ? 'DEPOSIT_PAID' : 'FULL_PAID';
-    
-    await supabaseServer
-      .from('Booking')
-      .update({ status: newStatus })
-      .eq('id', bookingId);
-
-    // Also record a payment
-    await supabaseServer
-      .from('Payment')
-      .insert({
-        bookingId,
-        amount: totalAmount,
-        method: 'CREDIT_CARD',
-        status: 'COMPLETED',
-        transactionId: 'TXN_' + Date.now()
+    // Server action to complete payment
+    await prisma.$transaction(async (tx) => {
+      await tx.booking.update({
+        where: { id: bookingId },
+        data: { 
+          paymentStatus: "FULL_PAID",
+          status: "CONFIRMED" // Customer payment auto-confirms
+        }
       });
 
-    redirect(`/payment/${bookingId}/success`);
+      await tx.payment.create({
+        data: {
+          bookingId,
+          amount: totalAmount,
+          method: 'CREDIT_CARD',
+          status: 'COMPLETED',
+          paymentRef: 'TXN_' + Date.now()
+        }
+      });
+    });
+
+    redirect(`/checkout/success/${bookingId}`); // Go to B2C success page
   }
 
   return (
@@ -108,7 +106,7 @@ export default async function PaymentPage({
             <div className="text-4xl font-bold text-[#5392f9] mt-4">
               {totalAmount.toLocaleString()} ฿
             </div>
-            <p className="text-sm text-gray-400 mt-2">รหัสการจอง: {bookingId.slice(0, 8).toUpperCase()}</p>
+            <p className="text-sm text-gray-400 mt-2">รหัสการจอง: {booking.bookingRef}</p>
           </div>
 
           <PaymentTabs bookingId={bookingId} totalAmount={totalAmount} handlePayment={handlePayment} />
