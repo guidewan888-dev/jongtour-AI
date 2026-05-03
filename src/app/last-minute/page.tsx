@@ -41,7 +41,7 @@ export default async function LastMinutePage() {
       });
       futureDeps.sort((a: any, b: any) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime());
       return { ...t, departures: futureDeps };
-    }).filter((t: any) => t.departures.length > 0).slice(0, 12);
+    }).filter((t: any) => t.departures.length > 0);
 
   } catch (error: any) {
     console.error("Supabase error in last-minute:", error);

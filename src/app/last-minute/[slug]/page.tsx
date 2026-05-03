@@ -112,7 +112,7 @@ export default async function WholesaleLastMinutePage({ params, searchParams }: 
       return true;
     }
     return false;
-  }).slice(0, 12);
+  });
 
   const validTours = toursData.map(t => ({
     id: t.id,
