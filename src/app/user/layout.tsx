@@ -16,28 +16,36 @@ export default async function UserLayout({ children }: { children: ReactNode }) 
   }
 
   let { data: dbUser } = await supabase
-    .from('User')
-    .select('*')
+    .from('users')
+    .select('*, role:roles(*)')
     .eq('email', user.email || '')
     .single();
 
   // Auto-create user if it doesn't exist
   if (!dbUser && user.email) {
-    const { data: newUser } = await supabase
-      .from('User')
-      .insert({
-        email: user.email,
-        role: "CUSTOMER", // Default role
-        password: "OAUTH_USER", // Dummy password since auth is handled by Supabase
-      })
-      .select()
+    const { data: customerRole } = await supabase
+      .from("roles")
+      .select("id")
+      .eq("name", "CUSTOMER")
       .single();
-    dbUser = newUser;
+
+    if (customerRole) {
+      const { data: newUser } = await supabase
+        .from('users')
+        .insert({
+          email: user.email,
+          roleId: customerRole.id,
+          passwordHash: "OAUTH_USER", // Dummy password since auth is handled by Supabase
+        })
+        .select('*, role:roles(*)')
+        .single();
+      dbUser = newUser;
+    }
   }
 
   // If Admin tries to access User Dashboard, optionally redirect them to Admin Panel
-  if (dbUser?.role === "ADMIN") {
-    redirect("/admin/bookings");
+  if (dbUser?.role?.name === "ADMIN") {
+    redirect("/admin");
   }
 
   const menuItems = [
