@@ -36,21 +36,38 @@ export default async function DestinationPage({ params }: { params: { slug?: str
     whereClause.OR = keywordConditions;
   }
 
-  const toursData = await prisma.tour.findMany({
-    where: whereClause,
-    include: {
-      departures: {
-        where: { startDate: { gte: new Date() } },
-        orderBy: { startDate: 'asc' },
-        include: { prices: true }
+  let toursData: any[] = [];
+  let prismaError: string | null = null;
+  
+  try {
+    toursData = await prisma.tour.findMany({
+      where: whereClause,
+      include: {
+        departures: {
+          where: { startDate: { gte: new Date() } },
+          orderBy: { startDate: 'asc' },
+          include: { prices: true }
+        },
+        destinations: true,
+        images: { take: 1 },
+        supplier: true
       },
-      destinations: true,
-      images: { take: 1 },
-      supplier: true
-    },
-    orderBy: { createdAt: 'desc' },
-    take: 12
-  });
+      orderBy: { createdAt: 'desc' },
+      take: 20
+    });
+  } catch (error: any) {
+    console.error("Prisma error in destinations:", error);
+    prismaError = error?.message || String(error);
+  }
+
+  if (prismaError) {
+    return (
+      <div className="bg-red-50 p-6 rounded-lg m-10 text-red-800 font-mono text-xs whitespace-pre-wrap relative z-50">
+        <h2>Database Connection Error (IPv6 Panic / Prisma Error)</h2>
+        <p>{prismaError}</p>
+      </div>
+    );
+  }
 
   const validTours = toursData.map(t => ({
     id: t.id,

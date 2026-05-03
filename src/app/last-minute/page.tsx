@@ -9,31 +9,48 @@ export default async function LastMinutePage() {
   const next30Days = new Date();
   next30Days.setDate(today.getDate() + 30);
 
-  const toursData = await prisma.tour.findMany({
-    where: {
-      status: 'PUBLISHED',
-      departures: {
-        some: {
-          startDate: {
-            gte: today,
-            lte: next30Days
+  let toursData: any[] = [];
+  let prismaError: string | null = null;
+  
+  try {
+    toursData = await prisma.tour.findMany({
+      where: {
+        status: 'PUBLISHED',
+        departures: {
+          some: {
+            startDate: {
+              gte: today,
+              lte: next30Days
+            }
           }
         }
-      }
-    },
-    include: {
-      departures: {
-        where: { startDate: { gte: today, lte: next30Days } },
-        orderBy: { startDate: 'asc' },
-        include: { prices: true }
       },
-      destinations: true,
-      images: { take: 1 },
-      supplier: true
-    },
-    orderBy: { createdAt: 'desc' },
-    take: 12
-  });
+      include: {
+        departures: {
+          where: { startDate: { gte: today, lte: next30Days } },
+          orderBy: { startDate: 'asc' },
+          include: { prices: true }
+        },
+        destinations: true,
+        images: { take: 1 },
+        supplier: true
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 12
+    });
+  } catch (error: any) {
+    console.error("Prisma error in last-minute:", error);
+    prismaError = error?.message || String(error);
+  }
+
+  if (prismaError) {
+    return (
+      <div className="bg-red-50 p-6 rounded-lg m-10 text-red-800 font-mono text-xs whitespace-pre-wrap">
+        <h2>Database Connection Error (IPv6 Panic / Prisma Error)</h2>
+        <p>{prismaError}</p>
+      </div>
+    );
+  }
 
   const validTours = toursData.map(t => ({
     id: t.id,
