@@ -39,7 +39,8 @@ export default async function SearchPage({ params }: { params: { slug?: string[]
       images: { take: 1 },
       supplier: true
     },
-    orderBy: { createdAt: 'desc' }
+    orderBy: { createdAt: 'desc' },
+    take: 100
   });
 
   const tours = toursData.map(t => ({

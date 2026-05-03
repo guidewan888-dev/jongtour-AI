@@ -31,7 +31,8 @@ export default async function LastMinutePage() {
       images: { take: 1 },
       supplier: true
     },
-    orderBy: { createdAt: 'desc' }
+    orderBy: { createdAt: 'desc' },
+    take: 100
   });
 
   const validTours = toursData.map(t => ({
