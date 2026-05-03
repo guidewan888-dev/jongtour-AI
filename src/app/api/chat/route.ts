@@ -114,7 +114,9 @@ export async function POST(request: NextRequest) {
           content: `คุณคือ AI Search Agent สำหรับระบบค้นหาทัวร์
 search_intent: ${JSON.stringify(intentExtracted)}
 
-ถ้า search_intent.supplier_filter_required = true คุณต้องดึงข้อมูลผ่าน search_tours โดยบังคับใช้ strict_filters.supplier_id เสมอ ห้ามแสดง Supplier อื่นเด็ดขาด`
+คำสั่งสำคัญ: 
+1. ถ้า search_intent.supplier_filter_required = true คุณต้องดึงข้อมูลผ่าน search_tours โดยบังคับใช้ strict_filters.supplier_id เสมอ ห้ามแสดง Supplier อื่นเด็ดขาด
+2. ถ้า search_intent.destination เป็น null ให้คุณดูจากบริบทการสนทนา (Chat History) ว่าลูกค้ากำลังคุยถึงประเทศหรือเมืองไหน แล้วนำมาใส่เป็นพารามิเตอร์ destination ในการเรียก search_tours`
         });
       }
     }
