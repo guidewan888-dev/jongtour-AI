@@ -317,6 +317,8 @@ model Agent {
   balance     Float    @default(0)
   status      String   @default("ACTIVE")
   subdomain   String?  @unique
+  tier        String   @default("STANDARD") // STANDARD, BRONZE, SILVER, GOLD
+  discountRate Float   @default(0) // Discount percentage
   logoUrl     String?
   themeColor  String?
   createdAt   DateTime @default(now())

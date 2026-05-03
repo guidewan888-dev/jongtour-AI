@@ -1,33 +1,51 @@
-"use client";
-
 import Link from "next/link";
 import { ChevronLeft, Calendar, Users, MapPin, CreditCard, Clock, FileText, CheckCircle2, Download, AlertCircle, Plane } from "lucide-react";
+import { createClient } from "@supabase/supabase-js";
+import { notFound } from "next/navigation";
+import { updateBookingStatus } from "@/actions/admin-booking";
 
-export default function BookingDetailsPage({ params }: { params: { id: string } }) {
-  // Mock data
-  const bookingData = {
-    id: params.id,
-    tourName: "ทัวร์ญี่ปุ่น โตเกียว ฟูจิ คาวากุจิโกะ (6D4N)",
-    travelDate: "15 พ.ย. 2026 - 20 พ.ย. 2026",
-    status: "AWAITING_CONFIRMATION",
-    customer: {
-      name: "คุณสมชาย ใจดี",
-      phone: "081-234-5678",
-      email: "somchai@email.com",
-      address: "123/45 ถนนสุขุมวิท เขตวัฒนา กรุงเทพฯ 10110"
-    },
-    payment: {
-      total: 45900,
-      paid: 0,
-      balance: 45900,
-      history: [
-        { date: "12 ต.ค. 26 14:35 น.", type: "โอนเงินเข้าธนาคารกสิกรไทย", amount: 45900, status: "รอตรวจสอบสลิป" }
-      ]
-    },
-    travelers: [
-      { id: 1, name: "นายสมชาย ใจดี", type: "ผู้ใหญ่", passportId: "AA1234567" },
-      { id: 2, name: "นางสมหญิง ใจดี", type: "ผู้ใหญ่", passportId: "AA9876543" }
-    ]
+export const dynamic = 'force-dynamic';
+
+export default async function BookingDetailsPage({ params }: { params: { id: string } }) {
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!
+  );
+
+  const { data: booking, error } = await supabase
+    .from("bookings")
+    .select(`
+      *,
+      customer:customers(*),
+      tour:tours(tourName),
+      departure:departures(startDate, endDate),
+      travelers:booking_travelers(*),
+      payments(*)
+    `)
+    .eq("id", params.id)
+    .single();
+
+  if (!booking) {
+    notFound();
+  }
+
+  const totalPaid = booking.payments?.filter((p:any) => p.status === 'COMPLETED').reduce((sum: number, p: any) => sum + p.amount, 0) || 0;
+  const balance = booking.totalPrice - totalPaid;
+
+  const statusMap: Record<string, string> = {
+    "PENDING": "รอชำระเงิน",
+    "AWAITING_CONFIRMATION": "รอตรวจสลิป",
+    "CONFIRMED": "ยืนยันแล้ว",
+    "COMPLETED": "เดินทางแล้ว",
+    "CANCELLED": "ยกเลิก"
+  };
+
+  const badgeColors: Record<string, string> = {
+    "PENDING": "bg-gray-100 text-gray-700 border-gray-200",
+    "AWAITING_CONFIRMATION": "bg-amber-100 text-amber-700 border-amber-200",
+    "CONFIRMED": "bg-green-100 text-green-700 border-green-200",
+    "COMPLETED": "bg-blue-100 text-blue-700 border-blue-200",
+    "CANCELLED": "bg-red-100 text-red-700 border-red-200",
   };
 
   return (
@@ -40,17 +58,33 @@ export default function BookingDetailsPage({ params }: { params: { id: string } 
           <div>
             <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-3">
               รายละเอียดการจอง
-              <span className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm font-bold border border-blue-200">
-                รอตรวจสลิป
+              <span className={`px-3 py-1 rounded-full text-sm font-bold border ${badgeColors[booking.status] || badgeColors['PENDING']}`}>
+                {statusMap[booking.status] || booking.status}
               </span>
             </h2>
-            <p className="text-gray-500 mt-1 font-mono tracking-wide">รหัส: {bookingData.id}</p>
+            <p className="text-gray-500 mt-1 font-mono tracking-wide">Ref: {booking.bookingRef}</p>
           </div>
         </div>
+        
         <div className="flex gap-3">
-          <Link href={`/admin/bookings/${bookingData.id}/verify-slip`} className="bg-blue-600 text-white px-5 py-2.5 rounded-xl font-bold flex items-center gap-2 hover:bg-blue-700 shadow-lg shadow-blue-600/30 transition-all">
-            <CheckCircle2 className="w-5 h-5" /> ตรวจสอบสลิปด่วน
-          </Link>
+          {booking.status === 'AWAITING_CONFIRMATION' && (
+            <form action={updateBookingStatus}>
+              <input type="hidden" name="bookingId" value={booking.id} />
+              <input type="hidden" name="status" value="CONFIRMED" />
+              <button type="submit" className="bg-blue-600 text-white px-5 py-2.5 rounded-xl font-bold flex items-center gap-2 hover:bg-blue-700 shadow-lg shadow-blue-600/30 transition-all">
+                <CheckCircle2 className="w-5 h-5" /> อนุมัติสลิปโอนเงิน (Approve)
+              </button>
+            </form>
+          )}
+          {booking.status === 'PENDING' && (
+             <form action={updateBookingStatus}>
+             <input type="hidden" name="bookingId" value={booking.id} />
+             <input type="hidden" name="status" value="CANCELLED" />
+             <button type="submit" className="bg-red-100 text-red-600 px-5 py-2.5 rounded-xl font-bold flex items-center gap-2 hover:bg-red-200 transition-all">
+               ยกเลิกการจอง
+             </button>
+           </form>
+          )}
         </div>
       </div>
 
@@ -64,13 +98,13 @@ export default function BookingDetailsPage({ params }: { params: { id: string } 
               <Plane className="w-5 h-5 text-indigo-500" /> ข้อมูลทัวร์ (Tour Package)
             </h3>
             <div className="flex gap-4">
-              <div className="w-24 h-24 bg-indigo-100 rounded-xl shrink-0 overflow-hidden">
-                <img src="https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?q=80&w=2070&auto=format&fit=crop" alt="Japan" className="w-full h-full object-cover" />
+              <div className="w-24 h-24 bg-indigo-100 rounded-xl shrink-0 overflow-hidden flex items-center justify-center text-indigo-300">
+                 <Plane className="w-8 h-8" />
               </div>
               <div className="flex-1 space-y-2">
-                <p className="font-bold text-lg text-gray-800">{bookingData.tourName}</p>
-                <p className="text-gray-600 flex items-center gap-2 text-sm"><Calendar className="w-4 h-4 text-gray-400" /> วันเดินทาง: <span className="font-bold">{bookingData.travelDate}</span></p>
-                <p className="text-gray-600 flex items-center gap-2 text-sm"><Users className="w-4 h-4 text-gray-400" /> ผู้เดินทางทั้งหมด: <span className="font-bold">{bookingData.travelers.length} ท่าน</span></p>
+                <p className="font-bold text-lg text-gray-800">{booking.tour?.tourName}</p>
+                <p className="text-gray-600 flex items-center gap-2 text-sm"><Calendar className="w-4 h-4 text-gray-400" /> วันเดินทาง: <span className="font-bold">{booking.departure?.startDate ? new Date(booking.departure.startDate).toLocaleDateString('th-TH') : "N/A"}</span></p>
+                <p className="text-gray-600 flex items-center gap-2 text-sm"><Users className="w-4 h-4 text-gray-400" /> ผู้เดินทางทั้งหมด: <span className="font-bold">{booking.travelers?.length || 0} ท่าน</span></p>
               </div>
             </div>
           </div>
@@ -81,24 +115,23 @@ export default function BookingDetailsPage({ params }: { params: { id: string } 
               <h3 className="font-bold text-gray-900 flex items-center gap-2">
                 <Users className="w-5 h-5 text-emerald-500" /> รายชื่อผู้เดินทาง (Travelers)
               </h3>
-              <Link href="/admin/wholesale" className="text-sm font-bold text-indigo-600 hover:underline flex items-center gap-1">
-                ไปหน้าจัดการเอกสาร <ChevronLeft className="w-4 h-4 rotate-180" />
-              </Link>
             </div>
             
             <div className="space-y-3">
-              {bookingData.travelers.map(t => (
+              {!booking.travelers || booking.travelers.length === 0 ? (
+                 <p className="text-gray-500 text-sm">ยังไม่ได้กรอกรายชื่อผู้เดินทาง</p>
+              ) : booking.travelers.map((t:any, idx:number) => (
                 <div key={t.id} className="flex justify-between items-center p-3 border border-gray-100 rounded-xl bg-gray-50">
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-white border border-gray-200 flex items-center justify-center text-gray-500 font-bold">{t.id}</div>
+                    <div className="w-8 h-8 rounded-full bg-white border border-gray-200 flex items-center justify-center text-gray-500 font-bold">{idx+1}</div>
                     <div>
-                      <p className="font-bold text-gray-800">{t.name}</p>
-                      <p className="text-xs text-gray-500">{t.type}</p>
+                      <p className="font-bold text-gray-800">{t.title} {t.firstName} {t.lastName}</p>
+                      <p className="text-xs text-gray-500">{t.paxType}</p>
                     </div>
                   </div>
                   <div className="text-right">
                     <p className="text-xs text-gray-400">Passport No.</p>
-                    <p className="font-mono text-sm font-bold text-gray-700">{t.passportId}</p>
+                    <p className="font-mono text-sm font-bold text-gray-700">{t.passportNo || "-"}</p>
                   </div>
                 </div>
               ))}
@@ -112,13 +145,9 @@ export default function BookingDetailsPage({ params }: { params: { id: string } 
           <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
             <h3 className="font-bold text-gray-900 mb-4 border-b border-gray-100 pb-2">ข้อมูลผู้ติดต่อหลัก</h3>
             <div className="space-y-3 text-sm">
-              <p className="font-bold text-lg text-gray-800">{bookingData.customer.name}</p>
-              <p className="text-gray-600 flex items-center gap-2"><CreditCard className="w-4 h-4 text-gray-400" /> {bookingData.customer.phone}</p>
-              <p className="text-gray-600 flex items-center gap-2"><MapPin className="w-4 h-4 text-gray-400" /> {bookingData.customer.email}</p>
-              <div className="pt-2">
-                <p className="text-gray-400 text-xs mb-1">ที่อยู่ออกใบเสร็จ:</p>
-                <p className="text-gray-700 leading-relaxed">{bookingData.customer.address}</p>
-              </div>
+              <p className="font-bold text-lg text-gray-800">{booking.customer?.firstName} {booking.customer?.lastName}</p>
+              <p className="text-gray-600 flex items-center gap-2"><CreditCard className="w-4 h-4 text-gray-400" /> {booking.customer?.phone}</p>
+              <p className="text-gray-600 flex items-center gap-2"><MapPin className="w-4 h-4 text-gray-400" /> {booking.customer?.email}</p>
             </div>
           </div>
 
@@ -128,41 +157,33 @@ export default function BookingDetailsPage({ params }: { params: { id: string } 
             <div className="space-y-3 mb-6">
               <div className="flex justify-between text-sm">
                 <span className="text-gray-500">ยอดรวมทั้งสิ้น</span>
-                <span className="font-bold text-gray-800">฿{bookingData.payment.total.toLocaleString()}</span>
+                <span className="font-bold text-gray-800">฿{booking.totalPrice?.toLocaleString()}</span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-gray-500">ชำระแล้ว</span>
-                <span className="font-bold text-emerald-600">฿{bookingData.payment.paid.toLocaleString()}</span>
+                <span className="font-bold text-emerald-600">฿{totalPaid.toLocaleString()}</span>
               </div>
               <div className="flex justify-between text-lg pt-2 border-t border-gray-100">
                 <span className="font-bold text-gray-800">ยอดค้างชำระ</span>
-                <span className="font-black text-red-600">฿{bookingData.payment.balance.toLocaleString()}</span>
+                <span className="font-black text-red-600">฿{balance.toLocaleString()}</span>
               </div>
             </div>
 
             <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
               <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">ประวัติการชำระเงิน</p>
-              {bookingData.payment.history.map((h, i) => (
-                <div key={i} className="flex gap-3">
-                  <div className="mt-1"><AlertCircle className="w-4 h-4 text-amber-500" /></div>
+              {!booking.payments || booking.payments.length === 0 ? (
+                 <p className="text-xs text-gray-500">ยังไม่มีประวัติการชำระเงิน</p>
+              ) : booking.payments.map((h:any, i:number) => (
+                <div key={i} className="flex gap-3 mb-3 last:mb-0">
+                  <div className="mt-1"><AlertCircle className="w-4 h-4 text-blue-500" /></div>
                   <div>
-                    <p className="text-sm font-bold text-gray-800">฿{h.amount.toLocaleString()} <span className="text-xs font-normal text-amber-600 bg-amber-100 px-2 py-0.5 rounded ml-1">{h.status}</span></p>
-                    <p className="text-xs text-gray-500">{h.type}</p>
-                    <p className="text-xs text-gray-400">{h.date}</p>
+                    <p className="text-sm font-bold text-gray-800">฿{h.amount.toLocaleString()} <span className="text-xs font-normal text-blue-600 bg-blue-100 px-2 py-0.5 rounded ml-1">{h.status}</span></p>
+                    <p className="text-xs text-gray-500">{h.paymentMethod} • Ref: {h.paymentRef}</p>
+                    <p className="text-xs text-gray-400">{new Date(h.createdAt).toLocaleString('th-TH')}</p>
                   </div>
                 </div>
               ))}
             </div>
-          </div>
-
-          {/* Quick Actions */}
-          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-4 flex flex-col gap-2">
-            <Link href={`/admin/bookings/${bookingData.id}/send-document?type=invoice1`} className="w-full text-center py-2.5 rounded-lg text-sm font-bold text-gray-700 bg-gray-50 hover:bg-gray-100 border border-gray-200 transition-colors flex justify-center items-center gap-2">
-              <FileText className="w-4 h-4" /> ออกอินวอยซ์มัดจำ
-            </Link>
-            <Link href={`/admin/wholesale`} className="w-full text-center py-2.5 rounded-lg text-sm font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 transition-colors flex justify-center items-center gap-2">
-              <Download className="w-4 h-4" /> ไปหน้าจัดการ Wholesale
-            </Link>
           </div>
         </div>
       </div>

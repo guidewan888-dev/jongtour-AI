@@ -14,6 +14,7 @@ export default function AdminSidebar() {
     { name: "แดชบอร์ด", href: "/admin", icon: LayoutDashboard },
     { name: "จัดการการจอง (Bookings)", href: "/admin/bookings", icon: Ticket },
     { name: "ลูกค้าสมาชิก", href: "/admin/customers", icon: Users },
+    { name: "ตัวแทนจำหน่าย (B2B Agents)", href: "/admin/agents", icon: Users },
     { name: "การเงิน & เอกสาร", href: "/admin/finance", icon: FileText },
     { name: "สถานะ API Sync", href: "/admin/sync", icon: RefreshCcw },
     { name: "Link Health Monitor", href: "/admin/link-monitor", icon: Activity },
