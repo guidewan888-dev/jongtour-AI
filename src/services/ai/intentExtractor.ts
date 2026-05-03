@@ -96,6 +96,18 @@ export async function extractIntent(
           intentExtracted.supplier_filter_required = false;
           intentExtracted.matched_supplier.supplier_id = null;
           intentExtracted.matched_supplier.canonical_name = null;
+       } else {
+          // STRICT ALIAS CHECK: The userMessage MUST actually contain one of the aliases or the canonical name!
+          const msgLower = userMessage.toLowerCase();
+          const hasAlias = isValidSupplier.aliases.some(a => msgLower.includes(a.toLowerCase())) || 
+                           msgLower.includes(isValidSupplier.canonical_name.toLowerCase());
+          
+          if (!hasAlias) {
+             console.log(`[Anti-Hallucination] Overriding supplier filter because message "${userMessage}" does not contain any alias for ${isValidSupplier.supplier_id}`);
+             intentExtracted.supplier_filter_required = false;
+             intentExtracted.matched_supplier.supplier_id = null;
+             intentExtracted.matched_supplier.canonical_name = null;
+          }
        }
     }
 
