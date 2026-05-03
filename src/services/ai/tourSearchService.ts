@@ -27,7 +27,10 @@ export async function searchTours(
   }
 
   if (args.destination) {
-    query = query.or(`title.ilike.%${args.destination}%,description.ilike.%${args.destination}%,destination.ilike.%${args.destination}%`);
+    const destParts = args.destination.split(/[\s-]+/).filter((p: string) => p.trim().length > 0);
+    for (const part of destParts) {
+      query = query.or(`title.ilike.%${part}%,description.ilike.%${part}%,destination.ilike.%${part}%`);
+    }
   }
   if (args.date_from) {
     query = query.gte('departures.startDate', args.date_from);
