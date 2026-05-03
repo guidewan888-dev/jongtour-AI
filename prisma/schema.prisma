@@ -343,6 +343,7 @@ model Booking {
   departureId   String
   customerId    String
   agentId       String?
+  bookingSource String   @default("ONLINE") // ONLINE, MANUAL, SALE, AGENT, AI_CHATBOT
   status        String   @default("PENDING") // PENDING, CONFIRMED, CANCELLED
   totalPrice    Float
   totalNetPrice Float?
@@ -800,6 +801,18 @@ model PricingRule {
   updatedAt   DateTime @updatedAt
 
   @@map("pricing_rules")
+}
+
+model Notification {
+  id          String   @id @default(cuid())
+  type        String   // BOOKING, PAYMENT, SUPPLIER, CUSTOMER, SYSTEM
+  title       String
+  message     String   @db.Text
+  isRead      Boolean  @default(false)
+  linkUrl     String?
+  createdAt   DateTime @default(now())
+
+  @@map("notifications")
 }
 
 model Quotation {
