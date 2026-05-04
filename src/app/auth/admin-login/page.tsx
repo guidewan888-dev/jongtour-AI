@@ -40,7 +40,7 @@ export default function AdminLoginPage() {
       
     } catch (error: any) {
       if (error.message?.toLowerCase().includes("rate limit")) {
-        setError("ระบบตรวจพบการล็อกอินผิดพลาดหลายครั้ง กรุณารอ 1 ชั่วโมง หรือใช้ Magic Link ด้านล่างครับ");
+        setError("ระบบล็อกอินชั่วคราวเนื่องจากใส่รหัสผิดหลายครั้ง กรุณารอ 1 ชั่วโมง หรือกดรีเซ็ตรหัสผ่านครับ");
       } else {
         setError(error.message || "อีเมลหรือรหัสผ่านไม่ถูกต้อง");
       }

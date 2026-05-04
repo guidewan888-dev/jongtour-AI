@@ -15,15 +15,21 @@ export async function POST(req: Request) {
     const cookieStore = await cookies();
     const supabase = createClient(cookieStore);
 
+    // Use Service Role to bypass RLS for user verification
+    const supabaseAdmin = require('@supabase/supabase-js').createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
+
     // 1. Verify if user exists and is an admin
-    // We check the database first to ensure we don't send admin reset links to normal customers
-    const { data: dbUser } = await supabase
+    const { data: dbUser, error: userError } = await supabaseAdmin
       .from('users')
       .select('id, email, role:roles(name)')
       .eq('email', email)
       .single();
 
-    if (!dbUser) {
+    if (!dbUser || userError) {
+      console.log('User not found or error:', userError);
       // Return success anyway to prevent email enumeration
       return NextResponse.json({ success: true });
     }
@@ -32,15 +38,12 @@ export async function POST(req: Request) {
     const allowedRoles = ['SUPER_ADMIN', 'ADMIN', 'OPERATION', 'FINANCE', 'CONTENT_MANAGER', 'SALE_MANAGER'];
     // @ts-ignore
     if (!dbUser.role || !allowedRoles.includes(dbUser.role.name)) {
+      console.log('User role not allowed:', dbUser.role);
       return NextResponse.json({ success: true }); // Silent fail
     }
 
     // 2. Generate Recovery Link via Supabase Auth Admin API
-    // We need to use the service role key to generate links without sending Supabase's default email
-    const supabaseAdmin = require('@supabase/supabase-js').createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
+
 
     const { data, error } = await supabaseAdmin.auth.admin.generateLink({
       type: 'recovery',
