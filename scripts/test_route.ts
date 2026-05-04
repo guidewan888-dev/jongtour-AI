@@ -5,7 +5,7 @@ dotenv.config({ path: '.env.local' });
 
 async function run() {
   try {
-    const email = 'guidewan888@gmail.com';
+    const email = 'jongtourAi@gmail.com';
 
     const supabaseAdmin = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,

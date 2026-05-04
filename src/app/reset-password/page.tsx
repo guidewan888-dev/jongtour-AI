@@ -57,7 +57,7 @@ export default function ResetPasswordPage() {
 
       // Redirect to dashboard after 3 seconds
       setTimeout(() => {
-        window.location.href = "/";
+        window.location.href = "https://admin.jongtour.com/";
       }, 3000);
       
     } catch (error: any) {
