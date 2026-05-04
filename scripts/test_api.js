@@ -6,7 +6,7 @@ async function test() {
     const res = await fetch('https://admin.jongtour.com/api/auth/forgot-password', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: 'guidewan888@gmail.com' })
+      body: JSON.stringify({ email: 'jongtourAi@gmail.com' })
     });
     console.log('API:', await res.text());
   } catch(e) {

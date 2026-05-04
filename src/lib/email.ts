@@ -1,4 +1,8 @@
 import nodemailer from 'nodemailer';
+import dns from 'dns';
+
+// Fix Node.js 17+ IPv6 resolution delay for SMTP which causes Vercel serverless to timeout
+dns.setDefaultResultOrder('ipv4first');
 
 // Create a transporter getter to ensure process.env is evaluated at runtime
 const getTransporter = () => nodemailer.createTransport({

@@ -26,8 +26,8 @@ export async function POST(req: Request) {
       .update({ mustChangePassword: false })
       .eq('email', user.email);
 
-    // 2. Send Notification Email
-    await EmailService.sendPasswordChangedNotification(user.email);
+    // 2. Send Notification Email (Do not await to avoid blocking UI)
+    EmailService.sendPasswordChangedNotification(user.email).catch(e => console.error("Email notification error:", e));
 
     // 3. Create Audit Log
     const { data: dbUser } = await supabase.from('users').select('id').eq('email', user.email).single();
