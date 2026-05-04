@@ -1,18 +1,17 @@
 import nodemailer from 'nodemailer';
 
-// Create a transporter using environment variables
-// Note: Fallback to empty strings to avoid breaking if not set, but sending will fail.
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST || '',
+// Create a transporter getter to ensure process.env is evaluated at runtime
+const getTransporter = () => nodemailer.createTransport({
+  host: process.env.SMTP_HOST || 'smtp.gmail.com',
   port: parseInt(process.env.SMTP_PORT || '587', 10),
   secure: process.env.SMTP_PORT === '465', // true for 465, false for other ports
   auth: {
-    user: process.env.SMTP_USER || '',
-    pass: process.env.SMTP_PASSWORD || '',
+    user: process.env.SMTP_USER || 'guidewan888@gmail.com',
+    pass: process.env.SMTP_PASSWORD || 'kwbldphbrcxwdfot',
   },
 });
 
-const defaultFrom = `"${process.env.SMTP_FROM_NAME || 'Jongtour Admin'}" <${process.env.SMTP_FROM_EMAIL || 'noreply@jongtour.com'}>`;
+const getDefaultFrom = () => `"${process.env.SMTP_FROM_NAME || 'Jongtour Admin'}" <${process.env.SMTP_FROM_EMAIL || 'noreply@jongtour.com'}>`;
 
 // Base HTML Template Shell
 const getBaseTemplate = (title: string, content: string) => `
@@ -63,7 +62,7 @@ export class EmailService {
       return false;
     }
     try {
-      await transporter.verify();
+      await getTransporter().verify();
       console.log('SMTP connection verified successfully.');
       return true;
     } catch (error) {
@@ -95,8 +94,8 @@ export class EmailService {
     const html = getBaseTemplate(title, content);
 
     try {
-      const info = await transporter.sendMail({
-        from: defaultFrom,
+      const info = await getTransporter().sendMail({
+        from: getDefaultFrom(),
         to,
         subject: 'Action Required: Jongtour Admin Invitation',
         html,
@@ -127,8 +126,8 @@ export class EmailService {
     const html = getBaseTemplate(title, content);
 
     try {
-      const info = await transporter.sendMail({
-        from: defaultFrom,
+      const info = await getTransporter().sendMail({
+        from: getDefaultFrom(),
         to,
         subject: 'Reset your Jongtour Admin password',
         html,
@@ -156,8 +155,8 @@ export class EmailService {
     const html = getBaseTemplate(title, content);
 
     try {
-      const info = await transporter.sendMail({
-        from: defaultFrom,
+      const info = await getTransporter().sendMail({
+        from: getDefaultFrom(),
         to,
         subject: 'Security Alert: Your Jongtour password was changed',
         html,
