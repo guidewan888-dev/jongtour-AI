@@ -58,8 +58,9 @@ export async function middleware(req: NextRequest) {
     }
   );
 
-  // Refresh session if expired
-  const { data: { user } } = await supabase.auth.getUser();
+  // Use getSession to avoid global API rate limits in middleware
+  const { data: { session } } = await supabase.auth.getSession();
+  const user = session?.user;
 
   // Extract subdomain (e.g., ktc.jongtour.com -> ktc)
   const hostParts = hostname.replace('www.', '').split(':'); // remove port if exists
