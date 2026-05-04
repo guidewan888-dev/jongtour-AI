@@ -63,8 +63,7 @@ export async function POST(req: Request) {
 
     if (!emailResult.success) {
       console.error('Failed to send SMTP email, fallback to logging:', emailResult.error);
-      // We still return success to the user so they don't know the internal state,
-      // but we log it for the admin.
+      return NextResponse.json({ success: false, error: 'SMTP Error: ' + emailResult.error }, { status: 500 });
     }
 
     // 4. Create Audit Log
