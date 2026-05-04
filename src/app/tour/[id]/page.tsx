@@ -92,13 +92,57 @@ export async function TourDetailsContent({ params, agentId }: { params: { id: st
 
   const tourDestination = tour.destinations?.[0]?.country || "";
 
-  // Mock Itinerary Data for UI demonstration
-  const itinerary = Array.from({ length: tour.durationDays || 3 }).map((_, i) => ({
-     day: i + 1,
-     title: i === 0 ? "ออกเดินทางจาก กรุงเทพฯ - สู่จุดหมายปลายทาง" : i === (tour.durationDays - 1) ? "เดินทางกลับ กรุงเทพฯ โดยสวัสดิภาพ" : "ท่องเที่ยวอิสระ หรือ ตามโปรแกรม",
-     desc: "สัมผัสประสบการณ์สุดพิเศษพร้อมไกด์ดูแลตลอดการเดินทาง พักผ่อนตามอัธยาศัย",
-     meals: i === 0 ? "เย็น" : "เช้า, กลางวัน, เย็น"
-  }));
+  let itinerary = [];
+  let highlightText = "สัมผัสประสบการณ์การเดินทางที่เหนือกว่า พร้อมไกด์ผู้เชี่ยวชาญดูแลตลอดการเดินทาง พักสบาย เดินทางสะดวก คุ้มค่าทุกวินาที";
+
+  if (tour) {
+    const { data: rawSource } = await supabase
+      .from('tour_raw_sources')
+      .select('rawPayload')
+      .eq('externalTourId', tour.externalTourId)
+      .eq('supplierId', tour.supplierId)
+      .single();
+      
+    if (rawSource?.rawPayload) {
+      const payload = rawSource.rawPayload;
+      if (tour.supplierId === 'SUP_LETGO') {
+        highlightText = payload.Highlight || highlightText;
+        const itins = payload.Itinerary || [];
+        itinerary = itins.map((it: any) => {
+          let meals = [];
+          if (it.ItinBfast && it.ItinBfast !== 'N') meals.push("เช้า");
+          if (it.ItinLunch && it.ItinLunch !== 'N') meals.push("กลางวัน");
+          if (it.ItinDnr && it.ItinDnr !== 'N') meals.push("เย็น");
+          
+          return {
+            day: it.ItinDay,
+            title: it.ItinDes,
+            desc: "",
+            meals: meals.length > 0 ? meals.join(", ") : "อิสระ หรือ ตามอัธยาศัย"
+          };
+        });
+      } else {
+        highlightText = payload.highlight || highlightText;
+        const plans = payload.plans || [];
+        itinerary = plans.map((p: any, idx: number) => ({
+          day: idx + 1,
+          title: p.topic || `วันที่ ${idx + 1}`,
+          desc: p.detail || "",
+          meals: "ตามโปรแกรม"
+        }));
+      }
+    }
+  }
+
+  // Fallback if empty
+  if (itinerary.length === 0) {
+    itinerary = Array.from({ length: tour?.durationDays || 3 }).map((_, i) => ({
+       day: i + 1,
+       title: i === 0 ? "ออกเดินทางจาก กรุงเทพฯ - สู่จุดหมายปลายทาง" : i === ((tour?.durationDays || 3) - 1) ? "เดินทางกลับ กรุงเทพฯ โดยสวัสดิภาพ" : "ท่องเที่ยวอิสระ หรือ ตามโปรแกรม",
+       desc: "สัมผัสประสบการณ์สุดพิเศษ",
+       meals: i === 0 ? "เย็น" : "เช้า, กลางวัน, เย็น"
+    }));
+  }
 
   return (
     <main className="min-h-screen bg-background pb-32 font-sans relative">
@@ -204,13 +248,7 @@ export async function TourDetailsContent({ params, agentId }: { params: { id: st
                 <FileText className="w-5 h-5 text-primary" /> ไฮไลท์โปรแกรมทัวร์
               </h2>
               <div className="prose prose-sm md:prose-base prose-slate max-w-none text-muted-foreground leading-relaxed">
-                 <p className="font-medium text-trust-800 mb-4">สัมผัสประสบการณ์การเดินทางที่เหนือกว่า พร้อมไกด์ผู้เชี่ยวชาญดูแลตลอดการเดินทาง พักสบาย เดินทางสะดวก คุ้มค่าทุกวินาที</p>
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <div className="flex gap-2 items-start"><CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0"/> เที่ยวชมหมู่บ้านมรดกโลก ชิราคาวาโกะ</div>
-                    <div className="flex gap-2 items-start"><CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0"/> ช้อปปิ้งจุใจที่ย่านชินจูกุและฮาราจูกุ</div>
-                    <div className="flex gap-2 items-start"><CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0"/> แช่ออนเซ็นธรรมชาติแท้ 100%</div>
-                    <div className="flex gap-2 items-start"><CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0"/> พิเศษ! บุฟเฟต์ขาปูยักษ์ไม่อั้น พร้อมเครื่องดื่ม</div>
-                 </div>
+                 <div dangerouslySetInnerHTML={{ __html: highlightText || "สัมผัสประสบการณ์การเดินทางที่เหนือกว่า พร้อมไกด์ผู้เชี่ยวชาญดูแลตลอดการเดินทาง" }} />
               </div>
             </CardContent>
           </Card>

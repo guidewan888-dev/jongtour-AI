@@ -60,7 +60,7 @@ export default function AdminLoginPage() {
       const { error } = await supabase.auth.signInWithOtp({
         email,
         options: {
-          emailRedirectTo: typeof window !== 'undefined' ? window.location.origin : 'https://admin.jongtour.com',
+          emailRedirectTo: typeof window !== 'undefined' ? `${window.location.origin}/api/auth/callback?next=/` : 'https://admin.jongtour.com/api/auth/callback?next=/',
         }
       });
       if (error) throw error;

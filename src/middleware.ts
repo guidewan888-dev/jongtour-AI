@@ -193,6 +193,13 @@ export async function middleware(req: NextRequest) {
     // 4. Enforce Access
     if (requiredDomain && !allowedDomains.includes(requiredDomain)) {
       console.log(`[RBAC Blocked] User ${user.email} (Role: ${userRole}) tried to access ${requiredDomain}.`);
+      
+      // Prevent cross-domain redirects that drop sessions for Admin
+      if (requiredDomain === 'admin') {
+        url.pathname = '/admin/forbidden';
+        return NextResponse.rewrite(url);
+      }
+
       // Redirect to a fallback domain they have access to
       let fallbackDomain = 'tour';
       if (allowedDomains.includes('admin')) fallbackDomain = 'admin';

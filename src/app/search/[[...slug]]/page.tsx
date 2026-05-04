@@ -49,6 +49,26 @@ export default async function SearchPage({
   const { data, error } = await query;
   let toursData = data || [];
 
+  if (toursData.length > 0) {
+    const externalTourIds = toursData.map((t: any) => t.externalTourId).filter(Boolean);
+    if (externalTourIds.length > 0) {
+      const { data: rawSources } = await supabase
+        .from('tour_raw_sources')
+        .select('externalTourId, supplierId, rawPayload')
+        .in('externalTourId', externalTourIds);
+        
+      if (rawSources && rawSources.length > 0) {
+        toursData = toursData.map((t: any) => {
+          const match = rawSources.find(r => r.externalTourId === t.externalTourId && r.supplierId === t.supplierId);
+          if (match) {
+            return { ...t, rawPayload: match.rawPayload };
+          }
+          return t;
+        });
+      }
+    }
+  }
+
   if (destinationFilter && toursData.length > 0) {
     toursData = toursData.filter((t: any) => 
       t.destinations?.some((d: any) => 
@@ -62,10 +82,20 @@ export default async function SearchPage({
     const futureDeps = (t.departures || []).filter((d: any) => new Date(d.startDate) >= today);
     futureDeps.sort((a: any, b: any) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime());
     
+    let desc = "แพ็กเกจทัวร์คุณภาพ ออกเดินทางแน่นอน";
+    if (t.rawPayload) {
+      if (t.supplierId === 'SUP_LETGO' && t.rawPayload.Highlight) {
+        desc = t.rawPayload.Highlight;
+      } else if (t.rawPayload.highlight) {
+        desc = t.rawPayload.highlight;
+      }
+    }
+    const cleanDesc = desc.replace(/<[^>]+>/g, '').trim();
+
     return {
       id: t.id,
       title: t.tourName,
-      description: "แพ็กเกจทัวร์คุณภาพ ออกเดินทางแน่นอน",
+      description: cleanDesc.length > 120 ? cleanDesc.substring(0, 120) + '...' : cleanDesc,
       durationDays: t.durationDays,
       destination: t.destinations?.[0]?.country || "ไม่ระบุ",
       imageUrl: t.images?.[0]?.imageUrl || "https://images.unsplash.com/photo-1436491865332-7a61a109cc05",

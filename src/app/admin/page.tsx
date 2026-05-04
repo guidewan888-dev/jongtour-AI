@@ -34,9 +34,9 @@ export default async function AdminDashboard() {
 
   // Fetch real sync logs
   const { data: syncLogsData } = await supabase
-    .from('supplier_sync_logs')
+    .from('ApiSyncLog')
     .select('*')
-    .order('startedAt', { ascending: false })
+    .order('createdAt', { ascending: false })
     .limit(10);
 
   const liveBookings = bookingsData || [];
@@ -129,6 +129,7 @@ export default async function AdminDashboard() {
           trend="+2 วันนี้"
           icon={Ticket} 
           colorClass="text-primary bg-primary-100/50" 
+          href="/admin/bookings"
         />
         <StatCard 
           title="ยอดรอชำระเงิน" 
@@ -136,6 +137,7 @@ export default async function AdminDashboard() {
           trend={`${unpaidCount} bookings`}
           icon={DollarSign} 
           colorClass="text-amber-600 bg-amber-50" 
+          href="/admin/finance"
         />
         <StatCard 
           title="ลูกค้าใหม่ (วันนี้)" 
@@ -143,13 +145,15 @@ export default async function AdminDashboard() {
           trend="+15% จากเมื่อวาน"
           icon={Users} 
           colorClass="text-emerald-600 bg-emerald-50" 
+          href="/admin/customers"
         />
         <StatCard 
           title="สถานะ API Sync ล่าสุด" 
           value={syncLogsData && syncLogsData.length > 0 ? (syncLogsData[0].status === 'SUCCESS' ? 'สำเร็จ' : syncLogsData[0].status === 'RUNNING' ? 'กำลังดึงข้อมูล' : 'ขัดข้อง') : "No Data"} 
-          trend={syncLogsData && syncLogsData.length > 0 ? `${new Date(syncLogsData[0].startedAt).toLocaleTimeString('th-TH', { timeZone: 'Asia/Bangkok' })} น.` : "N/A"}
+          trend={syncLogsData && syncLogsData.length > 0 ? `${new Date(syncLogsData[0].createdAt).toLocaleTimeString('th-TH', { timeZone: 'Asia/Bangkok' })} น.` : "N/A"}
           icon={RefreshCcw} 
           colorClass={syncLogsData && syncLogsData.length > 0 ? (syncLogsData[0].status === 'SUCCESS' ? "text-emerald-600 bg-emerald-50" : syncLogsData[0].status === 'RUNNING' ? "text-primary bg-primary-50" : "text-destructive bg-destructive/10") : "text-muted-foreground bg-muted"} 
+          href="/admin/wholesale/sync"
         />
       </div>
 
@@ -259,7 +263,7 @@ export default async function AdminDashboard() {
                        <div className="bg-muted/30 border border-border rounded-lg p-3 shadow-sm group-hover:border-primary/30 transition-colors">
                           <div className="flex justify-between items-start mb-1">
                              <span className="text-xs font-bold text-trust-900">{supplierName}</span>
-                             <span className="text-[10px] text-muted-foreground">{new Date(log.startedAt).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })} น.</span>
+                             <span className="text-[10px] text-muted-foreground">{new Date(log.createdAt).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })} น.</span>
                           </div>
                           <p className="text-xs text-muted-foreground leading-snug">{logText}</p>
                        </div>
@@ -281,9 +285,9 @@ export default async function AdminDashboard() {
   );
 }
 
-function StatCard({ title, value, trend, icon: Icon, colorClass }: { title: string, value: string, trend: string, icon: any, colorClass: string }) {
-  return (
-    <Card className="shadow-sm border-border overflow-hidden group">
+function StatCard({ title, value, trend, icon: Icon, colorClass, href }: { title: string, value: string, trend: string, icon: any, colorClass: string, href?: string }) {
+  const content = (
+    <Card className="shadow-sm border-border overflow-hidden group hover:border-primary/30 transition-colors cursor-pointer h-full">
       <CardContent className="p-5">
         <div className="flex items-start justify-between">
            <div>
@@ -298,4 +302,9 @@ function StatCard({ title, value, trend, icon: Icon, colorClass }: { title: stri
       </CardContent>
     </Card>
   );
+
+  if (href) {
+    return <Link href={href} className="block h-full">{content}</Link>;
+  }
+  return content;
 }

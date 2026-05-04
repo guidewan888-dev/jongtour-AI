@@ -37,50 +37,30 @@ export class TourFactoryAdapter implements SupplierAdapter {
   }
 
   async getTourDetail(externalTourId: string): Promise<RawTourDetail> {
-    await this.fetchApi(`/tours/${externalTourId}`);
-    return {
-      externalId: externalTourId,
-      name: "Detail Mock TourFactory",
-      payload: {},
-      itinerary: [],
-      images: []
-    };
+    throw new Error("Method not implemented. Bulk sync is used via getTours().");
   }
 
   async getDepartures(externalTourId: string): Promise<RawDeparture[]> {
-    await this.fetchApi(`/tours/${externalTourId}/dates`);
-    return [
-      {
-        externalId: `DEP_${externalTourId}_A`,
-        tourExternalId: externalTourId,
-        startDate: "2026-11-15T00:00:00Z",
-        endDate: "2026-11-23T00:00:00Z",
-        price: 65000,
-        availableSeats: 5,
-        totalSeats: 25,
-        status: 'available',
-        payload: { agent_price: 61000 }
-      }
-    ];
+    throw new Error("Method not implemented. Bulk sync is used via getTours().");
   }
 
   async getAvailability(externalTourId: string, departureExternalId: string): Promise<number> {
-    return 5;
+    throw new Error("Method not implemented.");
   }
 
   async getPrices(externalTourId: string, departureExternalId: string): Promise<TourPrices> {
-    return { adult: 65000, netPrice: 61000 };
+    throw new Error("Method not implemented.");
   }
 
   async createBooking(payload: BookingPayload): Promise<BookingResult> {
-    return { externalBookingId: `BK_TF_${Date.now()}`, status: 'confirmed' };
+    throw new Error("Method not implemented.");
   }
 
   async getBookingStatus(externalBookingId: string): Promise<string> {
-    return 'confirmed';
+    throw new Error("Method not implemented.");
   }
 
   async cancelBooking(externalBookingId: string): Promise<boolean> {
-    return true;
+    throw new Error("Method not implemented.");
   }
 }
