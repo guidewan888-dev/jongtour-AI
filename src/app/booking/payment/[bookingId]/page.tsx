@@ -1,19 +1,24 @@
+"use client";
+
 import { CreditCard, QrCode, Building2, CheckCircle, Lock, ReceiptText, Upload, ChevronLeft } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Card, CardContent } from "@/components/ui-new/Card";
 import { Button } from "@/components/ui-new/Button";
 import { Badge } from "@/components/ui-new/Badge";
 import { Input } from "@/components/ui-new/Input";
 
 export default function PaymentPage({ params }: { params: { bookingId: string } }) {
+  const router = useRouter();
+
   return (
     <div className="max-w-4xl mx-auto space-y-8">
       
       {/* Back to Edit Button */}
       <div className="mb-4">
-         <Link href="#" className="inline-flex items-center text-sm font-medium text-muted-foreground hover:text-trust-900 transition-colors">
+         <button onClick={() => router.back()} className="inline-flex items-center text-sm font-medium text-muted-foreground hover:text-trust-900 transition-colors">
             <ChevronLeft className="w-4 h-4 mr-1" /> ย้อนกลับไปแก้ไขข้อมูลผู้เดินทาง
-         </Link>
+         </button>
       </div>
 
       {/* Modern Stepper */}

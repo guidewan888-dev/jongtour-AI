@@ -251,6 +251,47 @@ search_intent: ${JSON.stringify(intentExtracted)}
              }
           }
         } 
+        else if (toolCall.function.name === "resolve_supplier_alias") {
+          const args = JSON.parse(toolCall.function.arguments);
+          const { supplierMaster } = await import('@/services/ai/supplierConfig');
+          const match = supplierMaster.find(s => s.aliases.some(a => a.toLowerCase().includes(args.supplier_text.toLowerCase())) || s.canonical_name.includes(args.supplier_text.toLowerCase()));
+          messages.push({
+            role: "tool",
+            tool_call_id: toolCall.id,
+            content: JSON.stringify(match ? { supplier_id: match.supplier_id, canonical_name: match.canonical_name } : { error: "Supplier not found" })
+          });
+        }
+        else if (toolCall.function.name === "get_tour_detail" || toolCall.function.name === "check_availability" || toolCall.function.name === "get_latest_price") {
+          const args = JSON.parse(toolCall.function.arguments);
+          const tid = args.tour_id || args.tourCode;
+          const { prisma } = await import("@/lib/prisma");
+          let tData = await prisma.tour.findFirst({
+            where: { OR: [{ id: tid }, { tourCode: tid }] },
+            include: { departures: { include: { prices: true } }, itineraries: true }
+          });
+          
+          if (!tData) {
+            messages.push({ role: "tool", tool_call_id: toolCall.id, content: JSON.stringify({ error: "Tour not found in database. Please ask user for clarification or search_tours again." }) });
+          } else {
+             if (toolCall.function.name === "get_tour_detail") {
+               messages.push({ role: "tool", tool_call_id: toolCall.id, content: JSON.stringify({ code: tData.tourCode, title: tData.tourName, highlights: tData.itineraries?.[0]?.description || "No highlight", duration: tData.durationDays }) });
+             } else if (toolCall.function.name === "check_availability") {
+               const dep = args.departure_id ? tData.departures.find((d: any) => d.id === args.departure_id) : null;
+               if (dep) {
+                 messages.push({ role: "tool", tool_call_id: toolCall.id, content: JSON.stringify({ tourCode: tData.tourCode, departureDate: dep.startDate, availableSeats: dep.availableSeats, status: dep.status }) });
+               } else {
+                 messages.push({ role: "tool", tool_call_id: toolCall.id, content: JSON.stringify({ tourCode: tData.tourCode, all_departures: tData.departures.map((d: any) => ({ id: d.id, date: d.startDate, seats: d.availableSeats })) }) });
+               }
+             } else if (toolCall.function.name === "get_latest_price") {
+               const dep = args.departure_id ? tData.departures.find((d: any) => d.id === args.departure_id) : (tData.departures[0] || null);
+               if (dep && dep.prices && dep.prices.length > 0) {
+                 messages.push({ role: "tool", tool_call_id: toolCall.id, content: JSON.stringify({ tourCode: tData.tourCode, basePrice: dep.prices[0].sellingPrice, currency: 'THB' }) });
+               } else {
+                 messages.push({ role: "tool", tool_call_id: toolCall.id, content: JSON.stringify({ error: "Price not found for this departure." }) });
+               }
+             }
+          }
+        }
         else if (toolCall.function.name === "calculate_fit_price") {
           const args = JSON.parse(toolCall.function.arguments);
           const pricingData = await calculateFitPrice({
@@ -383,7 +424,9 @@ search_intent: ${JSON.stringify(intentExtracted)}
         else if (toolCall.function.name === "get_booking_link") {
           const args = JSON.parse(toolCall.function.arguments);
           const domain = process.env.NEXT_PUBLIC_SITE_URL || "https://jongtour.com";
-          const bookingUrl = `${domain}/checkout/${args.tourCode}?departureId=${args.departureId}`;
+          const tid = args.tour_id || args.tourCode || "UNKNOWN";
+          const did = args.departure_id || args.departureId || "UNKNOWN";
+          const bookingUrl = `${domain}/booking/checkout/${tid}/${did}`;
           messages.push({
             role: "tool",
             tool_call_id: toolCall.id,
@@ -423,6 +466,37 @@ search_intent: ${JSON.stringify(intentExtracted)}
             content: JSON.stringify({ success: true, message: "Quotation draft prepared for Sales team." })
           });
         }
+        else if (toolCall.function.name === "create_private_group_itinerary" || toolCall.function.name === "estimate_private_group_price") {
+          const args = JSON.parse(toolCall.function.arguments);
+          try {
+            const fitCost = await calculateFitPrice({
+              country: args.destination,
+              pax: args.pax || 10,
+              durationDays: args.duration_days || 3,
+              hotelStars: args.hotel_level === '5 Star' ? 5 : 3,
+              includeFlights: args.include_airfare ?? true,
+              includeHotels: true,
+              includeTransport: true,
+              includeGuide: true,
+              includeInsurance: true
+            });
+            messages.push({
+              role: "tool",
+              tool_call_id: toolCall.id,
+              content: JSON.stringify({ success: true, estimated_price_per_pax: fitCost.sellingPricePerPax, total_pax: args.pax })
+            });
+          } catch (err) {
+             messages.push({ role: "tool", tool_call_id: toolCall.id, content: JSON.stringify({ error: "Failed to estimate private group price." }) });
+          }
+        }
+        else if (toolCall.function.name === "ask_human_support") {
+          const args = JSON.parse(toolCall.function.arguments);
+          messages.push({
+            role: "tool",
+            tool_call_id: toolCall.id,
+            content: JSON.stringify({ success: true, message: "เจ้าหน้าที่ได้รับแจ้งเรื่องแล้ว จะรีบติดต่อกลับโดยเร็วที่สุด" })
+          });
+        }
         else {
           // Mock generic tools
           messages.push({
@@ -442,6 +516,8 @@ search_intent: ${JSON.stringify(intentExtracted)}
         } else {
           controller.enqueue(encoder.encode(`__DATA__${JSON.stringify({ type: 'tours_data', tours })}__DATA__\n`));
         }
+
+        let finalAiResponseToLog = "";
 
         if (shouldStreamSecondPass) {
           if (intentExtracted?.supplier_filter_required && intentExtracted?.matched_supplier?.supplier_id) {
@@ -464,6 +540,7 @@ search_intent: ${JSON.stringify(intentExtracted)}
 
             const guardrailResult = validateAiOutput(finalOutputText, tours);
             finalOutputText = guardrailResult.sanitizedMessage;
+            finalAiResponseToLog = finalOutputText;
 
             const lines = finalOutputText.split('\n');
             for (const line of lines) {
@@ -482,6 +559,7 @@ search_intent: ${JSON.stringify(intentExtracted)}
              let aiOutput = secondResponse.choices[0]?.message?.content || "";
              const guardrailResult = validateAiOutput(aiOutput, tours);
              aiOutput = guardrailResult.sanitizedMessage;
+             finalAiResponseToLog = aiOutput;
 
              const lines = aiOutput.split('\n');
              for (const line of lines) {
@@ -493,14 +571,67 @@ search_intent: ${JSON.stringify(intentExtracted)}
           let aiOutput = initialMessage.content || "";
           const guardrailResult = validateAiOutput(aiOutput, tours);
           aiOutput = guardrailResult.sanitizedMessage;
+          finalAiResponseToLog = aiOutput;
 
           const lines = aiOutput.split('\n');
           for (const line of lines) {
             controller.enqueue(encoder.encode(line + '\n'));
           }
-        }
-        controller.close();
-      }
+          }
+          // Asynchronously log to DB
+          (async () => {
+             try {
+                const { prisma } = await import("@/lib/prisma");
+                const conv = await prisma.aiConversation.create({
+                   data: {
+                      userId: user?.id || null,
+                      customerEmail: user?.email || null,
+                      status: "ACTIVE"
+                   }
+                });
+                
+                const userMsgObj = await prisma.aiMessage.create({
+                   data: {
+                      conversationId: conv.id,
+                      role: "user",
+                      content: userMessage
+                   }
+                });
+                
+                const aiMsgObj = await prisma.aiMessage.create({
+                   data: {
+                      conversationId: conv.id,
+                      role: "assistant",
+                      content: finalAiResponseToLog || "No text"
+                   }
+                });
+                
+                if (initialMessage.tool_calls && initialMessage.tool_calls.length > 0) {
+                   for (const tc of initialMessage.tool_calls) {
+                      await prisma.aiToolCall.create({
+                         data: {
+                            messageId: aiMsgObj.id,
+                            toolName: tc.function.name,
+                            arguments: tc.function.arguments ? JSON.parse(tc.function.arguments) : {},
+                            result: {}
+                         }
+                      });
+                      
+                      if (tc.function.name === "ask_human_support") {
+                         await prisma.aiReviewQueue.create({
+                            data: {
+                               conversationId: conv.id,
+                               customerMessage: userMessage,
+                               reason: "AI requested human support or confidence was too low",
+                               priority: "HIGH"
+                            }
+                         });
+                      }
+                   }
+                }
+             } catch(e) { console.error("DB Log Error", e) }
+          })();
+          controller.close();      }
     });
 
     return new Response(stream, {
@@ -512,3 +643,4 @@ search_intent: ${JSON.stringify(intentExtracted)}
     return NextResponse.json({ reply: "เกิดข้อผิดพลาดในการประมวลผล", tours: [] }, { status: 500 });
   }
 }
+

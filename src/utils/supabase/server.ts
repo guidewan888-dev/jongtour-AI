@@ -5,7 +5,13 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://qterfftaebn
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || 'sb_publishable_SRwNSJ89mInda5FcuB1W2w_9IEJlSOI';
 
 export const createClient = (cookieStore: Awaited<ReturnType<typeof cookies>>) => {
-  const cookieDomain = process.env.NEXT_PUBLIC_COOKIE_DOMAIN || (process.env.NODE_ENV === 'production' ? '.jongtour.com' : undefined);
+  // Try to detect localhost from headers if possible, otherwise rely on a default safe fallback
+  // In server components during local dev, NODE_ENV is usually enough, but if they run `npm start`
+  // locally, we need to be careful.
+  const isLocalhost = process.env.NEXT_PUBLIC_SITE_URL?.includes('localhost') || process.env.NODE_ENV === 'development';
+  const cookieDomain = process.env.NEXT_PUBLIC_COOKIE_DOMAIN || ((process.env.NODE_ENV === 'production' && !isLocalhost) ? '.jongtour.com' : undefined);
+  const isSecure = process.env.NODE_ENV === 'production' && !isLocalhost;
+
   return createServerClient(
     supabaseUrl!,
     supabaseKey!,
@@ -14,7 +20,7 @@ export const createClient = (cookieStore: Awaited<ReturnType<typeof cookies>>) =
         domain: cookieDomain,
         path: '/',
         sameSite: 'lax',
-        secure: process.env.NODE_ENV === 'production',
+        secure: isSecure,
       },
       cookies: {
         getAll() {
@@ -23,7 +29,7 @@ export const createClient = (cookieStore: Awaited<ReturnType<typeof cookies>>) =
         setAll(cookiesToSet) {
           try {
             cookiesToSet.forEach(({ name, value, options }) => {
-              cookieStore.set(name, value, { ...options, domain: cookieDomain || options.domain })
+              cookieStore.set(name, value, { ...options, domain: cookieDomain || options.domain, secure: isSecure })
             })
           } catch {
             // The `setAll` method was called from a Server Component.

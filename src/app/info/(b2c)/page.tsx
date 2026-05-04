@@ -147,7 +147,7 @@ export default function InfoHomePage() {
             <a href="https://tour.jongtour.com" className="group bg-indigo-500 hover:bg-indigo-600 text-white text-lg font-bold px-10 py-4 rounded-full shadow-lg shadow-indigo-500/20 transition-all flex items-center justify-center gap-2">
               ค้นหาทัวร์ทั้งหมด <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </a>
-            <Link href="/contact" className="group bg-slate-800 hover:bg-slate-700 text-white border border-slate-700 text-lg font-bold px-10 py-4 rounded-full transition-all flex items-center justify-center gap-2">
+            <Link href="/info/contact" className="group bg-slate-800 hover:bg-slate-700 text-white border border-slate-700 text-lg font-bold px-10 py-4 rounded-full transition-all flex items-center justify-center gap-2">
               <PhoneCall className="w-5 h-5" /> ติดต่อทีมงาน
             </Link>
           </div>

@@ -156,7 +156,7 @@ export default function AdminCMSPage() {
                  </table>
               </div>
               <div className="p-3 border-t border-border bg-muted/20 text-center">
-                 <Link href="#" className="text-xs font-bold text-primary hover:text-primary-600">ดูรายการทั้งหมด</Link>
+                 <Link href="?view=all" className="text-xs font-bold text-primary hover:text-primary-600">ดูรายการทั้งหมด</Link>
               </div>
            </Card>
 

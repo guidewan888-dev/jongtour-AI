@@ -112,6 +112,202 @@ const COUNTRY_CONFIG: Record<string, any> = {
       { name: "⚽ ฤดูกาลฟุตบอล", desc: "สิงหาคม - พฤษภาคม" }
     ],
     visa: "ต้องขอวีซ่าท่องเที่ยวอังกฤษ (UK Visa) ล่วงหน้า (ไม่สามารถใช้แชงเก้นได้)"
+  },
+  korea: {
+    name: "เกาหลี", searchName: "Korea",
+    image: "https://images.unsplash.com/photo-1517154421773-0529f29ea451",
+    cities: ["seoul", "jeju", "busan", "nami"],
+    cityNames: ["โซล", "เชจู", "ปูซาน", "เกาะนามิ"],
+    seasons: [
+      { name: "🌸 ซากุระเกาหลี", desc: "เมษายน" },
+      { name: "⛄ เล่นสกีหิมะ", desc: "ธันวาคม - กุมภาพันธ์" }
+    ],
+    visa: "ไม่ต้องขอวีซ่า แต่ต้องลงทะเบียน K-ETA ล่วงหน้าก่อนเดินทาง"
+  },
+  taiwan: {
+    name: "ไต้หวัน", searchName: "Taiwan",
+    image: "https://images.unsplash.com/photo-1558000143-a6120ee5d985",
+    cities: ["taipei", "taichung", "kaohsiung", "sun-moon-lake"],
+    cityNames: ["ไทเป", "ไทจง", "เกาสง", "ทะเลสาบสุริยันจันทรา"],
+    seasons: [
+      { name: "🌸 ชมซากุระ", desc: "กุมภาพันธ์ - มีนาคม" },
+      { name: "🍂 อากาศเย็นสบาย", desc: "ตุลาคม - ธันวาคม" }
+    ],
+    visa: "คนไทยเข้าฟรีไม่ต้องขอวีซ่า (ฟรีวีซ่าถึงวันที่ 31 ก.ค. 2568)"
+  },
+  "hong-kong": {
+    name: "ฮ่องกง", searchName: "Hong Kong",
+    image: "https://images.unsplash.com/photo-1506973035872-a4ec16b8e8d9",
+    cities: ["victoria-peak", "disneyland", "lantau", "mongkok"],
+    cityNames: ["วิกตอเรียพีค", "ดิสนีย์แลนด์", "ลันเตา", "มงก๊ก"],
+    seasons: [
+      { name: "🛍️ ลดทั้งเกาะ", desc: "กรกฎาคม - สิงหาคม" },
+      { name: "⛄ ฤดูหนาว", desc: "ธันวาคม - กุมภาพันธ์" }
+    ],
+    visa: "คนไทยเข้าฮ่องกงฟรีไม่ต้องขอวีซ่า พำนักได้ไม่เกิน 30 วัน"
+  },
+  singapore: {
+    name: "สิงคโปร์", searchName: "Singapore",
+    image: "https://images.unsplash.com/photo-1525625293386-3f8f99389edd",
+    cities: ["marina-bay", "sentosa", "universal-studios", "jewel"],
+    cityNames: ["มารีน่าเบย์", "เซนโตซ่า", "ยูนิเวอร์แซลสตูดิโอ", "จีเวล"],
+    seasons: [
+      { name: "☀️ เที่ยวได้ตลอดปี", desc: "สภาพอากาศอบอุ่นตลอดปี มีฝนบ้างบางช่วง" }
+    ],
+    visa: "คนไทยเข้าฟรี กรอก SG Arrival Card ก่อนเดินทาง"
+  },
+  vietnam: {
+    name: "เวียดนาม", searchName: "Vietnam",
+    image: "https://images.unsplash.com/photo-1528127269322-539801943592",
+    cities: ["hanoi", "danang", "ho-chi-minh", "sapa", "bana-hills"],
+    cityNames: ["ฮานอย", "ดานัง", "โฮจิมินห์", "ซาปา", "บานาฮิลล์"],
+    seasons: [
+      { name: "⛄ ซาปาหนาวมาก", desc: "ธันวาคม - มกราคม (อาจมีหิมะ)" },
+      { name: "☀️ บานาฮิลล์อากาศดี", desc: "เที่ยวได้ตลอดปี" }
+    ],
+    visa: "คนไทยเข้าเวียดนามฟรี พำนักได้ไม่เกิน 30 วัน"
+  },
+  germany: {
+    name: "เยอรมนี", searchName: "Germany",
+    image: "https://images.unsplash.com/photo-1467269204594-9661b134dd2b",
+    cities: ["berlin", "munich", "frankfurt", "neuschwanstein"],
+    cityNames: ["เบอร์ลิน", "มิวนิก", "แฟรงก์เฟิร์ต", "ปราสาทนอยชวานสไตน์"],
+    seasons: [
+      { name: "🍻 Oktoberfest", desc: "กันยายน - ตุลาคม" },
+      { name: "🎄 ตลาดคริสต์มาส", desc: "ธันวาคม" }
+    ],
+    visa: "ต้องขอวีซ่าแชงเก้นล่วงหน้า"
+  },
+  austria: {
+    name: "ออสเตรีย", searchName: "Austria",
+    image: "https://images.unsplash.com/photo-1516550893923-42d28e5677af",
+    cities: ["vienna", "salzburg", "innsbruck", "hallstatt"],
+    cityNames: ["เวียนนา", "ซาลซ์บูร์ก", "อินส์บรุค", "ฮัลล์สตัทท์"],
+    seasons: [
+      { name: "⛄ หิมะตกสวยงาม", desc: "ธันวาคม - มีนาคม" },
+      { name: "🌷 ใบไม้ผลิ", desc: "เมษายน - พฤษภาคม" }
+    ],
+    visa: "ต้องขอวีซ่าแชงเก้นล่วงหน้า"
+  },
+  spain: {
+    name: "สเปน", searchName: "Spain",
+    image: "https://images.unsplash.com/photo-1543783207-ec64e4d95325",
+    cities: ["madrid", "barcelona", "seville", "valencia"],
+    cityNames: ["มาดริด", "บาร์เซโลนา", "เซบียา", "บาเลนเซีย"],
+    seasons: [
+      { name: "☀️ อบอุ่น", desc: "เมษายน - ตุลาคม" }
+    ],
+    visa: "ต้องขอวีซ่าแชงเก้นล่วงหน้า"
+  },
+  portugal: {
+    name: "โปรตุเกส", searchName: "Portugal",
+    image: "https://images.unsplash.com/photo-1555881400-74d7acaacd8b",
+    cities: ["lisbon", "porto", "sintra"],
+    cityNames: ["ลิสบอน", "ปอร์โต", "ซินทรา"],
+    seasons: [
+      { name: "☀️ อากาศเย็นสบาย", desc: "มีนาคม - ตุลาคม" }
+    ],
+    visa: "ต้องขอวีซ่าแชงเก้นล่วงหน้า"
+  },
+  "czech-republic": {
+    name: "เช็ก", searchName: "Czech",
+    image: "https://images.unsplash.com/photo-1519677100203-a0e668c92439",
+    cities: ["prague", "cesky-krumlov", "karlovy-vary"],
+    cityNames: ["ปราก", "เชสกี้ครุมลอฟ", "คาร์โลวีวารี"],
+    seasons: [
+      { name: "🍂 โรแมนติก", desc: "ตลอดปี" }
+    ],
+    visa: "ต้องขอวีซ่าแชงเก้นล่วงหน้า"
+  },
+  hungary: {
+    name: "ฮังการี", searchName: "Hungary",
+    image: "https://images.unsplash.com/photo-1541358969440-ce80fcefece6",
+    cities: ["budapest"],
+    cityNames: ["บูดาเปสต์"],
+    seasons: [
+      { name: "🌟 ล่องเรือดานูบ", desc: "เที่ยวได้ตลอดปี" }
+    ],
+    visa: "ต้องขอวีซ่าแชงเก้นล่วงหน้า"
+  },
+  iceland: {
+    name: "ไอซ์แลนด์", searchName: "Iceland",
+    image: "https://images.unsplash.com/photo-1476610287331-b711a62e400e",
+    cities: ["reykjavik", "blue-lagoon", "golden-circle"],
+    cityNames: ["เรคยาวิก", "บลูลากูน", "โกลเด้นเซอร์เคิล"],
+    seasons: [
+      { name: "✨ ล่าแสงเหนือ", desc: "กันยายน - เมษายน" }
+    ],
+    visa: "ต้องขอวีซ่าแชงเก้นล่วงหน้า"
+  },
+  dubai: {
+    name: "ดูไบ (UAE)", searchName: "Dubai",
+    image: "https://images.unsplash.com/photo-1512453979798-5ea266f8880c",
+    cities: ["dubai", "abu-dhabi"],
+    cityNames: ["ดูไบ", "อาบูดาบี"],
+    seasons: [
+      { name: "☀️ อากาศเย็นสบาย", desc: "พฤศจิกายน - มีนาคม (หน้าร้อนจะร้อนมาก)" }
+    ],
+    visa: "ต้องขอวีซ่า UAE ล่วงหน้า"
+  },
+  jordan: {
+    name: "จอร์แดน", searchName: "Jordan",
+    image: "https://images.unsplash.com/photo-1548810237-7756f140683a",
+    cities: ["petra", "amman", "dead-sea", "wadi-rum"],
+    cityNames: ["เพตรา", "อัมมาน", "เดดซี", "วาดิรัม"],
+    seasons: [
+      { name: "☀️ อากาศดี", desc: "มีนาคม - พฤษภาคม และ กันยายน - พฤศจิกายน" }
+    ],
+    visa: "ขอ Visa on Arrival ได้ หรือซื้อ Jordan Pass"
+  },
+  morocco: {
+    name: "โมร็อกโก", searchName: "Morocco",
+    image: "https://images.unsplash.com/photo-1539020140153-e479b8c22e70",
+    cities: ["marrakech", "casablanca", "fes", "chefchaouen"],
+    cityNames: ["มาราเกช", "คาซาบลังกา", "เฟส", "เชฟชาอุน"],
+    seasons: [
+      { name: "🐪 ทะเลทรายเย็นสบาย", desc: "ตุลาคม - เมษายน" }
+    ],
+    visa: "คนไทยต้องขอวีซ่าล่วงหน้าก่อนเดินทางเข้าโมร็อกโก"
+  },
+  "united-states": {
+    name: "สหรัฐอเมริกา", searchName: "USA",
+    image: "https://images.unsplash.com/photo-1485738422979-f5c462d49f74",
+    cities: ["new-york", "los-angeles", "las-vegas", "san-francisco"],
+    cityNames: ["นิวยอร์ก", "ลอสแอนเจลิส", "ลาสเวกัส", "ซานฟรานซิสโก"],
+    seasons: [
+      { name: "🗽 เที่ยวได้ตลอดปี", desc: "ขึ้นอยู่กับรัฐ" }
+    ],
+    visa: "ต้องขอ US Visa ล่วงหน้า (รอนาน ควรวางแผนเนิ่นๆ)"
+  },
+  canada: {
+    name: "แคนาดา", searchName: "Canada",
+    image: "https://images.unsplash.com/photo-1503614472-8c93d56e92ce",
+    cities: ["toronto", "vancouver", "banff", "niagara"],
+    cityNames: ["โทรอนโต", "แวนคูเวอร์", "แบนฟ์", "น้ำตกไนแองการ่า"],
+    seasons: [
+      { name: "🍁 ใบไม้เปลี่ยนสี", desc: "กันยายน - ตุลาคม" }
+    ],
+    visa: "ต้องขอวีซ่าแคนาดาล่วงหน้า"
+  },
+  australia: {
+    name: "ออสเตรเลีย", searchName: "Australia",
+    image: "https://images.unsplash.com/photo-1523482580672-f109ba8cb9be",
+    cities: ["sydney", "melbourne", "gold-coast", "perth"],
+    cityNames: ["ซิดนีย์", "เมลเบิร์น", "โกลด์โคสต์", "เพิร์ท"],
+    seasons: [
+      { name: "☀️ ฤดูร้อนสดใส", desc: "ธันวาคม - กุมภาพันธ์" }
+    ],
+    visa: "ต้องขอวีซ่า (ETA/eVisitor) ล่วงหน้า"
+  },
+  "new-zealand": {
+    name: "นิวซีแลนด์", searchName: "New Zealand",
+    image: "https://images.unsplash.com/photo-1469521669194-bce765805566",
+    cities: ["auckland", "queenstown", "christchurch", "rotorua"],
+    cityNames: ["โอ๊คแลนด์", "ควีนส์ทาวน์", "ไครสต์เชิร์ช", "โรโตรัว"],
+    seasons: [
+      { name: "🍁 ใบไม้เปลี่ยนสี", desc: "มีนาคม - พฤษภาคม" }
+    ],
+    visa: "ต้องขอวีซ่า (NZeTA หรือ Visitor Visa) ล่วงหน้า"
   }
 };
 
@@ -129,8 +325,11 @@ const DEFAULT_CONFIG = {
 export async function generateMetadata({ params }: { params: { slug: string } }) {
   const config = COUNTRY_CONFIG[params.slug] || { name: params.slug };
   return {
-    title: `แพ็กเกจทัวร์${config.name} | จองทัวร์${config.name}ราคาถูก คุ้มค่าที่สุด - Jongtour`,
+    title: `ทัวร์${config.name} 2569 โปรแกรมทัวร์${config.name} ราคาดี มี AI ช่วยค้นหา | Jongtour`,
     description: `ค้นหาแพ็กเกจทัวร์${config.name} อัปเดตล่าสุด เปรียบเทียบราคา จองง่าย ปลอดภัย 100% พร้อมผู้เชี่ยวชาญดูแลตลอดการเดินทาง`,
+    alternates: {
+      canonical: `https://jongtour.com/country/${params.slug}`
+    }
   };
 }
 

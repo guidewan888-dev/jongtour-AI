@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
-import { Send, Sparkles, Map, Loader2, MessageSquareText, ChevronDown, Wand2, Paperclip, Compare, FileText, HeadphonesIcon, Globe2, ScanSearch } from "lucide-react";
+import { Send, Sparkles, Map, Loader2, MessageSquareText, ChevronDown, Wand2, Paperclip, ArrowRightLeft, FileText, HeadphonesIcon, Globe2, ScanSearch } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { Card } from "@/components/ui-new/Card";
 import { Button } from "@/components/ui-new/Button";
@@ -43,17 +43,11 @@ export default function FloatingChat() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
 
-  // Hide floating chat if we are already on ai-planner full page
-  if (pathname === "/ai-planner") {
-    return null;
-  }
 
   // Auto scroll to bottom
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
-  
-  // eslint-disable-next-line react-hooks/rules-of-hooks
   useEffect(() => {
     if (isOpen) {
       scrollToBottom();
@@ -194,6 +188,11 @@ export default function FloatingChat() {
     }, 100);
   };
 
+  // Hide floating chat if we are already on ai-planner full page
+  if (pathname === "/ai-planner") {
+    return null;
+  }
+
   return (
     <>
       {/* Chat Window */}
@@ -234,7 +233,7 @@ export default function FloatingChat() {
                 <FileText className="w-3.5 h-3.5" /> ขอใบเสนอราคา
              </button>
              <button onClick={() => handleSuggestion("เปรียบเทียบทัวร์")} className="flex items-center gap-1.5 whitespace-nowrap px-3 py-1.5 rounded-full bg-white border border-border text-xs font-medium text-trust-700 hover:text-primary hover:border-primary/50 shadow-sm transition-colors">
-                <Compare className="w-3.5 h-3.5" /> เปรียบเทียบ
+                <ArrowRightLeft className="w-3.5 h-3.5" /> เปรียบเทียบ
              </button>
           </div>
 
@@ -391,3 +390,5 @@ export default function FloatingChat() {
     </>
   );
 }
+
+

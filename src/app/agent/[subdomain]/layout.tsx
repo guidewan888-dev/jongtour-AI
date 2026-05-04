@@ -28,51 +28,7 @@ export default async function AgentWhiteLabelLayout({
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col font-sans" style={{ '--theme-color': themeColor } as React.CSSProperties}>
       
-      {/* Top Header - Agent Branding */}
-      <header className="bg-white border-b border-gray-100 sticky top-0 z-50 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            
-            {/* Logo & Name */}
-            <Link href={`/agent/${subdomain}`} className="flex items-center gap-3">
-              {agentCompany.logoUrl ? (
-                <img src={agentCompany.logoUrl} alt={agentCompany.companyName} className="h-10 object-contain" />
-              ) : (
-                <div 
-                  className="w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold text-xl"
-                  style={{ backgroundColor: 'var(--theme-color)' }}
-                >
-                  {agentCompany.companyName.charAt(0).toUpperCase()}
-                </div>
-              )}
-              <span className="font-bold text-lg text-gray-800 hidden sm:block">{agentCompany.companyName}</span>
-            </Link>
 
-            {/* Contact Info (Desktop) */}
-            {agentCompany && (
-              <div className="hidden md:flex items-center gap-6 text-sm text-gray-600">
-                {agentCompany.phone && (
-                  <a href={`tel:${agentCompany.phone}`} className="flex items-center gap-2 hover:text-gray-900">
-                    <Phone className="w-4 h-4" /> {agentCompany.phone}
-                  </a>
-                )}
-                {agentCompany.email && (
-                  <a href={`mailto:${agentCompany.email}`} className="flex items-center gap-2 hover:text-gray-900">
-                    <Mail className="w-4 h-4" /> {agentCompany.email}
-                  </a>
-                )}
-              </div>
-            )}
-            
-            {/* Mobile Menu Button */}
-            <div className="md:hidden flex items-center">
-              <button className="text-gray-500 hover:text-gray-900 p-2">
-                <Map className="w-6 h-6" />
-              </button>
-            </div>
-          </div>
-        </div>
-      </header>
 
       {/* Main Content */}
       <main className="flex-1">

@@ -5,7 +5,13 @@ import { usePathname, useRouter } from "next/navigation";
 import { LayoutDashboard, Ticket, Users, FileText, Settings, LogOut, BarChart, Bot, FileEdit, PlaneTakeoff, ShieldCheck, HelpCircle, UserCircle, Briefcase, Globe2, ChevronRight } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
 
-export default function AdminSidebar() {
+interface AdminSidebarProps {
+  role?: string;
+  userName?: string;
+  userEmail?: string;
+}
+
+export default function AdminSidebar({ role = "CUSTOMER", userName = "Admin User", userEmail = "admin@jongtour.com" }: AdminSidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const supabase = createClient();
@@ -17,7 +23,6 @@ export default function AdminSidebar() {
         { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
         { name: "Bookings", href: "/admin/bookings", icon: Ticket },
         { name: "Operations", href: "/admin/operations", icon: PlaneTakeoff },
-        { name: "Wholesale", href: "/admin/wholesale", icon: Briefcase },
       ]
     },
     {
@@ -41,8 +46,64 @@ export default function AdminSidebar() {
         { name: "Users & Roles", href: "/admin/users", icon: ShieldCheck },
         { name: "Settings", href: "/admin/settings", icon: Settings },
       ]
+    },
+    {
+      title: "Wholesale / Supplier Center",
+      items: [
+        { name: "Dashboard", href: "/admin/wholesale/dashboard", icon: LayoutDashboard },
+        { name: "Supplier Master", href: "/admin/wholesale/suppliers", icon: Briefcase },
+        { name: "Data Sync", href: "/admin/wholesale/sync", icon: Globe2 },
+        { name: "Tour Import", href: "/admin/wholesale/import", icon: FileText },
+        { name: "Mapping", href: "/admin/wholesale/mapping", icon: BarChart },
+        { name: "Human Review", href: "/admin/wholesale/human-review", icon: Users },
+      ]
     }
   ];
+
+  // Access Matrix for Sidebar
+  const filterMenusByRole = (role: string) => {
+    // SUPER_ADMIN and ADMIN see everything
+    if (role === 'SUPER_ADMIN' || role === 'ADMIN') return menuGroups;
+
+    return menuGroups.map(group => {
+      let filteredItems = [...group.items];
+      
+      if (role === 'OPERATION') {
+        // Operations shouldn't see System Settings, Content, or Finance
+        if (group.title === 'Finance & CRM') {
+           filteredItems = filteredItems.filter(i => i.name !== 'Finance');
+        }
+        if (group.title === 'System') filteredItems = [];
+        if (group.title === 'AI & Content') filteredItems = [];
+      } 
+      else if (role === 'FINANCE') {
+        // Finance sees only Finance & CRM, and basic Overview
+        if (group.title === 'Wholesale / Supplier Center') filteredItems = [];
+        if (group.title === 'System') filteredItems = [];
+        if (group.title === 'AI & Content') filteredItems = [];
+      }
+      else if (role === 'CONTENT_MANAGER') {
+        // Content Manager sees CMS, AI, and basic overview
+        if (group.title === 'Wholesale / Supplier Center') filteredItems = [];
+        if (group.title === 'Finance & CRM') filteredItems = [];
+        if (group.title === 'System') filteredItems = [];
+      }
+      else if (role === 'SALE_MANAGER') {
+        // Sale Manager sees Customers, Bookings, Reports
+        if (group.title === 'Wholesale / Supplier Center') filteredItems = [];
+        if (group.title === 'System') filteredItems = [];
+        if (group.title === 'Finance & CRM') filteredItems = filteredItems.filter(i => i.name === 'Customers');
+      }
+      else {
+         // Default fallback: just show dashboard
+         if (group.title !== 'Overview') filteredItems = [];
+      }
+
+      return { ...group, items: filteredItems };
+    }).filter(group => group.items.length > 0);
+  };
+
+  const filteredMenuGroups = filterMenusByRole(role);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -66,7 +127,7 @@ export default function AdminSidebar() {
 
       {/* Navigation */}
       <nav className="flex-1 py-6 px-4 overflow-y-auto custom-scrollbar space-y-8">
-        {menuGroups.map((group) => (
+        {filteredMenuGroups.map((group) => (
           <div key={group.title}>
             <p className="text-[11px] font-bold text-trust-500 mb-3 px-3 uppercase tracking-wider">{group.title}</p>
             <div className="space-y-1">
@@ -103,8 +164,8 @@ export default function AdminSidebar() {
                <UserCircle className="w-5 h-5 text-trust-300" />
             </div>
             <div className="flex-1 min-w-0">
-               <p className="text-sm font-bold text-white truncate">Super Admin</p>
-               <p className="text-[10px] text-trust-400 truncate">admin@jongtour.com</p>
+               <p className="text-sm font-bold text-white truncate">{userName}</p>
+               <p className="text-[10px] text-trust-400 truncate">{userEmail}</p>
             </div>
          </div>
         <button 

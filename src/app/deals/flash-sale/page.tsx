@@ -106,7 +106,7 @@ export default async function FlashSalePage() {
           </p>
 
           <div className="w-full max-w-4xl shadow-2xl rounded-2xl overflow-hidden ring-4 ring-white/20">
-             <AiSearchBar placeholder="AI ค้นหาทัวร์ไฟไหม้ พิมพ์เลย เช่น 'ไปญี่ปุ่นอาทิตย์หน้า ราคาไม่เกินสองหมื่น'" />
+             <AiSearchBar placeholder="AI ค้นหาทัวร์ไฟไหม้ พิมพ์เลย เช่น 'ไปญี่ปุ่นอาทิตย์หน้า ราคาไม่เกินสองหมื่น'" defaultContext={{ promotion_type: 'flash_sale' }} />
           </div>
         </div>
       </div>

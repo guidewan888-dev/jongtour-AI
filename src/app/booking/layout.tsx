@@ -13,25 +13,7 @@ export default function BookingLayout({
 }) {
   return (
     <div className="min-h-screen bg-background flex flex-col font-sans">
-      {/* Secure Header - No Distractions (No Navigation Links) */}
-      <header className="bg-white border-b border-border sticky top-0 z-50 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-[72px] flex items-center justify-between">
-          
-          {/* Logo (Can link back to tour domain to cancel flow) */}
-          <a href="/" className="flex items-center gap-2 group">
-            <span className="text-2xl font-black text-trust-900 tracking-tight transition-colors">
-              Jong<span className="text-primary">tour</span>
-            </span>
-          </a>
 
-          {/* Secure Trust Badge */}
-          <div className="flex items-center gap-1.5 text-trust-900 bg-muted px-3 py-1.5 rounded-full border border-border shadow-soft">
-            <Lock className="w-4 h-4 text-emerald-600" />
-            <span className="text-xs font-bold tracking-wide">SECURE CHECKOUT</span>
-          </div>
-
-        </div>
-      </header>
 
       {/* Trust Banner */}
       <div className="bg-primary/5 border-b border-primary/10 py-2">

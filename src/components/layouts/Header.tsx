@@ -16,7 +16,12 @@ export default function Header({ agentLogo, agentName }: HeaderProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeMobileSection, setActiveMobileSection] = useState<string | null>(null);
 
-  if (pathname === "/" || pathname.startsWith("/admin")) {
+  const isInternalPortal = [
+    '/admin', '/b2badmin', '/b2b', '/sale', '/supplier', '/tour-cms', 
+    '/booking/admin', '/tour/admin', '/info/admin'
+  ].some(path => pathname.startsWith(path));
+
+  if (pathname === "/" || isInternalPortal) {
     return null;
   }
 
@@ -64,35 +69,21 @@ export default function Header({ agentLogo, agentName }: HeaderProps) {
             <div className="absolute left-1/2 -translate-x-1/2 top-[80px] w-screen max-w-[1100px] bg-white border border-border shadow-floating rounded-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 transform origin-top translate-y-2 group-hover:translate-y-0 p-6 z-50 flex gap-6">
                
                {/* Column 1: Asia */}
-               <div className="flex-[1.2]">
+               <div className="flex-1">
                   <div className="flex items-center justify-between border-b-2 border-primary pb-2 mb-4">
                      <h3 className="text-sm font-black text-trust-900">🌏 เอเชีย</h3>
                      <Link href="/region/asia" className="text-[10px] font-bold text-primary hover:underline">ดูทั้งหมด</Link>
                   </div>
-                  <div className="grid grid-cols-2 gap-x-2 gap-y-4">
-                     <div>
-                        <ul className="space-y-1.5">
-                           <CityLink name="ทัวร์ญี่ปุ่น" href="/country/japan" className="font-bold text-trust-900" />
-                           <CityLink name="ทัวร์จีน" href="/country/china" className="font-bold text-red-600" />
-                           <CityLink name="ทัวร์เกาหลี" href="/country/korea" />
-                           <CityLink name="ทัวร์ไต้หวัน" href="/country/taiwan" />
-                           <CityLink name="ฮ่องกง" href="/country/hongkong" />
-                           <CityLink name="สิงคโปร์" href="/country/singapore" />
-                           <CityLink name="เวียดนาม" href="/country/vietnam" />
-                        </ul>
-                     </div>
-                     <div>
-                        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1.5">เมืองฮิตเอเชีย</p>
-                        <ul className="space-y-1.5">
-                           <CityLink name="โตเกียว" href="/country/japan/tokyo" />
-                           <CityLink name="โอซาก้า" href="/country/japan/osaka" />
-                           <CityLink name="ฮอกไกโด" href="/country/japan/hokkaido" />
-                           <CityLink name="ปักกิ่ง" href="/country/china/beijing" />
-                           <CityLink name="เซี่ยงไฮ้" href="/country/china/shanghai" />
-                           <CityLink name="จางเจียเจี้ย" href="/country/china/zhangjiajie" />
-                        </ul>
-                     </div>
-                  </div>
+                  <ul className="space-y-1.5">
+                     <CityLink name="ทัวร์เอเชียทั้งหมด" href="/region/asia" className="font-bold text-trust-900" />
+                     <CityLink name="ญี่ปุ่น" href="/country/japan" />
+                     <CityLink name="จีน" href="/country/china" />
+                     <CityLink name="เกาหลี" href="/country/korea" />
+                     <CityLink name="ไต้หวัน" href="/country/taiwan" />
+                     <CityLink name="ฮ่องกง" href="/country/hong-kong" />
+                     <CityLink name="สิงคโปร์" href="/country/singapore" />
+                     <CityLink name="เวียดนาม" href="/country/vietnam" />
+                  </ul>
                </div>
 
                {/* Column 2: Europe */}
@@ -104,41 +95,42 @@ export default function Header({ agentLogo, agentName }: HeaderProps) {
                   <div className="grid grid-cols-2 gap-x-2 gap-y-4">
                      <div>
                         <ul className="space-y-1.5">
-                           <CityLink name="แกรนด์ยุโรป" href="/region/europe/grand" className="font-bold text-trust-900" />
+                           <CityLink name="ทัวร์ยุโรปทั้งหมด" href="/region/europe" className="font-bold text-trust-900" />
+                           <CityLink name="แกรนด์ยุโรป" href="/region/europe/grand-europe" />
                            <CityLink name="สวิตเซอร์แลนด์" href="/country/switzerland" />
                            <CityLink name="ฝรั่งเศส" href="/country/france" />
                            <CityLink name="อิตาลี" href="/country/italy" />
                            <CityLink name="อังกฤษ" href="/country/uk" />
                            <CityLink name="เยอรมนี" href="/country/germany" />
                            <CityLink name="ออสเตรีย" href="/country/austria" />
-                           <CityLink name="สเปน" href="/country/spain" />
                         </ul>
                      </div>
                      <div>
                         <ul className="space-y-1.5">
+                           <CityLink name="สเปน" href="/country/spain" />
                            <CityLink name="โปรตุเกส" href="/country/portugal" />
-                           <CityLink name="เช็ก" href="/country/czech" />
+                           <CityLink name="เช็ก" href="/country/czech-republic" />
                            <CityLink name="ฮังการี" href="/country/hungary" />
                            <CityLink name="ไอซ์แลนด์" href="/country/iceland" />
                            <CityLink name="สแกนดิเนเวีย" href="/region/europe/scandinavia" />
-                           <CityLink name="บอลข่าน" href="/region/europe/balkan" />
-                           <div className="pt-2 mt-2 border-t border-border"></div>
-                           <CityLink name="🔥 ไฟไหม้ยุโรป" href="/region/europe/flash-sale" highlight className="text-destructive text-xs" />
+                           <CityLink name="บอลข่าน" href="/region/europe/balkans" />
                         </ul>
                      </div>
                   </div>
                </div>
 
                {/* Column 3: Middle East / Africa */}
-               <div className="flex-1 border-l border-border pl-6">
+               <div className="flex-[1.2] border-l border-border pl-6">
                   <div className="flex items-center justify-between border-b-2 border-amber-600 pb-2 mb-4">
-                     <h3 className="text-sm font-black text-trust-900">🐪 ตะวันออกกลาง / แอฟริกา</h3>
+                     <h3 className="text-sm font-black text-trust-900">🐪 ตะวันออกกลาง / คอเคซัส / แอฟริกาเหนือ</h3>
+                     <Link href="/region/middle-east-caucasus-north-africa" className="text-[10px] font-bold text-amber-600 hover:underline shrink-0 ml-2">ดูทั้งหมด</Link>
                   </div>
                   <ul className="space-y-1.5">
-                     <CityLink name="อียิปต์" href="/country/egypt" className="font-bold text-amber-700" />
-                     <CityLink name="จอร์เจีย" href="/country/georgia" className="font-bold text-trust-900" />
-                     <CityLink name="ตุรกี" href="/country/turkey" className="font-bold text-red-600" />
-                     <CityLink name="ดูไบ (UAE)" href="/country/uae/dubai" />
+                     <CityLink name="ทัวร์ตะวันออกกลางทั้งหมด" href="/region/middle-east-caucasus-north-africa" className="font-bold text-trust-900" />
+                     <CityLink name="อียิปต์" href="/country/egypt" />
+                     <CityLink name="จอร์เจีย" href="/country/georgia" />
+                     <CityLink name="ตุรกี" href="/country/turkey" />
+                     <CityLink name="ดูไบ" href="/country/dubai" />
                      <CityLink name="จอร์แดน" href="/country/jordan" />
                      <CityLink name="โมร็อกโก" href="/country/morocco" />
                   </ul>
@@ -148,12 +140,14 @@ export default function Header({ agentLogo, agentName }: HeaderProps) {
                <div className="flex-1 border-l border-border pl-6">
                   <div className="flex items-center justify-between border-b-2 border-emerald-600 pb-2 mb-4">
                      <h3 className="text-sm font-black text-trust-900">🗽 อเมริกา / ออสเตรเลีย</h3>
+                     <Link href="/region/america-australia" className="text-[10px] font-bold text-emerald-600 hover:underline">ดูทั้งหมด</Link>
                   </div>
                   <ul className="space-y-1.5">
-                     <CityLink name="อเมริกา" href="/country/usa" />
+                     <CityLink name="ทัวร์ทั้งหมด" href="/region/america-australia" className="font-bold text-trust-900" />
+                     <CityLink name="อเมริกา" href="/country/united-states" />
                      <CityLink name="แคนาดา" href="/country/canada" />
                      <CityLink name="ออสเตรเลีย" href="/country/australia" />
-                     <CityLink name="นิวซีแลนด์" href="/country/newzealand" />
+                     <CityLink name="นิวซีแลนด์" href="/country/new-zealand" />
                   </ul>
                </div>
 
@@ -206,7 +200,7 @@ export default function Header({ agentLogo, agentName }: HeaderProps) {
             </div>
           </div>
 
-          <NavLink href="/contact" label="ติดต่อเรา" />
+          <NavLink href="/info/contact" label="ติดต่อเรา" />
         </div>
 
         <div className="flex items-center gap-4">
@@ -239,11 +233,12 @@ export default function Header({ agentLogo, agentName }: HeaderProps) {
                      <div>
                         <p className="text-xs font-bold text-primary mb-2">🌏 เอเชีย</p>
                         <div className="grid grid-cols-2 gap-2">
+                           <Link href="/region/asia" className="text-sm font-bold text-trust-700 py-1" onClick={() => setMobileMenuOpen(false)}>ทัวร์เอเชียทั้งหมด</Link>
                            <Link href="/country/japan" className="text-sm text-trust-700 py-1" onClick={() => setMobileMenuOpen(false)}>ญี่ปุ่น</Link>
                            <Link href="/country/china" className="text-sm text-trust-700 py-1" onClick={() => setMobileMenuOpen(false)}>จีน</Link>
                            <Link href="/country/korea" className="text-sm text-trust-700 py-1" onClick={() => setMobileMenuOpen(false)}>เกาหลี</Link>
                            <Link href="/country/taiwan" className="text-sm text-trust-700 py-1" onClick={() => setMobileMenuOpen(false)}>ไต้หวัน</Link>
-                           <Link href="/country/hongkong" className="text-sm text-trust-700 py-1" onClick={() => setMobileMenuOpen(false)}>ฮ่องกง</Link>
+                           <Link href="/country/hong-kong" className="text-sm text-trust-700 py-1" onClick={() => setMobileMenuOpen(false)}>ฮ่องกง</Link>
                            <Link href="/country/singapore" className="text-sm text-trust-700 py-1" onClick={() => setMobileMenuOpen(false)}>สิงคโปร์</Link>
                            <Link href="/country/vietnam" className="text-sm text-trust-700 py-1" onClick={() => setMobileMenuOpen(false)}>เวียดนาม</Link>
                         </div>
@@ -251,26 +246,43 @@ export default function Header({ agentLogo, agentName }: HeaderProps) {
                      <div>
                         <p className="text-xs font-bold text-blue-600 mb-2">🏰 ยุโรป</p>
                         <div className="grid grid-cols-2 gap-2">
-                           <Link href="/region/europe" className="text-sm font-bold text-trust-700 py-1" onClick={() => setMobileMenuOpen(false)}>ยุโรปทั้งหมด</Link>
+                           <Link href="/region/europe" className="text-sm font-bold text-trust-700 py-1" onClick={() => setMobileMenuOpen(false)}>ทัวร์ยุโรปทั้งหมด</Link>
+                           <Link href="/region/europe/grand-europe" className="text-sm text-trust-700 py-1" onClick={() => setMobileMenuOpen(false)}>แกรนด์ยุโรป</Link>
                            <Link href="/country/switzerland" className="text-sm text-trust-700 py-1" onClick={() => setMobileMenuOpen(false)}>สวิตเซอร์แลนด์</Link>
                            <Link href="/country/france" className="text-sm text-trust-700 py-1" onClick={() => setMobileMenuOpen(false)}>ฝรั่งเศส</Link>
                            <Link href="/country/italy" className="text-sm text-trust-700 py-1" onClick={() => setMobileMenuOpen(false)}>อิตาลี</Link>
+                           <Link href="/country/uk" className="text-sm text-trust-700 py-1" onClick={() => setMobileMenuOpen(false)}>อังกฤษ</Link>
+                           <Link href="/country/germany" className="text-sm text-trust-700 py-1" onClick={() => setMobileMenuOpen(false)}>เยอรมนี</Link>
+                           <Link href="/country/austria" className="text-sm text-trust-700 py-1" onClick={() => setMobileMenuOpen(false)}>ออสเตรีย</Link>
+                           <Link href="/country/spain" className="text-sm text-trust-700 py-1" onClick={() => setMobileMenuOpen(false)}>สเปน</Link>
+                           <Link href="/country/portugal" className="text-sm text-trust-700 py-1" onClick={() => setMobileMenuOpen(false)}>โปรตุเกส</Link>
+                           <Link href="/country/czech-republic" className="text-sm text-trust-700 py-1" onClick={() => setMobileMenuOpen(false)}>เช็ก</Link>
+                           <Link href="/country/hungary" className="text-sm text-trust-700 py-1" onClick={() => setMobileMenuOpen(false)}>ฮังการี</Link>
+                           <Link href="/country/iceland" className="text-sm text-trust-700 py-1" onClick={() => setMobileMenuOpen(false)}>ไอซ์แลนด์</Link>
+                           <Link href="/region/europe/scandinavia" className="text-sm text-trust-700 py-1" onClick={() => setMobileMenuOpen(false)}>สแกนดิเนเวีย</Link>
+                           <Link href="/region/europe/balkans" className="text-sm text-trust-700 py-1" onClick={() => setMobileMenuOpen(false)}>บอลข่าน</Link>
                         </div>
                      </div>
                      <div>
-                        <p className="text-xs font-bold text-amber-600 mb-2">🐪 ตะวันออกกลาง / แอฟริกา</p>
+                        <p className="text-xs font-bold text-amber-600 mb-2">🐪 ตะวันออกกลาง / คอเคซัส / แอฟริกาเหนือ</p>
                         <div className="grid grid-cols-2 gap-2">
+                           <Link href="/region/middle-east-caucasus-north-africa" className="text-sm font-bold text-trust-700 py-1" onClick={() => setMobileMenuOpen(false)}>ทัวร์ทั้งหมด</Link>
                            <Link href="/country/egypt" className="text-sm text-trust-700 py-1" onClick={() => setMobileMenuOpen(false)}>อียิปต์</Link>
                            <Link href="/country/georgia" className="text-sm text-trust-700 py-1" onClick={() => setMobileMenuOpen(false)}>จอร์เจีย</Link>
                            <Link href="/country/turkey" className="text-sm text-trust-700 py-1" onClick={() => setMobileMenuOpen(false)}>ตุรกี</Link>
-                           <Link href="/country/uae/dubai" className="text-sm text-trust-700 py-1" onClick={() => setMobileMenuOpen(false)}>ดูไบ</Link>
+                           <Link href="/country/dubai" className="text-sm text-trust-700 py-1" onClick={() => setMobileMenuOpen(false)}>ดูไบ</Link>
+                           <Link href="/country/jordan" className="text-sm text-trust-700 py-1" onClick={() => setMobileMenuOpen(false)}>จอร์แดน</Link>
+                           <Link href="/country/morocco" className="text-sm text-trust-700 py-1" onClick={() => setMobileMenuOpen(false)}>โมร็อกโก</Link>
                         </div>
                      </div>
                      <div>
                         <p className="text-xs font-bold text-emerald-600 mb-2">🗽 อเมริกา / ออสเตรเลีย</p>
                         <div className="grid grid-cols-2 gap-2">
-                           <Link href="/country/usa" className="text-sm text-trust-700 py-1" onClick={() => setMobileMenuOpen(false)}>อเมริกา</Link>
+                           <Link href="/region/america-australia" className="text-sm font-bold text-trust-700 py-1" onClick={() => setMobileMenuOpen(false)}>ทัวร์ทั้งหมด</Link>
+                           <Link href="/country/united-states" className="text-sm text-trust-700 py-1" onClick={() => setMobileMenuOpen(false)}>อเมริกา</Link>
+                           <Link href="/country/canada" className="text-sm text-trust-700 py-1" onClick={() => setMobileMenuOpen(false)}>แคนาดา</Link>
                            <Link href="/country/australia" className="text-sm text-trust-700 py-1" onClick={() => setMobileMenuOpen(false)}>ออสเตรเลีย</Link>
+                           <Link href="/country/new-zealand" className="text-sm text-trust-700 py-1" onClick={() => setMobileMenuOpen(false)}>นิวซีแลนด์</Link>
                         </div>
                      </div>
                   </div>
@@ -344,3 +356,4 @@ function MobileAccordion({ title, isOpen, onClick, children }: { title: string, 
       </div>
    );
 }
+

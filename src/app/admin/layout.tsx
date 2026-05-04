@@ -36,15 +36,27 @@ export default async function AdminLayout({ children }: { children: ReactNode })
   let finalUser = dbUser;
 
   // Prevent non-admins from accessing the admin panel
-  const allowedRoles = ["ADMIN", "SUPER_ADMIN"];
+  const allowedRoles = [
+    "SUPER_ADMIN", 
+    "ADMIN", 
+    "OPERATION", 
+    "FINANCE", 
+    "CONTENT_MANAGER", 
+    "SALE_MANAGER"
+  ];
+  
   if (!isBypass && (!finalUser || !finalUser.role || !allowedRoles.includes(finalUser.role.name))) {
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://jongtour.com";
     redirect(`${siteUrl}/user/bookings`);
   }
 
+  const roleName = finalUser?.role?.name || "CUSTOMER";
+  const userProfileName = finalUser?.name || user?.user_metadata?.full_name || "Admin User";
+  const userEmail = finalUser?.email || user?.email || "admin@jongtour.com";
+
   return (
     <div className="min-h-screen bg-muted flex font-sans text-trust-900">
-      <AdminSidebar />
+      <AdminSidebar role={roleName} userName={userProfileName} userEmail={userEmail} />
 
       {/* Main Content */}
       <div className="flex-1 ml-[260px] flex flex-col min-h-screen">
@@ -85,8 +97,8 @@ export default async function AdminLayout({ children }: { children: ReactNode })
                 <UserCircle className="w-5 h-5 text-primary-700" />
               </div>
               <div className="hidden md:block">
-                <p className="text-sm font-bold text-trust-900 leading-none">{dbUser?.name || "Admin User"}</p>
-                <p className="text-[11px] text-muted-foreground mt-1">Super Admin</p>
+                <p className="text-sm font-bold text-trust-900 leading-none">{userProfileName}</p>
+                <p className="text-[11px] text-muted-foreground mt-1">{roleName}</p>
               </div>
               <ChevronDown className="w-4 h-4 text-muted-foreground hidden md:block ml-1" />
             </button>

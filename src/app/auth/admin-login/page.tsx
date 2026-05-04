@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 import { Loader2, ShieldCheck, Mail } from "lucide-react";
@@ -12,6 +12,16 @@ export default function AdminLoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
   const supabase = createClient();
+
+  // Listen for Magic Link authentication
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "SIGNED_IN" && session) {
+        window.location.href = "/";
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, [supabase.auth]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,10 +40,33 @@ export default function AdminLoginPage() {
       
     } catch (error: any) {
       if (error.message?.toLowerCase().includes("rate limit")) {
-        setError("ระบบตรวจพบการล็อกอินผิดพลาดหลายครั้ง กรุณารอประมาณ 5 นาทีแล้วลองใหม่ครับ");
+        setError("ระบบตรวจพบการล็อกอินผิดพลาดหลายครั้ง กรุณารอ 1 ชั่วโมง หรือใช้ Magic Link ด้านล่างครับ");
       } else {
         setError(error.message || "อีเมลหรือรหัสผ่านไม่ถูกต้อง");
       }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleMagicLink = async () => {
+    if (!email) {
+      setError("กรุณากรอกอีเมลเพื่อรับ Magic Link");
+      return;
+    }
+    setIsLoading(true);
+    setError(null);
+    try {
+      const { error } = await supabase.auth.signInWithOtp({
+        email,
+        options: {
+          emailRedirectTo: typeof window !== 'undefined' ? window.location.origin : 'https://admin.jongtour.com',
+        }
+      });
+      if (error) throw error;
+      setError("✅ ส่ง Magic Link ไปยังอีเมลแล้ว! กรุณาเช็คกล่องจดหมายของคุณ");
+    } catch (error: any) {
+      setError(error.message || "ไม่สามารถส่ง Magic Link ได้");
     } finally {
       setIsLoading(false);
     }
@@ -114,6 +147,26 @@ export default function AdminLoginPage() {
               ) : (
                 "เข้าสู่ระบบ Admin"
               )}
+            </button>
+          </div>
+          
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-300"></div>
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-2 bg-white text-gray-500">หรือ</span>
+            </div>
+          </div>
+
+          <div>
+            <button
+              type="button"
+              onClick={handleMagicLink}
+              className="w-full flex justify-center items-center py-3 px-4 border border-red-200 rounded-md shadow-sm text-sm font-bold text-red-600 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:bg-gray-50 disabled:text-gray-400 disabled:cursor-not-allowed transition-all"
+              disabled={isLoading || !email}
+            >
+              ส่ง Magic Link เข้าอีเมล (ใช้เมื่อโดนล็อค)
             </button>
           </div>
         </form>

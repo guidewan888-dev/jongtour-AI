@@ -13,51 +13,7 @@ export default function TourLayout({
 }) {
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col font-sans selection:bg-orange-100 selection:text-orange-900">
-      {/* Top Header - OTA Style */}
-      <header className="bg-white border-b border-slate-200 sticky top-0 z-50 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          
-          {/* Logo */}
-          <Link href="/" className="flex items-center gap-2">
-            <span className="text-2xl font-black text-slate-800 tracking-tight">
-              Jong<span className="text-orange-500">tour</span>
-            </span>
-            <span className="hidden sm:inline-block px-2 py-0.5 bg-orange-100 text-orange-700 text-[10px] font-black rounded uppercase tracking-wider">Marketplace</span>
-          </Link>
 
-          {/* Navigation Links */}
-          <nav className="hidden lg:flex items-center gap-1">
-            <NavItem href="/" icon={<Search size={16} />} label="Home Search" active />
-            <NavItem href="/search" icon={<Map size={16} />} label="All Tours" />
-            <NavItem href="/destinations" icon={<Map size={16} />} label="Destinations" />
-            <NavItem href="/promotions" icon={<Zap size={16} />} label="Promotions" highlight />
-            <NavItem href="/ai" icon={<Zap size={16} />} label="AI Search" highlight />
-            <NavItem href="/compare" icon={<Repeat size={16} />} label="Compare Tours" />
-          </nav>
-
-          {/* User Actions */}
-          <div className="flex items-center gap-3">
-            <Link 
-              href="https://booking.jongtour.com" 
-              className="hidden sm:flex items-center gap-2 text-sm font-semibold text-slate-600 hover:text-orange-600 transition-colors"
-            >
-              <CalendarDays size={18} />
-              My Booking
-            </Link>
-            <div className="w-px h-6 bg-slate-200 hidden sm:block"></div>
-            <Link 
-              href="https://booking.jongtour.com/auth/login" 
-              className="flex items-center gap-2 text-sm font-bold text-white bg-slate-900 hover:bg-slate-800 px-4 py-2 rounded-full transition-colors"
-            >
-              <User size={16} />
-              <span className="hidden sm:inline">Sign In</span>
-            </Link>
-            <button className="lg:hidden p-2 text-slate-600">
-              <Menu size={24} />
-            </button>
-          </div>
-        </div>
-      </header>
 
       {/* Main Content */}
       <main className="flex-1 w-full relative">

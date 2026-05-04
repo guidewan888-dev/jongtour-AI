@@ -35,6 +35,28 @@ const REGION_CONFIG: Record<string, any> = {
       { name: "☀️ ฤดูร้อน", desc: "มิถุนายน - สิงหาคม" }
     ],
     visa: "หลายประเทศฟรีวีซ่าสำหรับคนไทย เช่น ญี่ปุ่น เกาหลี ไต้หวัน ฮ่องกง สิงคโปร์"
+  },
+  "middle-east-caucasus-north-africa": {
+    name: "ตะวันออกกลาง / คอเคซัส / แอฟริกาเหนือ",
+    image: "https://images.unsplash.com/photo-1524231757912-21f4fe3a7200",
+    countries: ["egypt", "georgia", "turkey", "dubai", "jordan", "morocco"],
+    countryNames: ["อียิปต์", "จอร์เจีย", "ตุรกี", "ดูไบ", "จอร์แดน", "โมร็อกโก"],
+    seasons: [
+      { name: "☀️ ฤดูร้อน", desc: "พฤษภาคม - ตุลาคม" },
+      { name: "❄️ ฤดูหนาว", desc: "พฤศจิกายน - เมษายน" }
+    ],
+    visa: "จอร์เจีย ตุรกี คนไทยเข้าฟรี! อียิปต์ โมร็อกโก ต้องขอวีซ่า"
+  },
+  "america-australia": {
+    name: "อเมริกา / ออสเตรเลีย",
+    image: "https://images.unsplash.com/photo-1501594907352-04cda38ebc29",
+    countries: ["usa", "canada", "australia", "new-zealand"],
+    countryNames: ["สหรัฐอเมริกา", "แคนาดา", "ออสเตรเลีย", "นิวซีแลนด์"],
+    seasons: [
+      { name: "🌸 ฤดูใบไม้ผลิ", desc: "กันยายน - พฤศจิกายน (ออสเตรเลีย/นิวซีแลนด์)" },
+      { name: "🍁 ฤดูใบไม้ร่วง", desc: "กันยายน - พฤศจิกายน (อเมริกา/แคนาดา)" }
+    ],
+    visa: "ต้องขอวีซ่าล่วงหน้าทุกประเทศ (US Visa, ETA ออสเตรเลีย ฯลฯ)"
   }
 };
 

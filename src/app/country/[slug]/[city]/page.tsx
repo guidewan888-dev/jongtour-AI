@@ -28,19 +28,34 @@ export async function generateMetadata({ params }: { params: { slug: string, cit
     'cairo': 'ไคโร', 'alexandria': 'อเล็กซานเดรีย', 'luxor': 'ลักซอร์', 'aswan': 'อัสวาน',
     'tbilisi': 'ทบิลิซี', 'gudauri': 'กูดาวรี', 'batumi': 'บาทูมี', 'kazbegi': 'คาซเบกิ',
     'istanbul': 'อิสตันบูล', 'cappadocia': 'คัปปาโดเกีย', 'pamukkale': 'ปามุคคาเล่', 'antalya': 'อันตัลยา',
+    'dubai': 'ดูไบ', 'amman': 'อัมมาน', 'petra': 'เพตรา', 'dead-sea': 'เดดซี', 'wadi-rum': 'วาดิรัม',
+    'marrakech': 'มาราเกช', 'casablanca': 'คาซาบลังกา', 'fes': 'เฟส', 'chefchaouen': 'เชฟชาอุน',
+    // America & Australia
+    'new-york': 'นิวยอร์ก', 'los-angeles': 'ลอสแอนเจลิส', 'las-vegas': 'ลาสเวกัส', 'san-francisco': 'ซานฟรานซิสโก',
+    'toronto': 'โทรอนโต', 'vancouver': 'แวนคูเวอร์', 'banff': 'แบนฟ์', 'niagara': 'น้ำตกไนแองการ่า',
+    'sydney': 'ซิดนีย์', 'melbourne': 'เมลเบิร์น', 'gold-coast': 'โกลด์โคสต์', 'perth': 'เพิร์ท',
+    'auckland': 'โอ๊คแลนด์', 'queenstown': 'ควีนส์ทาวน์', 'christchurch': 'ไครสต์เชิร์ช', 'rotorua': 'โรโตรัว',
+    // Misc
+    'private-group': 'กรุ๊ปส่วนตัว'
   };
 
   const countryNameMap: Record<string, string> = {
-    'japan': 'ญี่ปุ่น', 'china': 'จีน', 'egypt': 'อียิปต์', 'georgia': 'จอร์เจีย',
-    'turkey': 'ตุรกี', 'france': 'ฝรั่งเศส', 'switzerland': 'สวิตเซอร์แลนด์', 'italy': 'อิตาลี', 'uk': 'อังกฤษ'
+    'japan': 'ญี่ปุ่น', 'china': 'จีน', 'korea': 'เกาหลี', 'taiwan': 'ไต้หวัน', 'hong-kong': 'ฮ่องกง', 'singapore': 'สิงคโปร์', 'vietnam': 'เวียดนาม',
+    'egypt': 'อียิปต์', 'georgia': 'จอร์เจีย', 'turkey': 'ตุรกี', 'dubai': 'ดูไบ (UAE)', 'jordan': 'จอร์แดน', 'morocco': 'โมร็อกโก',
+    'france': 'ฝรั่งเศส', 'switzerland': 'สวิตเซอร์แลนด์', 'italy': 'อิตาลี', 'uk': 'อังกฤษ', 'germany': 'เยอรมนี', 'austria': 'ออสเตรีย',
+    'spain': 'สเปน', 'portugal': 'โปรตุเกส', 'czech-republic': 'เช็ก', 'hungary': 'ฮังการี', 'iceland': 'ไอซ์แลนด์',
+    'united-states': 'สหรัฐอเมริกา', 'canada': 'แคนาดา', 'australia': 'ออสเตรเลีย', 'new-zealand': 'นิวซีแลนด์'
   };
 
   const countryName = countryNameMap[params.slug] || params.slug;
   const cityName = cityNameMap[params.city] || params.city;
 
   return {
-    title: `แพ็กเกจทัวร์${cityName} ประเทศ${countryName} | จองทัวร์${cityName}ราคาถูก - Jongtour`,
-    description: `ค้นหาแพ็กเกจทัวร์${cityName} อัปเดตล่าสุด เปรียบเทียบราคา จองง่าย ปลอดภัย 100% พร้อมผู้เชี่ยวชาญดูแลตลอดการเดินทาง`,
+    title: `ทัวร์${cityName} 2569 โปรแกรมทัวร์${cityName} ราคาดี มี AI ช่วยค้นหา | Jongtour`,
+    description: `ค้นหาแพ็กเกจทัวร์${cityName} ประเทศ${countryName} อัปเดตล่าสุด เปรียบเทียบราคา จองง่าย ปลอดภัย 100% พร้อมผู้เชี่ยวชาญดูแลตลอดการเดินทาง`,
+    alternates: {
+      canonical: `https://jongtour.com/country/${params.slug}/${params.city}`
+    }
   };
 }
 
@@ -51,8 +66,11 @@ export default async function CityPage({ params }: { params: { slug: string, cit
   );
 
   const countryNameMap: Record<string, string> = {
-    'japan': 'ญี่ปุ่น', 'china': 'จีน', 'egypt': 'อียิปต์', 'georgia': 'จอร์เจีย',
-    'turkey': 'ตุรกี', 'france': 'ฝรั่งเศส', 'switzerland': 'สวิตเซอร์แลนด์', 'italy': 'อิตาลี', 'uk': 'อังกฤษ'
+    'japan': 'ญี่ปุ่น', 'china': 'จีน', 'korea': 'เกาหลี', 'taiwan': 'ไต้หวัน', 'hong-kong': 'ฮ่องกง', 'singapore': 'สิงคโปร์', 'vietnam': 'เวียดนาม',
+    'egypt': 'อียิปต์', 'georgia': 'จอร์เจีย', 'turkey': 'ตุรกี', 'dubai': 'ดูไบ (UAE)', 'jordan': 'จอร์แดน', 'morocco': 'โมร็อกโก',
+    'france': 'ฝรั่งเศส', 'switzerland': 'สวิตเซอร์แลนด์', 'italy': 'อิตาลี', 'uk': 'อังกฤษ', 'germany': 'เยอรมนี', 'austria': 'ออสเตรีย',
+    'spain': 'สเปน', 'portugal': 'โปรตุเกส', 'czech-republic': 'เช็ก', 'hungary': 'ฮังการี', 'iceland': 'ไอซ์แลนด์',
+    'united-states': 'สหรัฐอเมริกา', 'canada': 'แคนาดา', 'australia': 'ออสเตรเลีย', 'new-zealand': 'นิวซีแลนด์'
   };
   const thCountryName = countryNameMap[params.slug] || params.slug;
   const englishCountryName = params.slug;
@@ -72,6 +90,13 @@ export default async function CityPage({ params }: { params: { slug: string, cit
     'cairo': 'ไคโร', 'alexandria': 'อเล็กซานเดรีย', 'luxor': 'ลักซอร์', 'aswan': 'อัสวาน',
     'tbilisi': 'ทบิลิซี', 'gudauri': 'กูดาวรี', 'batumi': 'บาทูมี', 'kazbegi': 'คาซเบกิ',
     'istanbul': 'อิสตันบูล', 'cappadocia': 'คัปปาโดเกีย', 'pamukkale': 'ปามุคคาเล่', 'antalya': 'อันตัลยา',
+    'dubai': 'ดูไบ', 'amman': 'อัมมาน', 'petra': 'เพตรา', 'dead-sea': 'เดดซี', 'wadi-rum': 'วาดิรัม',
+    'marrakech': 'มาราเกช', 'casablanca': 'คาซาบลังกา', 'fes': 'เฟส', 'chefchaouen': 'เชฟชาอุน',
+    'new-york': 'นิวยอร์ก', 'los-angeles': 'ลอสแอนเจลิส', 'las-vegas': 'ลาสเวกัส', 'san-francisco': 'ซานฟรานซิสโก',
+    'toronto': 'โทรอนโต', 'vancouver': 'แวนคูเวอร์', 'banff': 'แบนฟ์', 'niagara': 'น้ำตกไนแองการ่า',
+    'sydney': 'ซิดนีย์', 'melbourne': 'เมลเบิร์น', 'gold-coast': 'โกลด์โคสต์', 'perth': 'เพิร์ท',
+    'auckland': 'โอ๊คแลนด์', 'queenstown': 'ควีนส์ทาวน์', 'christchurch': 'ไครสต์เชิร์ช', 'rotorua': 'โรโตรัว',
+    'private-group': 'กรุ๊ปส่วนตัว'
   };
 
   const thCityName = cityNameMap[params.city] || params.city;
