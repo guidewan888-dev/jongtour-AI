@@ -10,10 +10,10 @@ const supabase = createClient(
 
 async function generateLink() {
   const { data, error } = await supabase.auth.admin.generateLink({
-    type: 'recovery',
+    type: 'magiclink',
     email: 'guidewan888@gmail.com',
     options: {
-      redirectTo: 'https://admin.jongtour.com/auth/reset-password'
+      redirectTo: 'https://admin.jongtour.com/'
     }
   });
 

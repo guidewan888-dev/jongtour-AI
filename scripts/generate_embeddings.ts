@@ -1,14 +1,18 @@
 import { createClient } from '@supabase/supabase-js';
 import OpenAI from 'openai';
-
+import { PrismaClient } from '@prisma/client';
+import * as dotenv from 'dotenv';
+dotenv.config({ path: '.env.local' });
+dotenv.config({ path: '.env' });
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://qterfftaebnoawnzkfgu.supabase.co";
-// Must use the SERVICE_ROLE_KEY to update embeddings since it bypasses RLS
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || "sb_publishable_SRwNSJ89mInda5FcuB1W2w_9IEJlSOI";
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || "";
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 const openaiApiKey = process.env.OPENAI_API_KEY;
 const openai = openaiApiKey ? new OpenAI({ apiKey: openaiApiKey }) : null;
+
+const prisma = new PrismaClient();
 
 async function main() {
   if (!openai) {
@@ -16,43 +20,48 @@ async function main() {
     return;
   }
 
-  console.log("Fetching tours without embeddings...");
-  const { data: tours, error: fetchError } = await supabase
-    .from('Tour')
-    .select('id, title, destination, durationDays, price, description, itinerary')
-    .is('embedding', null)
-    .limit(100); // Process 100 at a time
+  console.log("Cleaning up old embeddings...");
+  await prisma.$executeRaw`DELETE FROM tour_embeddings`;
 
-  if (fetchError) {
-    console.error("Fetch Error:", fetchError);
-    return;
-  }
+  console.log("Fetching tours to generate embeddings...");
+  const tours = await prisma.tour.findMany({
+    where: {
+      status: 'PUBLISHED'
+    },
+    include: {
+      destinations: true,
+      departures: {
+        include: {
+          prices: true
+        }
+      },
+      supplier: true
+    }
+  });
 
-  if (!tours || tours.length === 0) {
-    console.log("No tours found that need embeddings.");
-    return;
-  }
+  console.log(`Found ${tours.length} published tours.`);
 
-  console.log(`Processing ${tours.length} tours...`);
   let successCount = 0;
   let failedCount = 0;
 
   for (const tour of tours) {
     try {
-      let itineraryText = "";
-      if (tour.itinerary && Array.isArray(tour.itinerary)) {
-        itineraryText = tour.itinerary.map((day: any, i: number) => 
-          `Day ${i + 1}: ${day.title || day.detail || ''}`
-        ).join(" | ");
+      let lowestPrice = 0;
+      if (tour.departures && tour.departures.length > 0) {
+        const prices = tour.departures.flatMap(d => d.prices.map(p => p.sellingPrice));
+        if (prices.length > 0) {
+          lowestPrice = Math.min(...prices.map(Number));
+        }
       }
 
+      const dests = tour.destinations.map(d => `${d.city ? d.city + ', ' : ''}${d.country}`).join(' | ');
+
       const textToEmbed = `
-        Tour Title: ${tour.title}
-        Destination: ${tour.destination}
-        Duration: ${tour.durationDays} days
-        Price: ${tour.price} THB
-        Description: ${tour.description || "No description"}
-        Itinerary: ${itineraryText}
+        Tour Title: ${tour.tourName}
+        Supplier: ${tour.supplier?.displayName}
+        Destinations: ${dests}
+        Duration: ${tour.durationDays} Days / ${tour.durationNights} Nights
+        Starting Price: ${lowestPrice > 0 ? lowestPrice + ' THB' : 'N/A'}
       `.trim().replace(/\n/g, " ");
 
       const response = await openai.embeddings.create({
@@ -63,25 +72,32 @@ async function main() {
 
       const embedding = response.data[0].embedding;
 
-      const { error: updateError } = await supabase
-        .from('Tour')
-        .update({ embedding })
-        .eq('id', tour.id);
+      const { error } = await supabase.from('tour_embeddings').insert({
+        id: `embed_${tour.id}`,
+        tourId: tour.id,
+        embedding: embedding,
+        content: textToEmbed,
+        updatedAt: new Date().toISOString()
+      });
 
-      if (updateError) {
-        console.error(`Failed to update tour ${tour.id}:`, updateError.message);
-        failedCount++;
-      } else {
-        process.stdout.write('.');
-        successCount++;
+      if (error) {
+        throw new Error(error.message);
       }
+
+      process.stdout.write('.');
+      successCount++;
     } catch (err) {
-      console.error(`Failed to process tour ${tour.id}:`, err);
+      console.error(`\nFailed to process tour ${tour.id}:`, err);
       failedCount++;
     }
   }
 
   console.log(`\nDone! Success: ${successCount}, Failed: ${failedCount}`);
+  await prisma.$disconnect();
 }
 
-main();
+main().catch(e => {
+  console.error(e);
+  prisma.$disconnect();
+  process.exit(1);
+});

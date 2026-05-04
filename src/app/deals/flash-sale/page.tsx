@@ -26,7 +26,7 @@ export default async function FlashSalePage() {
       id, tourName, tourCode, durationDays,
       images:tour_images(imageUrl),
       departures(startDate, remainingSeats, status, prices(sellingPrice, netPrice)),
-      supplier:suppliers(name)
+      supplier:suppliers(displayName)
     `)
     .limit(50); // Get a larger pool to filter down in JS
 
@@ -72,7 +72,7 @@ export default async function FlashSalePage() {
       startDate: mainDep.startDate,
       remainingSeats: mainDep.remainingSeats,
       status: mainDep.status,
-      supplier: t.supplier?.name || "Jongtour Partner",
+      supplier: t.supplier?.displayName || "Jongtour Partner",
       bookingUrl: `/tour/${t.id}`
     };
   }).filter(Boolean); // Remove nulls

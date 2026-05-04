@@ -8,6 +8,8 @@ export async function searchTours(
   intentExtracted: IntentExtractionResult | null,
   semanticMatchedTourIds: string[] = []
 ): Promise<{ tours: any[], strictInstruction: string }> {
+  console.log("=== searchTours args ===", args);
+  console.log("=== intentExtracted ===", JSON.stringify(intentExtracted));
   
   // STRICT B2B LOCK: Force supplier_id from Intent Extractor if present
   if (intentExtracted?.supplier_filter_required && intentExtracted?.matched_supplier?.supplier_id) {
@@ -42,9 +44,25 @@ export async function searchTours(
      }
   } else if (args.destination) {
     const destParts = args.destination.split(/[\s-]+/).filter((p: string) => p.trim().length > 0);
+    const countryMap: Record<string, string> = {
+      "ญี่ปุ่น": "JAPAN",
+      "เกาหลี": "KOREA",
+      "ยุโรป": "EUROPE",
+      "จีน": "CHINA",
+      "ไต้หวัน": "TAIWAN",
+      "เวียดนาม": "VIETNAM",
+      "สิงคโปร์": "SINGAPORE",
+      "ฮ่องกง": "HONG KONG",
+      "พม่า": "MYANMAR"
+    };
+
     for (const part of destParts) {
+       const mappedPart = countryMap[part] || part;
        orConditions.push({ tourName: { contains: part, mode: 'insensitive' } });
-       orConditions.push({ destinations: { some: { country: { contains: part, mode: 'insensitive' } } } });
+       orConditions.push({ destinations: { some: { country: { contains: mappedPart, mode: 'insensitive' } } } });
+       if (mappedPart !== part) {
+         orConditions.push({ destinations: { some: { country: { contains: part, mode: 'insensitive' } } } });
+       }
     }
   }
 

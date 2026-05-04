@@ -92,6 +92,9 @@ export async function POST(request: NextRequest) {
         });
         if (!matchError && matches && matches.length > 0) {
           semanticMatchedTourIds = matches.map((m: any) => m.id);
+          console.log(`[RAG] Found ${semanticMatchedTourIds.length} matches from DB`);
+        } else {
+          console.log(`[RAG] Found 0 matches. Error:`, matchError);
         }
       } catch (err) {
         console.error("Semantic search failed:", err);
@@ -99,7 +102,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Prepare Messages History
-    const dynamicSystemPrompt = await getActivePrompt("BOOKING_ASSISTANT_SYSTEM_PROMPT");
+    const dynamicSystemPromptRaw = await getActivePrompt("BOOKING_ASSISTANT_SYSTEM_PROMPT");
+    const dynamicSystemPrompt = dynamicSystemPromptRaw + `\n\nCURRENT DATE AND TIME: ${new Date().toISOString()}`;
     const salesStrategyPrompt = await getActivePrompt("SALES_RESPONSE_STRATEGY");
     const fullSystemPrompt = getSystemPrompt() + "\n\n" + dynamicSystemPrompt + "\n\n" + salesStrategyPrompt + crmContext;
 
@@ -261,7 +265,7 @@ search_intent: ${JSON.stringify(intentExtracted)}
             content: JSON.stringify(match ? { supplier_id: match.supplier_id, canonical_name: match.canonical_name } : { error: "Supplier not found" })
           });
         }
-        else if (toolCall.function.name === "get_tour_detail" || toolCall.function.name === "check_availability" || toolCall.function.name === "get_latest_price") {
+        else if (toolCall.function.name === "get_tour_detail" || toolCall.function.name === "check_availability" || toolCall.function.name === "get_latest_price" || toolCall.function.name === "get_booking_link") {
           const args = JSON.parse(toolCall.function.arguments);
           const tid = args.tour_id || args.tourCode;
           const { prisma } = await import("@/lib/prisma");
@@ -289,8 +293,32 @@ search_intent: ${JSON.stringify(intentExtracted)}
                } else {
                  messages.push({ role: "tool", tool_call_id: toolCall.id, content: JSON.stringify({ error: "Price not found for this departure." }) });
                }
+             } else if (toolCall.function.name === "get_booking_link") {
+               const bookUrl = `https://jongtour.com/checkout?tourCode=${tData.tourCode}${args.departure_id ? '&departure=' + args.departure_id : ''}`;
+               messages.push({ role: "tool", tool_call_id: toolCall.id, content: JSON.stringify({ booking_url: bookUrl, message: "บอกลูกค้าว่าสามารถคลิกลิงก์นี้เพื่อดำเนินการจองและชำระเงินได้เลย" }) });
              }
           }
+        }
+        else if (toolCall.function.name === "create_lead") {
+          const args = JSON.parse(toolCall.function.arguments);
+          const { prisma } = await import("@/lib/prisma");
+          try {
+            await prisma.lead.create({
+              data: {
+                customerName: args.customer_name || "Unknown",
+                contactInfo: args.phone || args.line_id || "No contact",
+                source: "AI_CHAT",
+                status: "NEW"
+              }
+            });
+            messages.push({ role: "tool", tool_call_id: toolCall.id, content: JSON.stringify({ success: true, message: "สร้าง Lead สำเร็จ ให้แจ้งลูกค้าว่าจะมีเจ้าหน้าที่ติดต่อกลับ" }) });
+          } catch (err) {
+            messages.push({ role: "tool", tool_call_id: toolCall.id, content: JSON.stringify({ success: false, error: "DB Error" }) });
+          }
+        }
+        else if (toolCall.function.name === "ask_human_support") {
+          const args = JSON.parse(toolCall.function.arguments);
+          messages.push({ role: "tool", tool_call_id: toolCall.id, content: JSON.stringify({ success: true, message: "แจ้งลูกค้าว่าระบบกำลังส่งเรื่องให้เจ้าหน้าที่แอดมิน กรุณารอสักครู่" }) });
         }
         else if (toolCall.function.name === "calculate_fit_price") {
           const args = JSON.parse(toolCall.function.arguments);
@@ -638,9 +666,21 @@ search_intent: ${JSON.stringify(intentExtracted)}
       headers: { 'Content-Type': 'text/plain; charset=utf-8' },
     });
 
-  } catch (error) {
+  } catch (error: any) {
     console.error("Chat API Error:", error);
-    return NextResponse.json({ reply: "เกิดข้อผิดพลาดในการประมวลผล", tours: [] }, { status: 500 });
+    
+    // Extract OpenAI Error if present
+    let errorMessage = error?.message || "เกิดข้อผิดพลาดในการประมวลผล";
+    if (error?.status === 429) {
+      errorMessage = "ขออภัยครับ ตอนนี้โควต้า OpenAI เต็ม หรือมีผู้ใช้งานจำนวนมาก กรุณาลองใหม่อีกครั้งในภายหลัง";
+    } else if (error?.status === 401) {
+      errorMessage = "ขออภัยครับ เกิดปัญหาการเชื่อมต่อกับ OpenAI (API Key ไม่ถูกต้อง)";
+    }
+    
+    return NextResponse.json({ 
+      reply: `[System Error: ${errorMessage}] ขออภัยในความไม่สะดวกครับ เจ้าหน้าที่เทคนิคได้รับทราบปัญหาแล้ว จะรีบดำเนินการแก้ไขโดยเร็วที่สุดครับ 🙏`, 
+      tours: [] 
+    }, { status: 500 });
   }
 }
 

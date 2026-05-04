@@ -360,7 +360,7 @@ export default async function CountryPage({ params }: { params: { slug: string }
         id, tourName, tourCode, durationDays,
         images:tour_images(imageUrl),
         departures(startDate, remainingSeats, prices(sellingPrice)),
-        supplier:suppliers(name)
+        supplier:suppliers(displayName)
       `)
       .in('id', tourIds)
       .limit(12);
@@ -383,7 +383,7 @@ export default async function CountryPage({ params }: { params: { slug: string }
       days: t.durationDays,
       image: t.images?.[0]?.imageUrl || config.image,
       price: minPrice,
-      supplier: t.supplier?.name || "Jongtour Partner",
+      supplier: t.supplier?.displayName || "Jongtour Partner",
       isFlashSale,
       isConfirmed,
       lowSeats,

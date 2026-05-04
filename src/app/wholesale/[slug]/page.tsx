@@ -62,7 +62,7 @@ export default async function WholesalePage({ params }: { params: { slug: string
       id, tourName, tourCode, durationDays,
       images:tour_images(imageUrl),
       departures(startDate, remainingSeats, prices(sellingPrice), status),
-      supplier:suppliers(name)
+      supplier:suppliers(displayName)
     `)
     .eq('supplierId', supplierId)
     .limit(20);
@@ -85,7 +85,7 @@ export default async function WholesalePage({ params }: { params: { slug: string
       days: t.durationDays,
       image: t.images?.[0]?.imageUrl || "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e",
       price: minPrice,
-      supplier: t.supplier?.name || supplierName,
+      supplier: t.supplier?.displayName || supplierName,
       isFlashSale,
       isConfirmed,
       lowSeats,

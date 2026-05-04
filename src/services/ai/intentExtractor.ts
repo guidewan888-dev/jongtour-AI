@@ -82,7 +82,7 @@ export async function extractIntent(
         }
       },
       messages: [
-        { role: "system", content: getIntentExtractorPrompt() },
+        { role: "system", content: getIntentExtractorPrompt() + `\n\nCURRENT DATE: ${new Date().toISOString()}` },
         { role: "user", content: userMessage }
       ]
     });

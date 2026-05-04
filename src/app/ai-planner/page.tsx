@@ -209,7 +209,14 @@ function AIPlannerContent() {
         body: JSON.stringify({ message: userMsg, chatHistory, image: currentImage })
       });
       
-      if (!response.ok) throw new Error("API failed");
+      if (!response.ok) {
+        let errorText = "API failed";
+        try {
+          const errData = await response.json();
+          if (errData.reply) errorText = errData.reply;
+        } catch (e) {}
+        throw new Error(errorText);
+      }
       
       // If it's returning JSON directly (fallback mode)
       const contentType = response.headers.get("content-type");
@@ -288,11 +295,11 @@ function AIPlannerContent() {
         }
       }
       
-    } catch (error) {
+    } catch (error: any) {
       setMessages(prev => [...prev, {
         id: (Date.now() + 1).toString(),
         role: "ai",
-        text: "ขออภัยครับ ตอนนี้เซิร์ฟเวอร์ระบบ AI กำลังปรับปรุง ลองใหม่อีกครั้งนะครับ 😅",
+        text: error.message && error.message !== "API failed" ? error.message : "ขออภัยครับ เกิดปัญหาขัดข้องชั่วคราวในการติดต่อกับ AI Server ทีมงานกำลังเร่งแก้ไขครับ 😅",
       }]);
     } finally {
       setIsLoading(false);

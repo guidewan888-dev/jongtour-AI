@@ -108,7 +108,7 @@ export default async function CityPage({ params }: { params: { slug: string, cit
       id, tourName, tourCode, durationDays,
       images:tour_images(imageUrl),
       departures(startDate, remainingSeats, prices(sellingPrice)),
-      supplier:suppliers(name)
+      supplier:suppliers(displayName)
     `)
     .ilike('tourName', `%${thCityName}%`)
     .limit(16);
@@ -127,7 +127,7 @@ export default async function CityPage({ params }: { params: { slug: string, cit
       days: t.durationDays,
       image: t.images?.[0]?.imageUrl || "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e",
       price: minPrice,
-      supplier: t.supplier?.name || "Jongtour Partner"
+      supplier: t.supplier?.displayName || "Jongtour Partner"
     };
   }).filter((t: any) => t.price > 0);
 

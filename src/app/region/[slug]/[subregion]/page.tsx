@@ -73,7 +73,7 @@ export default async function SubRegionPage({ params }: { params: { slug: string
       id, tourName, tourCode, durationDays,
       images:tour_images(imageUrl),
       departures(startDate, remainingSeats, prices(sellingPrice)),
-      supplier:suppliers(name)
+      supplier:suppliers(displayName)
     `)
     .ilike('tourName', `%${thSubRegionName}%`)
     .limit(16);
@@ -95,7 +95,7 @@ export default async function SubRegionPage({ params }: { params: { slug: string
       days: t.durationDays,
       image: t.images?.[0]?.imageUrl || config.image,
       price: minPrice,
-      supplier: t.supplier?.name || "Jongtour Partner",
+      supplier: t.supplier?.displayName || "Jongtour Partner",
       isFlashSale,
       isConfirmed,
       lowSeats,
