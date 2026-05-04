@@ -49,7 +49,7 @@ export async function POST(req: Request) {
       type: 'recovery',
       email: email,
       options: {
-        redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://admin.jongtour.com'}/auth/reset-password`
+        redirectTo: `https://admin.jongtour.com/reset-password`
       }
     });
 

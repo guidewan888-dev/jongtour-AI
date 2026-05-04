@@ -103,7 +103,7 @@ export async function middleware(req: NextRequest) {
   const isInfoPath = url.pathname.startsWith('/info') || isInfoSubdomain;
   const isSalePath = url.pathname.startsWith('/sale') || isSaleSubdomain;
   
-  const isAuthPath = url.pathname.startsWith('/auth') || url.pathname.startsWith('/login') || url.pathname.startsWith('/admin-login');
+  const isAuthPath = url.pathname.startsWith('/auth') || url.pathname.startsWith('/login') || url.pathname.startsWith('/admin-login') || url.pathname.startsWith('/reset-password');
 
   // Paths that should not be rewritten or blocked
   const excludePaths = ['/api', '/_next', '/favicon.ico', '/images'];
