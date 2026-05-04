@@ -25,7 +25,7 @@ export default async function FlashSalePage() {
     .select(`
       id, tourName, tourCode, durationDays,
       images:tour_images(imageUrl),
-      departures(startDate, remainingSeats, status, prices(sellingPrice, costPrice)),
+      departures(startDate, remainingSeats, status, prices(sellingPrice, netPrice)),
       supplier:suppliers(name)
     `)
     .limit(50); // Get a larger pool to filter down in JS
@@ -46,7 +46,7 @@ export default async function FlashSalePage() {
     const priceData = mainDep.prices?.[0] || {};
     
     const sellingPrice = priceData.sellingPrice || 0;
-    const costPrice = priceData.costPrice || sellingPrice; // Using costPrice as original price for demonstration if available
+    const costPrice = priceData.netPrice || sellingPrice; // Using netPrice as original price for demonstration if available
     
     // Determine Flash Sale status
     const daysUntilDeparture = (new Date(mainDep.startDate).getTime() - new Date().getTime()) / (1000 * 3600 * 24);

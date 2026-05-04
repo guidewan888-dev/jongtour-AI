@@ -1,17 +1,48 @@
 import { Calendar, Search, Filter, MoreVertical, AlertCircle, CheckCircle2, Clock } from 'lucide-react';
 import Link from 'next/link';
+import { createClient } from '@/utils/supabase/server';
+import { cookies } from 'next/headers';
 
 export const dynamic = 'force-dynamic';
 
 export default async function DeparturesManagementPage() {
-  // Mock data for MVP presentation
-  const departures = [
-    { id: '1', tourCode: 'ZGJPN01', title: 'Japan Classic Snow Hokkaido', date: 'Dec 15 - Dec 19, 2026', status: 'Available', totalSeats: 30, availableSeats: 12, retailPrice: 35000, netPrice: 32000, supplier: "Let's Go" },
-    { id: '2', tourCode: 'ZGJPN01', title: 'Japan Classic Snow Hokkaido', date: 'Dec 22 - Dec 26, 2026', status: 'Almost Full', totalSeats: 30, availableSeats: 3, retailPrice: 38000, netPrice: 35000, supplier: "Let's Go" },
-    { id: '3', tourCode: 'ZGKR02', title: 'Korea Winter Ski Resort', date: 'Dec 10 - Dec 14, 2026', status: 'Full', totalSeats: 25, availableSeats: 0, retailPrice: 28900, netPrice: 26000, supplier: "Let's Go" },
-    { id: '4', tourCode: 'EUSW01', title: 'Grand Switzerland', date: 'Nov 05 - Nov 12, 2026', status: 'Available', totalSeats: 20, availableSeats: 15, retailPrice: 89000, netPrice: 82000, supplier: "Go365" },
-    { id: '5', tourCode: 'VNDN01', title: 'Danang Ba Na Hills', date: 'Oct 20 - Oct 23, 2026', status: 'On Request', totalSeats: 15, availableSeats: 15, retailPrice: 15900, netPrice: 14500, supplier: "Tour Factory" },
-  ];
+  const cookieStore = await cookies();
+  const supabase = createClient(cookieStore);
+
+  const today = new Date().toISOString();
+  
+  const { data: depsData } = await supabase
+    .from('departures')
+    .select(`
+      id, 
+      startDate, 
+      endDate, 
+      status, 
+      totalSeats, 
+      remainingSeats,
+      supplierId,
+      tours (tourCode, tourName),
+      prices(paxType, sellingPrice, netPrice)
+    `)
+    .gte('startDate', today)
+    .order('startDate', { ascending: true })
+    .limit(50);
+
+  const departures = (depsData || []).map((d: any) => {
+    const adultPrice = d.prices?.find((p: any) => p.paxType === 'ADULT') || d.prices?.[0];
+    return {
+      id: d.id,
+      tourCode: d.tours?.tourCode || 'UNKNOWN',
+      title: d.tours?.tourName || 'Unknown Tour',
+      date: `${new Date(d.startDate).toLocaleDateString('en-US', { month: 'short', day: '2-digit' })} - ${new Date(d.endDate).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' })}`,
+      status: d.remainingSeats > 0 ? (d.remainingSeats < 5 ? 'Almost Full' : 'Available') : 'Full',
+      totalSeats: d.totalSeats || 0,
+      availableSeats: d.remainingSeats || 0,
+      retailPrice: adultPrice?.sellingPrice || 0,
+      netPrice: adultPrice?.netPrice || 0,
+      supplier: d.supplierId === 'SUP_LETGO' ? "Let's Go" : d.supplierId === 'SUP_TOURFACTORY' ? "Tour Factory" : d.supplierId === 'SUP_CHECKIN' ? "Check In" : d.supplierId
+    };
+  });
 
   return (
     <div className="space-y-6">
@@ -69,7 +100,11 @@ export default async function DeparturesManagementPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200 bg-white">
-              {departures.map((dep) => (
+              {departures.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="px-6 py-8 text-center text-slate-500">No departures found</td>
+                </tr>
+              ) : departures.map((dep) => (
                 <tr key={dep.id} className="hover:bg-slate-50 transition-colors">
                   <td className="px-6 py-4">
                     <p className="font-medium text-slate-900">{dep.tourCode}</p>
@@ -82,9 +117,9 @@ export default async function DeparturesManagementPage() {
                         <div 
                           className={`h-2 rounded-full ${
                             dep.availableSeats === 0 ? 'bg-red-500' : 
-                            (dep.availableSeats / dep.totalSeats) < 0.2 ? 'bg-amber-500' : 'bg-emerald-500'
+                            (dep.availableSeats / (dep.totalSeats || 1)) < 0.2 ? 'bg-amber-500' : 'bg-emerald-500'
                           }`}
-                          style={{ width: `${Math.max(0, 100 - (dep.availableSeats / dep.totalSeats * 100))}%` }}
+                          style={{ width: `${Math.max(0, 100 - (dep.availableSeats / (dep.totalSeats || 1) * 100))}%` }}
                         ></div>
                       </div>
                       <span className="text-xs font-medium text-slate-700">{dep.availableSeats}/{dep.totalSeats}</span>

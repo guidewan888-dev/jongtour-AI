@@ -1,6 +1,46 @@
-import { Activity, Server, Database, AlertTriangle, ArrowRight } from 'lucide-react';
+import { Activity, Server, Database, AlertTriangle, ArrowRight, RefreshCcw, CheckCircle2, XCircle } from 'lucide-react';
+import { createClient } from '@/utils/supabase/server';
+import { cookies } from 'next/headers';
+import Link from 'next/link';
 
-export default function B2BAdminDashboard() {
+export const dynamic = "force-dynamic";
+
+export default async function B2BAdminDashboard() {
+  const cookieStore = await cookies();
+  const supabase = createClient(cookieStore);
+
+  // Fetch real stats
+  const { count: suppliersCount } = await supabase.from('suppliers').select('*', { count: 'exact', head: true }).eq('isActive', true);
+  const { count: toursCount } = await supabase.from('tours').select('*', { count: 'exact', head: true });
+  const { count: departuresCount } = await supabase.from('departures').select('*', { count: 'exact', head: true });
+  
+  // Fetch sync errors in last 24h
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  const { count: errorsCount } = await supabase.from('ApiSyncLog')
+    .select('*', { count: 'exact', head: true })
+    .eq('status', 'FAILED')
+    .gte('createdAt', yesterday.toISOString());
+
+  // Fetch suppliers and their latest sync status
+  const { data: suppliers } = await supabase.from('suppliers').select('id, name, canonicalName, isActive').eq('isActive', true);
+  const supplierRows = await Promise.all((suppliers || []).map(async (sup: any) => {
+    const { data: lastSync } = await supabase.from('ApiSyncLog')
+      .select('status, createdAt')
+      .eq('supplierId', sup.id)
+      .order('createdAt', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    return {
+      id: sup.id,
+      name: sup.name,
+      alias: sup.canonicalName,
+      lastSyncDate: lastSync?.createdAt ? new Date(lastSync.createdAt) : null,
+      status: lastSync?.status || 'UNKNOWN'
+    };
+  }));
+
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6">
       <div className="flex justify-between items-end mb-4">
@@ -8,17 +48,17 @@ export default function B2BAdminDashboard() {
           <h1 className="text-2xl font-bold text-slate-100 mb-1">API & Integration Dashboard</h1>
           <p className="text-slate-500 text-xs">ภาพรวมการเชื่อมต่อระบบ Wholesale และสถานะของ Cron Jobs</p>
         </div>
-        <button className="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-4 py-2 rounded flex items-center gap-2 transition-colors">
-          <Activity size={14} /> Force Global Sync
-        </button>
+        <Link href="/admin/wholesale/sync" className="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-4 py-2 rounded flex items-center gap-2 transition-colors">
+          <Activity size={14} /> Go to Sync Center
+        </Link>
       </div>
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <KpiCard title="Active Suppliers (API)" value="8" trend="100% Uptime" color="emerald" />
-        <KpiCard title="Total Tours Synced" value="12,450" trend="+142 today" color="blue" />
-        <KpiCard title="Total Departures" value="85,320" trend="+850 today" color="indigo" />
-        <KpiCard title="Sync Errors (24h)" value="12" trend="Needs attention" color="rose" alert />
+        <KpiCard title="Active Suppliers (API)" value={(suppliersCount || 0).toString()} trend="Running" color="emerald" />
+        <KpiCard title="Total Tours Synced" value={(toursCount || 0).toLocaleString()} trend="From Database" color="blue" />
+        <KpiCard title="Total Departures" value={(departuresCount || 0).toLocaleString()} trend="From Database" color="indigo" />
+        <KpiCard title="Sync Errors (24h)" value={(errorsCount || 0).toString()} trend={errorsCount && errorsCount > 0 ? "Needs attention" : "All clear"} color={errorsCount && errorsCount > 0 ? "rose" : "emerald"} alert={errorsCount && errorsCount > 0} />
       </div>
 
       {/* Sync Status Board */}
@@ -41,46 +81,35 @@ export default function B2BAdminDashboard() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800 text-slate-300">
-              <tr className="hover:bg-slate-900/50">
-                <td className="px-4 py-3">
-                  <div className="font-bold text-slate-200">letgo_group</div>
-                  <div className="text-[10px] text-slate-500 font-mono mt-0.5">SUP-5f8a9b21</div>
-                </td>
-                <td className="px-4 py-3"><span className="bg-blue-500/10 text-blue-400 px-2 py-1 rounded text-[10px] font-bold">REST API</span></td>
-                <td className="px-4 py-3">2 mins ago</td>
-                <td className="px-4 py-3 flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-emerald-500"></div> SUCCESS</td>
-                <td className="px-4 py-3 text-right"><button className="text-emerald-500 hover:text-emerald-400">View Logs</button></td>
-              </tr>
-              <tr className="hover:bg-slate-900/50">
-                <td className="px-4 py-3">
-                  <div className="font-bold text-slate-200">go365_tours</div>
-                  <div className="text-[10px] text-slate-500 font-mono mt-0.5">SUP-8a1c4d92</div>
-                </td>
-                <td className="px-4 py-3"><span className="bg-blue-500/10 text-blue-400 px-2 py-1 rounded text-[10px] font-bold">REST API</span></td>
-                <td className="px-4 py-3">1 hour ago</td>
-                <td className="px-4 py-3 flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-amber-500"></div> RETRYING (2/3)</td>
-                <td className="px-4 py-3 text-right"><button className="text-emerald-500 hover:text-emerald-400">View Logs</button></td>
-              </tr>
-              <tr className="hover:bg-slate-900/50">
-                <td className="px-4 py-3">
-                  <div className="font-bold text-slate-200">tour_factory</div>
-                  <div className="text-[10px] text-slate-500 font-mono mt-0.5">SUP-3b7e9f14</div>
-                </td>
-                <td className="px-4 py-3"><span className="bg-purple-500/10 text-purple-400 px-2 py-1 rounded text-[10px] font-bold">XML SOAP</span></td>
-                <td className="px-4 py-3">3 hours ago</td>
-                <td className="px-4 py-3 flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-rose-500"></div> FAILED</td>
-                <td className="px-4 py-3 text-right"><button className="text-emerald-500 hover:text-emerald-400">View Logs</button></td>
-              </tr>
-              <tr className="hover:bg-slate-900/50">
-                <td className="px-4 py-3">
-                  <div className="font-bold text-slate-200">siam_orchard</div>
-                  <div className="text-[10px] text-slate-500 font-mono mt-0.5">SUP-1c5d8a22</div>
-                </td>
-                <td className="px-4 py-3"><span className="bg-orange-500/10 text-orange-400 px-2 py-1 rounded text-[10px] font-bold">PDF OCR</span></td>
-                <td className="px-4 py-3">12 hours ago</td>
-                <td className="px-4 py-3 flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-emerald-500"></div> SUCCESS</td>
-                <td className="px-4 py-3 text-right"><a href="/b2badmin/human-review" className="text-amber-500 hover:text-amber-400 flex items-center justify-end gap-1">Review Required <ArrowRight size={10}/></a></td>
-              </tr>
+              {supplierRows.length === 0 && (
+                 <tr>
+                    <td colSpan={5} className="px-4 py-8 text-center text-slate-500">No active suppliers found in database.</td>
+                 </tr>
+              )}
+              {supplierRows.map((row) => (
+                <tr key={row.id} className="hover:bg-slate-900/50">
+                  <td className="px-4 py-3">
+                    <div className="font-bold text-slate-200">{row.name}</div>
+                    <div className="text-[10px] text-slate-500 font-mono mt-0.5">{row.id}</div>
+                  </td>
+                  <td className="px-4 py-3"><span className="bg-blue-500/10 text-blue-400 px-2 py-1 rounded text-[10px] font-bold">API</span></td>
+                  <td className="px-4 py-3">{row.lastSyncDate ? row.lastSyncDate.toLocaleString('th-TH') : 'Never'}</td>
+                  <td className="px-4 py-3 flex items-center gap-2">
+                    {row.status === 'SUCCESS' ? (
+                      <><div className="w-2 h-2 rounded-full bg-emerald-500"></div> SUCCESS</>
+                    ) : row.status === 'FAILED' ? (
+                      <><div className="w-2 h-2 rounded-full bg-rose-500"></div> FAILED</>
+                    ) : row.status === 'RUNNING' ? (
+                      <><RefreshCcw className="w-3 h-3 animate-spin text-amber-500" /> RUNNING</>
+                    ) : (
+                      <><div className="w-2 h-2 rounded-full bg-slate-500"></div> UNKNOWN</>
+                    )}
+                  </td>
+                  <td className="px-4 py-3 text-right">
+                    <Link href="/admin/wholesale/sync" className="text-emerald-500 hover:text-emerald-400">View Logs</Link>
+                  </td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>
@@ -89,7 +118,7 @@ export default function B2BAdminDashboard() {
   );
 }
 
-function KpiCard({ title, value, trend, color, alert }: { title: string, value: string, trend: string, color: 'emerald'|'blue'|'indigo'|'rose', alert?: boolean }) {
+function KpiCard({ title, value, trend, color, alert }: { title: string, value: string, trend: string, color: 'emerald'|'blue'|'indigo'|'rose', alert?: boolean | null }) {
   const colorStyles = {
     emerald: 'text-emerald-400',
     blue: 'text-blue-400',

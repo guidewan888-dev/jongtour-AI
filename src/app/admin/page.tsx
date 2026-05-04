@@ -184,11 +184,16 @@ export default async function AdminDashboard() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
-                {activeBookings.map((booking) => (
+                {activeBookings.length === 0 ? (
+                  <tr>
+                    <td colSpan={4} className="px-5 py-8 text-center text-muted-foreground">ไม่มีรายการจองใหม่ในระบบ</td>
+                  </tr>
+                ) : (
+                  activeBookings.map((booking: any) => (
                   <tr key={booking.id} className="hover:bg-muted/30 transition-colors group">
                     <td className="px-5 py-4 align-top">
                       <div className="flex items-center gap-2 mb-1">
-                         <span className="font-mono text-sm font-bold text-trust-900">{booking.id.replace('mock-', 'BK-').substring(0, 10)}</span>
+                         <span className="font-mono text-sm font-bold text-trust-900">{booking.id.substring(0, 10)}</span>
                          <span className="text-[10px] text-muted-foreground bg-muted px-1.5 rounded">{booking.date}</span>
                       </div>
                       <p className="text-sm font-bold text-primary">{booking.amount}</p>
@@ -215,7 +220,7 @@ export default async function AdminDashboard() {
                       </Button>
                     </td>
                   </tr>
-                ))}
+                )))}
               </tbody>
             </table>
           </div>
