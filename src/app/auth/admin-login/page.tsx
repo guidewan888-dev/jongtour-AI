@@ -49,28 +49,7 @@ export default function AdminLoginPage() {
     }
   };
 
-  const handleMagicLink = async () => {
-    if (!email) {
-      setError("กรุณากรอกอีเมลเพื่อรับ Magic Link");
-      return;
-    }
-    setIsLoading(true);
-    setError(null);
-    try {
-      const { error } = await supabase.auth.signInWithOtp({
-        email,
-        options: {
-          emailRedirectTo: typeof window !== 'undefined' ? `${window.location.origin}/api/auth/callback?next=/` : 'https://admin.jongtour.com/api/auth/callback?next=/',
-        }
-      });
-      if (error) throw error;
-      setError("✅ ส่ง Magic Link ไปยังอีเมลแล้ว! กรุณาเช็คกล่องจดหมายของคุณ");
-    } catch (error: any) {
-      setError(error.message || "ไม่สามารถส่ง Magic Link ได้");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+
 
   return (
     <div className="sm:mx-auto sm:w-full sm:max-w-md">
@@ -94,7 +73,7 @@ export default function AdminLoginPage() {
           )}
           
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email Address (Admin)</label>
+            <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email Address</label>
             <div className="mt-1 relative rounded-md shadow-sm">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <Mail className="h-5 w-5 text-gray-400" />
@@ -108,13 +87,18 @@ export default function AdminLoginPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="pl-10 block w-full sm:text-sm border-gray-300 rounded-md py-3 border focus:ring-red-500 focus:border-red-500 bg-gray-50/50"
-                placeholder="admin@jongtour.com"
+                placeholder="your.email@jongtour.com"
               />
             </div>
           </div>
 
           <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700">Password</label>
+            <div className="flex justify-between items-center">
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700">Password</label>
+              <a href="/auth/forgot-password" className="text-sm font-medium text-red-600 hover:text-red-500">
+                ลืมรหัสผ่าน?
+              </a>
+            </div>
             <div className="mt-1 relative rounded-md shadow-sm">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <ShieldCheck className="h-5 w-5 text-gray-400" />
@@ -128,7 +112,6 @@ export default function AdminLoginPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="pl-10 block w-full sm:text-sm border-gray-300 rounded-md py-3 border focus:ring-red-500 focus:border-red-500 bg-gray-50/50"
-                placeholder="••••••••"
               />
             </div>
           </div>
@@ -147,26 +130,6 @@ export default function AdminLoginPage() {
               ) : (
                 "เข้าสู่ระบบ Admin"
               )}
-            </button>
-          </div>
-          
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-300"></div>
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-white text-gray-500">หรือ</span>
-            </div>
-          </div>
-
-          <div>
-            <button
-              type="button"
-              onClick={handleMagicLink}
-              className="w-full flex justify-center items-center py-3 px-4 border border-red-200 rounded-md shadow-sm text-sm font-bold text-red-600 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:bg-gray-50 disabled:text-gray-400 disabled:cursor-not-allowed transition-all"
-              disabled={isLoading || !email}
-            >
-              ส่ง Magic Link เข้าอีเมล (ใช้เมื่อโดนล็อค)
             </button>
           </div>
         </form>

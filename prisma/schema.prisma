@@ -531,9 +531,10 @@ model User {
   roleId       String
   agentId      String?
   supplierId   String?
-  status       String   @default("ACTIVE")
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  status             String   @default("ACTIVE")
+  mustChangePassword Boolean  @default(false)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
 
   role            Role              @relation(fields: [roleId], references: [id], onDelete: Restrict)
   agent           Agent?            @relation(fields: [agentId], references: [id], onDelete: SetNull)

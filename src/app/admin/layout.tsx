@@ -50,6 +50,11 @@ export default async function AdminLayout({ children }: { children: ReactNode })
     redirect(`${siteUrl}/user/bookings`);
   }
 
+  // Force password change if required
+  if (finalUser?.mustChangePassword) {
+    redirect("/auth/force-change-password");
+  }
+
   const roleName = finalUser?.role?.name || "CUSTOMER";
   const userProfileName = finalUser?.name || user?.user_metadata?.full_name || "Admin User";
   const userEmail = finalUser?.email || user?.email || "admin@jongtour.com";
