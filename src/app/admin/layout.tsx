@@ -36,7 +36,8 @@ export default async function AdminLayout({ children }: { children: ReactNode })
   let finalUser = dbUser;
 
   // Prevent non-admins from accessing the admin panel
-  if (!isBypass && (!finalUser || !finalUser.role || finalUser.role.name !== "ADMIN")) {
+  const allowedRoles = ["ADMIN", "SUPER_ADMIN"];
+  if (!isBypass && (!finalUser || !finalUser.role || !allowedRoles.includes(finalUser.role.name))) {
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://jongtour.com";
     redirect(`${siteUrl}/user/bookings`);
   }

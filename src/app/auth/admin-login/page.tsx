@@ -29,7 +29,11 @@ export default function AdminLoginPage() {
       window.location.href = "/";
       
     } catch (error: any) {
-      setError(error.message || "Invalid login credentials");
+      if (error.message?.toLowerCase().includes("rate limit")) {
+        setError("ระบบตรวจพบการล็อกอินผิดพลาดหลายครั้ง กรุณารอประมาณ 5 นาทีแล้วลองใหม่ครับ");
+      } else {
+        setError(error.message || "อีเมลหรือรหัสผ่านไม่ถูกต้อง");
+      }
     } finally {
       setIsLoading(false);
     }
