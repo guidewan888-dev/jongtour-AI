@@ -1,22 +1,22 @@
-﻿export const dynamic = 'force-dynamic';
+export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import * as line from '@line/bot-sdk';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-if (!supabaseUrl || !supabaseKey) {
-  throw new Error('Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY environment variables');
-}
-const supabase = createClient(supabaseUrl, supabaseKey);
-
-const lineConfig = {
-  channelAccessToken: process.env.LINE_CHANNEL_ACCESS_TOKEN || '',
-  channelSecret: process.env.LINE_CHANNEL_SECRET || '',
-};
-const lineClient = new line.messagingApi.MessagingApiClient(lineConfig);
-
 export async function GET(request: Request) {
+  // Init clients at runtime (not build time) to avoid missing env var errors
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!supabaseUrl || !supabaseKey) {
+    return NextResponse.json({ error: 'Missing SUPABASE env vars' }, { status: 500 });
+  }
+  const supabase = createClient(supabaseUrl, supabaseKey);
+
+  const lineConfig = {
+    channelAccessToken: process.env.LINE_CHANNEL_ACCESS_TOKEN || '',
+    channelSecret: process.env.LINE_CHANNEL_SECRET || '',
+  };
+  const lineClient = new line.messagingApi.MessagingApiClient(lineConfig);
   // 1. Authorization check for Cron
   // Vercel sends a CRON secret header
   const authHeader = request.headers.get('authorization');
