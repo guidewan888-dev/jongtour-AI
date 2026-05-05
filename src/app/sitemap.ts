@@ -1,87 +1,70 @@
+import { prisma } from '@/lib/prisma';
 import { MetadataRoute } from 'next';
-import { createClient } from '@supabase/supabase-js';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://jongtour.com';
-  
-  // Basic static routes
-  const staticRoutes = [
-    '',
-    '/tour/search',
-    '/deals/flash-sale',
-    '/ai-planner',
-    '/compare',
-    '/blog/guides',
-    '/blog/destinations',
-    '/faq',
-    '/contact',
-  ].map((route) => ({
-    url: `${baseUrl}${route}`,
-    lastModified: new Date(),
-    changeFrequency: 'daily' as const,
-    priority: route === '' ? 1 : 0.8,
-  }));
 
-  // Dynamic Country Pages
-  const countries = ['japan', 'china', 'korea', 'taiwan', 'hongkong', 'singapore', 'vietnam', 'europe', 'switzerland', 'france', 'italy', 'egypt', 'georgia', 'turkey', 'usa', 'australia'];
-  const countryUrls = countries.map((slug) => ({
-    url: `${baseUrl}/country/${slug}`,
-    lastModified: new Date(),
-    changeFrequency: 'daily' as const,
-    priority: 0.8,
-  }));
+  // ─── Static pages ────────────────────────────────
+  const staticPages: MetadataRoute.Sitemap = [
+    { url: baseUrl, lastModified: new Date(), changeFrequency: 'daily', priority: 1.0 },
+    { url: `${baseUrl}/search`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.9 },
+    { url: `${baseUrl}/deals/flash-sale`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.9 },
+    { url: `${baseUrl}/visa`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.9 },
+    { url: `${baseUrl}/talents`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.7 },
+    { url: `${baseUrl}/about`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.5 },
+    { url: `${baseUrl}/contact`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.5 },
+    { url: `${baseUrl}/faq`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.4 },
+    { url: `${baseUrl}/privacy-policy`, lastModified: new Date(), changeFrequency: 'yearly', priority: 0.3 },
+    { url: `${baseUrl}/terms`, lastModified: new Date(), changeFrequency: 'yearly', priority: 0.3 },
+  ];
 
-  // Dynamic Region Pages
-  const regions = ['europe', 'asia'];
-  const regionUrls = regions.map((slug) => ({
-    url: `${baseUrl}/region/${slug}`,
+  // ─── Country/destination pages ───────────────────
+  const countries = ['japan', 'korea', 'china', 'europe', 'usa', 'turkey', 'vietnam', 'taiwan', 'singapore', 'egypt'];
+  const countryPages: MetadataRoute.Sitemap = countries.map(c => ({
+    url: `${baseUrl}/tour/${c}`,
     lastModified: new Date(),
     changeFrequency: 'daily' as const,
     priority: 0.9,
   }));
 
-  // Dynamic Landing Pages configuration (Phase 6 UI layer)
-  const wholesalePages = [
-    '/wholesale/letgo-group', '/wholesale/go365', '/wholesale/check-in-group', '/wholesale/tour-factory',
-  ].map((route) => ({
-    url: `${baseUrl}${route}`,
-    lastModified: new Date(),
-    changeFrequency: 'daily' as const,
-    priority: 0.9,
-  }));
-
-  const landingPages = [
-    '/country/japan', '/country/japan/tokyo', '/country/japan/osaka', '/country/japan/hokkaido', '/country/japan/sakura',
-    '/country/china', '/country/china/beijing', '/country/china/shanghai', '/country/china/zhangjiajie', '/country/china/flash-sale',
-  ].map((route) => ({
-    url: `${baseUrl}${route}`,
-    lastModified: new Date(),
-    changeFrequency: 'daily' as const,
-    priority: 0.9,
-  }));
-
+  // ─── Tour detail pages ──────────────────────────
+  let tourPages: MetadataRoute.Sitemap = [];
   try {
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL || '',
-      process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || ''
-    );
-
-    // Fetch published tours
-    const { data: tours } = await supabase
-      .from('tours')
-      .select('id, updatedAt')
-      .eq('status', 'PUBLISHED');
-
-    const tourRoutes = (tours || []).map((tour) => ({
-      url: `${baseUrl}/tour/${tour.id}`,
-      lastModified: tour.updatedAt ? new Date(tour.updatedAt) : new Date(),
+    const tours = await prisma.tour.findMany({
+      where: { status: 'PUBLISHED' },
+      select: { slug: true, updatedAt: true },
+    });
+    tourPages = tours.map(t => ({
+      url: `${baseUrl}/tour/${t.slug}`,
+      lastModified: t.updatedAt,
       changeFrequency: 'weekly' as const,
       priority: 0.9,
     }));
+  } catch {}
 
-    return [...staticRoutes, ...countryUrls, ...regionUrls, ...wholesalePages, ...landingPages, ...tourRoutes];
-  } catch (error) {
-    console.error('Error generating sitemap:', error);
-    return [...staticRoutes, ...countryUrls, ...regionUrls, ...wholesalePages, ...landingPages];
-  }
+  // ─── Visa pages ─────────────────────────────────
+  const visaCountries = ['japan', 'usa', 'uk', 'schengen', 'australia', 'china', 'india', 'canada'];
+  const visaPages: MetadataRoute.Sitemap = visaCountries.map(c => ({
+    url: `${baseUrl}/visa/${c}`,
+    lastModified: new Date(),
+    changeFrequency: 'weekly' as const,
+    priority: 0.8,
+  }));
+
+  // ─── Blog posts ─────────────────────────────────
+  let blogPages: MetadataRoute.Sitemap = [];
+  try {
+    const posts = await prisma.blogPost.findMany({
+      where: { status: 'PUBLISHED' },
+      select: { slug: true, updatedAt: true },
+    });
+    blogPages = posts.map(p => ({
+      url: `${baseUrl}/blog/${p.slug}`,
+      lastModified: p.updatedAt,
+      changeFrequency: 'monthly' as const,
+      priority: 0.7,
+    }));
+  } catch {}
+
+  return [...staticPages, ...countryPages, ...tourPages, ...visaPages, ...blogPages];
 }

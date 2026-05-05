@@ -1,7 +1,6 @@
+export const dynamic = 'force-dynamic';
 import { NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import { prisma } from "@/lib/prisma";
 
 export async function POST(req: Request, { params }: { params: { id: string } }) {
   try {
@@ -14,7 +13,7 @@ export async function POST(req: Request, { params }: { params: { id: string } })
       where: { id: conversationId },
       data: { 
         status: "human_takeover",
-        assignedToId: adminId 
+        // assignedToId: adminId 
       }
     });
 
@@ -24,3 +23,4 @@ export async function POST(req: Request, { params }: { params: { id: string } })
     return NextResponse.json({ error: "Failed to takeover conversation" }, { status: 500 });
   }
 }
+

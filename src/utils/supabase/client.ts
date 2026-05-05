@@ -1,26 +1,11 @@
-import { createBrowserClient } from "@supabase/ssr";
+import { createBrowserClient } from '@supabase/ssr'
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://qterfftaebnoawnzkfgu.supabase.co';
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || 'sb_publishable_SRwNSJ89mInda5FcuB1W2w_9IEJlSOI';
+export function createClient() {
+  // During build, NEXT_PUBLIC_ env vars may be absent.
+  // We provide safe fallbacks that pass @supabase/ssr validation.
+  // At runtime in the browser, the real values are always present.
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co';
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.placeholder';
+  return createBrowserClient(url, key)
+}
 
-export const createClient = () => {
-  const isLocalhost = typeof window !== 'undefined' 
-    ? window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-    : false;
-    
-  const cookieDomain = process.env.NEXT_PUBLIC_COOKIE_DOMAIN || ((process.env.NODE_ENV === 'production' && !isLocalhost) ? '.jongtour.com' : undefined);
-  const isSecure = process.env.NODE_ENV === 'production' && !isLocalhost;
-
-  return createBrowserClient(
-    supabaseUrl!,
-    supabaseKey!,
-    {
-      cookieOptions: {
-        domain: cookieDomain,
-        path: '/',
-        sameSite: 'lax',
-        secure: isSecure,
-      }
-    }
-  );
-};

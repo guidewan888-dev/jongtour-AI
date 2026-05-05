@@ -1,28 +1,21 @@
+export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://qterfftaebnoawnzkfgu.supabase.co';
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF0ZXJmZnRhZWJub2F3bnprZmd1Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NzQ3MzAxNCwiZXhwIjoyMDkzMDQ5MDE0fQ.IDd7B8okNE1B0vf1OVQizDGeVQNdVwLK0gzogOyWIFE';
-const supabase = createClient(supabaseUrl, supabaseKey);
+import { prisma } from '@/lib/prisma';
 
 export async function GET() {
   try {
-    const { data: credentials, error } = await supabase
-      .from('SupplierApiCredential')
-      .select('supplierId, isActive');
-
-    if (error) throw error;
-    
-    // Ensure default is true if missing
-    const settings = {
-      SUP_LETGO: true,
-      SUP_TOURFACTORY: true,
-      SUP_CHECKIN: true,
-    };
-
-    credentials?.forEach(c => {
-      settings[c.supplierId as keyof typeof settings] = c.isActive;
+    const credentials = await prisma.supplierApiCredential.findMany({
+      select: { supplierId: true, status: true },
     });
+
+    // Build settings map — default to active if no credential record
+    const settings: Record<string, boolean> = {};
+    const suppliers = await prisma.supplier.findMany({ select: { id: true, canonicalName: true } });
+    
+    for (const s of suppliers) {
+      const cred = credentials.find(c => c.supplierId === s.id);
+      settings[s.id] = cred ? cred.status === 'ACTIVE' : true;
+    }
 
     return NextResponse.json({ success: true, settings });
   } catch (error: any) {
@@ -38,28 +31,25 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, message: 'Invalid payload' }, { status: 400 });
     }
 
-    // Upsert the setting
-    const { data: existing } = await supabase
-      .from('SupplierApiCredential')
-      .select('id')
-      .eq('supplierId', supplierId)
-      .single();
+    // Upsert credential status
+    const existing = await prisma.supplierApiCredential.findUnique({
+      where: { supplierId },
+    });
 
     if (existing) {
-      await supabase
-        .from('SupplierApiCredential')
-        .update({ isActive, updatedAt: new Date().toISOString() })
-        .eq('id', existing.id);
+      await prisma.supplierApiCredential.update({
+        where: { supplierId },
+        data: { status: isActive ? 'ACTIVE' : 'DISABLED' },
+      });
     } else {
-      await supabase
-        .from('SupplierApiCredential')
-        .insert({
-          id: `c${Math.random().toString(36).substring(2, 11)}`,
+      await prisma.supplierApiCredential.create({
+        data: {
           supplierId,
-          baseUrl: 'https://placeholder.com',
-          apiKey: 'placeholder',
-          isActive,
-        });
+          apiBaseUrl: 'https://placeholder.com',
+          encryptedApiKey: 'placeholder',
+          status: isActive ? 'ACTIVE' : 'DISABLED',
+        },
+      });
     }
 
     return NextResponse.json({ success: true, message: 'Setting updated' });

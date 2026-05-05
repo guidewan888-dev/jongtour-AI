@@ -1,10 +1,8 @@
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
 import { BOOKING_ASSISTANT_SYSTEM_PROMPT } from "./prompts/bookingAssistantPrompt";
 import { FILE_INTENT_CLASSIFIER_PROMPT } from "./prompts/fileIntentClassifierPrompt";
 import { VISION_AI_PROMPT } from "./prompts/visionAiPrompt";
 import { RESPONSE_STRATEGY_PROMPT } from "./prompts/responseStrategyPrompt";
-
-const prisma = new PrismaClient();
 
 export async function getActivePrompt(templateName: string): Promise<string> {
   try {

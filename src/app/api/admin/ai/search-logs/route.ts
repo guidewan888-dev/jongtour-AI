@@ -1,7 +1,7 @@
+export const dynamic = 'force-dynamic';
 import { NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from '@/lib/prisma';
 
-const prisma = new PrismaClient();
 
 // GET all search logs to monitor what the AI is looking for
 export async function GET(req: Request) {
@@ -17,3 +17,4 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: "Failed to fetch search logs" }, { status: 500 });
   }
 }
+

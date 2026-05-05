@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { aiRealDataFilter } from '@/lib/filters/realDataFilter';
 import { createClient } from "@supabase/supabase-js";
 import { createClient as createServerClient } from "@/utils/supabase/server";
 import { cookies } from "next/headers";
@@ -12,15 +13,30 @@ import { searchTours, formatTourSummary } from "@/services/ai/tourSearchService"
 import { runQualityChecker } from "@/services/ai/qualityChecker";
 import { processUserImage, getSearchAgentPrompt } from "@/services/ai/ocrExtractor";
 import { tools } from "@/services/ai/toolsConfig";
+import { wholesaleTools, isWholesaleTool, executeWholesaleTool } from "@/services/ai/wholesaleTools";
 import { checkSensitiveCase, validateAiOutput } from "@/services/ai/guardrails";
+import { checkRateLimit, getClientId } from "@/lib/rateLimit";
+import { extractUsage, mergeUsage, type TokenUsage } from "@/lib/tokenTracker";
+import { createChatCompletionSafe } from "@/lib/aiRetry";
 
-export const maxDuration = 60; // Increase Vercel timeout for slow AI generation
+export const maxDuration = 60;
 export const dynamic = "force-dynamic";
 
 export async function POST(request: NextRequest) {
+  // === RATE LIMITING (#1) ===
+  const clientId = getClientId(request);
+  const rateCheck = checkRateLimit(`chat:${clientId}`, { maxRequests: 10, windowMs: 60_000 });
+  if (!rateCheck.allowed) {
+    return NextResponse.json(
+      { reply: "ขออภัยครับ คุณส่งข้อความเร็วเกินไป กรุณารอสักครู่แล้วลองใหม่ 🙏", tours: [] },
+      { status: 429, headers: { 'X-RateLimit-Remaining': '0', 'X-RateLimit-Reset': String(rateCheck.resetAt) } }
+    );
+  }
+
   const openaiApiKey = process.env.OPENAI_API_KEY;
   const isOpenAIAvailable = !!openaiApiKey;
   const openai = isOpenAIAvailable ? new OpenAI({ apiKey: openaiApiKey }) : null;
+  let totalUsage: TokenUsage = { promptTokens: 0, completionTokens: 0, totalTokens: 0, estimatedCostUsd: 0, model: 'gpt-4o-mini' };
 
   try {
     const { message = "", chatHistory = [], image } = await request.json();
@@ -58,8 +74,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ reply: "ขออภัย ระบบ AI ไม่พร้อมใช้งาน 😅", tours: [] }, { status: 500 });
     }
 
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://qterfftaebnoawnzkfgu.supabase.co";
-    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || "sb_publishable_SRwNSJ89mInda5FcuB1W2w_9IEJlSOI";
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     // STEP 0: Sensitive Case Guardrail
@@ -113,7 +129,7 @@ export async function POST(request: NextRequest) {
         let content = m.content;
         if (m.role === 'ai' && m.tours && m.tours.length > 0) {
           const toursContext = m.tours.map((t:any) => {
-            const deps = t.departures ? t.departures.filter((d: any) => new Date(d.startDate) >= new Date()).sort((a: any, b: any) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime()).slice(0, 5).map((d: any) => `${new Date(d.startDate).toLocaleDateString('th-TH', { day: 'numeric', month: 'short' })} ถึง ${new Date(d.endDate).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' })} (ว่าง ${d.availableSeats} ที่)`).join(', ') : 'ไม่มีข้อมูล';
+            const deps = t.departures ? t.departures.filter((d: any) => new Date(d.startDate) >= new Date()).sort((a: any, b: any) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime()).slice(0, 5).map((d: any) => `${new Date(d.startDate).toLocaleDateString('th-TH', { day: 'numeric', month: 'short' })} ถึง ${new Date(d.endDate).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' })} (ว่าง ${d.remainingSeats} ที่)`).join(', ') : 'ไม่มีข้อมูล';
             return `[รหัส: ${t.code}, ชื่อ: ${t.title}, วันเดินทางที่ว่าง: ${deps}]`;
           }).join('\n');
           content += `\n\n[System Note: The following tours were shown to the user in this message:\n${toursContext}]`;
@@ -194,13 +210,14 @@ search_intent: ${JSON.stringify(intentExtracted)}
 
     messages.push({ role: "user", content: processedUserMessage });
 
-    const initialResponse = await openai.chat.completions.create({
+    const initialResponse = await createChatCompletionSafe(openai, {
       model: "gpt-4o-mini", 
       temperature: 0.1,
       messages,
-      tools,
+      tools: [...tools, ...wholesaleTools],
       tool_choice: forceTool ? { type: "function", function: { name: "search_tours" } } : "auto",
     });
+    totalUsage = mergeUsage(totalUsage, extractUsage(initialResponse));
 
     const initialMessage = initialResponse.choices[0].message;
     let tours: any[] = [];
@@ -235,7 +252,8 @@ search_intent: ${JSON.stringify(intentExtracted)}
           // AI Search Agent (Only for image uploads)
           if (userImage && extractedDataForSearch) {
              messages.push({ role: "system", content: getSearchAgentPrompt(extractedDataForSearch) });
-             const secondRes = await openai.chat.completions.create({ model: "gpt-4o-mini", messages, tools, tool_choice: "auto" });
+             const secondRes = await createChatCompletionSafe(openai, { model: "gpt-4o-mini", messages, tools, tool_choice: "auto" });
+             totalUsage = mergeUsage(totalUsage, extractUsage(secondRes));
              const secondMsg = secondRes.choices[0].message;
              if (secondMsg.tool_calls && secondMsg.tool_calls.length > 0) {
                 messages.push(secondMsg);
@@ -245,9 +263,10 @@ search_intent: ${JSON.stringify(intentExtracted)}
                     const tArgs = JSON.parse(tc.function.arguments);
                     let tData = await (await import("@/lib/prisma")).prisma.tour.findFirst({
                       where: { tourCode: tArgs.tourCode },
-                      include: { departures: { include: { prices: true } }, itineraries: true }
+                      include: { departures: { include: { prices: true } }, destinations: true, rawSources: { take: 1 } }
                     });
-                    messages.push({ role: "tool", tool_call_id: tc.id, content: JSON.stringify(tData ? { code: tData.tourCode, title: tData.tourName, highlights: tData.itineraries?.[0]?.description, departures: tData.departures } : { error: "Tour not found" }) });
+                    const highlights = (tData as any)?.rawSources?.[0]?.rawData ? JSON.stringify((tData as any).rawSources[0].rawData).substring(0, 500) : tData?.destinations?.map((d: any) => d.country).join(', ') || 'N/A';
+                    messages.push({ role: "tool", tool_call_id: tc.id, content: JSON.stringify(tData ? { code: tData.tourCode, title: tData.tourName, highlights, departures: tData.departures } : { error: "Tour not found" }) });
                   } else {
                     messages.push({ role: "tool", tool_call_id: tc.id, content: "{ \"status\": \"Tool executed but skipped deep logic for OCR flow\" }" });
                   }
@@ -271,20 +290,21 @@ search_intent: ${JSON.stringify(intentExtracted)}
           const { prisma } = await import("@/lib/prisma");
           let tData = await prisma.tour.findFirst({
             where: { OR: [{ id: tid }, { tourCode: tid }] },
-            include: { departures: { include: { prices: true } }, itineraries: true }
+            include: { departures: { where: { startDate: { gte: new Date() } }, orderBy: { startDate: 'asc' }, include: { prices: true } }, destinations: true, rawSources: { take: 1 } }
           });
           
           if (!tData) {
             messages.push({ role: "tool", tool_call_id: toolCall.id, content: JSON.stringify({ error: "Tour not found in database. Please ask user for clarification or search_tours again." }) });
           } else {
              if (toolCall.function.name === "get_tour_detail") {
-               messages.push({ role: "tool", tool_call_id: toolCall.id, content: JSON.stringify({ code: tData.tourCode, title: tData.tourName, highlights: tData.itineraries?.[0]?.description || "No highlight", duration: tData.durationDays }) });
+               const tourHighlights = (tData as any)?.rawSources?.[0]?.rawData ? JSON.stringify((tData as any).rawSources[0].rawData).substring(0, 800) : (tData as any)?.destinations?.map((d: any) => `${d.country}${d.city ? '/' + d.city : ''}`).join(', ') || 'N/A';
+               messages.push({ role: "tool", tool_call_id: toolCall.id, content: JSON.stringify({ code: tData.tourCode, title: tData.tourName, highlights: tourHighlights, duration: `${tData.durationDays}D${tData.durationNights}N`, destinations: (tData as any)?.destinations?.map((d: any) => d.country), departures: tData.departures.slice(0, 5).map((d: any) => ({ id: d.id, startDate: d.startDate, endDate: d.endDate, seats: d.remainingSeats, status: d.status, prices: d.prices?.map((p: any) => ({ paxType: p.paxType, price: p.sellingPrice })) })) }) });
              } else if (toolCall.function.name === "check_availability") {
                const dep = args.departure_id ? tData.departures.find((d: any) => d.id === args.departure_id) : null;
                if (dep) {
-                 messages.push({ role: "tool", tool_call_id: toolCall.id, content: JSON.stringify({ tourCode: tData.tourCode, departureDate: dep.startDate, availableSeats: dep.availableSeats, status: dep.status }) });
+                 messages.push({ role: "tool", tool_call_id: toolCall.id, content: JSON.stringify({ tourCode: tData.tourCode, departureDate: dep.startDate, availableSeats: dep.remainingSeats, status: dep.status }) });
                } else {
-                 messages.push({ role: "tool", tool_call_id: toolCall.id, content: JSON.stringify({ tourCode: tData.tourCode, all_departures: tData.departures.map((d: any) => ({ id: d.id, date: d.startDate, seats: d.availableSeats })) }) });
+                 messages.push({ role: "tool", tool_call_id: toolCall.id, content: JSON.stringify({ tourCode: tData.tourCode, all_departures: tData.departures.map((d: any) => ({ id: d.id, date: d.startDate, seats: d.remainingSeats })) }) });
                }
              } else if (toolCall.function.name === "get_latest_price") {
                const dep = args.departure_id ? tData.departures.find((d: any) => d.id === args.departure_id) : (tData.departures[0] || null);
@@ -299,19 +319,109 @@ search_intent: ${JSON.stringify(intentExtracted)}
              }
           }
         }
+        // === get_departure_dates ===
+        else if (toolCall.function.name === "get_departure_dates") {
+          const args = JSON.parse(toolCall.function.arguments);
+          const tid = args.tour_id || args.tourCode;
+          const { prisma } = await import("@/lib/prisma");
+          const tour = await prisma.tour.findFirst({
+            where: { OR: [{ id: tid }, { tourCode: tid }] },
+            include: {
+              departures: {
+                where: {
+                  ...(args.available_only ? { remainingSeats: { gt: 0 }, status: 'AVAILABLE' } : {}),
+                  ...(args.date_from ? { startDate: { gte: new Date(args.date_from) } } : { startDate: { gte: new Date() } }),
+                  ...(args.date_to ? { startDate: { lte: new Date(args.date_to) } } : {}),
+                },
+                orderBy: { startDate: 'asc' },
+                include: { prices: true },
+              },
+            },
+          });
+          if (!tour) {
+            messages.push({ role: "tool", tool_call_id: toolCall.id, content: JSON.stringify({ error: "Tour not found" }) });
+          } else {
+            messages.push({ role: "tool", tool_call_id: toolCall.id, content: JSON.stringify({
+              tourCode: tour.tourCode,
+              tourName: tour.tourName,
+              total_departures: tour.departures.length,
+              departures: tour.departures.map((d: any) => ({
+                id: d.id,
+                startDate: d.startDate,
+                endDate: d.endDate,
+                remainingSeats: d.remainingSeats,
+                totalSeats: d.totalSeats,
+                status: d.status,
+                prices: d.prices?.map((p: any) => ({ paxType: p.paxType, price: p.sellingPrice })),
+              })),
+            }) });
+          }
+        }
+        // === compare_tours ===
+        else if (toolCall.function.name === "compare_tours") {
+          const args = JSON.parse(toolCall.function.arguments);
+          const tourIds = args.tour_ids || [];
+          const { prisma } = await import("@/lib/prisma");
+          const toursData = await prisma.tour.findMany({
+            where: { OR: tourIds.map((tid: string) => ({ OR: [{ id: tid }, { tourCode: tid }] })) },
+            include: {
+              departures: { where: { startDate: { gte: new Date() } }, orderBy: { startDate: 'asc' }, take: 5, include: { prices: true } },
+              destinations: true,
+              supplier: { select: { displayName: true, canonicalName: true } },
+            },
+          });
+          const comparison = toursData.map((t: any) => {
+            const lowestPrice = t.departures.length > 0 ? Math.min(...t.departures.flatMap((d: any) => d.prices?.filter((p: any) => p.paxType === 'ADULT').map((p: any) => p.sellingPrice) || [0])) : 0;
+            return {
+              code: t.tourCode,
+              name: t.tourName,
+              duration: `${t.durationDays}D${t.durationNights}N`,
+              destinations: t.destinations?.map((d: any) => d.country).join(', '),
+              supplier: t.supplier?.displayName,
+              lowestPrice,
+              nextDeparture: t.departures[0] ? { date: t.departures[0].startDate, seats: t.departures[0].remainingSeats } : null,
+              totalDepartures: t.departures.length,
+            };
+          });
+          messages.push({ role: "tool", tool_call_id: toolCall.id, content: JSON.stringify({
+            comparison,
+            instruction: "เปรียบเทียบทัวร์ให้ลูกค้าเป็นตาราง: ราคา, ระยะเวลา, จุดหมาย, สายการบิน, วันเดินทางที่ใกล้สุด แนะนำตัวเลือกที่เหมาะสมที่สุด",
+          }) });
+        }
+        // === create_lead ===
         else if (toolCall.function.name === "create_lead") {
           const args = JSON.parse(toolCall.function.arguments);
           const { prisma } = await import("@/lib/prisma");
           try {
-            await prisma.lead.create({
+            const lead = await prisma.lead.create({
               data: {
-                customerName: args.customer_name || "Unknown",
-                contactInfo: args.phone || args.line_id || "No contact",
+                customerName: args.customer_name || userName || "Unknown",
+                contactInfo: args.phone || args.line_id || args.email || "AI_CHAT",
                 source: "AI_CHAT",
-                status: "NEW"
+                status: "NEW",
+                estimatedValue: args.pax && args.pax > 0 ? args.pax * 25000 : null,
               }
             });
-            messages.push({ role: "tool", tool_call_id: toolCall.id, content: JSON.stringify({ success: true, message: "สร้าง Lead สำเร็จ ให้แจ้งลูกค้าว่าจะมีเจ้าหน้าที่ติดต่อกลับ" }) });
+            // Log activity
+            await prisma.leadActivity.create({
+              data: { leadId: lead.id, type: "CHAT", note: `AI สร้าง Lead อัตโนมัติ — จุดหมาย: ${args.destination || 'ไม่ระบุ'}, ช่วง: ${args.travel_date || 'ไม่ระบุ'}, ${args.pax || '?'} คน\nข้อความ: ${args.message || userMessage}` }
+            });
+
+            // === LEAD NOTIFICATION (#5) — Email Sales Team ===
+            try {
+              const { sendAiLeadNotification } = await import("@/lib/email");
+              await sendAiLeadNotification({
+                leadId: lead.id,
+                customerName: args.customer_name || userName || "ลูกค้า AI",
+                contactInfo: args.phone || args.line_id || args.email || "AI_CHAT",
+                destination: args.destination,
+                travelDate: args.travel_date,
+                pax: args.pax,
+                message: args.message || userMessage,
+              });
+            } catch (emailErr) { console.error("[Lead Email] Failed:", emailErr); }
+
+            messages.push({ role: "tool", tool_call_id: toolCall.id, content: JSON.stringify({ success: true, leadId: lead.id, message: "สร้าง Lead สำเร็จ ให้แจ้งลูกค้าว่าจะมีเจ้าหน้าที่ติดต่อกลับภายใน 30 นาที" }) });
           } catch (err) {
             messages.push({ role: "tool", tool_call_id: toolCall.id, content: JSON.stringify({ success: false, error: "DB Error" }) });
           }
@@ -421,31 +531,26 @@ search_intent: ${JSON.stringify(intentExtracted)}
             });
           }
         }
-        else if (toolCall.function.name === "prepare_rpa_booking") {
+        else if (toolCall.function.name === "prepare_rpa_booking" || isWholesaleTool(toolCall.function.name)) {
           const args = JSON.parse(toolCall.function.arguments);
           try {
-            const botUrl = process.env.BOT_SERVICE_URL || 'https://bot.jongtour.com';
-            const rpaRes = await fetch(`${botUrl}/run/start`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ bookingId: args.bookingId, supplierId: args.supplierId })
-            });
-            const rpaData = await rpaRes.json();
-            
+            const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+            const result = await executeWholesaleTool(
+              toolCall.function.name === 'prepare_rpa_booking' ? 'start_wholesale_rpa_session' : toolCall.function.name,
+              toolCall.function.name === 'prepare_rpa_booking' ? { booking_id: args.bookingId, started_by: 'AI' } : args,
+              baseUrl
+            );
             messages.push({
               role: "tool",
               tool_call_id: toolCall.id,
-              content: JSON.stringify({ 
-                success: true, 
-                message: "ระบบได้สั่งการให้ AI Bot ไปดำเนินการจองที่หน้าเว็บของ Wholesale แล้ว กรุณารอรับภาพ Screenshot และกด Approve ในหน้าจอ Admin RPA Dashboard" 
-              })
+              content: result,
             });
-          } catch (err) {
-            console.error("RPA Bot Service Error:", err);
+          } catch (err: any) {
+            console.error("Wholesale Tool Error:", err);
             messages.push({
               role: "tool",
               tool_call_id: toolCall.id,
-              content: JSON.stringify({ success: false, error: "ไม่สามารถเชื่อมต่อกับ RPA Bot Service ได้ กรุณาตรวจสอบว่า bot.jongtour.com ทำงานอยู่หรือไม่" })
+              content: JSON.stringify({ success: false, error: err.message || 'Wholesale tool execution failed' })
             });
           }
         }
@@ -461,76 +566,110 @@ search_intent: ${JSON.stringify(intentExtracted)}
             content: JSON.stringify({ success: true, booking_link: bookingUrl, message: `บอกลูกค้าว่า "สามารถคลิกที่ลิงก์นี้เพื่อดำเนินการจองได้เลยครับ: ${bookingUrl}"` })
           });
         }
-        else if (toolCall.function.name === "create_lead") {
+        // (duplicate create_lead removed — handled by primary Prisma handler above)
+        else if (toolCall.function.name === "create_quotation_draft" || toolCall.function.name === "create_quotation") {
           const args = JSON.parse(toolCall.function.arguments);
+          const { prisma } = await import("@/lib/prisma");
           try {
-            const { error } = await supabase.from("Lead").insert({
-              id: `L-AI-${Date.now()}`,
-              status: "NEW",
-              source: "AI_AGENT",
-              notes: `AI Generated Lead.\nCustomer Intent: ${args.notes}\nPhone: ${args.phone || 'N/A'}\nEmail: ${args.email || 'N/A'}`,
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString()
+            const tid = args.tour_id;
+            const tour = tid ? await prisma.tour.findFirst({
+              where: { OR: [{ id: tid }, { tourCode: tid }] },
+              include: { departures: { where: args.departure_id ? { id: args.departure_id } : { startDate: { gte: new Date() } }, orderBy: { startDate: 'asc' }, take: 1, include: { prices: true } } }
+            }) : null;
+
+            const dep = tour?.departures[0];
+            const adultPrice = dep?.prices?.find((p: any) => p.paxType === 'ADULT')?.sellingPrice || 0;
+            const totalPrice = adultPrice * (args.pax_adult || args.pax || 1);
+
+            const quotation = await prisma.quotation.create({
+              data: {
+                quotationRef: `QT-AI-${Date.now().toString(36).toUpperCase()}`,
+                tourId: tour?.id,
+                departureId: dep?.id,
+                customerName: args.customer_name || userName || "ลูกค้า AI",
+                customerEmail: args.customer_email || null,
+                paxAdult: args.pax_adult || args.pax || 1,
+                paxChild: args.pax_child || 0,
+                totalPrice,
+                status: "DRAFT",
+                notes: args.notes || `AI Generated — ${tour?.tourName || 'Custom Tour'}`,
+                validUntil: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+              }
             });
-            if (error) throw error;
             messages.push({
               role: "tool",
               tool_call_id: toolCall.id,
-              content: JSON.stringify({ success: true, message: "Lead created in CRM. Tell customer we will contact them soon." })
+              content: JSON.stringify({ success: true, quotationRef: quotation.quotationRef, tourName: tour?.tourName, totalPrice, validUntil: quotation.validUntil, message: "ใบเสนอราคาถูกสร้างแล้ว แจ้งลูกค้าว่าเจ้าหน้าที่จะส่งใบเสนอราคาอย่างเป็นทางการทางอีเมล" })
             });
-          } catch (e: any) {
-            messages.push({
-              role: "tool",
-              tool_call_id: toolCall.id,
-              content: JSON.stringify({ success: false, error: e.message })
-            });
+          } catch (err) {
+            console.error("Quotation Error:", err);
+            messages.push({ role: "tool", tool_call_id: toolCall.id, content: JSON.stringify({ success: false, error: "ไม่สามารถสร้างใบเสนอราคาได้" }) });
           }
-        }
-        else if (toolCall.function.name === "create_quotation_draft") {
-          const args = JSON.parse(toolCall.function.arguments);
-          messages.push({
-            role: "tool",
-            tool_call_id: toolCall.id,
-            content: JSON.stringify({ success: true, message: "Quotation draft prepared for Sales team." })
-          });
         }
         else if (toolCall.function.name === "create_private_group_itinerary" || toolCall.function.name === "estimate_private_group_price") {
           const args = JSON.parse(toolCall.function.arguments);
           try {
+            const hotelStars = args.hotel_level === '5 Star' ? 5 : args.hotel_level === '4 Star' ? 4 : 3;
+            const serviceMultiplier = args.service_level === 'Luxury' ? 1.6 : args.service_level === 'Premium' ? 1.3 : 1.0;
             const fitCost = await calculateFitPrice({
               country: args.destination,
               pax: args.pax || 10,
               durationDays: args.duration_days || 3,
-              hotelStars: args.hotel_level === '5 Star' ? 5 : 3,
+              hotelStars,
               includeFlights: args.include_airfare ?? true,
               includeHotels: true,
               includeTransport: true,
               includeGuide: true,
               includeInsurance: true
             });
+            const adjustedPrice = Math.round(fitCost.sellingPricePerPax * serviceMultiplier);
             messages.push({
               role: "tool",
               tool_call_id: toolCall.id,
-              content: JSON.stringify({ success: true, estimated_price_per_pax: fitCost.sellingPricePerPax, total_pax: args.pax })
+              content: JSON.stringify({
+                success: true,
+                estimated_price_per_pax: adjustedPrice,
+                total_pax: args.pax || 10,
+                total_estimated: adjustedPrice * (args.pax || 10),
+                assumptions: {
+                  hotel: `${hotelStars} Star`,
+                  service: args.service_level || 'Standard',
+                  airfare_included: args.include_airfare ?? true,
+                  duration: `${args.duration_days || 3} วัน`,
+                  note: "ราคานี้เป็นประมาณการเบื้องต้นเท่านั้น ราคาจริงอาจเปลี่ยนแปลงตามสายการบิน ช่วงเวลา และโรงแรมที่เลือก"
+                },
+                instruction: "แจ้งลูกค้าว่านี่คือราคาประมาณการเบื้องต้น พร้อมแจ้ง assumptions ทุกข้อ และแนะนำให้สร้าง Lead เพื่อให้เจ้าหน้าที่จัดทำใบเสนอราคาจริง"
+              })
             });
           } catch (err) {
-             messages.push({ role: "tool", tool_call_id: toolCall.id, content: JSON.stringify({ error: "Failed to estimate private group price." }) });
+             messages.push({ role: "tool", tool_call_id: toolCall.id, content: JSON.stringify({ error: "ไม่สามารถคำนวณราคาประมาณการได้ แนะนำให้ลูกค้าติดต่อเจ้าหน้าที่" }) });
           }
         }
         else if (toolCall.function.name === "ask_human_support") {
           const args = JSON.parse(toolCall.function.arguments);
+          try {
+            const { prisma } = await import("@/lib/prisma");
+            await (prisma as any).aiReviewQueue.create({
+              data: {
+                customerMessage: args.customer_message || userMessage,
+                reason: args.reason || "AI requested human support",
+                priority: args.priority || "HIGH",
+              }
+            });
+          } catch (e) { console.error("Review Queue Error:", e); }
+          
           messages.push({
             role: "tool",
             tool_call_id: toolCall.id,
-            content: JSON.stringify({ success: true, message: "เจ้าหน้าที่ได้รับแจ้งเรื่องแล้ว จะรีบติดต่อกลับโดยเร็วที่สุด" })
+            content: JSON.stringify({ success: true, message: "เจ้าหน้าที่ได้รับแจ้งเรื่องแล้ว จะรีบติดต่อกลับโดยเร็วที่สุด แจ้งลูกค้าว่ากรุณารอสักครู่" })
           });
         }
         else {
-          // Mock generic tools
+          console.warn(`[AI] Unknown tool called: ${toolCall.function.name}`);
           messages.push({
             role: "tool",
             tool_call_id: toolCall.id,
-            content: JSON.stringify({ success: true, message: "Tool executed successfully" })
+            content: JSON.stringify({ success: true, message: "Tool executed" })
           });
         }
       }
@@ -550,12 +689,12 @@ search_intent: ${JSON.stringify(intentExtracted)}
         if (shouldStreamSecondPass) {
           if (intentExtracted?.supplier_filter_required && intentExtracted?.matched_supplier?.supplier_id) {
             // Quality Checker Pipeline (No Stream, buffer and validate)
-            const fullResponse = await openai.chat.completions.create({
+            const fullResponse = await createChatCompletionSafe(openai, {
               model: "gpt-4o-mini",
               temperature: 0.1,
               messages,
-              stream: false,
             });
+            totalUsage = mergeUsage(totalUsage, extractUsage(fullResponse));
             let finalOutputText = fullResponse.choices[0]?.message?.content || "";
             
             finalOutputText = await runQualityChecker(
@@ -577,12 +716,12 @@ search_intent: ${JSON.stringify(intentExtracted)}
             }
           } else {
              // Normal Streaming -> Converted to Buffered for Guardrails
-             const secondResponse = await openai.chat.completions.create({
+             const secondResponse = await createChatCompletionSafe(openai, {
                model: "gpt-4o-mini",
                temperature: 0.1,
                messages,
-               stream: false,
              });
+             totalUsage = mergeUsage(totalUsage, extractUsage(secondResponse));
              
              let aiOutput = secondResponse.choices[0]?.message?.content || "";
              const guardrailResult = validateAiOutput(aiOutput, tours);
@@ -610,15 +749,18 @@ search_intent: ${JSON.stringify(intentExtracted)}
           (async () => {
              try {
                 const { prisma } = await import("@/lib/prisma");
-                const conv = await prisma.aiConversation.create({
+                const sessionUid = `s-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+                const conv = await (prisma as any).aiConversation.create({
                    data: {
                       userId: user?.id || null,
-                      customerEmail: user?.email || null,
-                      status: "ACTIVE"
+                      sessionId: sessionUid,
+                      totalTokens: totalUsage.totalTokens,
+                      estimatedCostUsd: totalUsage.estimatedCostUsd,
+                      model: totalUsage.model,
                    }
                 });
                 
-                const userMsgObj = await prisma.aiMessage.create({
+                await prisma.aiMessage.create({
                    data: {
                       conversationId: conv.id,
                       role: "user",
@@ -635,27 +777,28 @@ search_intent: ${JSON.stringify(intentExtracted)}
                 });
                 
                 if (initialMessage.tool_calls && initialMessage.tool_calls.length > 0) {
-                   for (const tc of initialMessage.tool_calls) {
+                   for (const tc of (initialMessage.tool_calls as any[])) {
                       await prisma.aiToolCall.create({
                          data: {
                             messageId: aiMsgObj.id,
-                            toolName: tc.function.name,
-                            arguments: tc.function.arguments ? JSON.parse(tc.function.arguments) : {},
-                            result: {}
+                            toolName: (tc as any).function?.name || 'unknown',
+                            inputArgs: (tc as any).function?.arguments ? JSON.parse((tc as any).function.arguments) : {},
                          }
                       });
-                      
-                      if (tc.function.name === "ask_human_support") {
-                         await prisma.aiReviewQueue.create({
-                            data: {
-                               conversationId: conv.id,
-                               customerMessage: userMessage,
-                               reason: "AI requested human support or confidence was too low",
-                               priority: "HIGH"
-                            }
-                         });
-                      }
                    }
+                }
+
+                // === TOKEN COST LOG (#2) ===
+                if (totalUsage.totalTokens > 0) {
+                  await (prisma as any).aiCostLog.create({
+                    data: {
+                      model: totalUsage.model,
+                      inputTokens: totalUsage.promptTokens,
+                      outputTokens: totalUsage.completionTokens,
+                      totalCostUsd: totalUsage.estimatedCostUsd,
+                      feature: 'chat',
+                    }
+                  });
                 }
              } catch(e) { console.error("DB Log Error", e) }
           })();

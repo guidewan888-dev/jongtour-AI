@@ -3,7 +3,7 @@
  * Core logic for creating, updating, and managing booking lifecycles
  */
 import { SupabaseClient } from '@supabase/supabase-js';
-import prisma from '@/lib/prisma';
+import { prisma } from '@/lib/prisma';
 import { v4 as uuidv4 } from 'uuid';
 
 export class BookingService {
@@ -52,7 +52,7 @@ export class BookingService {
 
     // Calculate total price based on pax
     const paxCount = Array.isArray(payload.paxData) ? payload.paxData.length : 1;
-    const totalPrice = (payload.priceSnapshot?.sellingPrice || departure.prices?.[0]?.sellingPrice || 0) * paxCount;
+    const totalPrice = (payload.priceSnapshot?.sellingPrice || 0) * paxCount;
 
     // Create Booking
     const booking = await prisma.booking.create({
@@ -85,6 +85,29 @@ export class BookingService {
       },
       data: { status }
     });
+
+    // Send notification on key status changes
+    if (updated.count > 0 && ['CONFIRMED', 'paid'].includes(status)) {
+      try {
+        const { NotificationService } = await import('./NotificationService');
+        const booking = await prisma.booking.findFirst({
+          where: { OR: [{ id: bookingId }, { bookingRef: bookingId }] },
+          include: { customer: true, tour: true },
+        });
+        if (booking?.customer) {
+          const cust = { email: booking.customer.email, lineId: booking.customer.lineId || undefined, id: booking.customer.id };
+          if (status === 'CONFIRMED') {
+            await NotificationService.bookingConfirmed(cust, {
+              bookingRef: booking.bookingRef,
+              tourName: booking.tour?.tourName || 'Tour',
+              date: booking.createdAt.toLocaleDateString('th-TH'),
+              pax: 1,
+              total: `฿${booking.totalPrice.toLocaleString()}`,
+            });
+          }
+        }
+      } catch {}
+    }
     
     return updated.count > 0;
   }

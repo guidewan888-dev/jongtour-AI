@@ -1,5 +1,6 @@
 "use server";
 
+import { prisma } from "@/lib/prisma";
 import { createClient } from "@/utils/supabase/server";
 import { cookies } from "next/headers";
 
@@ -12,11 +13,11 @@ export async function createQuotation(formData: FormData) {
     return { success: false, error: "กรุณาเข้าสู่ระบบ" };
   }
 
-  const { data: dbUser } = await supabase
-    .from('users')
-    .select('*, agent:agents(*)')
-    .eq('email', user.email || '')
-    .single();
+  // Use Prisma instead of raw Supabase for data integrity
+  const dbUser = await prisma.user.findFirst({
+    where: { email: user.email || '' },
+    include: { agent: true },
+  });
 
   if (!dbUser || !dbUser.agent) {
     return { success: false, error: "สิทธิ์การเข้าถึงไม่ถูกต้อง" };
@@ -42,9 +43,8 @@ export async function createQuotation(formData: FormData) {
     const validUntil = new Date();
     validUntil.setDate(validUntil.getDate() + 7);
 
-    const { data: quotation, error } = await supabase
-      .from('quotations')
-      .insert({
+    const quotation = await prisma.quotation.create({
+      data: {
         quotationRef,
         agentId: dbUser.agent.id,
         departureId,
@@ -56,14 +56,9 @@ export async function createQuotation(formData: FormData) {
         netPriceEstimate,
         notes,
         validUntil,
-        status: "ACTIVE"
-      })
-      .select('id')
-      .single();
-
-    if (error || !quotation) {
-      throw new Error("Failed to insert quotation: " + error?.message);
-    }
+        status: "ACTIVE",
+      },
+    });
 
     return { success: true, quotationId: quotation.id };
   } catch (error: any) {

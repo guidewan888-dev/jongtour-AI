@@ -1,9 +1,13 @@
+﻿export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import * as line from '@line/bot-sdk';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://qterfftaebnoawnzkfgu.supabase.co";
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || "sb_publishable_SRwNSJ89mInda5FcuB1W2w_9IEJlSOI";
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+if (!supabaseUrl || !supabaseKey) {
+  throw new Error('Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY environment variables');
+}
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 const lineConfig = {
@@ -42,7 +46,7 @@ export async function GET(request: Request) {
       title: t.tourName,
       code: t.tourCode,
       price: t.departures.length > 0 ? Math.min(...t.departures.map((d: any) => d.prices?.[0]?.sellingPrice || 0)) : 0,
-      destination: t.destinations?.[0]?.country || 'ไม่ระบุ',
+      destination: t.destinations?.[0]?.country || 'เนเธกเนเธฃเธฐเธเธธ',
       imageUrl: t.images?.[0]?.imageUrl || 'https://images.unsplash.com/photo-1436491865332-7a61a109cc05?auto=format&fit=crop&w=800&q=80',
     }));
 
@@ -87,11 +91,11 @@ export async function GET(request: Request) {
             messages: [
               {
                 type: 'text',
-                text: `🔥 โปรไฟไหม้มาแล้วครับพี่! ทัวร์ ${matchedTour.destination} ที่พี่เคยดูไว้ ตอนนี้ราคาลงมาเหลือแค่ ${matchedTour.price.toLocaleString()} บาท!! รีบจองก่อนเต็มนะครับ สนใจพิมพ์ 'สนใจ' หรือ 'จอง' ได้เลยครับ 👇`
+                text: `๐”ฅ เนเธเธฃเนเธเนเธซเธกเนเธกเธฒเนเธฅเนเธงเธเธฃเธฑเธเธเธตเน! เธ—เธฑเธงเธฃเน ${matchedTour.destination} เธ—เธตเนเธเธตเนเน€เธเธขเธ”เธนเนเธงเน เธ•เธญเธเธเธตเนเธฃเธฒเธเธฒเธฅเธเธกเธฒเน€เธซเธฅเธทเธญเนเธเน ${matchedTour.price.toLocaleString()} เธเธฒเธ—!! เธฃเธตเธเธเธญเธเธเนเธญเธเน€เธ•เนเธกเธเธฐเธเธฃเธฑเธ เธชเธเนเธเธเธดเธกเธเน 'เธชเธเนเธ' เธซเธฃเธทเธญ 'เธเธญเธ' เนเธ”เนเน€เธฅเธขเธเธฃเธฑเธ ๐‘`
               },
               {
                 type: 'flex',
-                altText: `โปรไฟไหม้ ${matchedTour.title}`,
+                altText: `เนเธเธฃเนเธเนเธซเธกเน ${matchedTour.title}`,
                 contents: {
                   type: 'bubble',
                   hero: {
@@ -106,7 +110,7 @@ export async function GET(request: Request) {
                     layout: 'vertical',
                     contents: [
                       { type: 'text', text: matchedTour.title, weight: 'bold', size: 'md', wrap: true },
-                      { type: 'text', text: `ราคา: ${matchedTour.price.toLocaleString()} บาท`, size: 'lg', color: '#ff3344', weight: 'bold' }
+                      { type: 'text', text: `เธฃเธฒเธเธฒ: ${matchedTour.price.toLocaleString()} เธเธฒเธ—`, size: 'lg', color: '#ff3344', weight: 'bold' }
                     ]
                   },
                   footer: {
@@ -117,7 +121,7 @@ export async function GET(request: Request) {
                         type: 'button',
                         style: 'primary',
                         color: '#ff3344',
-                        action: { type: 'uri', label: 'ดูรายละเอียด', uri: `https://jongtour.com/tours/${matchedTour.code}` }
+                        action: { type: 'uri', label: 'เธ”เธนเธฃเธฒเธขเธฅเธฐเน€เธญเธตเธขเธ”', uri: `https://jongtour.com/tours/${matchedTour.code}` }
                       }
                     ]
                   }
@@ -138,3 +142,4 @@ export async function GET(request: Request) {
     return NextResponse.json({ success: false, error: err.message }, { status: 500 });
   }
 }
+

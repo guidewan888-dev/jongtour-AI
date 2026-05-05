@@ -1,12 +1,9 @@
-import { PrismaClient, LinkAuditRun, LinkAuditItem } from '@prisma/client';
-import { createClient } from '@supabase/supabase-js';
+import { prisma } from '@/lib/prisma';
 
-const prisma = new PrismaClient();
-
-// Supabase client to check things if needed, or we use Prisma
+// Link Monitor Service — tour/departure health auditing
 export class LinkMonitorService {
   
-  static async runFullAudit(): Promise<LinkAuditRun> {
+  static async runFullAudit() {
     // Create new Run record
     const run = await prisma.linkAuditRun.create({
       data: {

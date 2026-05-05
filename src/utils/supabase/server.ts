@@ -1,41 +1,36 @@
-import { createServerClient } from "@supabase/ssr";
-import { cookies } from "next/headers";
+import { createServerClient, type CookieOptions } from '@supabase/ssr'
+import { cookies } from 'next/headers'
+import { ReadonlyRequestCookies } from 'next/dist/server/web/spec-extension/adapters/request-cookies'
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://qterfftaebnoawnzkfgu.supabase.co';
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || 'sb_publishable_SRwNSJ89mInda5FcuB1W2w_9IEJlSOI';
-
-export const createClient = (cookieStore: Awaited<ReturnType<typeof cookies>>) => {
-  // Try to detect localhost from headers if possible, otherwise rely on a default safe fallback
-  // In server components during local dev, NODE_ENV is usually enough, but if they run `npm start`
-  // locally, we need to be careful.
-  const isLocalhost = process.env.NEXT_PUBLIC_SITE_URL?.includes('localhost') || process.env.NODE_ENV === 'development';
-  const cookieDomain = process.env.NEXT_PUBLIC_COOKIE_DOMAIN || ((process.env.NODE_ENV === 'production' && !isLocalhost) ? '.jongtour.com' : undefined);
-  const isSecure = process.env.NODE_ENV === 'production' && !isLocalhost;
+export function createClient(cookieStore?: ReadonlyRequestCookies) {
+  // Support being called with or without a pre-fetched cookieStore
+  const store = cookieStore || cookies()
 
   return createServerClient(
-    supabaseUrl!,
-    supabaseKey!,
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
-      cookieOptions: {
-        domain: cookieDomain,
-        path: '/',
-        sameSite: 'lax',
-        secure: isSecure,
-      },
       cookies: {
-        getAll() {
-          return cookieStore.getAll()
+        get(name: string) {
+          return store.get(name)?.value
         },
-        setAll(cookiesToSet) {
+        set(name: string, value: string, options: CookieOptions) {
           try {
-            cookiesToSet.forEach(({ name, value, options }) => {
-              cookieStore.set(name, value, { ...options, domain: cookieDomain || options.domain, secure: isSecure })
-            })
-          } catch {
-            // The `setAll` method was called from a Server Component.
+            // @ts-ignore - store may be readonly in some contexts
+            store.set({ name, value, ...options })
+          } catch (error) {
+            // Called from Server Component — safe to ignore
+          }
+        },
+        remove(name: string, options: CookieOptions) {
+          try {
+            // @ts-ignore
+            store.set({ name, value: '', ...options })
+          } catch (error) {
+            // Called from Server Component — safe to ignore
           }
         },
       },
-    },
-  );
-};
+    }
+  )
+}

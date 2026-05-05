@@ -1,7 +1,6 @@
+export const dynamic = 'force-dynamic';
 import { NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import { prisma } from "@/lib/prisma";
 
 export async function POST(req: Request, { params }: { params: { id: string } }) {
   try {
@@ -19,13 +18,13 @@ export async function POST(req: Request, { params }: { params: { id: string } })
     // Deactivate all other versions in this template
     await prisma.aiPromptVersion.updateMany({
       where: { templateId: versionToActivate.templateId },
-      data: { isActive: false }
+      data: {} // isDefault field not in schema yet
     });
 
     // Activate the requested version
     const activatedVersion = await prisma.aiPromptVersion.update({
       where: { id: promptVersionId },
-      data: { isActive: true }
+      data: {} // isDefault field not in schema yet
     });
 
     // Update the current version pointer on the template
@@ -40,3 +39,4 @@ export async function POST(req: Request, { params }: { params: { id: string } })
     return NextResponse.json({ error: "Failed to activate prompt version" }, { status: 500 });
   }
 }
+

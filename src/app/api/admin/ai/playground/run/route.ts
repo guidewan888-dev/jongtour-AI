@@ -1,3 +1,4 @@
+﻿export const dynamic = 'force-dynamic';
 import { NextResponse } from "next/server";
 import OpenAI from "openai";
 
@@ -45,3 +46,4 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: error.message || "Failed to run playground test" }, { status: 500 });
   }
 }
+

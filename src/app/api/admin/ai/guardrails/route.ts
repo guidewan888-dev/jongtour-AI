@@ -1,7 +1,7 @@
+export const dynamic = 'force-dynamic';
 import { NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from '@/lib/prisma';
 
-const prisma = new PrismaClient();
 
 // GET all guardrails
 export async function GET() {
@@ -57,3 +57,4 @@ export async function PATCH(req: Request) {
     return NextResponse.json({ error: "Failed to update guardrail" }, { status: 500 });
   }
 }
+

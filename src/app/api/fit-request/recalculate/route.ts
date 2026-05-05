@@ -1,3 +1,4 @@
+﻿export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from "next/server";
 import { calculateFitPrice } from "@/services/pricingEngine";
 
@@ -20,7 +21,7 @@ export async function POST(req: NextRequest) {
       includeInsurance: true
     });
 
-    const estimatedPrice = `${pricingData.sellingPricePerPax.toLocaleString()} THB/ท่าน`;
+    const estimatedPrice = `${pricingData.sellingPricePerPax.toLocaleString()} THB/เธ—เนเธฒเธ`;
 
     return NextResponse.json({ success: true, estimatedPrice });
   } catch (error) {
@@ -28,3 +29,4 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Failed to recalculate price" }, { status: 500 });
   }
 }
+

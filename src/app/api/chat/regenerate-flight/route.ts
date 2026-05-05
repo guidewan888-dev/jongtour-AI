@@ -1,3 +1,4 @@
+﻿export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
 
@@ -24,10 +25,10 @@ Return ONLY a valid JSON object representing the new flight.
 Make sure the airline, airlineCode, and flight times are realistic.
 Format:
 {
-  "airline": "string (ชื่อสายการบิน เช่น Thai Airways, EVA Air)",
-  "airlineCode": "string (IATA code 2 ตัวอักษร เช่น TG, BR)",
-  "outbound": "string (เที่ยวบินขาไป เช่น TG676 BKK-NRT 07:35 - 15:45)",
-  "inbound": "string (เที่ยวบินขากลับ เช่น TG677 NRT-BKK 17:30 - 22:30)"
+  "airline": "string (เธเธทเนเธญเธชเธฒเธขเธเธฒเธฃเธเธดเธ เน€เธเนเธ Thai Airways, EVA Air)",
+  "airlineCode": "string (IATA code 2 เธ•เธฑเธงเธญเธฑเธเธฉเธฃ เน€เธเนเธ TG, BR)",
+  "outbound": "string (เน€เธ—เธตเนเธขเธงเธเธดเธเธเธฒเนเธ เน€เธเนเธ TG676 BKK-NRT 07:35 - 15:45)",
+  "inbound": "string (เน€เธ—เธตเนเธขเธงเธเธดเธเธเธฒเธเธฅเธฑเธ เน€เธเนเธ TG677 NRT-BKK 17:30 - 22:30)"
 }`;
 
     const completion = await openai.chat.completions.create({
@@ -43,3 +44,4 @@ Format:
     return NextResponse.json({ error: "Failed to regenerate flight" }, { status: 500 });
   }
 }
+

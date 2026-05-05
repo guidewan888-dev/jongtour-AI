@@ -1,3 +1,4 @@
+﻿export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
@@ -63,3 +64,4 @@ Return ONLY a valid JSON object with the following keys, and nothing else. If a 
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }
+

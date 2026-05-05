@@ -24,9 +24,9 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# local env files
-.env*.local
+# local env files — NEVER commit secrets
 .env
+.env*.local
 .env.development.local
 .env.test.local
 .env.production.local
@@ -43,4 +43,62 @@ dev.db
 *.db
 *.sqlite
 
-.vercel
+# build artifacts & logs
+build_output.txt
+*.log
+server.log
+
+# one-off scripts (prevent root clutter from being committed)
+/*.js
+!postcss.config.js
+!tailwind.config.js
+/*.mjs
+!next.config.mjs
+!postcss.config.mjs
+/*.py
+/*.ps1
+/*.html
+
+# quarantine / cleanup
+/_quarantine/
+
+# backup files
+*.backup
+*.bak
+*.old
+
+# bot-service (now internal — deploy separately if needed)
+/bot-service/
+
+# Supabase
+/supabase/.temp/
+supabase/.branches
+
+# IDE
+.vscode/settings.json
+.idea/
+*.swp
+*.swo
+
+# OS
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Security — never commit keys/certs
+*.key
+*.cert
+*.crt
+*.p12
+*.pfx
+
+# Prisma
+prisma/migrations/
+prisma/*.db
+
+# Sentry
+.sentryclirc
+
+# Playwright
+/test-results/
+/playwright-report/

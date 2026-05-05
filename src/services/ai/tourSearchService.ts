@@ -2,6 +2,7 @@ import { IntentExtractionResult } from './intentExtractor';
 import { supplierMaster } from './supplierConfig';
 import { prisma } from '@/lib/prisma';
 import { Prisma } from '@prisma/client';
+import { aiRealDataFilter } from '@/lib/filters/realDataFilter';
 
 export async function searchTours(
   args: any,
@@ -20,7 +21,7 @@ export async function searchTours(
     delete args.supplier_id;
   }
 
-  const whereClause: Prisma.TourWhereInput = { status: 'PUBLISHED' };
+  const whereClause: Prisma.TourWhereInput = { ...aiRealDataFilter };
 
   if (args.isLastMinute) {
     const today = new Date();
@@ -122,7 +123,7 @@ export async function searchTours(
       startDate: d.startDate,
       endDate: d.endDate,
       price: d.prices?.[0]?.sellingPrice || 0,
-      availableSeats: d.availableSeats
+      availableSeats: d.remainingSeats
     }))
   }));
   
@@ -203,7 +204,7 @@ export function formatTourSummary(tours: any[]) {
       .map((d: any) => ({
         dateText: `${new Date(d.startDate).toLocaleDateString('th-TH', { day: 'numeric', month: 'short' })} - ${new Date(d.endDate).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' })}`,
         price: d.price,
-        availableSeats: d.availableSeats
+        availableSeats: d.remainingSeats
       })).slice(0, 5) : []
   }));
 }

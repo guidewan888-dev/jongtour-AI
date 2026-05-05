@@ -1,22 +1,20 @@
-// Identity & Security
+/**
+ * Service Layer Index — Central export for all 16 core services
+ */
 export { AuthService } from './AuthService';
-export { UserService } from './UserService';
 export { RolePermissionService } from './RolePermissionService';
-
-// Product & Inventory
-export { TourService } from './TourService';
-export { SupplierService } from './SupplierService';
-export { AvailabilityService } from './AvailabilityService';
-export { PricingService } from './PricingService';
-
-// Transaction
 export { BookingService } from './BookingService';
 export { PaymentService } from './PaymentService';
-
-// Operations & AI
+export { TourService } from './TourService';
+export { PricingService } from './PricingService';
 export { CRMService } from './CRMService';
-export { CMSService } from './CMSService';
-export { ReportService } from './ReportService';
 export { NotificationService } from './NotificationService';
-export { LinkValidationService } from './LinkValidationService';
+export { AffiliateService } from './AffiliateService';
+export { TalentService } from './TalentService';
+export { ReportService } from './ReportService';
+export { AuditService } from './AuditService';
 export { AISearchService } from './AISearchService';
+export { AvailabilityService } from './AvailabilityService';
+export { CMSService } from './CMSService';
+export { SupplierService } from './SupplierService';
+export { UserService } from './UserService';

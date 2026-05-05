@@ -1,26 +1,34 @@
-import Link from 'next/link';
+import React from 'react';
+import type { Metadata } from 'next';
 
-export default function NotFound() {
+export const metadata: Metadata = {
+  title: 'ไม่พบหน้าที่ค้นหา (404)',
+  description: 'ไม่พบหน้าที่คุณค้นหา กรุณาตรวจสอบ URL หรือกลับหน้าหลัก',
+};
+
+export default function NotFoundPage() {
   return (
-    <div className="flex flex-col items-center justify-center min-h-[70vh] px-4 text-center">
-      <h1 className="text-6xl font-black text-slate-900 mb-4">404</h1>
-      <h2 className="text-2xl font-bold text-slate-700 mb-6">ขออภัย ไม่พบหน้าที่คุณต้องการ (Page Not Found)</h2>
-      <p className="text-slate-500 max-w-md mb-8">
-        หน้าที่คุณกำลังพยายามเข้าถึงอาจถูกลบไปแล้ว หรือเปลี่ยน URL ไปเป็นที่อื่น
-      </p>
-      <div className="flex gap-4">
-        <Link 
-          href="/" 
-          className="bg-primary text-white font-bold py-3 px-6 rounded-full hover:bg-primary/90 transition-colors"
-        >
-          กลับสู่หน้าหลัก (Home)
-        </Link>
-        <Link 
-          href="/info/contact" 
-          className="bg-slate-100 text-slate-700 font-bold py-3 px-6 rounded-full hover:bg-slate-200 transition-colors"
-        >
-          ติดต่อเรา (Contact Us)
-        </Link>
+    <div className="min-h-[80vh] flex items-center justify-center font-sans p-4">
+      <div className="max-w-md w-full text-center">
+        <div className="text-9xl font-black text-slate-200 mb-4">404</div>
+        <h1 className="text-3xl font-bold text-slate-800 mb-2">ไม่พบหน้าที่ค้นหา</h1>
+        <p className="text-slate-500 mb-8">
+          ขออภัย ไม่พบหน้าที่คุณกำลังมองหา ลิงก์อาจไม่ถูกต้องหรือหน้านี้อาจถูกลบไปแล้ว
+        </p>
+        <div className="flex flex-col sm:flex-row gap-3 justify-center">
+          <a 
+            href="/" 
+            className="px-6 py-3 bg-[#F97316] text-white font-medium rounded-xl hover:bg-[#EA580C] transition-colors inline-block shadow-sm"
+          >
+            🏠 กลับหน้าหลัก
+          </a>
+          <a 
+            href="/search" 
+            className="px-6 py-3 bg-white text-slate-700 font-medium rounded-xl border border-slate-200 hover:bg-slate-50 transition-colors inline-block"
+          >
+            🔍 ค้นหาทัวร์
+          </a>
+        </div>
       </div>
     </div>
   );

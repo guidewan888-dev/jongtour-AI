@@ -1,7 +1,7 @@
+export const dynamic = 'force-dynamic';
 import { NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from '@/lib/prisma';
 
-const prisma = new PrismaClient();
 
 // GET all conversations for the Chat Logs UI
 export async function GET(req: Request) {
@@ -17,9 +17,9 @@ export async function GET(req: Request) {
     const conversations = await prisma.aiConversation.findMany({
       where: whereClause,
       include: {
-        messages: {
+        AiMessage: {
           orderBy: { createdAt: 'desc' },
-          take: 1 // Just to show the last message preview
+          take: 1
         }
       },
       orderBy: { updatedAt: 'desc' },
@@ -32,3 +32,4 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: "Failed to fetch conversations" }, { status: 500 });
   }
 }
+

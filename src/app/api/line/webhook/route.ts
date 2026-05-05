@@ -1,3 +1,4 @@
+﻿export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import * as line from '@line/bot-sdk';
 import { processAiQuery, generateAiReply, summarizeChatSession } from '@/services/aiPlanner';
@@ -5,15 +6,25 @@ import { transcribeAudio, analyzeImage } from '@/services/aiMediaProcessor';
 import { buildTourCarousel, buildItineraryFlex } from '@/services/lineFlexBuilder';
 import { prisma } from '@/lib/prisma';
 
-// Configure LINE Client
-const config = {
-  channelAccessToken: process.env.LINE_CHANNEL_ACCESS_TOKEN || '',
-  channelSecret: process.env.LINE_CHANNEL_SECRET || '',
-};
+// Lazy LINE client initialization (avoids build-time crash when env vars aren't set)
+function getLineConfig() {
+  return {
+    channelAccessToken: process.env.LINE_CHANNEL_ACCESS_TOKEN || '',
+    channelSecret: process.env.LINE_CHANNEL_SECRET || '',
+  };
+}
 
-// Create a new LINE client
-const client = new line.messagingApi.MessagingApiClient(config);
-const blobClient = new line.messagingApi.MessagingApiBlobClient(config);
+let _client: line.messagingApi.MessagingApiClient | null = null;
+let _blobClient: line.messagingApi.MessagingApiBlobClient | null = null;
+
+function getClient() {
+  if (!_client) _client = new line.messagingApi.MessagingApiClient(getLineConfig());
+  return _client;
+}
+function getBlobClient() {
+  if (!_blobClient) _blobClient = new line.messagingApi.MessagingApiBlobClient(getLineConfig());
+  return _blobClient;
+}
 
 export async function POST(request: Request) {
   try {
@@ -53,7 +64,7 @@ export async function POST(request: Request) {
             userMessage = event.message.text;
           } else if (event.message.type === 'audio') {
             // Fetch audio from LINE
-            const stream = await blobClient.getMessageContent(event.message.id);
+            const stream = await getBlobClient().getMessageContent(event.message.id);
             const chunks = [];
             for await (const chunk of stream) chunks.push(chunk);
             const buffer = Buffer.concat(chunks);
@@ -61,7 +72,7 @@ export async function POST(request: Request) {
             userMessage = await transcribeAudio(buffer);
           } else if (event.message.type === 'image') {
             // Fetch image from LINE
-            const stream = await blobClient.getMessageContent(event.message.id);
+            const stream = await getBlobClient().getMessageContent(event.message.id);
             const chunks = [];
             for await (const chunk of stream) chunks.push(chunk);
             const buffer = Buffer.concat(chunks);
@@ -71,9 +82,9 @@ export async function POST(request: Request) {
           }
 
           if (!userMessage || userMessage.trim() === '') {
-            return await client.replyMessage({
+            return await getClient().replyMessage({
               replyToken: replyToken,
-              messages: [{ type: 'text', text: 'ขออภัยค่ะ ระบบไม่สามารถประมวลผลข้อความนี้ได้ กรุณาลองใหม่อีกครั้งค่ะ' }]
+              messages: [{ type: 'text', text: 'เธเธญเธญเธ เธฑเธขเธเนเธฐ เธฃเธฐเธเธเนเธกเนเธชเธฒเธกเธฒเธฃเธ–เธเธฃเธฐเธกเธงเธฅเธเธฅเธเนเธญเธเธงเธฒเธกเธเธตเนเนเธ”เน เธเธฃเธธเธ“เธฒเธฅเธญเธเนเธซเธกเนเธญเธตเธเธเธฃเธฑเนเธเธเนเธฐ' }]
             });
           }
 
@@ -115,7 +126,7 @@ export async function POST(request: Request) {
                 userProfile = await prisma.userProfile.create({ data: { userId: lineUserId, preferences: {} } });
               }
               if (userProfile && userProfile.preferences && Object.keys(userProfile.preferences).length > 0) {
-                crmContext = `\n[CRM DATA: คุณมีข้อมูลความชอบของลูกค้ารายนี้จากประวัติเก่า: ${JSON.stringify(userProfile.preferences)} โปรดนำข้อมูลเหล่านี้มาช่วยในการสนทนา]`;
+                crmContext = `\n[CRM DATA: เธเธธเธ“เธกเธตเธเนเธญเธกเธนเธฅเธเธงเธฒเธกเธเธญเธเธเธญเธเธฅเธนเธเธเนเธฒเธฃเธฒเธขเธเธตเนเธเธฒเธเธเธฃเธฐเธงเธฑเธ•เธดเน€เธเนเธฒ: ${JSON.stringify(userProfile.preferences)} เนเธเธฃเธ”เธเธณเธเนเธญเธกเธนเธฅเน€เธซเธฅเนเธฒเธเธตเนเธกเธฒเธเนเธงเธขเนเธเธเธฒเธฃเธชเธเธ—เธเธฒ]`;
               }
             } catch (err) {
               console.error("CRM Fetch Error:", err);
@@ -160,7 +171,7 @@ export async function POST(request: Request) {
           }
 
           // Reply via LINE API
-          const result = await client.replyMessage({
+          const result = await getClient().replyMessage({
             replyToken: replyToken,
             messages: messages
           });
@@ -179,11 +190,11 @@ export async function POST(request: Request) {
         } catch (error) {
           console.error("Error processing LINE event:", error);
           // Fallback reply
-          return await client.replyMessage({
+          return await getClient().replyMessage({
             replyToken: replyToken,
             messages: [{
               type: 'text',
-              text: "ขออภัยค่ะ แอดมิน AI กำลังติดปัญหาเล็กน้อย กรุณารอสักครู่หรือติดต่อแอดมินทาง @Jongtour นะคะ"
+              text: "เธเธญเธญเธ เธฑเธขเธเนเธฐ เนเธญเธ”เธกเธดเธ AI เธเธณเธฅเธฑเธเธ•เธดเธ”เธเธฑเธเธซเธฒเน€เธฅเนเธเธเนเธญเธข เธเธฃเธธเธ“เธฒเธฃเธญเธชเธฑเธเธเธฃเธนเนเธซเธฃเธทเธญเธ•เธดเธ”เธ•เนเธญเนเธญเธ”เธกเธดเธเธ—เธฒเธ @Jongtour เธเธฐเธเธฐ"
             }]
           });
         }
@@ -196,3 +207,5 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }
+
+

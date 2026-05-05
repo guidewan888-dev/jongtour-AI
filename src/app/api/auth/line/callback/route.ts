@@ -21,8 +21,12 @@ export async function GET(request: Request) {
     return NextResponse.redirect(`${origin}/login`);
   }
 
-  const clientId = process.env.LINE_CLIENT_ID || '2009935240';
-  const clientSecret = process.env.LINE_CLIENT_SECRET || 'cf1f206b44b04eaeeb31895cf156c800';
+  const clientId = process.env.LINE_CLIENT_ID;
+  const clientSecret = process.env.LINE_CLIENT_SECRET;
+  if (!clientId || !clientSecret) {
+    console.error('Missing LINE_CLIENT_ID or LINE_CLIENT_SECRET');
+    return NextResponse.redirect(`${origin}/login?error=server_config_error`);
+  }
   const redirectUri = `${origin}/api/auth/line/callback`;
 
   try {
@@ -69,8 +73,12 @@ export async function GET(request: Request) {
     const email = lineEmail || `line_${lineId}@jongtour.com`;
 
     // 3. Initialize Admin Supabase Client
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://qterfftaebnoawnzkfgu.supabase.co';
-    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF0ZXJmZnRhZWJub2F3bnprZmd1Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NzQ3MzAxNCwiZXhwIjoyMDkzMDQ5MDE0fQ.IDd7B8okNE1B0vf1OVQizDGeVQNdVwLK0gzogOyWIFE';
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    if (!supabaseUrl || !supabaseServiceKey) {
+      console.error('Missing Supabase environment variables');
+      return NextResponse.redirect(`${origin}/login?error=server_config_error`);
+    }
     
     const supabaseAdmin = createSupabaseAdmin(
       supabaseUrl,

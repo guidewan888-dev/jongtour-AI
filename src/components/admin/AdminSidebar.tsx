@@ -28,7 +28,7 @@ export default function AdminSidebar({ role = "CUSTOMER", userName = "Admin User
     <aside className="w-[260px] bg-trust-900 border-r border-trust-800 text-white flex flex-col fixed h-full z-20 shadow-xl">
       {/* Brand Header */}
       <div className="h-20 px-6 border-b border-trust-800 flex items-center shrink-0">
-        <Link href="/admin" className="flex items-center gap-2 group w-full">
+        <Link href="/dashboard" className="flex items-center gap-2 group w-full">
           <div className="w-8 h-8 bg-gradient-to-br from-primary to-orange-600 rounded-lg flex items-center justify-center shadow-sm">
              <Globe2 className="w-5 h-5 text-white" />
           </div>

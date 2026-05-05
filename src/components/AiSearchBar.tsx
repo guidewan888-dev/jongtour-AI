@@ -3,7 +3,11 @@
 import { useState, useRef } from "react";
 import { Sparkles, Mic, ScanSearch, ArrowRight, Wand2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { Badge } from "@/components/ui-new/Badge";
+
+// Inline fallback for missing ui-new/Badge module
+const Badge = ({ children, variant, className = '' }: { children: React.ReactNode; variant?: string; className?: string }) => (
+  <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-slate-100 text-slate-700 ${className}`}>{children}</span>
+);
 
 export default function AiSearchBar() {
   const [query, setQuery] = useState("");

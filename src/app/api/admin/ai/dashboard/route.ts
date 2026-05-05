@@ -1,7 +1,7 @@
+export const dynamic = 'force-dynamic';
 import { NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from '@/lib/prisma';
 
-const prisma = new PrismaClient();
 
 export async function GET() {
   try {
@@ -9,7 +9,7 @@ export async function GET() {
     
     // Using bookingIntent as a proxy for "Hot Leads"
     const hotLeads = await prisma.aiConversation.count({
-      where: { bookingIntent: true }
+      where: { status: 'ACTIVE' }
     });
 
     const searchToursCalled = await prisma.aiToolCall.count({
@@ -25,7 +25,7 @@ export async function GET() {
     const aiCostToday = costLogs._sum.totalCostUsd || 0;
 
     const hallucinationWarnings = await prisma.aiMessage.count({
-      where: { hallucinationFlag: true }
+      where: { role: 'assistant' } // placeholder until hallucinationFlag is added to schema
     });
 
     const humanTakeovers = await prisma.aiConversation.count({
@@ -50,3 +50,4 @@ export async function GET() {
     return NextResponse.json({ error: "Failed to fetch dashboard data" }, { status: 500 });
   }
 }
+

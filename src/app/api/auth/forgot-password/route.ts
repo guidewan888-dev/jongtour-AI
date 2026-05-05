@@ -1,7 +1,8 @@
+export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import { createClient } from '@/utils/supabase/server';
 import { cookies } from 'next/headers';
-import { EmailService } from '@/lib/email';
+import { sendPasswordResetEmail } from '@/lib/email';
 import { prisma } from '@/lib/prisma'; // Assuming prisma is available here or we can use Supabase JS
 
 export async function POST(req: Request) {
@@ -16,9 +17,14 @@ export async function POST(req: Request) {
     const supabase = createClient(cookieStore);
 
     // Use Service Role to bypass RLS for user verification
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    if (!supabaseUrl || !serviceRoleKey) {
+      return NextResponse.json({ success: false, error: 'Server configuration error' }, { status: 500 });
+    }
     const supabaseAdmin = require('@supabase/supabase-js').createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://qterfftaebnoawnzkfgu.supabase.co',
-      process.env.SUPABASE_SERVICE_ROLE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF0ZXJmZnRhZWJub2F3bnprZmd1Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NzQ3MzAxNCwiZXhwIjoyMDkzMDQ5MDE0fQ.IDd7B8okNE1B0vf1OVQizDGeVQNdVwLK0gzogOyWIFE'
+      supabaseUrl,
+      serviceRoleKey
     );
 
     // 1. Verify if user exists and is an admin
@@ -59,7 +65,7 @@ export async function POST(req: Request) {
 
     // 3. Send custom email using our SMTP EmailService
     const actionLink = data.properties.action_link;
-    const emailResult = await EmailService.sendPasswordReset(email, actionLink);
+    const emailResult = await sendPasswordResetEmail({ to: email, resetUrl: actionLink });
 
     if (!emailResult.success) {
       console.error('Failed to send SMTP email, fallback to logging:', emailResult.error);
@@ -82,3 +88,4 @@ export async function POST(req: Request) {
     return NextResponse.json({ success: false, error: error.message || error.toString() || 'Internal Server Error', stack: error.stack }, { status: 500 });
   }
 }
+

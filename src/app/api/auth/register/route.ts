@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma'; // Assuming this exists, I'll need to check
 import { createClient } from '@/utils/supabase/server';
@@ -35,9 +36,9 @@ export async function POST(req: Request) {
 
     // 2. Create Agent & User in Prisma
     const { PrismaClient } = await import('@prisma/client');
-    const db = new PrismaClient();
+    
 
-    await db.$transaction(async (tx) => {
+    await prisma.$transaction(async (tx) => {
       // Find or Create Role
       let role = await tx.role.findUnique({ where: { name: 'AGENT_ADMIN' } });
       if (!role) {
@@ -75,3 +76,4 @@ export async function POST(req: Request) {
     return NextResponse.json({ success: false, message: error.message || 'เกิดข้อผิดพลาดภายในเซิร์ฟเวอร์' }, { status: 500 });
   }
 }
+

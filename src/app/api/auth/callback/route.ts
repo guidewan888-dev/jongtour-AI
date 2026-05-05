@@ -1,3 +1,4 @@
+﻿export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server'
 import { createClient } from '@/utils/supabase/server'
 import { cookies } from 'next/headers'
@@ -25,3 +26,4 @@ export async function GET(request: Request) {
   // Return the user to an error page with some instructions
   return NextResponse.redirect(new URL('/auth/admin-login?error=Invalid_Token', requestUrl.origin))
 }
+

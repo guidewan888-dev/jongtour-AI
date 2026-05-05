@@ -1,20 +1,24 @@
 {
   "crons": [
     {
-      "path": "/api/cron/sync?supplierId=SUP_LETGO",
-      "schedule": "0 * * * *"
+      "path": "/api/cron/link-monitor",
+      "schedule": "0 3 * * *"
     },
     {
-      "path": "/api/cron/sync?supplierId=SUP_TOURFACTORY",
-      "schedule": "20 * * * *"
+      "path": "/api/cron/seo-monitor",
+      "schedule": "0 6 * * *"
     },
     {
-      "path": "/api/cron/sync?supplierId=SUP_CHECKIN",
-      "schedule": "40 * * * *"
+      "path": "/api/cron/cleanup-holds",
+      "schedule": "*/5 * * * *"
     },
     {
       "path": "/api/cron/proactive-alerts",
-      "schedule": "0 12 * * *"
+      "schedule": "0 1 * * *"
+    },
+    {
+      "path": "/api/cron/document-scheduler",
+      "schedule": "0 2 * * *"
     }
   ]
 }

@@ -1,0 +1,38 @@
+User-agent: *
+Allow: /
+
+# Block private areas
+Disallow: /admin/
+Disallow: /agent/
+Disallow: /sale/
+Disallow: /api/
+Disallow: /booking/checkout/
+Disallow: /account/
+Disallow: /search?
+Disallow: /*?utm_*
+Disallow: /*?ref=
+Disallow: /*?gclid=
+Disallow: /*?fbclid=
+
+# Allow major search engines
+User-agent: Googlebot
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+# Block AI scrapers
+User-agent: GPTBot
+Disallow: /
+
+User-agent: ClaudeBot
+Disallow: /
+
+User-agent: PerplexityBot
+Disallow: /
+
+User-agent: Bytespider
+Disallow: /
+
+# Sitemaps
+Sitemap: https://jongtour.com/sitemap.xml

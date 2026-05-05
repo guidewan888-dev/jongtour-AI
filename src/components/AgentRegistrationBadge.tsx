@@ -15,7 +15,7 @@ export default function AgentRegistrationBadge() {
   return (
     <div className="fixed bottom-6 left-6 z-40 hidden md:block">
       <Link 
-        href="/auth/register" 
+        href="/register" 
         className="group flex items-center gap-3 bg-white/90 backdrop-blur-md px-4 py-3 rounded-2xl shadow-floating border border-border hover:border-primary/50 transition-all duration-300 hover:scale-105"
       >
         <div className="w-10 h-10 rounded-xl bg-primary-50 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-colors">

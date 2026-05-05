@@ -3,7 +3,11 @@ import { SupplierAdapter, RawTour, RawTourDetail, RawDeparture, TourPrices, Book
 export class LetgoAdapter implements SupplierAdapter {
   readonly supplierId = 'SUP_LETGO'; // Match this in database
   private baseUrl = 'https://www.zegoapi.com/v1.5';
-  private token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2OWYwM2JlODQzMWFmMmU0ODY5NWY0YjAiLCJpYXQiOjE3Nzc1MTg1NDN9.qbZPxA3jldUTTLsGmbdMrvv3qXnTPDiNc_9_T48zPnw';
+  private get token(): string {
+    const token = process.env.LETGO_API_TOKEN;
+    if (!token) throw new Error('[LetgoAdapter] Missing LETGO_API_TOKEN environment variable');
+    return token;
+  }
 
   // Mocking internal fetch with credential handling
   private async fetchApi(endpoint: string, options: any = {}, retries = 3) {

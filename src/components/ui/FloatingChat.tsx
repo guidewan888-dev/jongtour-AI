@@ -4,9 +4,20 @@ import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { Send, Sparkles, Map, Loader2, MessageSquareText, ChevronDown, Wand2, Paperclip, ArrowRightLeft, FileText, HeadphonesIcon, Globe2, ScanSearch } from "lucide-react";
 import { usePathname } from "next/navigation";
-import { Card } from "@/components/ui-new/Card";
-import { Button } from "@/components/ui-new/Button";
-import { Badge } from "@/components/ui-new/Badge";
+
+// Inline fallbacks for missing ui-new components
+const Card = ({ children, className = '' }: { children: React.ReactNode; className?: string }) => (
+  <div className={`rounded-2xl border border-slate-200 bg-white overflow-hidden ${className}`}>{children}</div>
+);
+const CardContent = ({ children, className = '' }: { children: React.ReactNode; className?: string }) => (
+  <div className={className}>{children}</div>
+);
+const Button = ({ children, size, className = '', asChild }: any) => asChild
+  ? children
+  : <button className={`inline-flex items-center justify-center font-bold ${className}`}>{children}</button>;
+const Badge = ({ children, variant, className = '' }: any) => (
+  <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${variant === 'success' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-700'} ${className}`}>{children}</span>
+);
 
 type Tour = {
   id: string;

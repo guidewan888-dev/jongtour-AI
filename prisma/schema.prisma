@@ -126,6 +126,12 @@ model Tour {
   lastLinkCheckedAt   DateTime?
   linkVerifiedBy      String?
   linkVerifiedAt      DateTime?
+  isVisible           Boolean   @default(true)
+  isMock              Boolean   @default(false)
+  isDemo              Boolean   @default(false)
+  excludedFromSearch  Boolean   @default(false)
+  excludedFromAi      Boolean   @default(false)
+  sourceType          String    @default("API") // API, CSV, SCRAPE, MOCK, DEMO
   createdAt           DateTime  @default(now())
   updatedAt           DateTime  @updatedAt
 
@@ -142,6 +148,7 @@ model Tour {
   departures    Departure[]
   bookings      Booking[]
   TourEmbedding TourEmbedding?
+  favorites     CustomerFavorite[]
 
   @@unique([supplierId, externalTourId])
   @@map("tours")
@@ -259,6 +266,7 @@ model Departure {
   prices           Price[]
   bookings         Booking[]
   quotations       Quotation[]
+  seatHolds        SeatHold[]
 
   @@unique([tourId, externalDepartureId])
   @@map("departures")
@@ -317,11 +325,35 @@ model Customer {
   lastName  String
   email     String
   phone     String
+  lineId    String?  @unique
+  avatarUrl String?
+  status    String   @default("ACTIVE") // ACTIVE, INACTIVE, BANNED
+  tags      String[] // e.g. VIP, CORPORATE, BLACKLIST
+  leadSource String  @default("ORGANIC") // ORGANIC, ADS, REFERRAL, WALK_IN
+  internalNotes String? @db.Text
+  emailVerifiedAt DateTime?
+  phoneVerifiedAt DateTime?
+  passwordHash String?
+  mustChangePassword Boolean @default(false)
+  lastLoginAt DateTime?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  deletedAt DateTime?
 
   user     User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
   bookings Booking[]
+  socialAccounts CustomerSocialAccount[]
+  favorites CustomerFavorite[]
+  notifications Notification[]
+  supportTickets SupportTicket[]
+  documents CustomerDocument[]
+  loginHistory CustomerLoginHistory[]
+  preference CustomerPreference?
+  consent CustomerConsent?
+  consentLogs ConsentLog[]
+  activityLogs CustomerActivityLog[]
+  resetTokens PasswordResetToken[]
+  visaApplications VisaApplication[]
 
   @@map("customers")
 }
@@ -393,10 +425,13 @@ model Booking {
   refunds          Refund[]
   vouchers         Voucher[]
   priceSnapshots   PriceSnapshot[]
+  documents        CustomerDocument[]
   wholesaleRef     BookingWholesaleRef?
   wholesaleActions BookingWholesaleAction[]
   rpaSessions      WholesaleRpaSession[]
   rpaActions       WholesaleRpaAction[]
+  supportTickets   SupportTicket[]
+  visaApplications VisaApplication[]
 
   @@map("bookings")
 }
@@ -453,11 +488,13 @@ model Payment {
   id            String    @id @default(cuid())
   bookingId     String
   paymentRef    String    @unique
-  amount        Float
-  paymentMethod String // CREDIT_CARD, BANK_TRANSFER, PROMPT_PAY
-  status        String    @default("PENDING") // PENDING, COMPLETED, FAILED, REFUNDED
-  paidAt        DateTime?
-  createdAt     DateTime  @default(now())
+  amount             Float
+  paymentMethod      String // CREDIT_CARD, BANK_TRANSFER, PROMPT_PAY
+  status             String    @default("PENDING") // PENDING, COMPLETED, FAILED, REFUNDED
+  slipUrl            String?   @db.Text
+  verificationStatus String?   @default("PENDING") // PENDING, UPLOADED, VERIFIED, REJECTED
+  paidAt             DateTime?
+  createdAt          DateTime  @default(now())
 
   booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
 
@@ -469,9 +506,12 @@ model Invoice {
   id          String   @id @default(cuid())
   bookingId   String
   invoiceNo   String   @unique
+  invoiceType String   @default("DEPOSIT") // DEPOSIT, BALANCE, FULL
   issueDate   DateTime @default(now())
   dueDate     DateTime
   totalAmount Float
+  description String?  @db.Text
+  pdfUrl      String?  @db.Text
   status      String   @default("UNPAID") // UNPAID, PARTIAL, PAID, VOID
   createdAt   DateTime @default(now())
 
@@ -497,13 +537,16 @@ model Voucher {
 
 // 27. ai_conversations
 model AiConversation {
-  id        String   @id @default(cuid())
-  userId    String? // Can be null for anonymous guests
-  sessionId String   @unique
-  status    String   @default("ACTIVE") // ACTIVE, CLOSED
-  summary   String?  @db.Text
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id               String   @id @default(cuid())
+  userId           String?
+  sessionId        String   @unique
+  status           String   @default("ACTIVE")
+  summary          String?  @db.Text
+  totalTokens      Int      @default(0)
+  estimatedCostUsd Float    @default(0)
+  model            String   @default("gpt-4o-mini")
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
   user      User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
   AiMessage AiMessage[]
@@ -544,6 +587,7 @@ model User {
   auditLogs       AuditLog[]
   saleLeads       Lead[]            @relation("SaleLeads")
   AiPromptVersion AiPromptVersion[]
+  assignedTickets SupportTicket[]   @relation("StaffTickets")
 
   @@map("users")
 }
@@ -843,8 +887,12 @@ model Notification {
   title     String
   message   String   @db.Text
   isRead    Boolean  @default(false)
+  readAt    DateTime?
   linkUrl   String?
   createdAt DateTime @default(now())
+
+  customerId String?
+  customer   Customer? @relation(fields: [customerId], references: [id], onDelete: Cascade)
 
   @@map("notifications")
 }
@@ -966,28 +1014,43 @@ model Refund {
 // CMS Additions
 // -----------------------------------------------------
 model CmsPage {
-  id        String   @id @default(cuid())
-  slug      String   @unique
-  title     String
-  content   String   @db.Text
-  seoTitle  String?
-  status    String   @default("DRAFT") // DRAFT, PUBLISHED
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id               String   @id @default(cuid())
+  slug             String   @unique
+  title            String
+  content          String   @db.Text
+  seoTitle         String?
+  meta_description String?  @db.Text
+  page_type        String   @default("PAGE") // PAGE, BLOG, LANDING
+  status           String   @default("DRAFT") // DRAFT, PUBLISHED
+  created_at       DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
+  @@index([page_type, status])
   @@map("cms_pages")
 }
 
 model BlogPost {
-  id        String   @id @default(cuid())
-  slug      String   @unique
-  title     String
-  content   String   @db.Text
-  seoTitle  String?
-  status    String   @default("DRAFT") // DRAFT, PUBLISHED
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id          String    @id @default(cuid())
+  slug        String    @unique
+  title       String
+  content     String    @db.Text
+  excerpt     String?   @db.Text
+  coverImage  String?
+  category    String?
+  tags        String[]  @default([])
+  seoTitle    String?
+  metaDesc    String?   @db.Text
+  status      String    @default("DRAFT") // DRAFT, PUBLISHED, SCHEDULED
+  views       Int       @default(0)
+  wordCount   Int       @default(0)
+  authorId    String?
+  publishedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
+  @@index([status])
+  @@index([category])
+  @@index([publishedAt])
   @@map("blog_posts")
 }
 
@@ -1349,3 +1412,685 @@ model AiGuardrail {
   @@map("ai_guardrails")
 }
 
+model CustomerSocialAccount {
+  id                      String    @id @default(cuid())
+  customerId              String
+  provider                String    // 'google', 'line', 'facebook'
+  providerUserId          String
+  providerEmail           String?
+  displayName             String?
+  avatarUrl               String?
+  accessTokenEncrypted    String?   @db.Text
+  refreshTokenEncrypted   String?   @db.Text
+  tokenExpiresAt          DateTime?
+  linkedAt                DateTime  @default(now())
+  lastLoginAt             DateTime  @default(now())
+  createdAt               DateTime  @default(now())
+  updatedAt               DateTime  @updatedAt
+
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerUserId])
+  @@map("customer_social_accounts")
+}
+
+model CustomerFavorite {
+  id         String   @id @default(cuid())
+  customerId String
+  tourId     String
+  createdAt  DateTime @default(now())
+
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  tour     Tour     @relation(fields: [tourId], references: [id], onDelete: Cascade)
+
+  @@unique([customerId, tourId])
+  @@map("customer_favorites")
+}
+
+model SupportTicket {
+  id          String   @id @default(cuid())
+  ticketNo    String   @unique
+  customerId  String
+  topic       String
+  bookingRef  String?
+  bookingId   String?
+  priority    String   @default("NORMAL") // LOW, NORMAL, HIGH, URGENT
+  status      String   @default("OPEN") // OPEN, IN_PROGRESS, RESOLVED, CLOSED
+  assignedTo  String?  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  booking  Booking? @relation(fields: [bookingId], references: [id], onDelete: SetNull)
+  staff    User?    @relation("StaffTickets", fields: [assignedTo], references: [id], onDelete: SetNull)
+  messages SupportMessage[]
+
+  @@map("support_tickets")
+}
+
+model SupportMessage {
+  id          String   @id @default(cuid())
+  ticketId    String
+  senderId    String?  
+  senderType  String   @default("CUSTOMER") // CUSTOMER, STAFF, AI
+  message     String   @db.Text
+  attachment  String?
+  createdAt   DateTime @default(now())
+
+  ticket SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+
+  @@map("support_messages")
+}
+
+model CustomerDocument {
+  id             String   @id @default(cuid())
+  customerId     String
+  bookingId      String?
+  documentType   String   // PASSPORT, VISA, PAYMENT_SLIP, OTHER
+  fileUrl        String   @db.Text
+  fileName       String
+  fileSize       Int?
+  status         String   @default("PENDING") // PENDING, APPROVED, REJECTED
+  rejectionReason String?  @db.Text
+  uploadedAt     DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  booking  Booking? @relation(fields: [bookingId], references: [id], onDelete: SetNull)
+
+  @@map("customer_documents")
+}
+
+model CustomerLoginHistory {
+  id          String   @id @default(cuid())
+  customerId  String
+  ipAddress   String?
+  userAgent   String?  @db.Text
+  deviceType  String?  // DESKTOP, MOBILE, TABLET
+  location    String?
+  status      String   @default("SUCCESS") // SUCCESS, FAILED
+  createdAt   DateTime @default(now())
+
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@map("customer_login_history")
+}
+
+model CustomerPreference {
+  id                  String   @id @default(cuid())
+  customerId          String   @unique
+  preferredCountries  String[]
+  preferredCities     String[]
+  budgetMin           Int?
+  budgetMax           Int?
+  travelStyle         String[] // RELAXING, ADVENTURE, CULTURE, SHOPPING, LUXURY, FAMILY
+  hotelLevel          String[] // 3_STAR, 4_STAR, 5_STAR
+  airlinePreference   String[] // FULL_SERVICE, LOW_COST
+  mealPreference      String?
+  specialNeeds        String?  @db.Text
+  allergyNote         String?  @db.Text
+  marketingConsent    Boolean  @default(false)
+  dealAlerts          Boolean  @default(false)
+  updatedAt           DateTime @updatedAt
+
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@map("customer_preferences")
+}
+
+model CustomerConsent {
+  id                  String   @id @default(cuid())
+  customerId          String   @unique
+  privacyAccepted     Boolean  @default(false)
+  marketingConsent    Boolean  @default(false)
+  dataUsageConsent    Boolean  @default(false)
+  lastIpAddress       String?
+  acceptedAt          DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@map("customer_consents")
+}
+
+model ConsentLog {
+  id              String   @id @default(cuid())
+  customerId      String
+  action          String   // e.g., "OPT_IN_MARKETING", "OPT_OUT_DATA_USAGE"
+  consentType     String   // "PRIVACY", "MARKETING", "DATA_USAGE"
+  ipAddress       String?
+  userAgent       String?  @db.Text
+  createdAt       DateTime @default(now())
+
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@map("consent_logs")
+}
+
+model CustomerActivityLog {
+  id            String   @id @default(cuid())
+  customerId    String
+  action        String
+  entityType    String?
+  entityId      String?
+  metadataJson  Json?
+  ipAddress     String?
+  createdAt     DateTime @default(now())
+
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@map("customer_activity_logs")
+}
+
+model PasswordResetToken {
+  id          String   @id @default(cuid())
+  customerId  String
+  tokenHash   String   @unique
+  expiresAt   DateTime
+  usedAt      DateTime?
+  createdAt   DateTime @default(now())
+
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@map("password_reset_tokens")
+}
+
+// === Document Management System ===
+
+model DocumentSequence {
+  id       String @id @default(cuid())
+  docType  String @unique // QT, INV, RCP, VCH, BC, TI, WHC, APP, PM, TR, SC, PGP
+  prefix   String
+  lastNo   Int    @default(0)
+
+  @@map("document_sequences")
+}
+
+model DocumentDeliveryLog {
+  id           String    @id @default(cuid())
+  documentType String
+  documentId   String
+  documentNo   String?
+  channel      String    // EMAIL, LINE
+  recipient    String
+  status       String    @default("PENDING") // PENDING, SENT, FAILED, BOUNCED
+  errorMessage String?   @db.Text
+  sentAt       DateTime?
+  retryCount   Int       @default(0)
+  createdAt    DateTime  @default(now())
+
+  @@index([documentType, documentId])
+  @@index([status])
+  @@map("document_delivery_logs")
+}
+
+// === Phase 11: Visa Application ===
+
+model VisaApplication {
+  id              String    @id @default(cuid())
+  customerId      String
+  bookingId       String?
+  country         String
+  visaType        String    @default("TOURIST")
+  status          String    @default("DRAFT") // DRAFT, SUBMITTED, DOCUMENTS_REQUIRED, UNDER_REVIEW, APPROVED, REJECTED, CANCELLED
+  applicantName   String
+  passportNo      String?
+  travelDate      DateTime?
+  returnDate      DateTime?
+  notes           String?   @db.Text
+  adminNotes      String?   @db.Text
+  rejectionReason String?   @db.Text
+  documents       Json?
+  submittedAt     DateTime?
+  reviewedAt      DateTime?
+  reviewedBy      String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  customer Customer  @relation(fields: [customerId], references: [id])
+  booking  Booking?  @relation(fields: [bookingId], references: [id])
+
+  @@index([customerId])
+  @@index([status])
+  @@map("visa_applications")
+}
+
+// === Phase 11: Guide/Tour Leader Recruitment ===
+
+model GuideApplication {
+  id             String    @id @default(cuid())
+  fullName       String
+  email          String
+  phone          String
+  lineId         String?
+  position       String    // TOUR_GUIDE, TOUR_LEADER, LOCAL_GUIDE
+  languages      Json
+  experience     String?   @db.Text
+  destinations   Json?
+  licenseNo      String?
+  resumeUrl      String?
+  photoUrl       String?
+  status         String    @default("NEW") // NEW, SCREENING, INTERVIEW_SCHEDULED, INTERVIEWED, ACCEPTED, REJECTED
+  interviewDate  DateTime?
+  interviewNotes String?   @db.Text
+  adminNotes     String?   @db.Text
+  reviewedBy     String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@index([status])
+  @@index([email])
+  @@map("guide_applications")
+}
+
+// =====================================================
+// Phase 12: Affiliate / Commission System
+// =====================================================
+
+model Affiliate {
+  id              String    @id @default(cuid())
+  displayName     String
+  email           String    @unique
+  phone           String?
+  type            String    @default("AFFILIATE_LINK") // INFLUENCER, AFFILIATE_LINK, AGENT_B2B, PRO_STAFF, SUB_AGENT
+  tier            String    @default("BRONZE") // BRONZE, SILVER, GOLD, PLATINUM
+  status          String    @default("PENDING") // PENDING, ACTIVE, SUSPENDED, TERMINATED
+  referralCode    String    @unique
+  couponCode      String?   @unique
+  parentId        String?   // For sub-agents
+  websiteUrl      String?
+  socialHandle    String?
+  bankName        String?
+  bankAccount     String?
+  bankAccountName String?
+  taxId           String?
+  kycStatus       String    @default("PENDING") // PENDING, SUBMITTED, VERIFIED, REJECTED
+  kycDocuments    Json?
+  totalRevenue    Float     @default(0)
+  totalCommission Float     @default(0)
+  totalPaid       Float     @default(0)
+  cookieDays      Int       @default(30)
+  notes           String?   @db.Text
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  parent         Affiliate?        @relation("SubAffiliates", fields: [parentId], references: [id], onDelete: SetNull)
+  children       Affiliate[]       @relation("SubAffiliates")
+  commissionRules CommissionRule[]
+  ledgerEntries  CommissionLedger[]
+  payouts        AffiliatePayout[]
+  clicks         AffiliateClick[]
+
+  @@index([type])
+  @@index([tier])
+  @@index([status])
+  @@map("affiliates")
+}
+
+model CommissionRule {
+  id            String    @id @default(cuid())
+  name          String
+  priority      Int       @default(5) // P1=1 (override) ... P6=6 (global)
+  affiliateId   String?   // null = global rule
+  affiliateType String?   // null = all types
+  productType   String?   // TOUR, VISA, PRIVATE_GROUP, null = all
+  productId     String?   // specific product
+  campaignId    String?
+  rateType      String    @default("PERCENTAGE") // PERCENTAGE, FLAT
+  rateValue     Float
+  isStackable   Boolean   @default(true)
+  isActive      Boolean   @default(true)
+  validFrom     DateTime?
+  validUntil    DateTime?
+  conditions    Json?     // e.g. { minBookingValue: 10000 }
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  affiliate Affiliate? @relation(fields: [affiliateId], references: [id], onDelete: Cascade)
+
+  @@index([priority])
+  @@index([affiliateType, productType])
+  @@map("commission_rules")
+}
+
+model CommissionLedger {
+  id            String    @id @default(cuid())
+  affiliateId   String
+  bookingRef    String?
+  productType   String    // TOUR, VISA, PRIVATE_GROUP
+  bookingValue  Float
+  commissionRate Float
+  commissionAmount Float
+  whtAmount     Float     @default(0) // WHT 3%
+  netAmount     Float
+  status        String    @default("PENDING") // PENDING, HOLDING, CONFIRMED, APPROVED, PAID, CANCELLED
+  rulesApplied  Json?     // snapshot of rules at time of calculation
+  payoutId      String?
+  approvedBy    String?
+  approvedAt    DateTime?
+  notes         String?   @db.Text
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  affiliate Affiliate       @relation(fields: [affiliateId], references: [id], onDelete: Cascade)
+  payout    AffiliatePayout? @relation(fields: [payoutId], references: [id], onDelete: SetNull)
+
+  @@index([affiliateId, status])
+  @@index([status])
+  @@map("commission_ledger")
+}
+
+model AffiliatePayout {
+  id            String    @id @default(cuid())
+  affiliateId   String
+  payoutRef     String    @unique
+  period        String    // e.g. "2569-05"
+  grossAmount   Float
+  whtAmount     Float     @default(0)
+  netAmount     Float
+  status        String    @default("PENDING") // PENDING, APPROVED, PROCESSING, PAID, FAILED
+  bankFile      String?   // CSV file reference
+  whtCertUrl    String?   // WHT certificate PDF
+  processedBy   String?
+  processedAt   DateTime?
+  paidAt        DateTime?
+  notes         String?   @db.Text
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  affiliate     Affiliate          @relation(fields: [affiliateId], references: [id], onDelete: Cascade)
+  ledgerEntries CommissionLedger[]
+
+  @@index([affiliateId])
+  @@index([status])
+  @@map("affiliate_payouts")
+}
+
+model AffiliateClick {
+  id           String    @id @default(cuid())
+  affiliateId  String
+  referralCode String
+  couponCode   String?
+  sourceUrl    String?   @db.Text
+  landingUrl   String?   @db.Text
+  ipAddress    String?
+  userAgent    String?   @db.Text
+  converted    Boolean   @default(false)
+  bookingRef   String?
+  createdAt    DateTime  @default(now())
+
+  affiliate Affiliate @relation(fields: [affiliateId], references: [id], onDelete: Cascade)
+
+  @@index([affiliateId])
+  @@index([referralCode])
+  @@index([createdAt])
+  @@map("affiliate_clicks")
+}
+
+// =====================================================
+// Phase 13: Talent / Guide Request System
+// =====================================================
+
+model Talent {
+  id            String    @id @default(cuid())
+  displayName   String
+  realName      String?   // private
+  email         String    @unique
+  phone         String?
+  lineId        String?
+  photoUrl      String?
+  tier          String    @default("NEW") // NEW, STANDARD, SENIOR, PREMIUM, ELITE
+  status        String    @default("ACTIVE") // ACTIVE, INACTIVE, ON_LEAVE, SUSPENDED
+  region        String?
+  languages     String[]
+  specialties   String[]
+  bio           String?   @db.Text
+  experience    String?
+  licenseNo     String?
+  rating        Float     @default(0)
+  reviewCount   Int       @default(0)
+  totalTrips    Int       @default(0)
+  totalEarnings Float     @default(0)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  requests       TalentRequest[]
+  scheduleBlocks TalentScheduleBlock[]
+  reviews        TalentReview[]
+  favorites      TalentFavorite[]
+  pricingOverrides TalentPricingOverride[]
+
+  @@index([tier])
+  @@index([status])
+  @@index([region])
+  @@map("talents")
+}
+
+model TalentRequest {
+  id              String    @id @default(cuid())
+  requestRef      String    @unique
+  talentId        String
+  customerId      String?
+  bookingId       String?
+  bookingType     String    @default("TOUR") // TOUR, PRIVATE_GROUP
+  travelDate      DateTime
+  daysCount       Int       @default(1)
+  paxCount        Int       @default(1)
+  language        String    @default("TH")
+  message         String?   @db.Text
+  backupTalentId  String?
+  status          String    @default("SUBMITTED") // SUBMITTED, PENDING_REVIEW, TALENT_NOTIFIED, CONFIRMED, ALTERNATIVE_OFFERED, CUSTOMER_DECIDED, AUTO_ASSIGNED, COMPLETED, FULL_CANCEL
+  premiumAmount   Float     @default(0) // admin manual
+  surchargeAmount Float     @default(0)
+  discountAmount  Float     @default(0)
+  pricingNote     String?
+  adminNote       String?   @db.Text
+  assignedTalentId String?  // final assigned talent (may differ from requested)
+  respondedAt     DateTime?
+  confirmedAt     DateTime?
+  completedAt     DateTime?
+  cancelledAt     DateTime?
+  cancelReason    String?   @db.Text
+  refundAmount    Float     @default(0)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  talent    Talent   @relation(fields: [talentId], references: [id], onDelete: Restrict)
+
+  @@index([talentId])
+  @@index([status])
+  @@index([travelDate])
+  @@map("talent_requests")
+}
+
+model TalentScheduleBlock {
+  id        String   @id @default(cuid())
+  talentId  String
+  startDate DateTime
+  endDate   DateTime
+  reason    String?  // BOOKED, PERSONAL, HOLIDAY
+  requestRef String? // linked to TalentRequest
+  createdAt DateTime @default(now())
+
+  talent Talent @relation(fields: [talentId], references: [id], onDelete: Cascade)
+
+  @@index([talentId, startDate, endDate])
+  @@map("talent_schedule_blocks")
+}
+
+model TalentReview {
+  id         String   @id @default(cuid())
+  talentId   String
+  customerId String?
+  requestRef String?
+  rating     Int      // 1-5
+  comment    String?  @db.Text
+  isPublic   Boolean  @default(true)
+  isModerated Boolean @default(false)
+  createdAt  DateTime @default(now())
+
+  talent Talent @relation(fields: [talentId], references: [id], onDelete: Cascade)
+
+  @@index([talentId])
+  @@map("talent_reviews")
+}
+
+model TalentFavorite {
+  id         String   @id @default(cuid())
+  talentId   String
+  customerId String
+  createdAt  DateTime @default(now())
+
+  talent Talent @relation(fields: [talentId], references: [id], onDelete: Cascade)
+
+  @@unique([customerId, talentId])
+  @@map("talent_favorites")
+}
+
+model TalentPricingOverride {
+  id            String   @id @default(cuid())
+  talentId      String?
+  requestRef    String?
+  adminUserId   String?
+  premiumAmount Float    @default(0)
+  surcharge     Float    @default(0)
+  discount      Float    @default(0)
+  reason        String?
+  createdAt     DateTime @default(now())
+
+  talent Talent? @relation(fields: [talentId], references: [id], onDelete: Cascade)
+
+  @@map("talent_pricing_overrides")
+}
+
+// ═══════════════════════════════════════════════════════════
+// PHASE 7 — Infrastructure Models (SEO, Monitoring, Marketing)
+// ═══════════════════════════════════════════════════════════
+
+// Seat hold during checkout (TTL-based)
+model SeatHold {
+  id          String   @id @default(cuid())
+  departureId String
+  seats       Int
+  expiresAt   DateTime
+  createdAt   DateTime @default(now())
+
+  departure Departure @relation(fields: [departureId], references: [id], onDelete: Cascade)
+
+  @@index([departureId])
+  @@index([expiresAt])
+  @@map("seat_holds")
+}
+
+// Short links for marketing (jt.lol/xxx)
+model ShortLink {
+  id        String    @id @default(cuid())
+  shortCode String    @unique
+  longUrl   String    @db.Text
+  campaign  String?
+  source    String?
+  medium    String?
+  clicks    Int       @default(0)
+  isActive  Boolean   @default(true)
+  expiresAt DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  events ShortLinkClick[]
+
+  @@map("short_links")
+}
+
+// Short link click tracking
+model ShortLinkClick {
+  id          String   @id @default(cuid())
+  shortLinkId String
+  ip          String?
+  userAgent   String?  @db.Text
+  referer     String?
+  country     String?
+  city        String?
+  createdAt   DateTime @default(now())
+
+  shortLink ShortLink @relation(fields: [shortLinkId], references: [id], onDelete: Cascade)
+
+  @@index([shortLinkId])
+  @@map("short_link_clicks")
+}
+
+// System error log (from ErrorMonitor)
+model SystemErrorLog {
+  id        String   @id @default(cuid())
+  message   String   @db.VarChar(500)
+  stack     String?  @db.Text
+  severity  String   // LOW, MEDIUM, HIGH, CRITICAL
+  category  String   // API, DATABASE, AUTH, PAYMENT, SYNC, AI, WEBHOOK, GENERAL
+  context   Json?
+  userId    String?
+  resolved  Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([severity])
+  @@index([category])
+  @@index([createdAt])
+  @@map("system_error_logs")
+}
+
+// Marketing attribution events
+model MarketingEvent {
+  id          String   @id @default(cuid())
+  eventType   String   // PAGE_VIEW, LEAD, BOOKING, CONVERSION
+  source      String?  // google, facebook, line, tiktok, direct
+  medium      String?  // cpc, organic, social, email
+  campaign    String?
+  content     String?
+  term        String?
+  referrer    String?  @db.Text
+  landingPage String?  @db.Text
+  customerId  String?
+  bookingId   String?
+  value       Float?   // conversion value in THB
+  currency    String   @default("THB")
+  sessionId   String?
+  ip          String?
+  userAgent   String?  @db.Text
+  metadata    Json?
+  createdAt   DateTime @default(now())
+
+  @@index([eventType])
+  @@index([source, medium])
+  @@index([campaign])
+  @@index([createdAt])
+  @@map("marketing_events")
+}
+
+// UTM parameter capture log
+model UtmCapture {
+  id           String   @id @default(cuid())
+  sessionId    String
+  firstTouch   Json?    // First UTM params seen
+  lastTouch    Json?    // Last UTM params seen
+  touchCount   Int      @default(1)
+  customerId   String?
+  convertedAt  DateTime?
+  conversionId String?  // bookingId or leadId
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([sessionId])
+  @@index([customerId])
+  @@map("utm_captures")
+}
+
+// SEO audit results
+model SeoAuditResult {
+  id          String   @id @default(cuid())
+  url         String
+  score       Int      // 0-100
+  issues      Json?    // Array of issues found
+  category    String?  // technical, content, performance
+  checkedAt   DateTime @default(now())
+
+  @@index([url])
+  @@map("seo_audit_results")
+}

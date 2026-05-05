@@ -1,7 +1,8 @@
+export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import { createClient } from '@/utils/supabase/server';
 import { cookies } from 'next/headers';
-import { EmailService } from '@/lib/email';
+import { sendNotificationEmail } from '@/lib/email';
 import { prisma } from '@/lib/prisma';
 
 export async function POST(req: Request) {
@@ -27,7 +28,7 @@ export async function POST(req: Request) {
       .eq('email', user.email);
 
     // 2. Send Notification Email (Do not await to avoid blocking UI)
-    EmailService.sendPasswordChangedNotification(user.email).catch(e => console.error("Email notification error:", e));
+    sendNotificationEmail({ to: user.email, subject: 'รหัสผ่านถูกเปลี่ยนแล้ว - Jongtour', title: '🔒 รหัสผ่านถูกเปลี่ยน', body: 'รหัสผ่านบัญชี Jongtour ของคุณถูกเปลี่ยนเรียบร้อยแล้ว หากคุณไม่ได้ดำเนินการนี้ กรุณาติดต่อทีมงานทันที' }).catch(e => console.error("Email notification error:", e));
 
     // 3. Create Audit Log
     const { data: dbUser } = await supabase.from('users').select('id').eq('email', user.email).single();
@@ -49,3 +50,4 @@ export async function POST(req: Request) {
     return NextResponse.json({ success: false, error: 'Internal Server Error' }, { status: 500 });
   }
 }
+

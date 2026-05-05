@@ -1,7 +1,8 @@
+export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import { createClient } from '@/utils/supabase/server';
 import { cookies } from 'next/headers';
-import { EmailService } from '@/lib/email';
+import { sendAdminInviteEmail } from '@/lib/email';
 import { prisma } from '@/lib/prisma';
 import crypto from 'crypto';
 
@@ -76,8 +77,8 @@ export async function POST(req: Request) {
     });
 
     // 6. Send Invitation Email
-    const loginUrl = `${process.env.NEXT_PUBLIC_SITE_URL || 'https://admin.jongtour.com'}/auth/admin-login`;
-    const emailResult = await EmailService.sendAdminInvite(email, tempPassword, loginUrl);
+    const loginUrl = `${process.env.NEXT_PUBLIC_SITE_URL || 'https://admin.jongtour.com'}/login`;
+    const emailResult = await sendAdminInviteEmail({ to: email, name: name || email, role, inviteUrl: loginUrl });
 
     // 7. Audit Log
     await prisma.auditLog.create({
@@ -104,3 +105,4 @@ export async function POST(req: Request) {
     return NextResponse.json({ success: false, error: 'Internal Server Error' }, { status: 500 });
   }
 }
+
