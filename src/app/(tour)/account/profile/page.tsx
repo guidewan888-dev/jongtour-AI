@@ -1,4 +1,4 @@
-﻿export const dynamic = 'force-dynamic';
+export const dynamic = 'force-dynamic';
 import React from 'react'
 import { createClient } from '@/utils/supabase/server'
 import { prisma } from '@/lib/prisma'
@@ -32,8 +32,8 @@ export default async function CustomerProfilePage() {
     <div className="space-y-6 animate-fade-in-up max-w-3xl">
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 pb-4 border-b border-slate-200">
         <div>
-          <h1 className="text-2xl font-black text-slate-800">เธเนเธญเธกเธนเธฅเธชเนเธงเธเธ•เธฑเธง (Profile)</h1>
-          <p className="text-slate-500 text-sm mt-1">เธเธฑเธ”เธเธฒเธฃเธเนเธญเธกเธนเธฅเธชเนเธงเธเธ•เธฑเธง เธเนเธญเธกเธนเธฅเธ•เธดเธ”เธ•เนเธญ เนเธฅเธฐเธเธงเธฒเธกเธเธญเธเนเธเธเธฒเธฃเน€เธ”เธดเธเธ—เธฒเธ</p>
+          <h1 className="text-2xl font-black text-slate-800">ข้อมูลส่วนตัว (Profile)</h1>
+          <p className="text-slate-500 text-sm mt-1">จัดการข้อมูลส่วนตัว ข้อมูลติดต่อ และความชอบในการเดินทาง</p>
         </div>
       </div>
 

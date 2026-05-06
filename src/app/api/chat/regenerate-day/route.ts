@@ -1,4 +1,4 @@
-﻿export const dynamic = 'force-dynamic';
+export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
 
@@ -23,8 +23,8 @@ Format:
   "title": "New Day Title",
   "detail": "New Day details",
   "meals": { "breakfast": true, "lunch": false, "dinner": true },
-  "hotel": "เธฃเธฐเธเธธเธเธทเนเธญเนเธฃเธเนเธฃเธกเธ—เธตเนเธกเธตเธญเธขเธนเนเธเธฃเธดเธเนเธฅเธฐเธชเธกเธเธฃเธดเธ เธ•เธฃเธเธเธฑเธเน€เธกเธทเธญเธเธ—เธตเนเนเธ (เน€เธเนเธ Hilton, Marriott) เธซเนเธฒเธกเธฃเธฐเธเธธเนเธเนเธเธทเนเธญเธเธฃเธฐเน€เธ—เธจ",
-  "hotelHighlight": "เธเธณเธญเธเธดเธเธฒเธขเธเธธเธ”เน€เธ”เนเธเธเธญเธเนเธฃเธเนเธฃเธก 1 เธเธฃเธฐเนเธขเธเธชเธฑเนเธเน เน€เธเธทเนเธญเธเธนเธเนเธเธฅเธนเธเธเนเธฒ (เน€เธเนเธ เน€เธ”เธดเธ 1 เธเธฒเธ—เธตเธ–เธถเธเธชเธ–เธฒเธเธตเธฃเธ–เนเธ)",
+  "hotel": "ระบุชื่อโรงแรมที่มีอยู่จริงและสมจริง ตรงกับเมืองที่ไป (เช่น Hilton, Marriott) ห้ามระบุแค่ชื่อประเทศ",
+  "hotelHighlight": "คำอธิบายจุดเด่นของโรงแรม 1 ประโยคสั้นๆ เพื่อจูงใจลูกค้า (เช่น เดิน 1 นาทีถึงสถานีรถไฟ)",
   "hotelImageUrl": "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&q=80",
   "imagePrompt": "A short English phrase describing the main attraction",
   "coordinates": { "lat": 13.7563, "lng": 100.5018 }

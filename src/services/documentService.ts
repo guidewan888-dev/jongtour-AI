@@ -348,7 +348,7 @@ async function generateAndStorePdf(docType: string, data: DocumentData): Promise
     const { createClient } = await import('@supabase/supabase-js');
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY || (process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY)!,
     );
 
     const fileName = `documents/${docType.toLowerCase()}/${data.documentNo.replace(/\//g, '-')}.pdf`;

@@ -1,4 +1,4 @@
-﻿export const dynamic = 'force-dynamic';
+export const dynamic = 'force-dynamic';
 import React from 'react'
 import { createClient } from '@/utils/supabase/server'
 import { prisma } from '@/lib/prisma'
@@ -43,9 +43,9 @@ export default async function CustomerVouchersPage() {
 
   const getStatusBadge = (status: string) => {
     switch(status) {
-      case 'ACTIVE': return <span className="bg-emerald-100 text-emerald-700 px-2.5 py-1 rounded-md text-[10px] font-black tracking-wider uppercase border border-emerald-200">เธเธฃเนเธญเธกเนเธเนเธเธฒเธ (Active)</span>
-      case 'USED': return <span className="bg-slate-100 text-slate-600 px-2.5 py-1 rounded-md text-[10px] font-black tracking-wider uppercase border border-slate-200">เนเธเนเธเธฒเธเนเธฅเนเธง (Used)</span>
-      case 'REVOKED': return <span className="bg-red-100 text-red-700 px-2.5 py-1 rounded-md text-[10px] font-black tracking-wider uppercase border border-red-200">เธขเธเน€เธฅเธดเธ (Revoked)</span>
+      case 'ACTIVE': return <span className="bg-emerald-100 text-emerald-700 px-2.5 py-1 rounded-md text-[10px] font-black tracking-wider uppercase border border-emerald-200">พร้อมใช้งาน (Active)</span>
+      case 'USED': return <span className="bg-slate-100 text-slate-600 px-2.5 py-1 rounded-md text-[10px] font-black tracking-wider uppercase border border-slate-200">ใช้งานแล้ว (Used)</span>
+      case 'REVOKED': return <span className="bg-red-100 text-red-700 px-2.5 py-1 rounded-md text-[10px] font-black tracking-wider uppercase border border-red-200">ยกเลิก (Revoked)</span>
       default: return <span className="bg-slate-100 text-slate-600 px-2.5 py-1 rounded-md text-[10px] font-black tracking-wider uppercase border border-slate-200">{status}</span>
     }
   }
@@ -54,8 +54,8 @@ export default async function CustomerVouchersPage() {
     <div className="space-y-6 animate-fade-in-up">
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 pb-4 border-b border-slate-200">
         <div>
-          <h1 className="text-2xl font-black text-slate-800">เน€เธญเธเธชเธฒเธฃ E-Voucher</h1>
-          <p className="text-slate-500 text-sm mt-1">เธ”เธฒเธงเธเนเนเธซเธฅเธ”เน€เธญเธเธชเธฒเธฃเธขเธทเธเธขเธฑเธเธเธฒเธฃเน€เธ”เธดเธเธ—เธฒเธเนเธฅเธฐ Voucher เธ•เนเธฒเธเน เธเธญเธเธเธธเธ“</p>
+          <h1 className="text-2xl font-black text-slate-800">เอกสาร E-Voucher</h1>
+          <p className="text-slate-500 text-sm mt-1">ดาวน์โหลดเอกสารยืนยันการเดินทางและ Voucher ต่างๆ ของคุณ</p>
         </div>
       </div>
 
@@ -83,15 +83,15 @@ export default async function CustomerVouchersPage() {
                   
                   <div className="space-y-2 mb-6">
                     <div className="flex justify-between items-center text-sm font-medium border-b border-slate-50 pb-2">
-                      <span className="text-slate-400">เธญเนเธฒเธเธญเธดเธเธเธฒเธฃเธเธญเธ</span>
+                      <span className="text-slate-400">อ้างอิงการจอง</span>
                       <Link href={`/account/bookings/${v.bookingRef}`} className="text-orange-500 font-bold hover:underline">{v.bookingRef}</Link>
                     </div>
                     <div className="flex justify-between items-center text-sm font-medium border-b border-slate-50 pb-2">
-                      <span className="text-slate-400">เธงเธฑเธเธ—เธตเนเน€เธ”เธดเธเธ—เธฒเธ</span>
+                      <span className="text-slate-400">วันที่เดินทาง</span>
                       <span className="text-slate-800 font-bold">{new Date(v.startDate).toLocaleDateString('th-TH')}</span>
                     </div>
                     <div className="flex justify-between items-center text-sm font-medium border-b border-slate-50 pb-2">
-                      <span className="text-slate-400">เธงเธฑเธเธ—เธตเนเธญเธญเธเน€เธญเธเธชเธฒเธฃ</span>
+                      <span className="text-slate-400">วันที่ออกเอกสาร</span>
                       <span className="text-slate-800 font-bold">{new Date(v.issueDate).toLocaleDateString('th-TH')}</span>
                     </div>
                   </div>
@@ -101,7 +101,7 @@ export default async function CustomerVouchersPage() {
                   href={`/account/vouchers/${v.bookingRef}`}
                   className="w-full bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 px-4 py-2.5 rounded-xl text-sm font-bold transition-colors flex items-center justify-center gap-2"
                 >
-                  เน€เธเธดเธ”เธ”เธน Voucher
+                  เปิดดู Voucher
                 </Link>
               </div>
             </div>
@@ -112,12 +112,12 @@ export default async function CustomerVouchersPage() {
           <div className="w-20 h-20 bg-emerald-50 text-emerald-500 rounded-full flex items-center justify-center mb-6 border border-emerald-100">
             <svg className="w-10 h-10" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" /></svg>
           </div>
-          <h3 className="text-xl font-black text-slate-800 mb-2">เธขเธฑเธเนเธกเนเธกเธต Voucher เธ—เธตเนเธเธฃเนเธญเธกเธ”เธฒเธงเธเนเนเธซเธฅเธ”</h3>
+          <h3 className="text-xl font-black text-slate-800 mb-2">ยังไม่มี Voucher ที่พร้อมดาวน์โหลด</h3>
           <p className="text-slate-500 font-medium mb-8 max-w-sm mx-auto">
-            Voucher เธเธฐเธเธฃเนเธญเธกเนเธซเนเธ”เธฒเธงเธเนเนเธซเธฅเธ”เธซเธฅเธฑเธเธเธฒเธเธ—เธตเนเธเธธเธ“เธเธณเธฃเธฐเน€เธเธดเธเน€เธ•เนเธกเธเธณเธเธงเธเนเธฅเธฐเธชเธ–เธฒเธเธฐเธเธฒเธฃเธเธญเธเน€เธเนเธ Confirmed เนเธฅเนเธง
+            Voucher จะพร้อมให้ดาวน์โหลดหลังจากที่คุณชำระเงินเต็มจำนวนและสถานะการจองเป็น Confirmed แล้ว
           </p>
           <Link href="/account/bookings" className="bg-orange-500 hover:bg-orange-600 text-white px-8 py-3 rounded-xl text-sm font-bold shadow-sm transition-colors">
-            เธ•เธฃเธงเธเธชเธญเธเธชเธ–เธฒเธเธฐเธเธฒเธฃเธเธญเธ
+            ตรวจสอบสถานะการจอง
           </Link>
         </div>
       )}

@@ -1,4 +1,4 @@
-﻿export const dynamic = 'force-dynamic';
+export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from "next/server";
 import { calculateFitPrice } from "@/services/pricingEngine";
 
@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
       includeInsurance: true
     });
 
-    const estimatedPrice = `${pricingData.sellingPricePerPax.toLocaleString()} THB/เธ—เนเธฒเธ`;
+    const estimatedPrice = `${pricingData.sellingPricePerPax.toLocaleString()} THB/ท่าน`;
 
     return NextResponse.json({ success: true, estimatedPrice });
   } catch (error) {

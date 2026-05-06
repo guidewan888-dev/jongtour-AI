@@ -1,4 +1,4 @@
-﻿export const dynamic = 'force-dynamic';
+export const dynamic = 'force-dynamic';
 import React from 'react'
 import { createClient } from '@/utils/supabase/server'
 import { prisma } from '@/lib/prisma'
@@ -36,8 +36,8 @@ export default async function CustomerBookingsPage() {
     <div className="space-y-6 animate-fade-in-up">
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 pb-4 border-b border-slate-200">
         <div>
-          <h1 className="text-2xl font-black text-slate-800">เธเธฃเธฐเธงเธฑเธ•เธดเธเธฒเธฃเธเธญเธ (My Bookings)</h1>
-          <p className="text-slate-500 text-sm mt-1">เธ•เธฃเธงเธเธชเธญเธเธชเธ–เธฒเธเธฐ เธเธณเธฃเธฐเน€เธเธดเธ เนเธฅเธฐเธ”เธฒเธงเธเนเนเธซเธฅเธ”เน€เธญเธเธชเธฒเธฃเธเธฒเธฃเน€เธ”เธดเธเธ—เธฒเธเธเธญเธเธเธธเธ“</p>
+          <h1 className="text-2xl font-black text-slate-800">ประวัติการจอง (My Bookings)</h1>
+          <p className="text-slate-500 text-sm mt-1">ตรวจสอบสถานะ ชำระเงิน และดาวน์โหลดเอกสารการเดินทางของคุณ</p>
         </div>
       </div>
 

@@ -1,4 +1,4 @@
-﻿export const dynamic = 'force-dynamic';
+export const dynamic = 'force-dynamic';
 import React from 'react'
 import { createClient } from '@/utils/supabase/server'
 import { prisma } from '@/lib/prisma'
@@ -47,9 +47,9 @@ export default async function CustomerFavoritesPage() {
         <div>
           <h1 className="text-2xl font-black text-slate-800 flex items-center gap-2">
             <svg className="w-6 h-6 text-rose-500" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clipRule="evenodd" /></svg>
-            เธ—เธฑเธงเธฃเนเธ—เธตเนเธเธฑเธเธ—เธถเธเนเธงเน (Favorites)
+            ทัวร์ที่บันทึกไว้ (Favorites)
           </h1>
-          <p className="text-slate-500 text-sm mt-1">เนเธเนเธเน€เธเธเธ—เธฑเธงเธฃเนเธ—เธตเนเธเธธเธ“เธชเธเนเธเนเธฅเธฐเธเธฑเธเธ—เธถเธเนเธงเนเน€เธเธฃเธตเธขเธเน€เธ—เธตเธขเธ</p>
+          <p className="text-slate-500 text-sm mt-1">แพ็กเกจทัวร์ที่คุณสนใจและบันทึกไว้เปรียบเทียบ</p>
         </div>
       </div>
 

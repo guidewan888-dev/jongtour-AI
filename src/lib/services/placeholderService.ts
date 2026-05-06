@@ -10,7 +10,7 @@
 
 export async function getPlaceholderData(tableName: string) {
   // In the future, this will be wired to Supabase:
-  // const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!);
+  // const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, (process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY)!);
   // const { data } = await supabase.from(tableName).select('*');
   
   console.warn(`[API Audit] Missing backend for ${tableName}. Returning empty placeholder array to prevent Mock Data hallucination.`);

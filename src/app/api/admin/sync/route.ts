@@ -1,4 +1,4 @@
-﻿export const dynamic = 'force-dynamic';
+export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import { SyncManager, AdapterFactory } from '@/services/suppliers/core/SyncManager';
 import { LetgoAdapter } from '@/services/suppliers/adapters/LetgoAdapter';

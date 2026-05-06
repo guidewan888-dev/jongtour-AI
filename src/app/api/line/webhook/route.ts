@@ -1,4 +1,4 @@
-﻿export const dynamic = 'force-dynamic';
+export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import * as line from '@line/bot-sdk';
 import { processAiQuery, generateAiReply, summarizeChatSession } from '@/services/aiPlanner';
@@ -84,7 +84,7 @@ export async function POST(request: Request) {
           if (!userMessage || userMessage.trim() === '') {
             return await getClient().replyMessage({
               replyToken: replyToken,
-              messages: [{ type: 'text', text: 'เธเธญเธญเธ เธฑเธขเธเนเธฐ เธฃเธฐเธเธเนเธกเนเธชเธฒเธกเธฒเธฃเธ–เธเธฃเธฐเธกเธงเธฅเธเธฅเธเนเธญเธเธงเธฒเธกเธเธตเนเนเธ”เน เธเธฃเธธเธ“เธฒเธฅเธญเธเนเธซเธกเนเธญเธตเธเธเธฃเธฑเนเธเธเนเธฐ' }]
+              messages: [{ type: 'text', text: 'ขออภัยค่ะ ระบบไม่สามารถประมวลผลข้อความนี้ได้ กรุณาลองใหม่อีกครั้งค่ะ' }]
             });
           }
 
@@ -126,7 +126,7 @@ export async function POST(request: Request) {
                 userProfile = await prisma.userProfile.create({ data: { userId: lineUserId, preferences: {} } });
               }
               if (userProfile && userProfile.preferences && Object.keys(userProfile.preferences).length > 0) {
-                crmContext = `\n[CRM DATA: เธเธธเธ“เธกเธตเธเนเธญเธกเธนเธฅเธเธงเธฒเธกเธเธญเธเธเธญเธเธฅเธนเธเธเนเธฒเธฃเธฒเธขเธเธตเนเธเธฒเธเธเธฃเธฐเธงเธฑเธ•เธดเน€เธเนเธฒ: ${JSON.stringify(userProfile.preferences)} เนเธเธฃเธ”เธเธณเธเนเธญเธกเธนเธฅเน€เธซเธฅเนเธฒเธเธตเนเธกเธฒเธเนเธงเธขเนเธเธเธฒเธฃเธชเธเธ—เธเธฒ]`;
+                crmContext = `\n[CRM DATA: คุณมีข้อมูลความชอบของลูกค้ารายนี้จากประวัติเก่า: ${JSON.stringify(userProfile.preferences)} โปรดนำข้อมูลเหล่านี้มาช่วยในการสนทนา]`;
               }
             } catch (err) {
               console.error("CRM Fetch Error:", err);
@@ -194,7 +194,7 @@ export async function POST(request: Request) {
             replyToken: replyToken,
             messages: [{
               type: 'text',
-              text: "เธเธญเธญเธ เธฑเธขเธเนเธฐ เนเธญเธ”เธกเธดเธ AI เธเธณเธฅเธฑเธเธ•เธดเธ”เธเธฑเธเธซเธฒเน€เธฅเนเธเธเนเธญเธข เธเธฃเธธเธ“เธฒเธฃเธญเธชเธฑเธเธเธฃเธนเนเธซเธฃเธทเธญเธ•เธดเธ”เธ•เนเธญเนเธญเธ”เธกเธดเธเธ—เธฒเธ @Jongtour เธเธฐเธเธฐ"
+              text: "ขออภัยค่ะ แอดมิน AI กำลังติดปัญหาเล็กน้อย กรุณารอสักครู่หรือติดต่อแอดมินทาง @Jongtour นะคะ"
             }]
           });
         }

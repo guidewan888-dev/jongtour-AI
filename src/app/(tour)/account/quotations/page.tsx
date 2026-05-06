@@ -1,4 +1,4 @@
-﻿export const dynamic = 'force-dynamic';
+export const dynamic = 'force-dynamic';
 import React from 'react'
 import { createClient } from '@/utils/supabase/server'
 import { prisma } from '@/lib/prisma'
@@ -27,20 +27,20 @@ export default async function CustomerQuotationsPage() {
   const getStatusBadge = (status: string, validUntil: Date) => {
     const isExpired = new Date() > new Date(validUntil)
     if (status === 'BOOKED') {
-      return <span className="bg-emerald-100 text-emerald-700 px-2.5 py-1 rounded-md text-[10px] font-black tracking-wider uppercase border border-emerald-200">เธ—เธณเธฃเธฒเธขเธเธฒเธฃเธเธญเธเนเธฅเนเธง (Booked)</span>
+      return <span className="bg-emerald-100 text-emerald-700 px-2.5 py-1 rounded-md text-[10px] font-black tracking-wider uppercase border border-emerald-200">ทำรายการจองแล้ว (Booked)</span>
     }
     if (isExpired || status === 'EXPIRED') {
-      return <span className="bg-slate-100 text-slate-500 px-2.5 py-1 rounded-md text-[10px] font-black tracking-wider uppercase border border-slate-200">เธซเธกเธ”เธญเธฒเธขเธธ (Expired)</span>
+      return <span className="bg-slate-100 text-slate-500 px-2.5 py-1 rounded-md text-[10px] font-black tracking-wider uppercase border border-slate-200">หมดอายุ (Expired)</span>
     }
-    return <span className="bg-orange-100 text-orange-700 px-2.5 py-1 rounded-md text-[10px] font-black tracking-wider uppercase border border-orange-200">เธฃเธญเธเธฒเธฃเธขเธทเธเธขเธฑเธ (Active)</span>
+    return <span className="bg-orange-100 text-orange-700 px-2.5 py-1 rounded-md text-[10px] font-black tracking-wider uppercase border border-orange-200">รอการยืนยัน (Active)</span>
   }
 
   return (
     <div className="space-y-6 animate-fade-in-up">
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 pb-4 border-b border-slate-200">
         <div>
-          <h1 className="text-2xl font-black text-slate-800">เนเธเน€เธชเธเธญเธฃเธฒเธเธฒ (Quotations)</h1>
-          <p className="text-slate-500 text-sm mt-1">เนเธเน€เธชเธเธญเธฃเธฒเธเธฒเธ—เธตเน Sales Manager เธซเธฃเธทเธญ AI Planner เธชเธฃเนเธฒเธเนเธซเนเธเธธเธ“</p>
+          <h1 className="text-2xl font-black text-slate-800">ใบเสนอราคา (Quotations)</h1>
+          <p className="text-slate-500 text-sm mt-1">ใบเสนอราคาที่ Sales Manager หรือ AI Planner สร้างให้คุณ</p>
         </div>
       </div>
 
@@ -66,22 +66,22 @@ export default async function CustomerQuotationsPage() {
                     </span>
                     <span className="flex items-center gap-1.5">
                       <svg className="w-4 h-4 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
-                      {q.paxAdult + q.paxChild} เธ—เนเธฒเธ
+                      {q.paxAdult + q.paxChild} ท่าน
                     </span>
                     <span className="flex items-center gap-1.5">
                       <svg className="w-4 h-4 text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                      เนเธเนเนเธ”เนเธ–เธถเธ {new Date(q.validUntil).toLocaleDateString('th-TH')}
+                      ใช้ได้ถึง {new Date(q.validUntil).toLocaleDateString('th-TH')}
                     </span>
                   </div>
                 </div>
                 
                 <div className="flex flex-col sm:flex-row items-center gap-4 w-full md:w-auto border-t md:border-t-0 md:border-l border-slate-100 pt-4 md:pt-0 md:pl-6 shrink-0">
                   <div className="text-left sm:text-right w-full sm:w-auto">
-                    <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">เธขเธญเธ”เธฃเธงเธกเธชเธธเธ—เธเธด</p>
-                    <p className="text-2xl font-black text-indigo-700">เธฟ{q.totalSellingPrice.toLocaleString()}</p>
+                    <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">ยอดรวมสุทธิ</p>
+                    <p className="text-2xl font-black text-indigo-700">฿{q.totalSellingPrice.toLocaleString()}</p>
                   </div>
                   <Link href={`/account/quotations/${q.quotationRef}`} className={`w-full sm:w-auto ${q.status === 'ACTIVE' && !isExpired ? 'bg-indigo-600 hover:bg-indigo-700 text-white' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'} px-6 py-3 rounded-xl text-sm font-bold shadow-sm transition-colors text-center whitespace-nowrap`}>
-                    เธ”เธนเธฃเธฒเธขเธฅเธฐเน€เธญเธตเธขเธ”
+                    ดูรายละเอียด
                   </Link>
                 </div>
               </div>
@@ -93,14 +93,14 @@ export default async function CustomerQuotationsPage() {
           <div className="w-20 h-20 bg-indigo-50 text-indigo-500 rounded-full flex items-center justify-center mb-6 border border-indigo-100">
             <svg className="w-10 h-10" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
           </div>
-          <h3 className="text-xl font-black text-slate-800 mb-2">เธขเธฑเธเนเธกเนเธกเธตเนเธเน€เธชเธเธญเธฃเธฒเธเธฒ</h3>
+          <h3 className="text-xl font-black text-slate-800 mb-2">ยังไม่มีใบเสนอราคา</h3>
           <p className="text-slate-500 font-medium mb-8 max-w-sm mx-auto">
-            เธเธธเธ“เธชเธฒเธกเธฒเธฃเธ–เนเธซเนเธเธเธฑเธเธเธฒเธเธเธฒเธขเธซเธฃเธทเธญ AI Planner เธเธญเธเน€เธฃเธฒเธเธฑเธ”เธ—เธณเนเธเน€เธชเธเธญเธฃเธฒเธเธฒเธ—เธฑเธงเธฃเนเนเธเธเธเธฅเธธเนเธกเธชเนเธงเธเธ•เธฑเธงเธซเธฃเธทเธญเนเธเนเธเน€เธเธเธเธดเน€เธจเธฉเนเธซเนเธเธธเธ“เนเธ”เน
+            คุณสามารถให้พนักงานขายหรือ AI Planner ของเราจัดทำใบเสนอราคาทัวร์แบบกลุ่มส่วนตัวหรือแพ็กเกจพิเศษให้คุณได้
           </p>
           <div className="flex gap-4">
             <Link href="/account/ai-chats" className="bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-3 rounded-xl text-sm font-bold shadow-sm transition-colors flex items-center justify-center gap-2">
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" /></svg>
-              เธเธธเธขเธเธฑเธ AI Planner
+              คุยกับ AI Planner
             </Link>
           </div>
         </div>

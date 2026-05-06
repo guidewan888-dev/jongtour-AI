@@ -1,4 +1,4 @@
-﻿export const dynamic = 'force-dynamic';
+export const dynamic = 'force-dynamic';
 import { prisma } from '@/lib/prisma';
 import LeadListClient from './LeadListClient';
 
@@ -12,7 +12,7 @@ export default async function LeadListPage() {
     id: l.id,
     name: l.customerName,
     phone: l.contactInfo,
-    interest: 'เธ—เธฑเธงเธฃเน (เธญเนเธฒเธเธญเธดเธเธเธฒเธเธเธดเธเธเธฃเธฃเธก)', 
+    interest: 'ทัวร์ (อ้างอิงจากกิจกรรม)', 
     source: l.source,
     score: Math.floor(Math.random() * 100), // AI Score simulation
     status: l.status,

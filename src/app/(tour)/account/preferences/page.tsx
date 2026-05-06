@@ -1,4 +1,4 @@
-﻿export const dynamic = 'force-dynamic';
+export const dynamic = 'force-dynamic';
 import React from 'react'
 import { createClient } from '@/utils/supabase/server'
 import { prisma } from '@/lib/prisma'
@@ -24,8 +24,8 @@ export default async function CustomerPreferencesPage() {
     <div className="space-y-6 animate-fade-in-up">
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 pb-4 border-b border-slate-200">
         <div>
-          <h1 className="text-2xl font-black text-slate-800">เธเธงเธฒเธกเธชเธเนเธเนเธฅเธฐเธเธฒเธฃเน€เธ”เธดเธเธ—เธฒเธ (Travel Preferences)</h1>
-          <p className="text-slate-500 text-sm mt-1">เธญเธฑเธเน€เธ”เธ•เธเนเธญเธกเธนเธฅเธชเนเธ•เธฅเนเธเธฒเธฃเธ—เนเธญเธเน€เธ—เธตเนเธขเธงเน€เธเธทเนเธญเนเธซเน AI เธเธญเธเน€เธฃเธฒเนเธเธฐเธเธณเธ—เธฑเธงเธฃเนเธ—เธตเนเธ•เธฃเธเนเธเธเธธเธ“เธกเธฒเธเธ—เธตเนเธชเธธเธ”</p>
+          <h1 className="text-2xl font-black text-slate-800">ความสนใจและการเดินทาง (Travel Preferences)</h1>
+          <p className="text-slate-500 text-sm mt-1">อัปเดตข้อมูลสไตล์การท่องเที่ยวเพื่อให้ AI ของเราแนะนำทัวร์ที่ตรงใจคุณมากที่สุด</p>
         </div>
       </div>
 
