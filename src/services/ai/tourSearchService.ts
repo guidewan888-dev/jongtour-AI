@@ -13,6 +13,7 @@ export async function searchTours(
   console.log("=== intentExtracted ===", JSON.stringify(intentExtracted));
   
   try {
+  console.log("[searchTours] DATABASE_URL host:", process.env.DATABASE_URL?.replace(/\/\/.*@/, '//***@').substring(0, 100));
   // STRICT B2B LOCK: Force supplier_id from Intent Extractor if present
   if (intentExtracted?.supplier_filter_required && intentExtracted?.matched_supplier?.supplier_id) {
     args.supplier_id = intentExtracted.matched_supplier.supplier_id;
