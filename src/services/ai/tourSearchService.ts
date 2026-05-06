@@ -12,6 +12,7 @@ export async function searchTours(
   console.log("=== searchTours args ===", args);
   console.log("=== intentExtracted ===", JSON.stringify(intentExtracted));
   
+  try {
   // STRICT B2B LOCK: Force supplier_id from Intent Extractor if present
   if (intentExtracted?.supplier_filter_required && intentExtracted?.matched_supplier?.supplier_id) {
     args.supplier_id = intentExtracted.matched_supplier.supplier_id;
@@ -186,6 +187,10 @@ export async function searchTours(
   let strictInstruction = "";
 
   return { tours, strictInstruction };
+  } catch (dbError: any) {
+    console.error("[searchTours] Database query failed:", dbError?.message?.substring(0, 200));
+    return { tours: [], strictInstruction: "[SYSTEM: ฐานข้อมูลทัวร์ไม่สามารถเข้าถึงได้ชั่วคราว ให้ตอบลูกค้าว่ากำลังปรับปรุงระบบ และแนะนำให้ติดต่อเจ้าหน้าที่โดยตรง]" };
+  }
 }
 
 export function formatTourSummary(tours: any[]) {
