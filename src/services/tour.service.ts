@@ -72,7 +72,7 @@ export async function getTourList(options?: {
   country?: string;
   limit?: number;
 }): Promise<TourListItem[]> {
-  const { keyword, country, limit = 50 } = options || {};
+  const { keyword, country, limit = 1000 } = options || {};
   const sb = getSupabaseAdmin();
 
   // 1. Get published tours

@@ -9,7 +9,7 @@ const regions = [
     emoji: "🌏",
     countries: [
       { name: "ญี่ปุ่น", slug: "japan", flag: "🇯🇵" },
-      { name: "เกาหลี", slug: "south-korea", flag: "🇰🇷" },
+      { name: "เกาหลี", slug: "korea", flag: "🇰🇷" },
       { name: "จีน", slug: "china", flag: "🇨🇳" },
       { name: "ไต้หวัน", slug: "taiwan", flag: "🇹🇼" },
       { name: "เวียดนาม", slug: "vietnam", flag: "🇻🇳" },
@@ -22,12 +22,11 @@ const regions = [
     name: "ยุโรป",
     emoji: "🏰",
     countries: [
-      { name: "อิตาลี", slug: "italy", flag: "🇮🇹" },
-      { name: "ฝรั่งเศส", slug: "france", flag: "🇫🇷" },
-      { name: "สวิตเซอร์แลนด์", slug: "switzerland", flag: "🇨🇭" },
-      { name: "อังกฤษ", slug: "united-kingdom", flag: "🇬🇧" },
-      { name: "สเปน", slug: "spain", flag: "🇪🇸" },
-      { name: "เยอรมัน", slug: "germany", flag: "🇩🇪" },
+      { name: "ยุโรป (ทั้งหมด)", slug: "europe", flag: "🇪🇺" },
+      { name: "อิตาลี", slug: "europe", flag: "🇮🇹" },
+      { name: "ฝรั่งเศส", slug: "europe", flag: "🇫🇷" },
+      { name: "สวิตเซอร์แลนด์", slug: "europe", flag: "🇨🇭" },
+      { name: "รัสเซีย", slug: "russia", flag: "🇷🇺" },
     ],
   },
   {
@@ -48,7 +47,7 @@ const regions = [
       { name: "อเมริกา", slug: "usa", flag: "🇺🇸" },
       { name: "แคนาดา", slug: "canada", flag: "🇨🇦" },
       { name: "ออสเตรเลีย", slug: "australia", flag: "🇦🇺" },
-      { name: "นิวซีแลนด์", slug: "new-zealand", flag: "🇳🇿" },
+      { name: "นิวซีแลนด์", slug: "newzealand", flag: "🇳🇿" },
     ],
   },
 ];

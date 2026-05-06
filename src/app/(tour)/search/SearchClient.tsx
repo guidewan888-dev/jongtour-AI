@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 
 interface TourResult {
@@ -23,23 +23,26 @@ export default function SearchClient({ initialTours }: { initialTours: TourResul
   const [isLoading, setIsLoading] = useState(true);
   const [tours, setTours] = useState<TourResult[]>(initialTours);
 
+  // Filter states
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCountries, setSelectedCountries] = useState<Set<string>>(new Set());
+  const [selectedSuppliers, setSelectedSuppliers] = useState<Set<string>>(new Set());
+  const [sortBy, setSortBy] = useState('recommend');
+
   useEffect(() => {
-    // If SSR returned empty (DB was unreachable at build time), fetch from API at runtime
-    if (initialTours.length === 0) {
-      fetch('/api/tours/list')
-        .then(r => r.json())
-        .then(data => {
-          if (data.tours && data.tours.length > 0) {
-            setTours(data.tours);
-          }
-        })
-        .catch(() => {})
-        .finally(() => setIsLoading(false));
-    } else {
-      setTours(initialTours);
-      const timer = setTimeout(() => setIsLoading(false), 600);
-      return () => clearTimeout(timer);
-    }
+    fetch('/api/tours/list?limit=1000')
+      .then(r => r.json())
+      .then(data => {
+        if (data.tours && data.tours.length > 0) {
+          setTours(data.tours);
+        } else if (initialTours.length > 0) {
+          setTours(initialTours);
+        }
+      })
+      .catch(() => {
+        if (initialTours.length > 0) setTours(initialTours);
+      })
+      .finally(() => setIsLoading(false));
   }, [initialTours]);
 
   useEffect(() => {
@@ -47,30 +50,83 @@ export default function SearchClient({ initialTours }: { initialTours: TourResul
     return () => { document.body.style.overflow = 'auto'; };
   }, [isMobileFilterOpen]);
 
+  // Derive available countries and suppliers from data
+  const { countries, suppliers } = useMemo(() => {
+    const cMap: Record<string, number> = {};
+    const sMap: Record<string, number> = {};
+    tours.forEach(t => {
+      if (t.country) cMap[t.country] = (cMap[t.country] || 0) + 1;
+      if (t.supplier) sMap[t.supplier] = (sMap[t.supplier] || 0) + 1;
+    });
+    return {
+      countries: Object.entries(cMap).sort((a, b) => b[1] - a[1]),
+      suppliers: Object.entries(sMap).sort((a, b) => b[1] - a[1]),
+    };
+  }, [tours]);
+
+  // Apply filters + sort
+  const filteredTours = useMemo(() => {
+    let result = tours;
+
+    // Search
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      result = result.filter(t =>
+        t.title.toLowerCase().includes(q) ||
+        t.code.toLowerCase().includes(q) ||
+        t.country.toLowerCase().includes(q) ||
+        t.city.toLowerCase().includes(q)
+      );
+    }
+
+    // Country filter
+    if (selectedCountries.size > 0) {
+      result = result.filter(t => selectedCountries.has(t.country));
+    }
+
+    // Supplier filter
+    if (selectedSuppliers.size > 0) {
+      result = result.filter(t => selectedSuppliers.has(t.supplier));
+    }
+
+    // Sort
+    if (sortBy === 'price-asc') result = [...result].sort((a, b) => (a.price || 999999) - (b.price || 999999));
+    else if (sortBy === 'price-desc') result = [...result].sort((a, b) => (b.price || 0) - (a.price || 0));
+
+    return result;
+  }, [tours, searchQuery, selectedCountries, selectedSuppliers, sortBy]);
+
+  const toggleFilter = (set: Set<string>, value: string, setter: (s: Set<string>) => void) => {
+    const next = new Set(set);
+    next.has(value) ? next.delete(value) : next.add(value);
+    setter(next);
+  };
+
+  const clearAllFilters = () => {
+    setSearchQuery('');
+    setSelectedCountries(new Set());
+    setSelectedSuppliers(new Set());
+    setSortBy('recommend');
+  };
+
   const FilterSidebar = () => (
     <div className="space-y-6 pb-20 md:pb-0">
-      {/* Quick Toggles */}
-      <div className="space-y-2">
-        <label className="flex items-center justify-between p-3 bg-red-50 rounded-xl border border-red-100 cursor-pointer">
-          <span className="text-sm font-bold text-red-700 flex items-center gap-2">🔥 ทัวร์ไฟไหม้</span>
-          <input type="checkbox" className="w-4 h-4 text-primary-600 rounded focus:ring-primary-500" />
-        </label>
-        <label className="flex items-center justify-between p-3 bg-emerald-50 rounded-xl border border-emerald-100 cursor-pointer">
-          <span className="text-sm font-bold text-emerald-700 flex items-center gap-2">✅ คอนเฟิร์มเดินทาง</span>
-          <input type="checkbox" className="w-4 h-4 text-primary-600 rounded focus:ring-primary-500" defaultChecked />
-        </label>
-      </div>
-
-      <hr className="border-slate-200" />
-
-      {/* Country */}
+      {/* Supplier Filter */}
       <div>
-        <h4 className="font-bold text-slate-900 mb-3 text-sm">ประเทศ / โซน</h4>
+        <h4 className="font-bold text-slate-900 mb-3 text-sm">🏢 โฮลเซล</h4>
         <div className="space-y-2">
-          {['🇯🇵 ญี่ปุ่น', '🇰🇷 เกาหลีใต้', '🇨🇳 จีน', '🇪🇺 ยุโรป', '🇻🇳 เวียดนาม'].map(c => (
-            <label key={c} className="flex items-center gap-3 cursor-pointer group">
-              <input type="checkbox" className="w-4 h-4 text-primary-600 border-slate-300 rounded focus:ring-primary-500" />
-              <span className="text-sm text-slate-600 group-hover:text-slate-900">{c}</span>
+          {suppliers.map(([name, count]) => (
+            <label key={name} className="flex items-center justify-between cursor-pointer group">
+              <div className="flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  checked={selectedSuppliers.has(name)}
+                  onChange={() => toggleFilter(selectedSuppliers, name, setSelectedSuppliers)}
+                  className="w-4 h-4 text-primary-600 border-slate-300 rounded focus:ring-primary-500"
+                />
+                <span className="text-sm text-slate-600 group-hover:text-slate-900">{name}</span>
+              </div>
+              <span className="text-xs text-slate-400">{count}</span>
             </label>
           ))}
         </div>
@@ -78,9 +134,32 @@ export default function SearchClient({ initialTours }: { initialTours: TourResul
 
       <hr className="border-slate-200" />
 
-      {/* Budget */}
+      {/* Country Filter */}
       <div>
-        <h4 className="font-bold text-slate-900 mb-3 text-sm">งบประมาณ</h4>
+        <h4 className="font-bold text-slate-900 mb-3 text-sm">🌍 ประเทศ / โซน</h4>
+        <div className="space-y-2 max-h-64 overflow-y-auto">
+          {countries.map(([name, count]) => (
+            <label key={name} className="flex items-center justify-between cursor-pointer group">
+              <div className="flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  checked={selectedCountries.has(name)}
+                  onChange={() => toggleFilter(selectedCountries, name, setSelectedCountries)}
+                  className="w-4 h-4 text-primary-600 border-slate-300 rounded focus:ring-primary-500"
+                />
+                <span className="text-sm text-slate-600 group-hover:text-slate-900">{name}</span>
+              </div>
+              <span className="text-xs text-slate-400">{count}</span>
+            </label>
+          ))}
+        </div>
+      </div>
+
+      <hr className="border-slate-200" />
+
+      {/* Budget Filter */}
+      <div>
+        <h4 className="font-bold text-slate-900 mb-3 text-sm">💰 งบประมาณ</h4>
         <div className="space-y-2">
           {['ไม่เกิน ฿15,000', '฿15,000 - ฿25,000', '฿25,000 - ฿40,000', '฿40,000+'].map((p, i) => (
             <label key={i} className="flex items-center gap-3 cursor-pointer group">
@@ -90,23 +169,10 @@ export default function SearchClient({ initialTours }: { initialTours: TourResul
           ))}
         </div>
       </div>
-
-      <hr className="border-slate-200" />
-
-      {/* Duration */}
-      <div>
-        <h4 className="font-bold text-slate-900 mb-3 text-sm">ระยะเวลา</h4>
-        <div className="flex flex-wrap gap-2">
-          {['1-3 วัน', '4-5 วัน', '6-8 วัน', '9+ วัน'].map(d => (
-            <label key={d} className="cursor-pointer">
-              <input type="checkbox" className="peer sr-only" />
-              <div className="g-chip text-xs peer-checked:!bg-primary-50 peer-checked:!text-primary-700 peer-checked:!border-primary-500">{d}</div>
-            </label>
-          ))}
-        </div>
-      </div>
     </div>
   );
+
+  const activeFilterCount = selectedCountries.size + selectedSuppliers.size + (searchQuery ? 1 : 0);
 
   return (
     <>
@@ -120,17 +186,28 @@ export default function SearchClient({ initialTours }: { initialTours: TourResul
                   <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
                 </svg>
               </div>
-              <input type="text" className="g-input pl-9 !py-2 !text-sm" placeholder="ค้นหาทัวร์..." />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="g-input pl-9 !py-2 !text-sm"
+                placeholder="ค้นหาทัวร์ ประเทศ รหัส..."
+              />
             </div>
-            <select className="hidden md:block g-input !w-auto !py-2 !text-sm">
-              <option>ทุกเดือน</option>
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+              className="hidden md:block g-input !w-auto !py-2 !text-sm"
+            >
+              <option value="recommend">แนะนำ</option>
+              <option value="price-asc">ราคา: ต่ำ→สูง</option>
+              <option value="price-desc">ราคา: สูง→ต่ำ</option>
             </select>
-            <button className="btn-primary text-sm !py-2 hidden md:block">ค้นหา</button>
             <button onClick={() => setIsMobileFilterOpen(true)} className="md:hidden btn-secondary text-sm !py-2 flex items-center gap-1">
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75" />
               </svg>
-              กรอง
+              กรอง {activeFilterCount > 0 && <span className="bg-primary-600 text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center">{activeFilterCount}</span>}
             </button>
           </div>
         </div>
@@ -142,7 +219,9 @@ export default function SearchClient({ initialTours }: { initialTours: TourResul
           <div className="sticky top-40 g-card p-5">
             <div className="flex justify-between items-center mb-5">
               <h3 className="text-base font-bold text-slate-900">ตัวกรอง</h3>
-              <button className="text-xs text-primary-600 font-semibold hover:underline">ล้างทั้งหมด</button>
+              {activeFilterCount > 0 && (
+                <button onClick={clearAllFilters} className="text-xs text-primary-600 font-semibold hover:underline">ล้างทั้งหมด</button>
+              )}
             </div>
             <FilterSidebar />
           </div>
@@ -170,7 +249,7 @@ export default function SearchClient({ initialTours }: { initialTours: TourResul
             <div>
               <h1 className="text-xl font-bold text-slate-900">ค้นหาทัวร์</h1>
               <p className="text-sm text-slate-500 mt-1">
-                พบ {isLoading ? '...' : tours.length} โปรแกรม
+                {isLoading ? 'กำลังโหลด...' : `พบ ${filteredTours.length} โปรแกรม จาก ${suppliers.length} โฮลเซล`}
               </p>
             </div>
             <div className="flex items-center gap-2">
@@ -182,11 +261,14 @@ export default function SearchClient({ initialTours }: { initialTours: TourResul
                   <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd" /></svg>
                 </button>
               </div>
-              <select className="g-input !w-auto !py-1.5 !text-xs">
-                <option>แนะนำ (AI)</option>
-                <option>ราคา: ต่ำ→สูง</option>
-                <option>ราคา: สูง→ต่ำ</option>
-                <option>วันเดินทางล่าสุด</option>
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                className="g-input !w-auto !py-1.5 !text-xs md:hidden"
+              >
+                <option value="recommend">แนะนำ</option>
+                <option value="price-asc">ราคา: ต่ำ→สูง</option>
+                <option value="price-desc">ราคา: สูง→ต่ำ</option>
               </select>
             </div>
           </div>
@@ -202,21 +284,23 @@ export default function SearchClient({ initialTours }: { initialTours: TourResul
                 </div>
               ))}
             </div>
-          ) : tours.length > 0 ? (
+          ) : filteredTours.length > 0 ? (
             <div className={`grid gap-4 ${viewMode === 'grid' ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1'}`}>
-              {tours.map(tour => (
-                <Link key={tour.id} href={`/tour/${tour.slug}`} className="g-card-interactive p-5 block">
+              {filteredTours.map(tour => (
+                <Link key={tour.id} href={`/tour/${tour.slug}`} className="g-card-interactive p-5 block group">
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-2">
+                      <div className="flex items-center gap-2 mb-2 flex-wrap">
                         <span className="text-xs font-semibold text-slate-400 bg-slate-50 px-2 py-0.5 rounded">{tour.code}</span>
-                        <span className="text-xs text-primary-600 font-semibold">{tour.supplier}</span>
+                        <span className="text-xs text-primary-600 font-semibold bg-primary-50 px-2 py-0.5 rounded">{tour.supplier}</span>
                       </div>
-                      <h3 className="text-sm font-bold text-slate-900 mb-1 line-clamp-2">{tour.title}</h3>
+                      <h3 className="text-sm font-bold text-slate-900 mb-1 line-clamp-2 group-hover:text-primary-600 transition-colors">{tour.title}</h3>
                       <p className="text-xs text-slate-500">
-                        {tour.country} {tour.city && `• ${tour.city}`} • {tour.durationDays}วัน{tour.durationNights}คืน
+                        🌍 {tour.country} {tour.city && `• ${tour.city}`} • ⏱️ {tour.durationDays}วัน{tour.durationNights}คืน
                       </p>
-                      <p className="text-xs text-slate-400 mt-1">เดินทาง: {tour.nextDeparture}</p>
+                      {tour.nextDeparture !== 'N/A' && (
+                        <p className="text-xs text-slate-400 mt-1">📅 เดินทาง: {tour.nextDeparture}</p>
+                      )}
                     </div>
                     <div className="text-right shrink-0">
                       {tour.price > 0 ? (
@@ -227,8 +311,8 @@ export default function SearchClient({ initialTours }: { initialTours: TourResul
                       ) : (
                         <div className="text-sm text-slate-400">สอบถามราคา</div>
                       )}
-                      {tour.availableSeats > 0 && (
-                        <div className="text-xs text-emerald-600 font-semibold mt-1">เหลือ {tour.availableSeats} ที่</div>
+                      {tour.availableSeats > 0 && tour.availableSeats <= 15 && (
+                        <div className="text-xs text-red-600 font-semibold mt-1">🔥 เหลือ {tour.availableSeats} ที่</div>
                       )}
                     </div>
                   </div>
@@ -241,6 +325,9 @@ export default function SearchClient({ initialTours }: { initialTours: TourResul
                 <span className="text-5xl mb-4">🔍</span>
                 <p className="g-empty-title">ไม่พบโปรแกรมทัวร์</p>
                 <p className="g-empty-desc">ลองเปลี่ยนคำค้นหาหรือเงื่อนไขตัวกรอง</p>
+                {activeFilterCount > 0 && (
+                  <button onClick={clearAllFilters} className="btn-secondary mt-4 text-sm">ล้างตัวกรอง</button>
+                )}
               </div>
             </div>
           )}

@@ -1,14 +1,14 @@
 /**
- * Mega Menu Configuration — Blueprint 05
- * Google-style dropdown with 4 columns
+ * Mega Menu Configuration
+ * All links point to working routes: /country/[slug] and /search
  */
 
 export interface MegaMenuItem {
   label: string;
   href: string;
   emoji?: string;
-  flag?: string; // emoji flag
-  count?: number; // tour count
+  flag?: string;
+  count?: number;
 }
 
 export interface MegaMenuColumn {
@@ -27,33 +27,34 @@ export const megaMenuConfig: MegaMenuGroup[] = [
     trigger: "ทัวร์ต่างประเทศ",
     columns: [
       {
-        title: "ตามภูมิภาค",
-        items: [
-          { label: "ทัวร์เอเชีย", href: "/region/asia", emoji: "🌏" },
-          { label: "ทัวร์ยุโรป", href: "/region/europe", emoji: "🏰" },
-          { label: "ทัวร์อเมริกา", href: "/region/america", emoji: "🗽" },
-          { label: "ทัวร์ออสเตรเลีย", href: "/region/oceania", emoji: "🦘" },
-          { label: "ทัวร์ตะวันออกกลาง", href: "/region/middle-east", emoji: "🕌" },
-        ],
-      },
-      {
-        title: "ทัวร์ฮิต",
+        title: "เอเชีย",
         items: [
           { label: "ทัวร์ญี่ปุ่น", href: "/country/japan", flag: "🇯🇵" },
-          { label: "ทัวร์เกาหลี", href: "/country/south-korea", flag: "🇰🇷" },
           { label: "ทัวร์จีน", href: "/country/china", flag: "🇨🇳" },
-          { label: "ทัวร์ยุโรป", href: "/region/europe", flag: "🇪🇺" },
-          { label: "ทัวร์อียิปต์", href: "/country/egypt", flag: "🇪🇬" },
-          { label: "ทัวร์จอร์เจีย", href: "/country/georgia", flag: "🇬🇪" },
-          { label: "ทัวร์ตุรกี", href: "/country/turkey", flag: "🇹🇷" },
+          { label: "ทัวร์เกาหลี", href: "/country/korea", flag: "🇰🇷" },
+          { label: "ทัวร์ไต้หวัน", href: "/country/taiwan", flag: "🇹🇼" },
+          { label: "ทัวร์เวียดนาม", href: "/country/vietnam", flag: "🇻🇳" },
+          { label: "ทัวร์ฮ่องกง", href: "/country/hongkong", flag: "🇭🇰" },
+          { label: "ทัวร์อินเดีย", href: "/country/india", flag: "🇮🇳" },
         ],
       },
       {
-        title: "ตามโปรโมชั่น",
+        title: "ยุโรป & ตะวันออกกลาง",
         items: [
-          { label: "Flash Sale ทัวร์ไฟไหม้", href: "/deals/flash-sale", emoji: "🔥" },
-          { label: "ราคาพิเศษเดือนนี้", href: "/deals/monthly", emoji: "💰" },
-          { label: "Last Minute Deal", href: "/last-minute", emoji: "⏰" },
+          { label: "ทัวร์ยุโรป", href: "/country/europe", flag: "🇪🇺" },
+          { label: "ทัวร์ตุรกี", href: "/country/turkey", flag: "🇹🇷" },
+          { label: "ทัวร์ดูไบ", href: "/country/dubai", flag: "🇦🇪" },
+          { label: "ทัวร์รัสเซีย", href: "/country/russia", flag: "🇷🇺" },
+          { label: "ทัวร์ออสเตรเลีย", href: "/country/australia", flag: "🇦🇺" },
+          { label: "ทัวร์นิวซีแลนด์", href: "/country/newzealand", flag: "🇳🇿" },
+        ],
+      },
+      {
+        title: "โปรโมชั่น",
+        items: [
+          { label: "🔥 ทัวร์ไฟไหม้ Flash Sale", href: "/deals/flash-sale" },
+          { label: "💰 ราคาพิเศษเดือนนี้", href: "/search" },
+          { label: "🤖 AI ช่วยหาทัวร์", href: "/ai-search" },
         ],
       },
     ],
@@ -65,38 +66,37 @@ export const megaMenuConfig: MegaMenuGroup[] = [
       {
         title: "ญี่ปุ่น 🇯🇵",
         items: [
-          { label: "โตเกียว", href: "/country/japan/tokyo" },
-          { label: "ฮอกไกโด", href: "/country/japan/hokkaido" },
-          { label: "โอซาก้า", href: "/country/japan/osaka" },
-          { label: "เกียวโต", href: "/country/japan/kyoto" },
-          { label: "นาโกย่า", href: "/country/japan/nagoya" },
-          { label: "ฟูกูโอกะ", href: "/country/japan/fukuoka" },
+          { label: "โตเกียว", href: "/country/japan" },
+          { label: "ฮอกไกโด", href: "/country/japan" },
+          { label: "โอซาก้า", href: "/country/japan" },
+          { label: "เกียวโต", href: "/country/japan" },
+          { label: "ฟูกูโอกะ", href: "/country/japan" },
         ],
       },
       {
         title: "เกาหลี 🇰🇷 / จีน 🇨🇳",
         items: [
-          { label: "โซล", href: "/country/south-korea/seoul" },
-          { label: "ปูซาน", href: "/country/south-korea/busan" },
-          { label: "เชจู", href: "/country/south-korea/jeju" },
-          { label: "ปักกิ่ง", href: "/country/china/beijing" },
-          { label: "เซี่ยงไฮ้", href: "/country/china/shanghai" },
-          { label: "จางเจียเจี้ย", href: "/country/china/zhangjiajie" },
+          { label: "โซล", href: "/country/korea" },
+          { label: "ปูซาน", href: "/country/korea" },
+          { label: "เชจู", href: "/country/korea" },
+          { label: "ปักกิ่ง", href: "/country/china" },
+          { label: "เซี่ยงไฮ้", href: "/country/china" },
+          { label: "จางเจียเจี้ย", href: "/country/china" },
         ],
       },
       {
-        title: "ยุโรป 🇪🇺 / ตะวันออกกลาง",
+        title: "ยุโรป 🇪🇺 / อื่นๆ",
         items: [
-          { label: "อิตาลี", href: "/country/italy", flag: "🇮🇹" },
-          { label: "ฝรั่งเศส", href: "/country/france", flag: "🇫🇷" },
-          { label: "สวิตเซอร์แลนด์", href: "/country/switzerland", flag: "🇨🇭" },
-          { label: "อังกฤษ", href: "/country/united-kingdom", flag: "🇬🇧" },
-          { label: "อียิปต์", href: "/country/egypt", flag: "🇪🇬" },
-          { label: "จอร์เจีย", href: "/country/georgia", flag: "🇬🇪" },
+          { label: "อิตาลี", href: "/country/europe", flag: "🇮🇹" },
+          { label: "ฝรั่งเศส", href: "/country/europe", flag: "🇫🇷" },
+          { label: "สวิตเซอร์แลนด์", href: "/country/europe", flag: "🇨🇭" },
+          { label: "อียิปต์", href: "/country/turkey", flag: "🇪🇬" },
+          { label: "ตุรกี", href: "/country/turkey", flag: "🇹🇷" },
+          { label: "ดูไบ", href: "/country/dubai", flag: "🇦🇪" },
         ],
       },
     ],
-    footerLink: { label: "ดูทุกจุดหมาย →", href: "/destinations" },
+    footerLink: { label: "ค้นหาทัวร์ทั้งหมด →", href: "/search" },
   },
 ];
 
@@ -129,14 +129,15 @@ export interface FooterColumn {
 
 export const footerColumns: FooterColumn[] = [
   {
-    title: "จุดหมายยอดฮิต",
+    title: "ทัวร์ยอดฮิต",
     links: [
       { label: "ทัวร์ญี่ปุ่น", href: "/country/japan" },
-      { label: "ทัวร์เกาหลี", href: "/country/south-korea" },
+      { label: "ทัวร์เกาหลี", href: "/country/korea" },
       { label: "ทัวร์จีน", href: "/country/china" },
-      { label: "ทัวร์ยุโรป", href: "/region/europe" },
-      { label: "ทัวร์อียิปต์", href: "/country/egypt" },
-      { label: "ดูทั้งหมด", href: "/destinations", highlight: true },
+      { label: "ทัวร์ยุโรป", href: "/country/europe" },
+      { label: "ทัวร์ไต้หวัน", href: "/country/taiwan" },
+      { label: "ทัวร์ตุรกี", href: "/country/turkey" },
+      { label: "ดูทั้งหมด", href: "/search", highlight: true },
     ],
   },
   {
@@ -145,7 +146,7 @@ export const footerColumns: FooterColumn[] = [
       { label: "จองทัวร์ออนไลน์", href: "/search" },
       { label: "กรุ๊ปส่วนตัว", href: "/private-group" },
       { label: "บริการวีซ่า", href: "/visa" },
-      { label: "AI Search", href: "/ai-search" },
+      { label: "AI ค้นหาทัวร์", href: "/ai-search" },
       { label: "B2B Agent", href: "/agent" },
     ],
   },
@@ -156,7 +157,6 @@ export const footerColumns: FooterColumn[] = [
       { label: "สมัครสมาชิก", href: "/register" },
       { label: "การจอง", href: "/account/bookings" },
       { label: "การชำระเงิน", href: "/account/payments" },
-      { label: "Voucher", href: "/account/vouchers" },
       { label: "ติดตามสถานะ", href: "/account/bookings" },
     ],
   },
@@ -165,7 +165,6 @@ export const footerColumns: FooterColumn[] = [
     links: [
       { label: "เกี่ยวกับเรา", href: "/about" },
       { label: "Blog", href: "/blog" },
-      { label: "คู่มือเที่ยว", href: "/blog" },
       { label: "FAQ / Help", href: "/help" },
       { label: "ติดต่อ", href: "/contact" },
       { label: "ร่วมงานกับเรา", href: "/careers" },
@@ -185,7 +184,6 @@ export const footerLegalLinks = [
 
 export const wholesalePartners = [
   { name: "Let'go Group", slug: "letgo" },
-  { name: "Go365", slug: "go365" },
   { name: "Check in Group", slug: "checkin" },
   { name: "Tour Factory", slug: "tour-factory" },
 ];
@@ -198,12 +196,12 @@ export const mobileDrawerLinks = [
   { label: "หน้าแรก", href: "/", emoji: "🏠" },
   { label: "ค้นหาทัวร์", href: "/search", emoji: "🔍" },
   { label: "ค้นหาด้วย AI", href: "/ai-search", emoji: "🤖" },
-  { label: "จุดหมายเที่ยว", href: "/destinations", emoji: "🌏" },
-  { label: "ทัวร์ฮิต", href: "/search?sort=popular", emoji: "🎫" },
+  { label: "ทัวร์ญี่ปุ่น", href: "/country/japan", emoji: "🇯🇵" },
+  { label: "ทัวร์จีน", href: "/country/china", emoji: "🇨🇳" },
+  { label: "ทัวร์เกาหลี", href: "/country/korea", emoji: "🇰🇷" },
+  { label: "ทัวร์ยุโรป", href: "/country/europe", emoji: "🇪🇺" },
   { label: "กรุ๊ปส่วนตัว", href: "/private-group", emoji: "✈️" },
   { label: "บริการวีซ่า", href: "/visa", emoji: "🛂" },
-  { label: "สมัครไกด์/หัวหน้าทัวร์", href: "/careers", emoji: "💼" },
   { label: "Blog & คู่มือเที่ยว", href: "/blog", emoji: "📝" },
-  { label: "FAQ", href: "/help", emoji: "❓" },
   { label: "ติดต่อ", href: "/contact", emoji: "📞" },
 ];
