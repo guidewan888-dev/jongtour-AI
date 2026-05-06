@@ -57,7 +57,15 @@ const SUPPLIER_DISPLAY: Record<string, { name: string; color: string }> = {
 export default function CountryPage({ params }: { params: { slug: string } }) {
   const [tours, setTours] = useState<Tour[]>([]);
   const [loading, setLoading] = useState(true);
+  const [activeCity, setActiveCity] = useState<string | null>(null);
   const countryInfo = COUNTRY_MAP[params.slug] || { name: params.slug, flagCode: '' };
+
+  // Read city from URL query param on mount
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const cityParam = urlParams.get('city');
+    if (cityParam) setActiveCity(cityParam);
+  }, []);
 
   useEffect(() => {
     fetch(`/api/tours/list?country=${encodeURIComponent(countryInfo.name)}&limit=1000`)
@@ -67,15 +75,28 @@ export default function CountryPage({ params }: { params: { slug: string } }) {
       .finally(() => setLoading(false));
   }, [countryInfo.name]);
 
+  // Get unique cities
+  const cities = useMemo(() => {
+    const citySet = new Set<string>();
+    tours.forEach(t => { if (t.city) citySet.add(t.city); });
+    return [...citySet].sort();
+  }, [tours]);
+
+  // Filter by city
+  const displayedTours = useMemo(() => {
+    if (!activeCity) return tours;
+    return tours.filter(t => t.city === activeCity || t.title.includes(activeCity));
+  }, [tours, activeCity]);
+
   const supplierGroups = useMemo(() => {
     const groups: Record<string, Tour[]> = {};
-    tours.forEach(t => {
+    displayedTours.forEach(t => {
       const key = (t.supplier || 'other').toLowerCase();
       if (!groups[key]) groups[key] = [];
       groups[key].push(t);
     });
     return Object.entries(groups).sort((a, b) => b[1].length - a[1].length);
-  }, [tours]);
+  }, [displayedTours]);
 
   const getSupplierInfo = (key: string) => {
     for (const [k, v] of Object.entries(SUPPLIER_DISPLAY)) {
@@ -114,6 +135,24 @@ export default function CountryPage({ params }: { params: { slug: string } }) {
       </section>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
+        {/* City filter chips */}
+        {cities.length > 0 && (
+          <div className="mb-6">
+            <h2 className="text-sm font-bold text-slate-500 mb-3">📍 กรองตามเมือง</h2>
+            <div className="flex flex-wrap gap-2">
+              <button onClick={() => setActiveCity(null)} className={`px-3 py-1.5 rounded-full text-xs font-bold border transition-all ${!activeCity ? 'bg-primary-500 text-white border-primary-500' : 'bg-white text-slate-600 border-slate-200 hover:border-primary-300'}`}>ทั้งหมด ({tours.length})</button>
+              {cities.map(city => {
+                const cityCount = tours.filter(t => t.city === city || t.title.includes(city)).length;
+                return (
+                  <button key={city} onClick={() => setActiveCity(activeCity === city ? null : city)} className={`px-3 py-1.5 rounded-full text-xs font-bold border transition-all ${activeCity === city ? 'bg-primary-500 text-white border-primary-500' : 'bg-white text-slate-600 border-slate-200 hover:border-primary-300'}`}>
+                    {city} ({cityCount})
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         {loading ? (
           <div className="space-y-8">{[1, 2].map(i => (
             <div key={i} className="bg-white rounded-2xl p-6 border border-slate-200 animate-pulse">
