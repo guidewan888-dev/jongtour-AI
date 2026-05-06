@@ -197,6 +197,27 @@ export async function middleware(req: NextRequest) {
     url.pathname = `/pub-auth${url.pathname}`;
     return NextResponse.rewrite(url);
   }
+  // ─── Legacy Route Redirects (/region/* → /tours/*, /country/* → /tours/*/*)
+  const COUNTRY_TO_CONTINENT: Record<string, string> = {
+    japan:'asia',china:'asia','south-korea':'asia',taiwan:'asia',vietnam:'asia',
+    hongkong:'asia',singapore:'asia',malaysia:'asia',india:'asia',cambodia:'asia',
+    myanmar:'asia',laos:'asia',philippines:'asia',srilanka:'asia',macau:'asia',
+    uk:'europe',france:'europe',italy:'europe',switzerland:'europe',spain:'europe',
+    turkey:'europe',russia:'europe',georgia:'europe',egypt:'europe',dubai:'europe',
+    usa:'americas',canada:'americas',australia:'oceania',newzealand:'oceania',
+  };
+  const REGION_MAP: Record<string, string> = { asia:'asia', europe:'europe', americas:'americas', oceania:'oceania', africa:'europe' };
+
+  if (url.pathname.startsWith('/region/')) {
+    const regionSlug = url.pathname.split('/')[2];
+    const mapped = REGION_MAP[regionSlug] || regionSlug;
+    return NextResponse.redirect(new URL(`/tours/${mapped}`, req.url), 301);
+  }
+  if (url.pathname.startsWith('/country/')) {
+    const countrySlug = url.pathname.split('/')[2];
+    const continent = COUNTRY_TO_CONTINENT[countrySlug] || 'asia';
+    return NextResponse.redirect(new URL(`/tours/${continent}/${countrySlug}`, req.url), 301);
+  }
 
   // 7. Default — tour portal
   return addSecurityHeaders(response);
