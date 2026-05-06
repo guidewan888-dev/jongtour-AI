@@ -1,184 +1,298 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import Link from 'next/link';
 import TourCard from '@/components/tour/TourCard';
-import { generateSupplierToursGroupedByCountry, WHOLESALES } from '@/data/tourTaxonomy';
 
-export default function WholesaleSlugPage({ params }: { params: { slug: string } }) {
-  const { slug } = params;
-  
-  // Basic mock mapper to convert slug back to our known wholesale names
-  const supplierName = WHOLESALES.find(w => w.toLowerCase().replace(/\s+/g, '-') === slug) 
-    || slug.toUpperCase().replace('-', ' ');
+interface Tour {
+  id: string; slug: string; code: string; title: string; supplier: string;
+  country: string; city: string; durationDays: number; durationNights: number;
+  nextDeparture: string; price: number; availableSeats: number; imageUrl?: string;
+  airline?: string;
+}
 
-  const [aiQuery, setAiQuery] = useState('');
-  const [isLoading, setIsLoading] = useState(true);
+const SUPPLIER_CONFIG: Record<string, {
+  name: string; displayName: string; logo: string;
+  gradient: string; heroBg: string; accent: string; accentLight: string;
+  accentBorder: string; tagline: string;
+}> = {
+  'letsgo': {
+    name: "let'sgo", displayName: "Let's Go Group",
+    logo: '/images/wholesale/letsgo.png',
+    gradient: 'from-green-800 via-green-700 to-emerald-600',
+    heroBg: 'bg-green-800', accent: 'text-green-600', accentLight: 'bg-green-50',
+    accentBorder: 'border-green-200',
+    tagline: 'โฮลเซลล์ชั้นนำ คุณภาพมาตรฐาน ราคาคุ้มค่า',
+  },
+  'go365': {
+    name: 'go365', displayName: 'Go365',
+    logo: '/images/wholesale/go365.png',
+    gradient: 'from-blue-800 via-blue-700 to-indigo-600',
+    heroBg: 'bg-blue-800', accent: 'text-blue-600', accentLight: 'bg-blue-50',
+    accentBorder: 'border-blue-200',
+    tagline: 'ทัวร์คุณภาพ ครอบคลุมทุกเส้นทาง ราคาดีที่สุด',
+  },
+  'checkin': {
+    name: 'checkingroup', displayName: 'Checkin Group',
+    logo: '/images/wholesale/checkin.png',
+    gradient: 'from-emerald-700 via-emerald-600 to-teal-500',
+    heroBg: 'bg-emerald-700', accent: 'text-emerald-600', accentLight: 'bg-emerald-50',
+    accentBorder: 'border-emerald-200',
+    tagline: 'เที่ยวสนุก ครบจบในที่เดียว มั่นใจทุกเส้นทาง',
+  },
+  'tour-factory': {
+    name: 'tourfactory', displayName: 'Tour Factory',
+    logo: '/images/wholesale/tourfactory.png',
+    gradient: 'from-purple-800 via-purple-700 to-violet-600',
+    heroBg: 'bg-purple-800', accent: 'text-purple-600', accentLight: 'bg-purple-50',
+    accentBorder: 'border-purple-200',
+    tagline: 'สร้างสรรค์ทริปพิเศษ โปรแกรมเอ็กซ์คลูซีฟ',
+  },
+};
 
-  // Simulate API fetch delay
+const CONTINENT_MAP: Record<string, { name: string; countries: string[] }> = {
+  asia: { name: 'เอเชีย', countries: ['ญี่ปุ่น','จีน','เกาหลีใต้','ไต้หวัน','เวียดนาม','ฮ่องกง','สิงคโปร์','มาเลเซีย','อินเดีย','กัมพูชา','พม่า','ลาว','ฟิลิปปินส์','ศรีลังกา'] },
+  europe: { name: 'ยุโรป', countries: ['ยุโรป','อังกฤษ','ฝรั่งเศส','อิตาลี','สวิตเซอร์แลนด์','สเปน','รัสเซีย','จอร์เจีย'] },
+  middleeast: { name: 'ตะวันออกกลาง & แอฟริกา', countries: ['ตุรกี','อียิปต์','ดูไบ'] },
+  americas: { name: 'อเมริกา', countries: ['อเมริกา','แคนาดา'] },
+  oceania: { name: 'โอเชียเนีย', countries: ['ออสเตรเลีย','นิวซีแลนด์'] },
+};
+
+const COUNTRY_FLAGS: Record<string, string> = {
+  'ญี่ปุ่น':'jp','จีน':'cn','เกาหลีใต้':'kr','ไต้หวัน':'tw','เวียดนาม':'vn',
+  'ฮ่องกง':'hk','สิงคโปร์':'sg','มาเลเซีย':'my','อินเดีย':'in','กัมพูชา':'kh',
+  'พม่า':'mm','ลาว':'la','ฟิลิปปินส์':'ph','ศรีลังกา':'lk',
+  'ยุโรป':'eu','อังกฤษ':'gb','ฝรั่งเศส':'fr','อิตาลี':'it','สวิตเซอร์แลนด์':'ch',
+  'สเปน':'es','รัสเซีย':'ru','จอร์เจีย':'ge','ตุรกี':'tr','อียิปต์':'eg','ดูไบ':'ae',
+  'อเมริกา':'us','แคนาดา':'ca','ออสเตรเลีย':'au','นิวซีแลนด์':'nz',
+};
+
+export default function WholesalePage({ params }: { params: { slug: string } }) {
+  const config = SUPPLIER_CONFIG[params.slug] || SUPPLIER_CONFIG['letsgo'];
+  const [tours, setTours] = useState<Tour[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [activeContinent, setActiveContinent] = useState<string | null>(null);
+  const [activeCountry, setActiveCountry] = useState<string | null>(null);
+  const [activeCity, setActiveCity] = useState<string | null>(null);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+
   useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 800);
-    return () => clearTimeout(timer);
-  }, [slug]);
+    setLoading(true);
+    fetch(`/api/tours/list?limit=2000`)
+      .then(r => r.json())
+      .then(d => {
+        if (d.tours) {
+          const filtered = (d.tours as Tour[]).filter(t =>
+            t.supplier.toLowerCase().replace(/['\s]/g, '').includes(config.name.replace(/['\s]/g, ''))
+          );
+          setTours(filtered);
+        }
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, [config.name]);
 
-  // Generate data scoped strictly to this supplier, grouped by country
-  const countryGroups = generateSupplierToursGroupedByCountry(supplierName, 4);
-  const countries = Object.keys(countryGroups);
+  // Build taxonomy: continent → country → city
+  const taxonomy = useMemo(() => {
+    const result: Record<string, { countries: Record<string, { cities: Set<string>; count: number }> }> = {};
+    tours.forEach(t => {
+      const country = t.country || 'อื่นๆ';
+      const city = t.city || '';
+      let continent = 'other';
+      for (const [key, data] of Object.entries(CONTINENT_MAP)) {
+        if (data.countries.includes(country)) { continent = key; break; }
+      }
+      if (!result[continent]) result[continent] = { countries: {} };
+      if (!result[continent].countries[country]) result[continent].countries[country] = { cities: new Set(), count: 0 };
+      result[continent].countries[country].count++;
+      if (city) result[continent].countries[country].cities.add(city);
+    });
+    return result;
+  }, [tours]);
+
+  const filteredTours = useMemo(() => {
+    let filtered = tours;
+    if (activeCountry) filtered = filtered.filter(t => t.country === activeCountry);
+    else if (activeContinent && CONTINENT_MAP[activeContinent]) {
+      filtered = filtered.filter(t => CONTINENT_MAP[activeContinent].countries.includes(t.country));
+    }
+    if (activeCity) filtered = filtered.filter(t => t.city === activeCity);
+    return filtered;
+  }, [tours, activeContinent, activeCountry, activeCity]);
+
+  const handleContinentClick = (key: string) => {
+    setActiveContinent(activeContinent === key ? null : key);
+    setActiveCountry(null); setActiveCity(null);
+  };
+  const handleCountryClick = (country: string) => {
+    setActiveCountry(activeCountry === country ? null : country);
+    setActiveCity(null);
+  };
 
   return (
-    <div className="bg-slate-50 selection:bg-orange-200 selection:text-orange-900">
-      <main>
-        {/* 1. Supplier Hero & Logo Info */}
-        <section className="bg-slate-900 text-white pt-16 pb-24 relative overflow-hidden">
-          {/* Abstract pattern */}
-          <div className="absolute right-0 top-0 w-1/2 h-full opacity-10 pointer-events-none">
-             <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="w-full h-full"><polygon fill="currentColor" points="0,100 100,0 100,100"/></svg>
-          </div>
-
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-            <div className="flex flex-col md:flex-row items-center gap-8 md:gap-12">
-              
-              {/* Supplier Identity */}
-              <div className="w-32 h-32 md:w-48 md:h-48 bg-white rounded-3xl flex items-center justify-center shrink-0 border-4 border-slate-700 shadow-2xl p-4">
-                <span className="font-black text-slate-800 text-2xl md:text-3xl text-center leading-none tracking-tight">{supplierName}</span>
-              </div>
-              
-              <div className="flex-1 text-center md:text-left">
-                <div className="inline-flex items-center gap-2 bg-blue-500/20 text-blue-300 font-bold px-3 py-1 rounded-full text-xs mb-4 border border-blue-500/30">
-                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
-                  Official Wholesale Partner
-                </div>
-                <h1 className="text-4xl md:text-6xl font-black tracking-tight mb-4">ทัวร์คุณภาพจาก {supplierName}</h1>
-                <p className="text-slate-300 text-lg max-w-2xl leading-relaxed mb-8">
-                  Jongtour เป็นตัวแทนจำหน่ายอย่างเป็นทางการของโฮลเซลล์ชั้นนำ {supplierName} มั่นใจได้ว่าทุกโปรแกรมทัวร์ได้รับการคัดสรรคุณภาพและคุ้มค่าที่สุด
-                </p>
-
-                {/* 2. AI Search Locked to Supplier */}
-                <div className="bg-white/10 backdrop-blur-md p-2 rounded-2xl border border-white/20 max-w-2xl relative">
-                  <div className="relative bg-white rounded-xl shadow-inner flex flex-col md:flex-row gap-2 p-1.5">
-                    <div className="flex-1 relative flex items-center">
-                      <div className="absolute left-3 flex items-center pointer-events-none">
-                        <svg className="h-5 w-5 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
-                      </div>
-                      <input 
-                        type="text" 
-                        value={aiQuery}
-                        onChange={e => setAiQuery(e.target.value)}
-                        className="w-full pl-10 pr-4 py-3 bg-transparent border-none focus:ring-0 text-slate-800 placeholder-slate-400 outline-none" 
-                        placeholder={`หาทัวร์ของ ${supplierName} เช่น 'ญี่ปุ่น 5 วัน เดือนหน้า'`} 
-                      />
-                    </div>
-                    {/* Hard filter via parameter */}
-                    <a 
-                      href={`/ai-search?q=${encodeURIComponent(aiQuery)}&supplier_id=${slug}`}
-                      className="bg-slate-900 hover:bg-slate-800 text-white font-bold py-3 px-6 rounded-lg shadow-md transition-all text-sm whitespace-nowrap flex items-center justify-center"
-                    >
-                      ให้ AI ค้นหาทัวร์นี้
-                    </a>
-                  </div>
-                </div>
-
-              </div>
+    <div className="bg-slate-50 min-h-screen">
+      {/* Hero */}
+      <section className={`relative bg-gradient-to-br ${config.gradient} text-white overflow-hidden`}>
+        <div className="absolute inset-0 opacity-10"><div className="absolute inset-0" style={{backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)', backgroundSize: '24px 24px'}} /></div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16 relative">
+          <div className="flex flex-col md:flex-row items-center gap-8">
+            <div className="w-28 h-28 md:w-36 md:h-36 bg-white rounded-2xl flex items-center justify-center shrink-0 shadow-2xl p-3">
+              <img src={config.logo} alt={config.displayName} className="max-w-full max-h-full object-contain" onError={(e) => { (e.target as HTMLImageElement).style.display='none'; (e.target as HTMLImageElement).parentElement!.innerHTML=`<span class="font-black text-2xl text-slate-800">${config.displayName}</span>`; }} />
             </div>
-          </div>
-        </section>
-
-        {/* 3. Supplier Promotions */}
-        <div className="bg-orange-50 border-b border-orange-100">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-            <div className="flex items-center gap-3 overflow-x-auto hide-scrollbar text-sm font-bold text-orange-800">
-              <svg className="w-5 h-5 shrink-0 text-orange-600 animate-bounce" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" /></svg>
-              <span>โปรโมชั่นพิเศษจาก {supplierName}:</span>
-              <span className="bg-white text-orange-600 px-3 py-1 rounded-full border border-orange-200">แถมฟรี! น้ำหนักกระเป๋า 30kg ทุกเส้นทาง</span>
-              <span className="bg-white text-orange-600 px-3 py-1 rounded-full border border-orange-200">ลด 1,000 บาท/ท่าน สำหรับกรุ๊ปครอบครัว 4 ท่านขึ้นไป</span>
+            <div className="flex-1 text-center md:text-left">
+              <div className="inline-flex items-center gap-2 bg-white/15 backdrop-blur-sm text-white/90 font-bold px-3 py-1 rounded-full text-xs mb-3 border border-white/20">
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
+                Official Wholesale Partner
+              </div>
+              <h1 className="text-3xl md:text-5xl font-black tracking-tight mb-3">ทัวร์คุณภาพจาก {config.displayName}</h1>
+              <p className="text-white/70 text-base md:text-lg max-w-xl mb-1">{config.tagline}</p>
+              {!loading && <p className="text-white/50 text-sm">พบ {tours.length} โปรแกรมทัวร์</p>}
             </div>
           </div>
         </div>
+      </section>
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 space-y-24">
-          
-          {isLoading ? (
-             <div className="flex flex-col items-center justify-center py-32">
-                <svg className="w-10 h-10 text-orange-500 animate-spin mb-4" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                <p className="text-slate-500 font-medium">กำลังโหลดโปรแกรมทัวร์ทั้งหมดจาก {supplierName} ผ่านระบบ API...</p>
-             </div>
-          ) : (
-            // 4. Tour Listings Grouped by Country
-            <section className="space-y-16">
-              {countries.map(country => {
-                const group = countryGroups[country];
-                if (!group || group.tours.length === 0) return null;
+      {/* Breadcrumb */}
+      <div className="bg-white border-b border-slate-200">
+        <div className="max-w-7xl mx-auto px-4 py-3 flex items-center gap-2 text-sm text-slate-500 overflow-x-auto">
+          <Link href="/" className="hover:text-primary-600">หน้าหลัก</Link><span>›</span>
+          <Link href="/search" className="hover:text-primary-600">ทัวร์</Link><span>›</span>
+          <span className={config.accent + ' font-semibold'}>{config.displayName}</span>
+          {activeContinent && CONTINENT_MAP[activeContinent] && <><span>›</span><span>{CONTINENT_MAP[activeContinent].name}</span></>}
+          {activeCountry && <><span>›</span><span className="font-semibold">{activeCountry}</span></>}
+          {activeCity && <><span>›</span><span>{activeCity}</span></>}
+        </div>
+      </div>
 
-                return (
-                  <div key={country} className="bg-white rounded-3xl p-6 md:p-8 shadow-sm border border-slate-200">
-                    <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 gap-4 border-b border-slate-100 pb-6">
-                      <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center shrink-0 text-orange-600">
-                          <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                        </div>
-                        <div>
-                          <h3 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-                            ทัวร์{country} โดย {supplierName}
-                          </h3>
-                        </div>
-                      </div>
-                      {/* Hard filter applied in the link as well */}
-                      <a href={`/search?supplier=${supplierName}&country=${country}`} className="bg-slate-50 text-slate-700 hover:bg-slate-100 hover:text-orange-600 border border-slate-200 font-bold py-2 px-5 rounded-xl transition-colors text-sm flex items-center gap-2 whitespace-nowrap">
-                        ดูทั้งหมด {group.totalAvailable} โปรแกรม <span aria-hidden="true">&rarr;</span>
-                      </a>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                      {group.tours.map(tour => (
-                        // Force supplier lock mentally on UI
-                        <TourCard key={tour.id} data={tour} viewMode="grid" />
-                      ))}
-                    </div>
-                  </div>
-                );
-              })}
-            </section>
-          )}
-
-          {/* 5. FAQ & CTA */}
-          <section className="bg-slate-900 rounded-3xl p-8 md:p-12 text-white relative overflow-hidden">
-            <div className="absolute left-0 bottom-0 w-64 h-64 bg-blue-500 opacity-20 rounded-full blur-3xl pointer-events-none"></div>
-            
-            <div className="relative z-10 flex flex-col md:flex-row gap-12">
-              <div className="w-full md:w-1/3">
-                <h2 className="text-3xl font-bold mb-4">ข้อมูลโฮลเซลล์</h2>
-                <p className="text-slate-400 mb-6 leading-relaxed">
-                  เราคัดสรรพันธมิตรคุณภาพ เพื่อให้ทริปของคุณราบรื่น ไร้กังวล
-                </p>
-                <div className="bg-white/5 p-6 rounded-2xl border border-white/10">
-                  <h4 className="font-bold text-white mb-4">สนใจจัดกรุ๊ปเหมา {supplierName}?</h4>
-                  <p className="text-slate-300 text-sm mb-6">เราสามารถประสานงานขอใบเสนอราคาพิเศษจาก {supplierName} โดยตรง พร้อมส่วนลด B2B</p>
-                  <a href="/contact" className="w-full bg-orange-600 hover:bg-orange-700 text-white font-bold py-3 rounded-xl transition-colors text-sm flex items-center justify-center gap-2 shadow-md">
-                    ติดต่อเจ้าหน้าที่ฝ่ายขาย
-                  </a>
-                </div>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div className="flex gap-6">
+          {/* Sidebar */}
+          <aside className={`shrink-0 transition-all ${sidebarOpen ? 'w-64' : 'w-0 overflow-hidden'} hidden lg:block`}>
+            <div className="sticky top-20 bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+              <div className={`p-4 ${config.accentLight} border-b ${config.accentBorder}`}>
+                <h3 className={`font-bold text-sm ${config.accent}`}>📂 หมวดหมู่ทัวร์</h3>
+                <p className="text-[10px] text-slate-400 mt-0.5">{tours.length} โปรแกรมทั้งหมด</p>
               </div>
-              
-              <div className="w-full md:w-2/3">
-                <h3 className="font-bold text-xl mb-4">คำถามที่พบบ่อย (FAQ)</h3>
-                <div className="space-y-3">
-                  <div className="bg-white/5 border border-white/10 rounded-xl p-5">
-                    <h4 className="font-bold text-blue-300 mb-2">ทำไมถึงควรจองทัวร์ {supplierName} ผ่าน Jongtour?</h4>
-                    <p className="text-slate-300 text-sm leading-relaxed">
-                      จองผ่านเราได้ราคาเท่ากับหรือถูกกว่าจองตรง เนื่องจากเราเป็น Agent รายใหญ่ พร้อมบริการหลังการขาย และระบบสะสมแต้ม Jongtour Points
-                    </p>
-                  </div>
-                  <div className="bg-white/5 border border-white/10 rounded-xl p-5">
-                    <h4 className="font-bold text-blue-300 mb-2">สถานะ 'คอนเฟิร์มเดินทาง' เชื่อถือได้ไหม?</h4>
-                    <p className="text-slate-300 text-sm leading-relaxed">
-                      เชื่อถือได้ 100% ระบบของเราเชื่อมต่อ API โดยตรงกับระบบตัดที่นั่งของ {supplierName} หากขึ้นสถานะคอนเฟิร์ม หมายความว่ากรุ๊ปนั้นสามารถออกเดินทางได้แน่นอน
-                    </p>
-                  </div>
-                </div>
+              <div className="max-h-[65vh] overflow-y-auto">
+                {/* All */}
+                <button onClick={() => { setActiveContinent(null); setActiveCountry(null); setActiveCity(null); }} className={`w-full text-left px-4 py-2.5 text-sm font-semibold transition-colors ${!activeContinent && !activeCountry ? config.accentLight + ' ' + config.accent : 'text-slate-700 hover:bg-slate-50'}`}>
+                  🌍 ทั้งหมด ({tours.length})
+                </button>
+                {Object.entries(taxonomy).sort((a,b) => {
+                  const order = ['asia','europe','middleeast','americas','oceania','other'];
+                  return order.indexOf(a[0]) - order.indexOf(b[0]);
+                }).map(([continent, data]) => {
+                  const continentName = CONTINENT_MAP[continent]?.name || 'อื่นๆ';
+                  const totalInContinent = Object.values(data.countries).reduce((s, c) => s + c.count, 0);
+                  const isOpen = activeContinent === continent;
+                  return (
+                    <div key={continent}>
+                      <button onClick={() => handleContinentClick(continent)} className={`w-full text-left px-4 py-2.5 text-sm font-semibold flex items-center justify-between transition-colors ${isOpen ? config.accentLight + ' ' + config.accent : 'text-slate-700 hover:bg-slate-50'}`}>
+                        <span>{continentName}</span>
+                        <span className="flex items-center gap-1.5">
+                          <span className="text-[10px] bg-slate-200 text-slate-500 px-1.5 py-0.5 rounded-full">{totalInContinent}</span>
+                          <svg className={`w-3.5 h-3.5 transition-transform ${isOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
+                        </span>
+                      </button>
+                      {isOpen && (
+                        <div className="bg-slate-50/50">
+                          {Object.entries(data.countries).sort((a,b) => b[1].count - a[1].count).map(([country, cData]) => {
+                            const isCountryActive = activeCountry === country;
+                            const flagCode = COUNTRY_FLAGS[country] || '';
+                            return (
+                              <div key={country}>
+                                <button onClick={() => handleCountryClick(country)} className={`w-full text-left pl-8 pr-4 py-2 text-sm flex items-center gap-2 transition-colors ${isCountryActive ? config.accent + ' font-bold ' + config.accentLight : 'text-slate-600 hover:bg-slate-50'}`}>
+                                  {flagCode && <img src={`https://flagcdn.com/w20/${flagCode}.png`} width="14" height="10" alt="" className="rounded-sm" />}
+                                  <span className="flex-1">{country}</span>
+                                  <span className="text-[10px] text-slate-400">{cData.count}</span>
+                                </button>
+                                {isCountryActive && cData.cities.size > 0 && (
+                                  <div>{[...cData.cities].sort().map(city => (
+                                    <button key={city} onClick={() => setActiveCity(activeCity === city ? null : city)} className={`w-full text-left pl-14 pr-4 py-1.5 text-xs transition-colors ${activeCity === city ? config.accent + ' font-semibold' : 'text-slate-500 hover:text-slate-700'}`}>
+                                      📍 {city}
+                                    </button>
+                                  ))}</div>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </div>
-          </section>
+          </aside>
 
+          {/* Main Content */}
+          <main className="flex-1 min-w-0">
+            {/* Mobile filter toggle */}
+            <div className="lg:hidden mb-4">
+              <button onClick={() => setSidebarOpen(!sidebarOpen)} className="btn-secondary text-sm w-full flex items-center justify-center gap-2">
+                📂 {sidebarOpen ? 'ซ่อน' : 'แสดง'}หมวดหมู่
+              </button>
+            </div>
+
+            {/* Active filter pills */}
+            {(activeContinent || activeCountry || activeCity) && (
+              <div className="flex items-center gap-2 mb-4 flex-wrap">
+                <span className="text-xs text-slate-400">กรองโดย:</span>
+                {activeContinent && CONTINENT_MAP[activeContinent] && (
+                  <span className={`inline-flex items-center gap-1 text-xs font-bold ${config.accentLight} ${config.accent} px-2.5 py-1 rounded-full`}>
+                    {CONTINENT_MAP[activeContinent].name}
+                    <button onClick={() => { setActiveContinent(null); setActiveCountry(null); setActiveCity(null); }} className="ml-1 hover:opacity-70">✕</button>
+                  </span>
+                )}
+                {activeCountry && (
+                  <span className={`inline-flex items-center gap-1 text-xs font-bold ${config.accentLight} ${config.accent} px-2.5 py-1 rounded-full`}>
+                    {COUNTRY_FLAGS[activeCountry] && <img src={`https://flagcdn.com/w20/${COUNTRY_FLAGS[activeCountry]}.png`} width="12" height="9" alt="" className="rounded-sm" />}
+                    {activeCountry}
+                    <button onClick={() => { setActiveCountry(null); setActiveCity(null); }} className="ml-1 hover:opacity-70">✕</button>
+                  </span>
+                )}
+                {activeCity && (
+                  <span className={`inline-flex items-center gap-1 text-xs font-bold ${config.accentLight} ${config.accent} px-2.5 py-1 rounded-full`}>
+                    📍 {activeCity}
+                    <button onClick={() => setActiveCity(null)} className="ml-1 hover:opacity-70">✕</button>
+                  </span>
+                )}
+              </div>
+            )}
+
+            {/* Results count */}
+            <div className="flex items-center justify-between mb-4">
+              <p className="text-sm text-slate-500 font-medium">
+                {loading ? 'กำลังโหลด...' : `แสดง ${filteredTours.length} โปรแกรม`}
+              </p>
+            </div>
+
+            {/* Tour Grid */}
+            {loading ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+                {[1,2,3,4,5,6].map(i => (
+                  <div key={i} className="bg-white rounded-2xl border border-slate-200 overflow-hidden animate-pulse">
+                    <div className="h-44 bg-slate-200" />
+                    <div className="p-4 space-y-3"><div className="h-4 bg-slate-200 rounded w-3/4" /><div className="h-3 bg-slate-100 rounded w-1/2" /><div className="h-6 bg-slate-200 rounded w-1/3" /></div>
+                  </div>
+                ))}
+              </div>
+            ) : filteredTours.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+                {filteredTours.map(tour => (
+                  <TourCard key={tour.id} tour={{ ...tour, flagCode: COUNTRY_FLAGS[tour.country] || '' }} />
+                ))}
+              </div>
+            ) : (
+              <div className="bg-white rounded-2xl p-16 text-center border border-slate-200">
+                <div className="text-5xl mb-4">🔍</div>
+                <h2 className="text-xl font-bold text-slate-900 mb-2">ไม่พบทัวร์{activeCountry || ''}</h2>
+                <p className="text-slate-500 mb-6">ลองเลือกหมวดอื่น หรือดูทัวร์ทั้งหมดของ {config.displayName}</p>
+                <button onClick={() => { setActiveContinent(null); setActiveCountry(null); setActiveCity(null); }} className="btn-primary">ดูทัวร์ทั้งหมด</button>
+              </div>
+            )}
+          </main>
         </div>
-      </main>
+      </div>
     </div>
   );
 }
