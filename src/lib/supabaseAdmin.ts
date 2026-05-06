@@ -1,17 +1,51 @@
-import { createClient } from '@supabase/supabase-js';
-
-// Fallback values for when Vercel doesn't inject env vars to serverless functions
-const FALLBACK_URL = 'https://qterfftaebnoawnzkfgu.supabase.co';
-const FALLBACK_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF0ZXJmZnRhZWJub2F3bnprZmd1Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NzQ3MzAxNCwiZXhwIjoyMDkzMDQ5MDE0fQ.IDd7B8okNE1B0vf1OVQizDGeVQNdVwLK0gzogOyWIFE';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
 /**
- * Create a Supabase admin client using service role key.
- * This uses HTTPS REST API — works even when direct DB connection (port 5432) is blocked.
+ * Server-side Supabase REST client (service_role).
+ * 
+ * SECURITY: Credentials are read from environment variables only.
+ * On Vercel, set these in Project Settings → Environment Variables:
+ *   - SUPABASE_URL (or NEXT_PUBLIC_SUPABASE_URL)
+ *   - SUPABASE_SERVICE_ROLE_KEY
+ * 
+ * This module is server-side only — never import in client components.
  */
-export function getSupabaseAdmin() {
-  const url = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || FALLBACK_URL;
-  const key = process.env.SB_SERVICE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || FALLBACK_KEY;
-  return createClient(url, key, {
+
+let _client: SupabaseClient | null = null;
+
+function getUrl(): string {
+  return (
+    process.env.SUPABASE_URL ||
+    process.env.NEXT_PUBLIC_SUPABASE_URL ||
+    ''
+  );
+}
+
+function getServiceKey(): string {
+  return (
+    process.env.SUPABASE_SERVICE_ROLE_KEY ||
+    process.env.SB_SERVICE_KEY ||
+    ''
+  );
+}
+
+export function getSupabaseAdmin(): SupabaseClient {
+  if (_client) return _client;
+
+  const url = getUrl();
+  const key = getServiceKey();
+
+  if (!url || !key) {
+    throw new Error(
+      `[SupabaseAdmin] Missing env vars. ` +
+      `SUPABASE_URL=${!!url}, SUPABASE_SERVICE_ROLE_KEY=${!!key}. ` +
+      `Set these in Vercel Dashboard → Settings → Environment Variables.`
+    );
+  }
+
+  _client = createClient(url, key, {
     auth: { persistSession: false, autoRefreshToken: false },
   });
+
+  return _client;
 }

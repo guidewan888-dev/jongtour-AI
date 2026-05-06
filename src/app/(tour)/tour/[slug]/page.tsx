@@ -1,246 +1,316 @@
-export const dynamic = 'force-dynamic';
-import React from 'react';
-import TourGallery from '@/components/tour/detail/TourGallery';
-import TourStickyCard from '@/components/tour/detail/TourStickyCard';
-import TourItinerary from '@/components/tour/detail/TourItinerary';
-import TourPriceTable from '@/components/tour/detail/TourPriceTable';
-import { TourDetail } from '@/types/tour';
-import { prisma } from '@/lib/prisma';
-import { notFound } from 'next/navigation';
+'use client';
+import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 
-async function getTourDetail(slug: string): Promise<TourDetail> {
-  const tour = await prisma.tour.findUnique({
-    where: { slug },
-    include: {
-      supplier: true,
-      destinations: true,
-      images: { orderBy: { createdAt: 'asc' } },
-      pdfs: true,
-      itineraries: { orderBy: { dayNumber: 'asc' } },
-      meals: true,
-      included: true,
-      excluded: true,
-      policies: true,
-      departures: {
-        where: { startDate: { gte: new Date() } },
-        orderBy: { startDate: 'asc' },
-        include: { prices: true }
-      }
-    }
-  });
-
-  if (!tour) notFound();
-
-  const startingPrice = tour.departures[0]?.prices[0]?.sellingPrice || 0;
-  
-  return {
-    id: tour.id,
-    slug: tour.slug,
-    code: tour.tourCode,
-    title: tour.tourName,
-    supplier: {
-      id: tour.supplier.canonicalName,
-      name: tour.supplier.displayName
-    },
-    country: tour.destinations[0]?.country || 'เนเธกเนเธฃเธฐเธเธธ',
-    city: tour.destinations[0]?.city || 'เนเธกเนเธฃเธฐเธเธธ',
-    duration: { days: tour.durationDays, nights: tour.durationNights },
-    images: tour.images.length > 0 ? tour.images.map(i => i.imageUrl) : ['https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?q=80&w=1200'],
-    price: { starting: startingPrice },
-    status: tour.status as any,
-    summary: tour.supplierBookingNote || 'เธฃเธฒเธขเธฅเธฐเน€เธญเธตเธขเธ”เธ—เธฑเธงเธฃเน',
-    highlights: [], 
-    flight: { airline: 'เน€เธ—เธตเนเธขเธงเธเธดเธเธกเธฒเธ•เธฃเธเธฒเธ', details: 'เธญเนเธฒเธเธญเธดเธเธเธฒเธเธฃเธฒเธขเธฅเธฐเน€เธญเธตเธขเธ”เธ—เธฑเธงเธฃเน' },
-    hotel: { name: 'เนเธฃเธเนเธฃเธกเธกเธฒเธ•เธฃเธเธฒเธ', rating: 3, details: 'เธ•เธฒเธกเนเธเธฃเนเธเธฃเธกเธ—เธฑเธงเธฃเน' },
-    meals: 'เธ”เธนเธฃเธฒเธขเธฅเธฐเน€เธญเธตเธขเธ”เนเธเนเธเธฃเนเธเธฃเธก',
-    included: tour.included.map(i => i.description),
-    excluded: tour.excluded.map(e => e.description),
-    policies: {
-      payment: tour.policies.find(p => p.policyType === 'PAYMENT')?.description || 'เน€เธเธทเนเธญเธเนเธเธเธฒเธฃเธเธณเธฃเธฐเน€เธเธดเธเธ•เธฒเธกเธกเธฒเธ•เธฃเธเธฒเธ',
-      cancellation: tour.policies.find(p => p.policyType === 'CANCELLATION')?.description || 'เน€เธเธทเนเธญเธเนเธเธเธฒเธฃเธขเธเน€เธฅเธดเธเธ•เธฒเธกเธกเธฒเธ•เธฃเธเธฒเธ'
-    },
-    pdfUrl: tour.pdfs[0]?.pdfUrl,
-    itinerary: tour.itineraries.map(it => ({
-      day: it.dayNumber,
-      title: it.title,
-      description: it.description,
-      meals: {
-        breakfast: !!tour.meals.find(m => m.dayNumber === it.dayNumber && m.mealType === 'BREAKFAST'),
-        lunch: !!tour.meals.find(m => m.dayNumber === it.dayNumber && m.mealType === 'LUNCH'),
-        dinner: !!tour.meals.find(m => m.dayNumber === it.dayNumber && m.mealType === 'DINNER')
-      }
-    })),
-    departures: tour.departures.map(d => ({
-      id: d.id,
-      startDate: d.startDate.toISOString(),
-      endDate: d.endDate.toISOString(),
-      priceAdult: d.prices.find(p => p.paxType === 'ADULT')?.sellingPrice || 0,
-      priceChild: d.prices.find(p => p.paxType === 'CHILD')?.sellingPrice || 0,
-      priceSingle: d.prices.find(p => p.paxType === 'SINGLE_SUPP')?.sellingPrice || 0,
-      status: d.status as any,
-      remainingSeats: d.remainingSeats
-    })),
-    faqs: []
-  };
+interface TourData {
+  id: string;
+  slug: string;
+  code: string;
+  title: string;
+  supplier: { id: string; name: string };
+  country: string;
+  city: string;
+  duration: { days: number; nights: number };
+  images: string[];
+  price: { starting: number };
+  status: string;
+  summary: string;
+  highlights: string[];
+  included: string[];
+  excluded: string[];
+  policies: { payment: string; cancellation: string };
+  pdfUrl?: string;
+  itinerary: {
+    day: number;
+    title: string;
+    description: string;
+    meals: { breakfast: boolean; lunch: boolean; dinner: boolean };
+  }[];
+  departures: {
+    id: string;
+    startDate: string;
+    endDate: string;
+    priceAdult: number;
+    priceChild: number;
+    priceSingle: number;
+    status: string;
+    remainingSeats: number;
+  }[];
 }
 
-export default async function TourDetailPage({ params }: { params: { slug: string } }) {
-  // 1. Fetch Data
-  const tour = await getTourDetail(params.slug);
+export default function TourDetailPage({ params }: { params: { slug: string } }) {
+  const [tour, setTour] = useState<TourData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [activeTab, setActiveTab] = useState<'itinerary' | 'departures' | 'info'>('itinerary');
+
+  useEffect(() => {
+    fetch(`/api/tours/${params.slug}`)
+      .then(r => r.json())
+      .then(data => {
+        if (data.tour) setTour(data.tour);
+        else setError(data.error || 'ไม่พบโปรแกรมทัวร์');
+      })
+      .catch(() => setError('เกิดข้อผิดพลาดในการโหลดข้อมูล'))
+      .finally(() => setLoading(false));
+  }, [params.slug]);
+
+  if (loading) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 py-12">
+        <div className="animate-pulse space-y-6">
+          <div className="h-8 bg-slate-200 rounded w-3/4" />
+          <div className="h-4 bg-slate-100 rounded w-1/2" />
+          <div className="h-64 bg-slate-100 rounded-2xl" />
+          <div className="grid grid-cols-2 gap-4">
+            <div className="h-32 bg-slate-100 rounded-xl" />
+            <div className="h-32 bg-slate-100 rounded-xl" />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !tour) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 py-20 text-center">
+        <div className="text-6xl mb-6">🔍</div>
+        <h1 className="text-2xl font-bold text-slate-900 mb-3">ไม่พบโปรแกรมทัวร์</h1>
+        <p className="text-slate-500 mb-8">{error || 'ทัวร์นี้อาจถูกลบหรือยังไม่เผยแพร่'}</p>
+        <Link href="/search" className="btn-primary">กลับหน้าค้นหา</Link>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-white text-slate-800 pb-32 md:pb-20">
-        
-        {/* Section 1: Breadcrumb */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <nav className="text-xs font-medium text-slate-500">
-            <ol className="flex items-center space-x-2">
-              <li><a href="/" className="hover:text-orange-600 transition-colors">เธซเธเนเธฒเธซเธฅเธฑเธ</a></li>
-              <li><svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" /></svg></li>
-              <li><a href={`/search?q=${encodeURIComponent(tour.country)}`} className="hover:text-orange-600 transition-colors">เธ—เธฑเธงเธฃเน{tour.country}</a></li>
-              <li><svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" /></svg></li>
-              <li className="text-slate-900 truncate max-w-[200px]" aria-current="page">{tour.code}</li>
-            </ol>
-          </nav>
-        </div>
+      {/* Breadcrumb */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+        <nav className="text-xs font-medium text-slate-500">
+          <ol className="flex items-center space-x-2">
+            <li><Link href="/" className="hover:text-primary-600 transition-colors">หน้าหลัก</Link></li>
+            <li><ChevronIcon /></li>
+            <li><Link href="/search" className="hover:text-primary-600 transition-colors">ค้นหาทัวร์</Link></li>
+            <li><ChevronIcon /></li>
+            <li><Link href={`/search?q=${encodeURIComponent(tour.country)}`} className="hover:text-primary-600 transition-colors">ทัวร์{tour.country}</Link></li>
+            <li><ChevronIcon /></li>
+            <li className="text-slate-900 truncate max-w-[200px]">{tour.code}</li>
+          </ol>
+        </nav>
+      </div>
 
-        {/* Section 2: Hero Gallery */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-8">
-          <TourGallery images={tour.images} title={tour.title} />
+      {/* Hero Image */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-8">
+        <div className="relative rounded-2xl overflow-hidden h-[300px] md:h-[420px] bg-slate-100">
+          <img
+            src={tour.images[0]}
+            alt={tour.title}
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 to-transparent" />
+          <div className="absolute bottom-6 left-6 right-6">
+            <div className="flex flex-wrap gap-2 mb-3">
+              <span className="bg-white/90 backdrop-blur text-primary-700 text-xs font-bold px-3 py-1 rounded-full">{tour.code}</span>
+              <span className="bg-white/90 backdrop-blur text-slate-700 text-xs font-bold px-3 py-1 rounded-full">🏢 {tour.supplier.name}</span>
+            </div>
+            <h1 className="text-2xl md:text-3xl font-black text-white drop-shadow-lg leading-tight">{tour.title}</h1>
+          </div>
         </div>
+      </div>
 
-        {/* Main Content Layout */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col lg:flex-row gap-10">
-            
-            {/* Left Column: Content */}
-            <div className="w-full lg:w-[65%] space-y-12">
-              
-              {/* Header Info */}
-              <div>
-                <div className="flex flex-wrap gap-2 mb-3">
-                  <span className="bg-orange-100 text-orange-700 text-xs font-bold px-3 py-1 rounded-full border border-orange-200">
-                    {tour.code}
-                  </span>
-                  <span className="bg-blue-50 text-blue-700 text-xs font-bold px-3 py-1 rounded-full border border-blue-200 flex items-center gap-1">
-                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>
-                    เธเธฑเธ”เนเธ”เธข {tour.supplier.name}
-                  </span>
-                  {tour.status === 'AVAILABLE' && (
-                    <span className="bg-emerald-50 text-emerald-700 text-xs font-bold px-3 py-1 rounded-full border border-emerald-200 flex items-center gap-1">
-                      <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
-                      เธเธฒเธฃเธฑเธเธ•เธตเธญเธญเธเน€เธ”เธดเธเธ—เธฒเธ
-                    </span>
-                  )}
-                </div>
-                
-                <h1 className="text-3xl md:text-4xl font-black text-slate-900 leading-tight mb-4">
-                  {tour.title}
-                </h1>
-                
-                <div className="flex flex-wrap items-center gap-6 text-sm text-slate-600 font-medium pb-8 border-b border-slate-200">
-                  <div className="flex items-center gap-2">
-                    <svg className="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                    เธฃเธฐเธขเธฐเน€เธงเธฅเธฒ: {tour.duration.days} เธงเธฑเธ {tour.duration.nights} เธเธทเธ
+      {/* Main Content */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex flex-col lg:flex-row gap-10">
+
+          {/* Left Column */}
+          <div className="w-full lg:w-[65%] space-y-8">
+            {/* Quick Info Bar */}
+            <div className="flex flex-wrap items-center gap-4 text-sm text-slate-600 font-medium pb-6 border-b border-slate-200">
+              <div className="flex items-center gap-2">⏱️ {tour.duration.days} วัน {tour.duration.nights} คืน</div>
+              <div className="flex items-center gap-2">🌍 {tour.country} {tour.city && `• ${tour.city}`}</div>
+              {tour.departures.length > 0 && (
+                <div className="flex items-center gap-2">📅 เดินทาง {new Date(tour.departures[0].startDate).toLocaleDateString('th-TH')}</div>
+              )}
+            </div>
+
+            {/* Summary */}
+            {tour.summary && (
+              <section>
+                <h2 className="text-xl font-bold text-slate-900 mb-3">รายละเอียดโปรแกรม</h2>
+                <p className="text-slate-600 leading-relaxed">{tour.summary}</p>
+              </section>
+            )}
+
+            {/* Tabs */}
+            <div className="border-b border-slate-200">
+              <div className="flex gap-1">
+                {[
+                  { key: 'itinerary' as const, label: '📋 แผนการเดินทาง', count: tour.itinerary.length },
+                  { key: 'departures' as const, label: '📅 รอบเดินทาง', count: tour.departures.length },
+                  { key: 'info' as const, label: 'ℹ️ เงื่อนไข', count: 0 },
+                ].map(tab => (
+                  <button
+                    key={tab.key}
+                    onClick={() => setActiveTab(tab.key)}
+                    className={`px-4 py-3 text-sm font-semibold border-b-2 transition-colors ${
+                      activeTab === tab.key
+                        ? 'text-primary-600 border-primary-600'
+                        : 'text-slate-500 border-transparent hover:text-slate-700'
+                    }`}
+                  >
+                    {tab.label} {tab.count > 0 && <span className="text-xs text-slate-400">({tab.count})</span>}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Tab Content */}
+            {activeTab === 'itinerary' && (
+              <div className="space-y-4">
+                {tour.itinerary.length > 0 ? tour.itinerary.map(day => (
+                  <div key={day.day} className="g-card p-5 border-l-4 border-primary-500">
+                    <div className="flex items-center gap-3 mb-2">
+                      <span className="bg-primary-600 text-white text-xs font-bold w-8 h-8 rounded-full flex items-center justify-center">
+                        {day.day}
+                      </span>
+                      <h3 className="font-bold text-slate-900">{day.title}</h3>
+                    </div>
+                    <p className="text-sm text-slate-600 ml-11 leading-relaxed">{day.description}</p>
+                    <div className="flex gap-3 mt-3 ml-11">
+                      {day.meals.breakfast && <span className="text-xs bg-amber-50 text-amber-700 px-2 py-1 rounded-full">🌅 เช้า</span>}
+                      {day.meals.lunch && <span className="text-xs bg-orange-50 text-orange-700 px-2 py-1 rounded-full">☀️ กลางวัน</span>}
+                      {day.meals.dinner && <span className="text-xs bg-indigo-50 text-indigo-700 px-2 py-1 rounded-full">🌙 เย็น</span>}
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <svg className="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                    เธเธฃเธฐเน€เธ—เธจ: {tour.country}
+                )) : (
+                  <div className="g-card p-8 text-center text-slate-400">
+                    <p className="text-3xl mb-3">📋</p>
+                    <p>ยังไม่มีแผนการเดินทาง — ดาวน์โหลด PDF สำหรับรายละเอียด</p>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <svg className="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                    เธชเธฒเธขเธเธฒเธฃเธเธดเธ: {tour.flight.airline}
+                )}
+              </div>
+            )}
+
+            {activeTab === 'departures' && (
+              <div className="space-y-3">
+                {tour.departures.length > 0 ? tour.departures.map(dep => (
+                  <div key={dep.id} className="g-card p-4 flex items-center justify-between">
+                    <div>
+                      <div className="font-semibold text-slate-900">
+                        {new Date(dep.startDate).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' })}
+                        {' → '}
+                        {new Date(dep.endDate).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' })}
+                      </div>
+                      <div className="text-xs text-slate-500 mt-1">
+                        {dep.remainingSeats > 0 ? (
+                          <span className="text-emerald-600 font-semibold">เหลือ {dep.remainingSeats} ที่</span>
+                        ) : (
+                          <span className="text-red-500 font-semibold">เต็ม</span>
+                        )}
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      {dep.priceAdult > 0 ? (
+                        <div className="text-lg font-bold text-primary-600">฿{dep.priceAdult.toLocaleString()}</div>
+                      ) : (
+                        <div className="text-sm text-slate-400">สอบถามราคา</div>
+                      )}
+                      <div className="text-xs text-slate-400">/ท่าน</div>
+                    </div>
+                  </div>
+                )) : (
+                  <div className="g-card p-8 text-center text-slate-400">
+                    <p className="text-3xl mb-3">📅</p>
+                    <p>ยังไม่มีรอบเดินทาง — ติดต่อสอบถาม</p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {activeTab === 'info' && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {tour.included.length > 0 && (
+                  <div className="g-card p-5">
+                    <h3 className="font-bold text-slate-900 mb-3 flex items-center gap-2">
+                      <span className="text-emerald-500">✅</span> อัตราค่ารวม
+                    </h3>
+                    <ul className="space-y-2 text-sm text-slate-600">
+                      {tour.included.map((item, i) => <li key={i} className="flex gap-2"><span className="text-emerald-500">•</span> {item}</li>)}
+                    </ul>
+                  </div>
+                )}
+                {tour.excluded.length > 0 && (
+                  <div className="g-card p-5">
+                    <h3 className="font-bold text-slate-900 mb-3 flex items-center gap-2">
+                      <span className="text-red-500">❌</span> อัตราค่าไม่รวม
+                    </h3>
+                    <ul className="space-y-2 text-sm text-slate-600">
+                      {tour.excluded.map((item, i) => <li key={i} className="flex gap-2"><span className="text-red-500">•</span> {item}</li>)}
+                    </ul>
+                  </div>
+                )}
+                <div className="g-card p-5 md:col-span-2">
+                  <h3 className="font-bold text-slate-900 mb-3">📜 เงื่อนไขการจอง</h3>
+                  <div className="grid gap-4 text-sm text-slate-600">
+                    <div><strong>การชำระเงิน:</strong> {tour.policies.payment}</div>
+                    <div><strong>การยกเลิก:</strong> {tour.policies.cancellation}</div>
                   </div>
                 </div>
               </div>
+            )}
+          </div>
 
-              {/* Summary */}
-              <section>
-                <h2 className="text-2xl font-bold text-slate-900 mb-4">เธฃเธฒเธขเธฅเธฐเน€เธญเธตเธขเธ”เนเธเธฃเนเธเธฃเธก</h2>
-                <p className="text-slate-600 leading-relaxed text-lg">{tour.summary}</p>
-              </section>
-
-              {/* Highlights */}
-              <section className="bg-orange-50/50 rounded-3xl p-8 border border-orange-100">
-                <h2 className="text-xl font-bold text-slate-900 mb-4 flex items-center gap-2">
-                  <svg className="w-6 h-6 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" /></svg>
-                  เนเธฎเนเธฅเธ—เนเธ—เธฑเธงเธฃเน (Highlights)
-                </h2>
-                <ul className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {tour.highlights.map((h, i) => (
-                    <li key={i} className="flex items-start gap-2 text-slate-700">
-                      <svg className="w-5 h-5 text-orange-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
-                      {h}
-                    </li>
-                  ))}
-                </ul>
-              </section>
-
-              {/* Price Table (Desktop only, mobile will use sticky bar mostly, but we show it) */}
-              <section>
-                <div className="flex justify-between items-end mb-6">
-                  <h2 className="text-2xl font-bold text-slate-900">เธ•เธฒเธฃเธฒเธเธฃเธญเธเธเธดเธเนเธฅเธฐเธฃเธฒเธเธฒ</h2>
-                  <a href={tour.pdfUrl || '#'} className="hidden md:flex items-center gap-2 text-orange-600 font-bold hover:underline">
-                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
-                    เนเธซเธฅเธ”เนเธเธฃเนเธเธฃเธก PDF
-                  </a>
-                </div>
-                <TourPriceTable departures={tour.departures} />
-              </section>
-
-              {/* Itinerary */}
-              <section id="itinerary">
-                <h2 className="text-2xl font-bold text-slate-900 mb-6">เนเธเธเธเธฒเธฃเน€เธ”เธดเธเธ—เธฒเธ (Itinerary)</h2>
-                <TourItinerary itinerary={tour.itinerary} />
-              </section>
-
-              {/* Included / Excluded & Policies */}
-              <section className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-8 border-t border-slate-200">
-                <div>
-                  <h3 className="font-bold text-slate-900 mb-4 flex items-center gap-2">
-                    <svg className="w-5 h-5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                    เธญเธฑเธ•เธฃเธฒเธเธตเนเธฃเธงเธก
-                  </h3>
-                  <ul className="space-y-2 text-sm text-slate-600">
-                    {tour.included.map((item, i) => (
-                      <li key={i} className="flex gap-2"><span className="text-emerald-500">โ€ข</span> {item}</li>
-                    ))}
-                  </ul>
-                </div>
-                <div>
-                  <h3 className="font-bold text-slate-900 mb-4 flex items-center gap-2">
-                    <svg className="w-5 h-5 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                    เธญเธฑเธ•เธฃเธฒเธเธตเนเนเธกเนเธฃเธงเธก
-                  </h3>
-                  <ul className="space-y-2 text-sm text-slate-600">
-                    {tour.excluded.map((item, i) => (
-                      <li key={i} className="flex gap-2"><span className="text-red-500">โ€ข</span> {item}</li>
-                    ))}
-                  </ul>
-                </div>
-              </section>
-
+          {/* Right Column: Sticky Card */}
+          <div className="hidden lg:block lg:w-[35%]">
+            <div className="sticky top-24 g-card p-6 space-y-5">
+              <div>
+                <p className="text-xs text-slate-500 font-medium">ราคาเริ่มต้น</p>
+                {tour.price.starting > 0 ? (
+                  <p className="text-3xl font-black text-primary-600">฿{tour.price.starting.toLocaleString()}</p>
+                ) : (
+                  <p className="text-lg font-bold text-slate-400">สอบถามราคา</p>
+                )}
+                <p className="text-xs text-slate-400">/ท่าน</p>
+              </div>
+              <div className="space-y-2 text-sm text-slate-600">
+                <div className="flex justify-between"><span>รหัสทัวร์</span><span className="font-semibold text-slate-900">{tour.code}</span></div>
+                <div className="flex justify-between"><span>ระยะเวลา</span><span className="font-semibold text-slate-900">{tour.duration.days}วัน {tour.duration.nights}คืน</span></div>
+                <div className="flex justify-between"><span>ประเทศ</span><span className="font-semibold text-slate-900">{tour.country}</span></div>
+                <div className="flex justify-between"><span>Wholesale</span><span className="font-semibold text-slate-900">{tour.supplier.name}</span></div>
+              </div>
+              <hr className="border-slate-100" />
+              {tour.pdfUrl && (
+                <a href={tour.pdfUrl} target="_blank" rel="noopener noreferrer"
+                  className="btn-secondary w-full flex items-center justify-center gap-2">
+                  📥 ดาวน์โหลด PDF โปรแกรม
+                </a>
+              )}
+              <Link href={`/contact?tour=${tour.code}`} className="btn-primary w-full text-center block">
+                📞 สอบถาม / จองทัวร์
+              </Link>
             </div>
-
-            {/* Right Column: Sticky Booking Card (Hidden on Mobile, shown as Bottom Bar) */}
-            <div className="hidden lg:block lg:w-[35%] relative">
-               <TourStickyCard tour={tour} />
-            </div>
-
           </div>
         </div>
+      </div>
 
-      {/* Mobile Sticky Bottom Bar */}
+      {/* Mobile Bottom Bar */}
       <div className="lg:hidden fixed bottom-0 inset-x-0 bg-white border-t border-slate-200 p-4 shadow-[0_-10px_20px_rgba(0,0,0,0.05)] z-50 flex justify-between items-center">
         <div>
           <p className="text-xs text-slate-500 font-medium">ราคาเริ่มต้น</p>
-          <p className="text-xl font-black text-orange-600">฿{tour.price.starting.toLocaleString()}</p>
+          {tour.price.starting > 0 ? (
+            <p className="text-xl font-black text-primary-600">฿{tour.price.starting.toLocaleString()}</p>
+          ) : (
+            <p className="text-sm font-bold text-slate-400">สอบถามราคา</p>
+          )}
         </div>
-        <button className="bg-orange-600 text-white font-bold px-8 py-3 rounded-xl shadow-md">
-          เลือกวันเดินทาง
-        </button>
+        <Link href={`/contact?tour=${tour.code}`} className="btn-primary">
+          สอบถาม / จอง
+        </Link>
       </div>
     </div>
   );
 }
 
+function ChevronIcon() {
+  return <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" /></svg>;
+}
