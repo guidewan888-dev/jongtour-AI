@@ -4,7 +4,7 @@ import React, { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { Send, Paperclip, Sparkles, ChevronDown, Headphones } from "lucide-react";
 
-/* ── Wholesale Partners ─────────────────────────── */
+/* ── Data ─────────────────────────── */
 const wholesalePartners = [
   { name: "Let's Go", code: "letsgo", logo: "/images/logos/download.png", ring: "#22c55e" },
   { name: "Check In Group", code: "checkin", logo: "/images/logos/CH7.jpg", ring: "#ef4444" },
@@ -12,17 +12,19 @@ const wholesalePartners = [
   { name: "Tour Factory", code: "tour-factory", logo: "/images/logos/Tour-Factory.jpg", ring: "#8b5cf6" },
 ];
 
-/* ── Quick Actions ─────────────────────────── */
 const quickActions = [
   { icon: "📋", label: "จัดทริปแนะนำ" },
   { icon: "💰", label: "ขอใบเสนอราคา" },
   { icon: "⚖️", label: "เปรียบเทียบโปรแกรม" },
 ];
 
-/* ── Main Page ─────────────────────────── */
+type Tour = { id: string; title: string; price: number; durationDays: number; imageUrl?: string; slug?: string };
+type Msg = { role: "user" | "ai"; text: string; time: string; tours?: Tour[] };
+
+/* ── Component ─────────────────────────── */
 export default function TourHomePage() {
   const [input, setInput] = useState("");
-  const [messages, setMessages] = useState<{ role: "user" | "ai"; text: string; time: string }[]>([
+  const [messages, setMessages] = useState<Msg[]>([
     {
       role: "ai",
       text: "ได้เลย! ฉันช่วยค้นหา เปรียบเทียบ\nและแนะนำโปรแกรมทัวร์ที่ดีที่สุดให้คุณได้",
@@ -30,21 +32,16 @@ export default function TourHomePage() {
     },
   ]);
   const [isLoading, setIsLoading] = useState(false);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const endRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    endRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
   }, [messages]);
 
-  const sendMessage = async (text: string) => {
+  const send = async (text: string) => {
     if (!text.trim() || isLoading) return;
-    const userMsg = {
-      role: "user" as const,
-      text: text.trim(),
-      time: new Date().toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" }),
-    };
-    setMessages((prev) => [...prev, userMsg]);
+    const now = () => new Date().toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" });
+    setMessages((p) => [...p, { role: "user", text: text.trim(), time: now() }]);
     setInput("");
     setIsLoading(true);
 
@@ -54,630 +51,281 @@ export default function TourHomePage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           message: text.trim(),
-          chatHistory: messages.map((m) => ({ role: m.role, content: m.text })),
+          chatHistory: messages.map((m) => ({ role: m.role === "ai" ? "assistant" : "user", content: m.text })),
         }),
       });
       const raw = await res.text();
-      const replyText = raw.replace(/__DATA__.*?__DATA__/g, "").trim();
-      setMessages((prev) => [
-        ...prev,
-        {
-          role: "ai",
-          text: replyText || "ขออภัยครับ ไม่สามารถตอบได้ในขณะนี้",
-          time: new Date().toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" }),
-        },
-      ]);
+
+      // Parse tour data
+      let tours: Tour[] = [];
+      const dataMatch = raw.match(/__DATA__([\s\S]*?)__DATA__/);
+      if (dataMatch) {
+        try {
+          const parsed = JSON.parse(dataMatch[1]);
+          tours = (parsed.tours || []).map((t: any) => ({
+            id: t.id || String(Math.random()),
+            title: t.title || t.tourName || "",
+            price: t.price || t.startingPrice || 0,
+            durationDays: t.durationDays || 0,
+            imageUrl: t.imageUrl || t.coverImage || "",
+            slug: t.slug || t.id || "",
+          }));
+        } catch {}
+      }
+
+      const replyText = raw.replace(/__DATA__[\s\S]*?__DATA__/g, "").replace(/__CHIPS__[\s\S]*$/g, "").trim();
+      setMessages((p) => [...p, { role: "ai", text: replyText || "พบข้อมูลทัวร์แล้วครับ", time: now(), tours }]);
     } catch {
-      setMessages((prev) => [
-        ...prev,
-        {
-          role: "ai",
-          text: "ขออภัยครับ เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง",
-          time: new Date().toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" }),
-        },
-      ]);
+      setMessages((p) => [...p, { role: "ai", text: "ขออภัยครับ เกิดข้อผิดพลาด กรุณาลองใหม่", time: new Date().toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" }) }]);
     }
     setIsLoading(false);
   };
 
   return (
-    <section className="hero-section">
-      {/* ── Decorative Elements ── */}
-      <div className="hero-deco-blob hero-deco-blob--1" />
-      <div className="hero-deco-blob hero-deco-blob--2" />
-      <div className="hero-deco-line hero-deco-line--1" />
-      <div className="hero-deco-line hero-deco-line--2" />
-      <div className="hero-deco-sparkle hero-deco-sparkle--1">✦</div>
-      <div className="hero-deco-sparkle hero-deco-sparkle--2">✦</div>
-      <div className="hero-deco-sparkle hero-deco-sparkle--3">+</div>
+    <section className="hero-wrap">
+      {/* Decorations */}
+      <div className="deco deco-1" />
+      <div className="deco deco-2" />
+      <div className="deco-dot deco-dot-1">✦</div>
+      <div className="deco-dot deco-dot-2">✦</div>
+      <div className="deco-dot deco-dot-3">+</div>
+      <div className="deco-ring deco-ring-1" />
+      <div className="deco-ring deco-ring-2" />
 
-      {/* ── Title ── */}
-      <div className="hero-title-block">
-        <div className="hero-sparkle-icon">
-          <Sparkles className="w-5 h-5" />
-        </div>
-        <h1 className="hero-title">
-          Smart <span className="hero-title--accent">Tour</span> Search
+      {/* Title */}
+      <div className="hero-top">
+        <div className="sparkle-badge"><Sparkles className="w-3.5 h-3.5" /></div>
+        <h1 className="hero-h1">
+          Smart <span className="accent">Tour</span> Search
         </h1>
-        <p className="hero-subtitle">ค้นหาทัวร์ที่ใช่ ด้วย AI ที่เข้าใจคุณ</p>
+        <p className="hero-sub">ค้นหาทัวร์ที่ใช่ ด้วย AI ที่เข้าใจคุณ</p>
       </div>
 
-      {/* ── Inline Chat Card ── */}
-      <div className="chat-card">
-        {/* Chat Header */}
-        <div className="chat-header">
-          <div className="chat-header__left">
-            <div className="chat-avatar">
-              <Sparkles className="w-4 h-4 text-white" />
-            </div>
+      {/* Chat Card */}
+      <div className="card">
+        <div className="card-glow" />
+
+        {/* Header */}
+        <div className="card-head">
+          <div className="card-head-l">
+            <div className="ai-av"><Sparkles className="w-4 h-4 text-white" /></div>
             <div>
-              <span className="chat-header__name">Jongtour AI Assistant</span>
-              <span className="chat-header__badge">Online</span>
+              <span className="ai-name">Jongtour AI Assistant</span>
+              <span className="ai-online">Online</span>
             </div>
           </div>
-          <div className="chat-header__right">
-            <button className="chat-header__icon-btn" aria-label="Support">
-              <Headphones className="w-4 h-4" />
-            </button>
-            <button className="chat-header__icon-btn" aria-label="Collapse">
-              <ChevronDown className="w-4 h-4" />
-            </button>
+          <div className="card-head-r">
+            <button className="hd-btn" aria-label="Support"><Headphones className="w-4 h-4" /></button>
+            <button className="hd-btn" aria-label="Toggle"><ChevronDown className="w-4 h-4" /></button>
           </div>
         </div>
 
         {/* Quick Actions */}
-        <div className="chat-quick-actions">
+        <div className="chips-row">
           {quickActions.map((a) => (
-            <button
-              key={a.label}
-              className="chat-chip"
-              onClick={() => sendMessage(a.label)}
-            >
+            <button key={a.label} className="chip" onClick={() => send(a.label)}>
               <span>{a.icon}</span> {a.label}
             </button>
           ))}
         </div>
 
         {/* Messages */}
-        <div className="chat-messages">
-          {messages.map((msg, i) => (
-            <div key={i} className={`chat-msg ${msg.role === "user" ? "chat-msg--user" : "chat-msg--ai"}`}>
-              {msg.role === "ai" && (
-                <div className="chat-msg__avatar">
-                  <Sparkles className="w-3.5 h-3.5 text-white" />
+        <div className="msgs">
+          {messages.map((m, i) => (
+            <div key={i}>
+              <div className={`msg ${m.role === "user" ? "msg-u" : "msg-a"}`}>
+                {m.role === "ai" && <div className="msg-av"><Sparkles className="w-3 h-3 text-white" /></div>}
+                <div className={`bubble ${m.role === "user" ? "bubble-u" : "bubble-a"}`}>
+                  <p className="btxt">{m.text}</p>
+                  <span className="btime">{m.time}{m.role === "user" && <span className="bchk">✓✓</span>}</span>
+                </div>
+              </div>
+              {/* Tour Cards */}
+              {m.tours && m.tours.length > 0 && (
+                <div className="tour-cards">
+                  {m.tours.slice(0, 5).map((t) => (
+                    <Link key={t.id} href={`/tours/detail/${t.slug || t.id}`} className="tour-card">
+                      <div className="tc-left">
+                        <p className="tc-title">{t.title}</p>
+                        <p className="tc-meta">{t.durationDays ? `${t.durationDays} วัน` : ""}</p>
+                      </div>
+                      <div className="tc-price">
+                        {t.price ? `฿${Number(t.price).toLocaleString()}` : ""}
+                      </div>
+                    </Link>
+                  ))}
                 </div>
               )}
-              <div className={`chat-msg__bubble ${msg.role === "user" ? "chat-msg__bubble--user" : "chat-msg__bubble--ai"}`}>
-                <p className="chat-msg__text">{msg.text}</p>
-                <span className="chat-msg__time">
-                  {msg.time}
-                  {msg.role === "user" && <span className="chat-msg__check">✓✓</span>}
-                </span>
-              </div>
             </div>
           ))}
           {isLoading && (
-            <div className="chat-msg chat-msg--ai">
-              <div className="chat-msg__avatar">
-                <Sparkles className="w-3.5 h-3.5 text-white" />
-              </div>
-              <div className="chat-msg__bubble chat-msg__bubble--ai">
-                <div className="chat-typing">
-                  <span /><span /><span />
-                </div>
-              </div>
+            <div className="msg msg-a">
+              <div className="msg-av"><Sparkles className="w-3 h-3 text-white" /></div>
+              <div className="bubble bubble-a"><div className="typing"><span /><span /><span /></div></div>
             </div>
           )}
-          <div ref={messagesEndRef} />
+          <div ref={endRef} />
         </div>
 
         {/* Input */}
-        <div className="chat-input-bar">
-          <button className="chat-input-attach" aria-label="Attach">
-            <Paperclip className="w-5 h-5" />
-          </button>
+        <div className="inp-bar">
+          <button className="inp-attach" aria-label="Attach"><Paperclip className="w-5 h-5" /></button>
           <input
-            ref={inputRef}
             type="text"
-            className="chat-input"
+            className="inp"
             placeholder="พิมพ์ข้อความหรือสอบถามได้เลย..."
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => { if (e.key === "Enter") sendMessage(input); }}
+            onKeyDown={(e) => { if (e.key === "Enter") send(input); }}
           />
-          <button
-            className="chat-input-send"
-            onClick={() => sendMessage(input)}
-            disabled={!input.trim() || isLoading}
-            aria-label="Send"
-          >
+          <button className="inp-send" onClick={() => send(input)} disabled={!input.trim() || isLoading} aria-label="Send">
             <Send className="w-5 h-5" />
           </button>
         </div>
       </div>
 
-      {/* ── Wholesale Partners ── */}
-      <div className="wholesale-row">
+      {/* Wholesale */}
+      <div className="ws-row">
         {wholesalePartners.map((p) => (
-          <Link key={p.code} href={`/wholesaler/${p.code}`} className="wholesale-item">
-            <div className="wholesale-logo" style={{ borderColor: p.ring, boxShadow: `0 4px 15px ${p.ring}22` }}>
+          <Link key={p.code} href={`/wholesaler/${p.code}`} className="ws-item">
+            <div className="ws-logo" style={{ borderColor: p.ring, boxShadow: `0 4px 15px ${p.ring}22` }}>
               <img src={p.logo} alt={p.name} loading="lazy" />
             </div>
-            <span className="wholesale-name">{p.name}</span>
+            <span className="ws-name">{p.name}</span>
           </Link>
         ))}
-        <Link href="/tours/asia" className="wholesale-item">
-          <div className="wholesale-logo wholesale-logo--more">
-            <span>•••</span>
-          </div>
-          <span className="wholesale-name">More</span>
+        <Link href="/tours/asia" className="ws-item">
+          <div className="ws-logo ws-more"><span>•••</span></div>
+          <span className="ws-name">More</span>
         </Link>
       </div>
 
-      {/* ── Scoped CSS ── */}
       <style jsx>{`
-        /* ═══════════ HERO SECTION ═══════════ */
-        .hero-section {
+        /* ═══ HERO WRAP ═══ */
+        .hero-wrap {
           position: relative;
-          min-height: calc(100vh - 64px - 200px);
           display: flex;
           flex-direction: column;
           align-items: center;
-          justify-content: center;
-          padding: 2rem 1rem 3rem;
+          padding: 2rem 1rem 6rem;
+          min-height: calc(100vh - 64px);
           overflow: hidden;
-          background: #fafafa;
+          background: linear-gradient(180deg, #fdf8f3 0%, #fff 40%, #fff 100%);
         }
 
-        /* ── Decorative Blobs ── */
-        .hero-deco-blob {
-          position: absolute;
-          border-radius: 50%;
-          pointer-events: none;
-          z-index: 0;
-        }
-        .hero-deco-blob--1 {
-          width: 500px; height: 500px;
-          top: -120px; right: -80px;
-          background: radial-gradient(circle, rgba(249,115,22,0.06) 0%, transparent 70%);
-        }
-        .hero-deco-blob--2 {
-          width: 400px; height: 400px;
-          bottom: -80px; left: -60px;
-          background: radial-gradient(circle, rgba(249,115,22,0.04) 0%, transparent 70%);
-        }
+        /* ═══ DECORATIONS ═══ */
+        .deco { position: absolute; border-radius: 50%; pointer-events: none; }
+        .deco-1 { width: 600px; height: 600px; top: -200px; right: -150px; background: radial-gradient(circle, rgba(249,115,22,0.07) 0%, transparent 70%); }
+        .deco-2 { width: 500px; height: 500px; bottom: -100px; left: -100px; background: radial-gradient(circle, rgba(59,130,246,0.04) 0%, transparent 70%); }
+        .deco-dot { position: absolute; pointer-events: none; color: rgba(249,115,22,0.15); font-size: 1rem; animation: float 6s ease-in-out infinite; }
+        .deco-dot-1 { top: 12%; left: 15%; }
+        .deco-dot-2 { top: 20%; right: 12%; animation-delay: 2s; }
+        .deco-dot-3 { bottom: 25%; left: 10%; color: rgba(0,0,0,0.06); animation-delay: 4s; }
+        .deco-ring { position: absolute; border-radius: 50%; border: 1px dashed rgba(249,115,22,0.08); pointer-events: none; animation: spin-slow 40s linear infinite; }
+        .deco-ring-1 { width: 700px; height: 700px; top: -100px; left: 50%; transform: translateX(-50%); }
+        .deco-ring-2 { width: 500px; height: 500px; top: 0; left: 50%; transform: translateX(-50%); animation-direction: reverse; }
+        @keyframes float { 0%,100%{transform:translateY(0);opacity:.5} 50%{transform:translateY(-10px);opacity:1} }
+        @keyframes spin-slow { from{transform:translateX(-50%) rotate(0)} to{transform:translateX(-50%) rotate(360deg)} }
 
-        /* ── Decorative Lines ── */
-        .hero-deco-line {
-          position: absolute;
-          pointer-events: none;
-          z-index: 0;
-        }
-        .hero-deco-line--1 {
-          top: 30%;
-          left: 8%;
-          width: 180px;
-          height: 1px;
-          background: linear-gradient(90deg, transparent, rgba(0,0,0,0.05), transparent);
-          transform: rotate(-20deg);
-        }
-        .hero-deco-line--2 {
-          top: 50%;
-          right: 6%;
-          width: 200px;
-          height: 1px;
-          background: linear-gradient(90deg, transparent, rgba(0,0,0,0.05), transparent);
-          transform: rotate(15deg);
-        }
+        /* ═══ TITLE ═══ */
+        .hero-top { position: relative; z-index: 1; text-align: center; margin-bottom: 1.5rem; }
+        .sparkle-badge { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 50%; background: linear-gradient(135deg, #f97316, #ea580c); color: #fff; margin-bottom: 0.5rem; box-shadow: 0 3px 10px rgba(249,115,22,0.3); }
+        .hero-h1 { font-size: clamp(1.6rem, 4vw, 2.8rem); font-weight: 800; color: #1e293b; letter-spacing: -0.02em; line-height: 1.15; margin: 0; }
+        .accent { background: linear-gradient(135deg, #f97316, #ea580c); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .hero-sub { font-size: 0.875rem; color: #94a3b8; margin-top: 0.35rem; font-weight: 500; }
 
-        /* ── Decorative Sparkles ── */
-        .hero-deco-sparkle {
-          position: absolute;
-          pointer-events: none;
-          z-index: 0;
-          color: rgba(249,115,22,0.18);
-          font-size: 1.2rem;
-          animation: sparkle-float 6s ease-in-out infinite;
-        }
-        .hero-deco-sparkle--1 { top: 15%; left: 18%; animation-delay: 0s; }
-        .hero-deco-sparkle--2 { top: 25%; right: 15%; animation-delay: 2s; }
-        .hero-deco-sparkle--3 { bottom: 20%; left: 12%; font-size: 1rem; color: rgba(0,0,0,0.08); animation-delay: 4s; }
-
-        @keyframes sparkle-float {
-          0%, 100% { transform: translateY(0) rotate(0deg); opacity: 0.5; }
-          50% { transform: translateY(-12px) rotate(15deg); opacity: 1; }
-        }
-
-        /* ═══════════ TITLE ═══════════ */
-        .hero-title-block {
-          position: relative;
-          z-index: 1;
-          text-align: center;
-          margin-bottom: 2rem;
-        }
-        .hero-sparkle-icon {
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          width: 32px; height: 32px;
-          border-radius: 50%;
-          background: linear-gradient(135deg, #f97316, #ea580c);
-          color: white;
-          margin-bottom: 0.75rem;
-          box-shadow: 0 4px 12px rgba(249,115,22,0.3);
-        }
-        .hero-title {
-          font-size: clamp(2.2rem, 5vw, 3.8rem);
-          font-weight: 900;
-          color: #1e293b;
-          letter-spacing: -0.03em;
-          line-height: 1.1;
-          margin: 0;
-        }
-        .hero-title--accent {
-          background: linear-gradient(135deg, #f97316, #ea580c);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          background-clip: text;
-        }
-        .hero-subtitle {
-          font-size: 1rem;
-          color: #94a3b8;
-          margin-top: 0.5rem;
-          font-weight: 500;
-        }
-
-        /* ═══════════ CHAT CARD ═══════════ */
-        .chat-card {
-          position: relative;
-          z-index: 1;
-          width: 100%;
-          max-width: 520px;
-          background: rgba(255,255,255,0.92);
-          backdrop-filter: blur(20px);
-          -webkit-backdrop-filter: blur(20px);
-          border-radius: 1.5rem;
-          box-shadow:
-            0 0 0 1px rgba(249,115,22,0.08),
-            0 8px 40px rgba(0,0,0,0.06),
-            0 20px 60px rgba(249,115,22,0.06);
+        /* ═══ CARD ═══ */
+        .card {
+          position: relative; z-index: 1;
+          width: 100%; max-width: 520px;
+          background: rgba(255,255,255,0.95);
+          backdrop-filter: blur(16px);
+          border-radius: 1.25rem;
+          border: 1px solid rgba(249,115,22,0.12);
           overflow: hidden;
           margin-bottom: 2.5rem;
-          animation: card-float 6s ease-in-out infinite;
+          box-shadow: 0 4px 24px rgba(0,0,0,0.04), 0 12px 48px rgba(249,115,22,0.06);
         }
-        .chat-card::before {
-          content: '';
-          position: absolute;
-          top: -1px; left: -1px; right: -1px; bottom: -1px;
-          border-radius: 1.5rem;
-          background: linear-gradient(135deg, rgba(249,115,22,0.2), transparent 40%, transparent 60%, rgba(249,115,22,0.15));
-          z-index: -1;
+        .card-glow {
+          position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+          background: conic-gradient(from 0deg, transparent, rgba(249,115,22,0.04), transparent, rgba(249,115,22,0.03), transparent);
+          animation: glow-spin 8s linear infinite;
           pointer-events: none;
         }
-        @keyframes card-float {
-          0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(-4px); }
-        }
+        @keyframes glow-spin { from{transform:rotate(0)} to{transform:rotate(360deg)} }
 
-        /* ── Chat Header ── */
-        .chat-header {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          padding: 0.875rem 1rem;
-          border-bottom: 1px solid #f1f5f9;
-        }
-        .chat-header__left {
-          display: flex;
-          align-items: center;
-          gap: 0.625rem;
-        }
-        .chat-avatar {
-          width: 36px; height: 36px;
-          border-radius: 10px;
-          background: linear-gradient(135deg, #f97316, #ea580c);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          box-shadow: 0 2px 12px rgba(249,115,22,0.4), 0 0 20px rgba(249,115,22,0.15);
-          animation: avatar-pulse 3s ease-in-out infinite;
-        }
-        @keyframes avatar-pulse {
-          0%, 100% { box-shadow: 0 2px 12px rgba(249,115,22,0.4), 0 0 20px rgba(249,115,22,0.15); }
-          50% { box-shadow: 0 2px 16px rgba(249,115,22,0.5), 0 0 30px rgba(249,115,22,0.25); }
-        }
-        .chat-header__name {
-          font-size: 0.85rem;
-          font-weight: 700;
-          color: #1e293b;
-          display: block;
-          line-height: 1.2;
-        }
-        .chat-header__badge {
-          font-size: 0.65rem;
-          font-weight: 700;
-          color: #22c55e;
-          padding: 1px 6px;
-          border-radius: 9px;
-          background: #f0fdf4;
-          display: inline-block;
-          margin-top: 2px;
-        }
-        .chat-header__right {
-          display: flex;
-          align-items: center;
-          gap: 0.25rem;
-        }
-        .chat-header__icon-btn {
-          width: 32px; height: 32px;
-          border-radius: 8px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          color: #94a3b8;
-          background: transparent;
-          border: none;
-          cursor: pointer;
-          transition: all 0.15s;
-        }
-        .chat-header__icon-btn:hover {
-          background: #f1f5f9;
-          color: #64748b;
-        }
+        /* ═══ CARD HEAD ═══ */
+        .card-head { display:flex; align-items:center; justify-content:space-between; padding:0.75rem 1rem; border-bottom:1px solid #f1f5f9; position:relative; z-index:1; background:rgba(255,255,255,0.8); }
+        .card-head-l { display:flex; align-items:center; gap:0.5rem; }
+        .ai-av { width:34px; height:34px; border-radius:10px; background:linear-gradient(135deg,#f97316,#ea580c); display:flex; align-items:center; justify-content:center; box-shadow:0 2px 10px rgba(249,115,22,0.35); }
+        .ai-name { font-size:0.8rem; font-weight:700; color:#1e293b; display:block; line-height:1.2; }
+        .ai-online { font-size:0.6rem; font-weight:700; color:#22c55e; padding:1px 5px; border-radius:8px; background:#f0fdf4; display:inline-block; margin-top:1px; }
+        .card-head-r { display:flex; gap:0.25rem; }
+        .hd-btn { width:30px; height:30px; border-radius:8px; display:flex; align-items:center; justify-content:center; color:#94a3b8; background:transparent; border:none; cursor:pointer; transition:all .15s; }
+        .hd-btn:hover { background:#f1f5f9; color:#64748b; }
 
-        /* ── Quick Actions ── */
-        .chat-quick-actions {
-          display: flex;
-          gap: 0.5rem;
-          padding: 0.75rem 1rem;
-          overflow-x: auto;
-          scrollbar-width: none;
-        }
-        .chat-quick-actions::-webkit-scrollbar { display: none; }
-        .chat-chip {
-          flex-shrink: 0;
-          display: inline-flex;
-          align-items: center;
-          gap: 0.375rem;
-          padding: 0.4rem 0.875rem;
-          font-size: 0.75rem;
-          font-weight: 600;
-          color: #475569;
-          background: #f8fafc;
-          border: 1px solid #e2e8f0;
-          border-radius: 999px;
-          cursor: pointer;
-          transition: all 0.15s;
-          white-space: nowrap;
-        }
-        .chat-chip:hover {
-          background: #fff7ed;
-          border-color: #fed7aa;
-          color: #ea580c;
-        }
+        /* ═══ CHIPS ═══ */
+        .chips-row { display:flex; gap:0.4rem; padding:0.6rem 1rem; overflow-x:auto; scrollbar-width:none; position:relative; z-index:1; }
+        .chips-row::-webkit-scrollbar { display:none; }
+        .chip { flex-shrink:0; display:inline-flex; align-items:center; gap:0.3rem; padding:0.35rem 0.75rem; font-size:0.7rem; font-weight:600; color:#475569; background:#f8fafc; border:1px solid #e2e8f0; border-radius:999px; cursor:pointer; transition:all .15s; white-space:nowrap; }
+        .chip:hover { background:#fff7ed; border-color:#fed7aa; color:#ea580c; }
 
-        /* ── Messages ── */
-        .chat-messages {
-          max-height: 240px;
-          overflow-y: auto;
-          padding: 0.75rem 1rem;
-          display: flex;
-          flex-direction: column;
-          gap: 0.75rem;
-          scrollbar-width: thin;
-          scrollbar-color: #e2e8f0 transparent;
-        }
-        .chat-msg {
-          display: flex;
-          gap: 0.5rem;
-          align-items: flex-end;
-        }
-        .chat-msg--user {
-          flex-direction: row-reverse;
-        }
-        .chat-msg__avatar {
-          width: 28px; height: 28px;
-          border-radius: 50%;
-          background: linear-gradient(135deg, #f97316, #ea580c);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          flex-shrink: 0;
-        }
-        .chat-msg__bubble {
-          max-width: 80%;
-          padding: 0.625rem 0.875rem;
-          border-radius: 1rem;
-          position: relative;
-        }
-        .chat-msg__bubble--ai {
-          background: #f1f5f9;
-          border-bottom-left-radius: 4px;
-          color: #334155;
-        }
-        .chat-msg__bubble--user {
-          background: linear-gradient(135deg, #f97316, #ea580c);
-          border-bottom-right-radius: 4px;
-          color: white;
-        }
-        .chat-msg__text {
-          font-size: 0.8125rem;
-          line-height: 1.5;
-          margin: 0;
-          white-space: pre-line;
-        }
-        .chat-msg__time {
-          display: block;
-          font-size: 0.625rem;
-          margin-top: 4px;
-          opacity: 0.6;
-        }
-        .chat-msg__check {
-          margin-left: 3px;
-          color: rgba(255,255,255,0.7);
-          font-size: 0.6rem;
-        }
+        /* ═══ MESSAGES ═══ */
+        .msgs { max-height:280px; overflow-y:auto; padding:0.6rem 1rem; display:flex; flex-direction:column; gap:0.5rem; scrollbar-width:thin; scrollbar-color:#e2e8f0 transparent; position:relative; z-index:1; }
+        .msg { display:flex; gap:0.4rem; align-items:flex-end; }
+        .msg-u { flex-direction:row-reverse; }
+        .msg-av { width:24px; height:24px; border-radius:50%; background:linear-gradient(135deg,#f97316,#ea580c); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+        .bubble { max-width:80%; padding:0.5rem 0.75rem; border-radius:0.875rem; }
+        .bubble-a { background:#f1f5f9; border-bottom-left-radius:4px; color:#334155; }
+        .bubble-u { background:linear-gradient(135deg,#f97316,#ea580c); border-bottom-right-radius:4px; color:#fff; }
+        .btxt { font-size:0.78rem; line-height:1.5; margin:0; white-space:pre-line; }
+        .btime { display:block; font-size:0.6rem; margin-top:3px; opacity:.55; }
+        .bchk { margin-left:3px; font-size:.55rem; }
 
-        /* Typing indicator */
-        .chat-typing {
-          display: flex;
-          gap: 4px;
-          padding: 4px 0;
-        }
-        .chat-typing span {
-          width: 6px; height: 6px;
-          border-radius: 50%;
-          background: #94a3b8;
-          animation: typing-dot 1.4s ease-in-out infinite;
-        }
-        .chat-typing span:nth-child(2) { animation-delay: 0.2s; }
-        .chat-typing span:nth-child(3) { animation-delay: 0.4s; }
-        @keyframes typing-dot {
-          0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
-          30% { transform: translateY(-6px); opacity: 1; }
-        }
+        /* ═══ TOUR CARDS ═══ */
+        .tour-cards { display:flex; flex-direction:column; gap:4px; margin:4px 0 4px 28px; }
+        .tour-card { display:flex; align-items:center; justify-content:space-between; gap:8px; padding:8px 12px; background:#fff; border:1px solid #f1f5f9; border-radius:10px; text-decoration:none; transition:all .15s; }
+        .tour-card:hover { border-color:#fed7aa; box-shadow:0 2px 8px rgba(249,115,22,0.08); }
+        .tc-left { flex:1; min-width:0; }
+        .tc-title { font-size:0.72rem; font-weight:600; color:#1e293b; margin:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+        .tc-meta { font-size:0.6rem; color:#94a3b8; margin:2px 0 0; }
+        .tc-price { font-size:0.75rem; font-weight:700; color:#ea580c; white-space:nowrap; }
 
-        /* ── Input Bar ── */
-        .chat-input-bar {
-          display: flex;
-          align-items: center;
-          gap: 0.5rem;
-          padding: 0.75rem 1rem;
-          border-top: 1px solid #f1f5f9;
-          background: #fafafa;
-        }
-        .chat-input-attach {
-          width: 36px; height: 36px;
-          border-radius: 50%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          color: #94a3b8;
-          background: transparent;
-          border: none;
-          cursor: pointer;
-          transition: all 0.15s;
-          flex-shrink: 0;
-        }
-        .chat-input-attach:hover {
-          background: #f1f5f9;
-          color: #64748b;
-        }
-        .chat-input {
-          flex: 1;
-          height: 40px;
-          padding: 0 0.75rem;
-          font-size: 0.8125rem;
-          color: #334155;
-          background: #fff;
-          border: 1px solid #e2e8f0;
-          border-radius: 999px;
-          outline: none;
-          transition: border-color 0.15s;
-        }
-        .chat-input::placeholder {
-          color: #94a3b8;
-        }
-        .chat-input:focus {
-          border-color: #f97316;
-          box-shadow: 0 0 0 3px rgba(249,115,22,0.08);
-        }
-        .chat-input-send {
-          width: 40px; height: 40px;
-          border-radius: 50%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          color: white;
-          background: linear-gradient(135deg, #f97316, #ea580c);
-          border: none;
-          cursor: pointer;
-          flex-shrink: 0;
-          transition: all 0.2s;
-          box-shadow: 0 2px 8px rgba(249,115,22,0.3);
-        }
-        .chat-input-send:hover:not(:disabled) {
-          transform: scale(1.05);
-          box-shadow: 0 4px 12px rgba(249,115,22,0.4);
-        }
-        .chat-input-send:disabled {
-          opacity: 0.5;
-          cursor: not-allowed;
-        }
+        /* ═══ TYPING ═══ */
+        .typing { display:flex; gap:4px; padding:3px 0; }
+        .typing span { width:5px; height:5px; border-radius:50%; background:#94a3b8; animation:tdot 1.4s ease-in-out infinite; }
+        .typing span:nth-child(2) { animation-delay:.2s; }
+        .typing span:nth-child(3) { animation-delay:.4s; }
+        @keyframes tdot { 0%,60%,100%{transform:translateY(0);opacity:.4} 30%{transform:translateY(-5px);opacity:1} }
 
-        /* ═══════════ WHOLESALE ROW ═══════════ */
-        .wholesale-row {
-          position: relative;
-          z-index: 1;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 2rem;
-          flex-wrap: wrap;
-        }
-        .wholesale-item {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: 0.5rem;
-          text-decoration: none;
-          transition: transform 0.2s;
-        }
-        .wholesale-item:hover {
-          transform: translateY(-3px);
-        }
-        .wholesale-logo {
-          width: 64px; height: 64px;
-          border-radius: 50%;
-          background: #fff;
-          border: 3px solid #e2e8f0;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          overflow: hidden;
-          padding: 8px;
-          box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        .wholesale-item:hover .wholesale-logo {
-          transform: scale(1.08);
-        }
-        .wholesale-logo img {
-          width: 100%;
-          height: 100%;
-          object-fit: contain;
-          border-radius: 50%;
-        }
-        .wholesale-logo--more {
-          background: #f1f5f9;
-          font-size: 1.2rem;
-          color: #64748b;
-          font-weight: 700;
-          letter-spacing: 2px;
-        }
-        .wholesale-name {
-          font-size: 0.7rem;
-          font-weight: 600;
-          color: #64748b;
-        }
+        /* ═══ INPUT BAR ═══ */
+        .inp-bar { display:flex; align-items:center; gap:0.4rem; padding:0.6rem 0.875rem; border-top:1px solid #f1f5f9; background:rgba(250,250,250,0.8); position:relative; z-index:1; }
+        .inp-attach { width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:#94a3b8; background:transparent; border:none; cursor:pointer; flex-shrink:0; }
+        .inp-attach:hover { background:#f1f5f9; color:#64748b; }
+        .inp { flex:1; height:38px; padding:0 0.75rem; font-size:0.78rem; color:#334155; background:#fff; border:1px solid #e2e8f0; border-radius:999px; outline:none; transition:border-color .15s; }
+        .inp::placeholder { color:#94a3b8; }
+        .inp:focus { border-color:#f97316; box-shadow:0 0 0 3px rgba(249,115,22,0.08); }
+        .inp-send { width:38px; height:38px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:#fff; background:linear-gradient(135deg,#f97316,#ea580c); border:none; cursor:pointer; flex-shrink:0; box-shadow:0 2px 8px rgba(249,115,22,0.3); transition:all .2s; }
+        .inp-send:hover:not(:disabled) { transform:scale(1.05); box-shadow:0 4px 12px rgba(249,115,22,0.4); }
+        .inp-send:disabled { opacity:.5; cursor:not-allowed; }
 
-        /* ═══════════ RESPONSIVE ═══════════ */
-        @media (max-width: 640px) {
-          .hero-section {
-            padding: 1.5rem 0.75rem 2rem;
-          }
-          .hero-title {
-            font-size: 2rem;
-          }
-          .chat-card {
-            max-width: 100%;
-          }
-          .wholesale-row {
-            gap: 1.25rem;
-          }
-          .wholesale-logo {
-            width: 48px; height: 48px;
-          }
+        /* ═══ WHOLESALE ═══ */
+        .ws-row { position:relative; z-index:1; display:flex; align-items:center; justify-content:center; gap:2rem; flex-wrap:wrap; margin-bottom:3rem; }
+        .ws-item { display:flex; flex-direction:column; align-items:center; gap:0.5rem; text-decoration:none; transition:transform .2s; }
+        .ws-item:hover { transform:translateY(-3px); }
+        .ws-logo { width:64px; height:64px; border-radius:50%; background:#fff; border:3px solid #e2e8f0; display:flex; align-items:center; justify-content:center; overflow:hidden; padding:8px; transition:all .3s cubic-bezier(.4,0,.2,1); }
+        .ws-item:hover .ws-logo { transform:scale(1.08); }
+        .ws-logo img { width:100%; height:100%; object-fit:contain; border-radius:50%; }
+        .ws-more { background:#f1f5f9; font-size:1.2rem; color:#64748b; font-weight:700; letter-spacing:2px; border-color:#e2e8f0; }
+        .ws-name { font-size:0.7rem; font-weight:600; color:#64748b; }
+
+        /* ═══ RESPONSIVE ═══ */
+        @media (max-width:640px) {
+          .hero-wrap { padding:1.5rem 0.75rem 4rem; }
+          .hero-h1 { font-size:1.6rem; }
+          .card { max-width:100%; }
+          .ws-row { gap:1.25rem; }
+          .ws-logo { width:52px; height:52px; }
         }
       `}</style>
     </section>
