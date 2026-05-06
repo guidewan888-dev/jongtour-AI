@@ -76,6 +76,7 @@ export interface TourListItem {
   price: number;
   availableSeats: number;
   imageUrl: string;
+  airline: string;
 }
 
 export interface TourDetailData {
@@ -154,11 +155,25 @@ export async function getTourList(options?: {
   const supplierMap: Record<string, string> = {};
   (suppliers || []).forEach(s => { supplierMap[s.id] = s.canonicalName; });
 
-  // 3. Get ALL destinations + images in parallel
-  const [{ data: destinations }, { data: images }] = await Promise.all([
+  // 3. Get ALL destinations + images + raw sources (for airline) in parallel
+  const [{ data: destinations }, { data: images }, { data: rawSources }] = await Promise.all([
     sb.from('tour_destinations').select('"tourId", country, city').in('tourId', tourIds),
     sb.from('tour_images').select('"tourId", "imageUrl"').in('tourId', tourIds),
+    sb.from('tour_raw_sources').select('"supplierId", "externalTourId", "rawPayload"').in('supplierId', supplierIds),
   ]);
+
+  // Build airline map from raw sources
+  const airlineMap: Record<string, string> = {};
+  (rawSources || []).forEach((rs: any) => {
+    const payload = rs.rawPayload;
+    if (!payload) return;
+    const airline = payload.airline || payload.airlineName || payload.air || '';
+    if (airline) {
+      // Map by externalTourId since we can't join directly to tourId
+      const key = `${rs.supplierId}_${rs.externalTourId}`;
+      airlineMap[key] = typeof airline === 'string' ? airline : '';
+    }
+  });
 
   // Build image map (first image per tour)
   const imageMap: Record<string, string> = {};
@@ -225,18 +240,36 @@ export async function getTourList(options?: {
     }
   });
 
+  // Build externalTourId map for airline lookup
+  const externalIdMap: Record<string, string> = {};
+  (rawSources || []).forEach((rs: any) => {
+    // Try to find tours matching this raw source
+    tours.forEach(t => {
+      const key = `${t.supplierId}_${rs.externalTourId}`;
+      if (t.supplierId === rs.supplierId && airlineMap[key]) {
+        // Match by tour code or name if possible
+        const payload = rs.rawPayload;
+        if (payload?.tourCode === t.tourCode || payload?.tour_code === t.tourCode) {
+          externalIdMap[t.id] = airlineMap[key];
+        }
+      }
+    });
+  });
+
   // 6. Format results with normalized countries
   return filteredTours.map(t => {
     const dep = depMap[t.id];
     const dest = destMap[t.id];
     const price = dep ? (priceMap[dep.id] || 0) : 0;
+    // Extract airline from tour title as fallback
+    const titleAirline = extractAirlineFromTitle(t.tourName || '');
     return {
       id: t.id,
       slug: t.slug || '',
       code: t.tourCode || '',
       title: t.tourName || '',
       supplier: supplierMap[t.supplierId] || '',
-      country: dest?.country || '', // Already normalized
+      country: dest?.country || '',
       city: dest?.city || '',
       durationDays: t.durationDays || 0,
       durationNights: t.durationNights || 0,
@@ -244,8 +277,34 @@ export async function getTourList(options?: {
       price: Number(price),
       availableSeats: dep?.remainingSeats || 0,
       imageUrl: imageMap[t.id] || '',
+      airline: externalIdMap[t.id] || titleAirline || '',
     };
   });
+}
+
+// Extract airline code/name from tour title (e.g. "ทัวร์ญี่ปุ่น (TG)" → "Thai Airways")
+const AIRLINE_CODES: Record<string, string> = {
+  'TG': 'Thai Airways', 'VZ': 'Thai VietJet', 'FD': 'Thai AirAsia',
+  'SL': 'Thai Lion Air', 'XJ': 'Thai AirAsia X', 'WE': 'Thai Smile',
+  'CX': 'Cathay Pacific', 'SQ': 'Singapore Airlines', 'NH': 'ANA',
+  'JL': 'Japan Airlines', 'MM': 'Peach Aviation', 'TR': 'Scoot',
+  'VJ': 'VietJet Air', 'VN': 'Vietnam Airlines', 'QR': 'Qatar Airways',
+  'EK': 'Emirates', 'TK': 'Turkish Airlines', 'CI': 'China Airlines',
+  'BR': 'EVA Air', 'CA': 'Air China', 'MU': 'China Eastern',
+  'CZ': 'China Southern', 'KE': 'Korean Air', 'OZ': 'Asiana Airlines',
+  'MH': 'Malaysia Airlines', 'AK': 'AirAsia', 'AI': 'Air India',
+  'MS': 'EgyptAir', 'EY': 'Etihad Airways', 'QF': 'Qantas',
+};
+
+function extractAirlineFromTitle(title: string): string {
+  // Match patterns like (TG), [TG], by TG, สายการบิน TG
+  const match = title.match(/[\(\[](\w{2})[\)\]]/);
+  if (match && AIRLINE_CODES[match[1]]) return AIRLINE_CODES[match[1]];
+  // Check if any airline name appears in the title
+  for (const [code, name] of Object.entries(AIRLINE_CODES)) {
+    if (title.includes(code) && title.includes('บิน')) return name;
+  }
+  return '';
 }
 
 // ─── Tour Detail ────────────────────────────────────────────────────
