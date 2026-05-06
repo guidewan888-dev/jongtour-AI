@@ -37,7 +37,7 @@ function addSecurityHeaders(response: NextResponse): NextResponse {
 
 // ─── Protected Paths ───────────────────────────────────
 const ADMIN_PATHS = ['/dashboard', '/bookings', '/customers', '/payments', '/operations',
-  '/affiliate-admin', '/talent-admin', '/wholesale', '/visa-admin', '/document-center',
+  '/affiliate-admin', '/talent-admin', '/visa-admin', '/document-center',
   '/feature-flags', '/recruitment', '/settings', '/admin'];
 const ACCOUNT_PATHS = ['/account'];
 const TALENT_PORTAL_PATHS = ['/talent-portal'];
