@@ -43,31 +43,39 @@ export async function POST(request: NextRequest) {
     const userMessage = message.trim();
     const userImage = image; // base64 string
 
-    const cookieStore = await cookies();
-    const supabaseUserClient = createServerClient(cookieStore);
-    const { data: { user } } = await supabaseUserClient.auth.getUser();
     let userName = "คุณลูกค้า";
     let crmContext = "";
+    let user: any = null;
     
-    if (user && user.user_metadata?.full_name) {
-      userName = `คุณ ${user.user_metadata.full_name.split(" ")[0]}`;
-    }
-    
-    // AI CRM (User Profiling)
-    if (user) {
-      const { prisma } = await import("@/lib/prisma");
-      try {
-        let userProfile = await prisma.userProfile.findUnique({ where: { userId: user.id } });
-        if (!userProfile) {
-          userProfile = await prisma.userProfile.create({ data: { userId: user.id, preferences: {} } });
-        }
-        
-        if (userProfile && userProfile.preferences && Object.keys(userProfile.preferences).length > 0) {
-          crmContext = `\n\n[CRM DATA: คุณมีข้อมูลความชอบของลูกค้ารายนี้จากประวัติเก่า: ${JSON.stringify(userProfile.preferences)} โปรดนำข้อมูลเหล่านี้มาช่วยในการสนทนาและปิดการขายอย่างแนบเนียน]`;
-        }
-      } catch (err) {
-        console.error("CRM Fetch Error:", err);
+    // Auth is OPTIONAL — chat must work for anonymous users too
+    try {
+      const cookieStore = await cookies();
+      const supabaseUserClient = createServerClient(cookieStore);
+      const { data } = await supabaseUserClient.auth.getUser();
+      user = data?.user || null;
+      
+      if (user && user.user_metadata?.full_name) {
+        userName = `คุณ ${user.user_metadata.full_name.split(" ")[0]}`;
       }
+      
+      // AI CRM (User Profiling)
+      if (user) {
+        const { prisma } = await import("@/lib/prisma");
+        try {
+          let userProfile = await prisma.userProfile.findUnique({ where: { userId: user.id } });
+          if (!userProfile) {
+            userProfile = await prisma.userProfile.create({ data: { userId: user.id, preferences: {} } });
+          }
+          
+          if (userProfile && userProfile.preferences && Object.keys(userProfile.preferences).length > 0) {
+            crmContext = `\n\n[CRM DATA: คุณมีข้อมูลความชอบของลูกค้ารายนี้จากประวัติเก่า: ${JSON.stringify(userProfile.preferences)} โปรดนำข้อมูลเหล่านี้มาช่วยในการสนทนาและปิดการขายอย่างแนบเนียน]`;
+          }
+        } catch (err) {
+          console.error("CRM Fetch Error:", err);
+        }
+      }
+    } catch (authError) {
+      console.warn("[Chat API] Auth/CRM skipped (Supabase client unavailable):", (authError as any)?.message?.substring(0, 100));
     }
 
     if (!isOpenAIAvailable || !openai) {
