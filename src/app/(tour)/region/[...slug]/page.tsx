@@ -1,11 +1,13 @@
 'use client';
 import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
+import TourCard from '@/components/tour/TourCard';
 
 interface Tour {
   id: string; slug: string; code: string; title: string; supplier: string;
   country: string; city: string; durationDays: number; durationNights: number;
   nextDeparture: string; price: number; availableSeats: number; imageUrl?: string;
+  airline?: string;
 }
 
 const REGION_DATA: Record<string, { name: string; nameEn: string; desc: string; countries: { name: string; slug: string; flagCode: string }[] }> = {
@@ -14,23 +16,30 @@ const REGION_DATA: Record<string, { name: string; nameEn: string; desc: string; 
     desc: 'เปิดโลกแห่งเอเชีย ให้ทุกการเดินทางเป็นความทรงจำที่ยิ่งใหญ่',
     countries: [
       { name: 'ญี่ปุ่น', slug: 'japan', flagCode: 'jp' },
-      { name: 'เกาหลี', slug: 'south-korea', flagCode: 'kr' },
+      { name: 'เกาหลีใต้', slug: 'south-korea', flagCode: 'kr' },
       { name: 'จีน', slug: 'china', flagCode: 'cn' },
       { name: 'ไต้หวัน', slug: 'taiwan', flagCode: 'tw' },
       { name: 'เวียดนาม', slug: 'vietnam', flagCode: 'vn' },
+      { name: 'ฮ่องกง', slug: 'hongkong', flagCode: 'hk' },
       { name: 'สิงคโปร์', slug: 'singapore', flagCode: 'sg' },
       { name: 'มาเลเซีย', slug: 'malaysia', flagCode: 'my' },
       { name: 'อินเดีย', slug: 'india', flagCode: 'in' },
+      { name: 'กัมพูชา', slug: 'cambodia', flagCode: 'kh' },
+      { name: 'พม่า', slug: 'myanmar', flagCode: 'mm' },
+      { name: 'ลาว', slug: 'laos', flagCode: 'la' },
     ],
   },
   europe: {
     name: 'ยุโรป', nameEn: 'Europe',
     desc: 'สัมผัสเสน่ห์ยุโรป วัฒนธรรมเก่าแก่ สถาปัตยกรรมอลังการ',
     countries: [
-      { name: 'อิตาลี', slug: 'italy', flagCode: 'it' },
+      { name: 'อังกฤษ', slug: 'uk', flagCode: 'gb' },
       { name: 'ฝรั่งเศส', slug: 'france', flagCode: 'fr' },
+      { name: 'อิตาลี', slug: 'italy', flagCode: 'it' },
       { name: 'สวิตเซอร์แลนด์', slug: 'switzerland', flagCode: 'ch' },
+      { name: 'สเปน', slug: 'spain', flagCode: 'es' },
       { name: 'ตุรกี', slug: 'turkey', flagCode: 'tr' },
+      { name: 'รัสเซีย', slug: 'russia', flagCode: 'ru' },
       { name: 'จอร์เจีย', slug: 'georgia', flagCode: 'ge' },
     ],
   },
@@ -42,13 +51,29 @@ const REGION_DATA: Record<string, { name: string; nameEn: string; desc: string; 
       { name: 'ดูไบ', slug: 'dubai', flagCode: 'ae' },
     ],
   },
+  americas: {
+    name: 'อเมริกา', nameEn: 'Americas',
+    desc: 'สำรวจทวีปอเมริกา จากมหานครนิวยอร์กถึงน้ำตกไนแองการ่า',
+    countries: [
+      { name: 'อเมริกา', slug: 'usa', flagCode: 'us' },
+      { name: 'แคนาดา', slug: 'canada', flagCode: 'ca' },
+    ],
+  },
+  oceania: {
+    name: 'โอเชียเนีย', nameEn: 'Oceania',
+    desc: 'ออสเตรเลีย นิวซีแลนด์ ดินแดนธรรมชาติอันงดงาม',
+    countries: [
+      { name: 'ออสเตรเลีย', slug: 'australia', flagCode: 'au' },
+      { name: 'นิวซีแลนด์', slug: 'newzealand', flagCode: 'nz' },
+    ],
+  },
 };
 
 const SUPPLIERS = [
-  { key: "let's go", name: "Let's Go", logo: "/images/wholesale/letsgo.png", color: 'bg-blue-500' },
-  { key: "go365", name: "Go365", logo: "/images/wholesale/go365.png", color: 'bg-green-500' },
-  { key: "checkin", name: "Checkin Group", logo: "/images/wholesale/checkin.png", color: 'bg-teal-500' },
-  { key: "tour factory", name: "Tour Factory", logo: "/images/wholesale/tourfactory.png", color: 'bg-purple-500' },
+  { key: "let's go", name: "Let's Go", color: 'bg-blue-500' },
+  { key: "go365", name: "Go365", color: 'bg-green-500' },
+  { key: "checkin", name: "Checkin Group", color: 'bg-teal-500' },
+  { key: "tour factory", name: "Tour Factory", color: 'bg-purple-500' },
 ];
 
 const LINE_URL = 'https://line.me/R/ti/p/@jongtour';
@@ -60,13 +85,24 @@ export default function RegionPage({ params }: { params: { slug: string[] } }) {
   const [loading, setLoading] = useState(true);
   const [activeCountry, setActiveCountry] = useState<string | null>(null);
 
+  // Fetch tours for EACH country separately then merge
   useEffect(() => {
-    const countryNames = region.countries.map(c => c.name).join(',');
-    fetch(`/api/tours/list?country=${encodeURIComponent(countryNames)}&limit=500`)
-      .then(r => r.json())
-      .then(d => { if (d.tours) setTours(d.tours); })
-      .catch(() => {})
-      .finally(() => setLoading(false));
+    setLoading(true);
+    setTours([]);
+    const promises = region.countries.map(c =>
+      fetch(`/api/tours/list?country=${encodeURIComponent(c.name)}&limit=100`)
+        .then(r => r.json())
+        .then(d => (d.tours || []) as Tour[])
+        .catch(() => [] as Tour[])
+    );
+    Promise.all(promises).then(results => {
+      const allTours = results.flat();
+      // Deduplicate by id
+      const seen = new Set<string>();
+      const unique = allTours.filter(t => { if (seen.has(t.id)) return false; seen.add(t.id); return true; });
+      setTours(unique);
+      setLoading(false);
+    });
   }, [region]);
 
   const supplierGroups = useMemo(() => {
@@ -81,15 +117,13 @@ export default function RegionPage({ params }: { params: { slug: string[] } }) {
     return Object.entries(groups).sort((a, b) => b[1].tours.length - a[1].tours.length);
   }, [tours, activeCountry]);
 
-  const getSupplierInfo = (key: string) => SUPPLIERS.find(s => key.includes(s.key)) || { name: key, logo: '', color: 'bg-slate-500' };
+  const getSupplierInfo = (key: string) => SUPPLIERS.find(s => key.includes(s.key)) || { name: key, color: 'bg-slate-500' };
 
   return (
     <div className="bg-white min-h-screen">
       {/* Hero */}
       <section className="relative bg-gradient-to-br from-primary-600 via-primary-500 to-orange-400 text-white overflow-hidden">
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute inset-0" style={{ backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)', backgroundSize: '24px 24px' }} />
-        </div>
+        <div className="absolute inset-0 opacity-10"><div className="absolute inset-0" style={{ backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)', backgroundSize: '24px 24px' }} /></div>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 md:py-20 relative text-center">
           <h1 className="text-3xl md:text-5xl font-black mb-3">เปิดโลกแห่ง{region.name}</h1>
           <p className="text-white/80 text-base md:text-lg max-w-2xl mx-auto mb-8">{region.desc}</p>
@@ -110,7 +144,7 @@ export default function RegionPage({ params }: { params: { slug: string[] } }) {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
-        {/* Country Filter Chips */}
+        {/* Country Filter */}
         <div className="mb-8">
           <h2 className="text-xl font-bold text-slate-900 mb-4">🌏 เลือกประเทศใน{region.name}</h2>
           <div className="flex flex-wrap gap-2">
@@ -124,7 +158,7 @@ export default function RegionPage({ params }: { params: { slug: string[] } }) {
           </div>
         </div>
 
-        {/* Wholesale Partners Banner */}
+        {/* Wholesale Partners */}
         <div className="g-card p-6 mb-8 bg-gradient-to-r from-slate-50 to-white border-slate-200">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <div>
@@ -142,7 +176,7 @@ export default function RegionPage({ params }: { params: { slug: string[] } }) {
           </div>
         </div>
 
-        {/* Tour Groups by Supplier */}
+        {/* Tour Groups */}
         {loading ? (
           <div className="space-y-6">{[1, 2].map(i => (
             <div key={i} className="g-card p-6 animate-pulse">
@@ -156,55 +190,35 @@ export default function RegionPage({ params }: { params: { slug: string[] } }) {
               const info = getSupplierInfo(supplier);
               const countriesInGroup = [...data.countries];
               return (
-                <section key={supplier} className="g-card overflow-hidden border-slate-200">
-                  {/* Supplier Header */}
+                <section key={supplier} className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
                   <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-5 border-b border-slate-100 bg-slate-50 gap-3">
                     <div className="flex items-center gap-3">
                       <div className={`w-11 h-11 ${info.color} rounded-xl flex items-center justify-center text-white text-xs font-black shadow-sm`}>{info.name.slice(0, 2)}</div>
                       <div>
-                        <h3 className="text-base font-bold text-slate-900">ทัวร์จาก {info.name}</h3>
+                        <h3 className="text-base font-bold text-slate-900">ดีลหลุดจองจาก {info.name}</h3>
                         <p className="text-xs text-slate-500">{data.tours.length} โปรแกรม • {countriesInGroup.join(', ')}</p>
                       </div>
                     </div>
+                    <span className="text-xs font-bold text-red-500 bg-red-50 px-3 py-1.5 rounded-full border border-red-200">⚡ ต้องตัดสินใจด่วน!</span>
                   </div>
 
-                  {/* Country sub-groups within supplier */}
                   <div className="p-5 space-y-6">
                     {countriesInGroup.map(country => {
                       const countryTours = data.tours.filter(t => t.country === country).slice(0, 4);
-                      const countrySlug = region.countries.find(c => c.name === country)?.slug || country;
-                      const flagCode = region.countries.find(c => c.name === country)?.flagCode || '';
+                      const countryMeta = region.countries.find(c => c.name === country);
                       return (
                         <div key={country}>
                           <div className="flex items-center justify-between mb-3">
                             <h4 className="font-bold text-slate-800 flex items-center gap-2 text-sm">
-                              {flagCode && <img src={`https://flagcdn.com/w20/${flagCode}.png`} width="16" height="12" alt={country} className="rounded-sm" />}
+                              {countryMeta?.flagCode && <img src={`https://flagcdn.com/w20/${countryMeta.flagCode}.png`} width="16" height="12" alt={country} className="rounded-sm" />}
                               {country}
                               <span className="text-xs text-slate-400 font-normal">({data.tours.filter(t => t.country === country).length})</span>
                             </h4>
-                            <Link href={`/country/${countrySlug}`} className="text-xs font-semibold text-primary-600 hover:text-primary-700">ดูทั้งหมด →</Link>
+                            <Link href={`/country/${countryMeta?.slug || country}`} className="text-xs font-semibold text-primary-600 hover:text-primary-700">ดูทั้งหมด →</Link>
                           </div>
-                          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                             {countryTours.map(tour => (
-                              <Link key={tour.id} href={`/tour/${tour.slug}`} className="group block rounded-xl border border-slate-100 hover:border-primary-200 hover:shadow-md transition-all bg-white overflow-hidden">
-                                <div className="relative h-32 bg-slate-100 overflow-hidden">
-                                  {tour.imageUrl ? (
-                                    <img src={tour.imageUrl} alt={tour.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy" />
-                                  ) : (
-                                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary-100 to-primary-50"><span className="text-3xl">{flagCode ? '' : '🌏'}</span>{flagCode && <img src={`https://flagcdn.com/w80/${flagCode}.png`} width="48" height="36" alt="" className="rounded" />}</div>
-                                  )}
-                                  <div className="absolute top-1.5 right-1.5 bg-black/50 text-white text-[9px] font-medium px-1.5 py-0.5 rounded-full backdrop-blur-sm">{tour.durationDays}D{tour.durationNights}N</div>
-                                  {tour.availableSeats > 0 && tour.availableSeats <= 5 && <div className="absolute top-1.5 left-1.5 bg-red-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full">🔥 เหลือ {tour.availableSeats}</div>}
-                                </div>
-                                <div className="p-2.5">
-                                  <p className="text-[9px] font-bold text-slate-400">{tour.code}</p>
-                                  <h5 className="text-xs font-bold text-slate-900 line-clamp-2 min-h-[2rem] leading-tight mt-0.5 group-hover:text-primary-600 transition-colors">{tour.title}</h5>
-                                  <div className="flex items-end justify-between mt-1.5 pt-1.5 border-t border-slate-50">
-                                    {tour.nextDeparture !== 'N/A' && <p className="text-[9px] text-slate-400">📅 {tour.nextDeparture}</p>}
-                                    {tour.price > 0 ? <div className="text-sm font-bold text-primary-600">฿{tour.price.toLocaleString()}</div> : <span className="text-[10px] text-slate-400">สอบถาม</span>}
-                                  </div>
-                                </div>
-                              </Link>
+                              <TourCard key={tour.id} tour={{ ...tour, flagCode: countryMeta?.flagCode }} />
                             ))}
                           </div>
                         </div>
@@ -234,7 +248,6 @@ export default function RegionPage({ params }: { params: { slug: string[] } }) {
             <h3 className="text-2xl font-black mb-2">รับโปรโมชั่นและข่าวสารก่อนใคร</h3>
             <p className="text-emerald-100 mb-6 max-w-md mx-auto">ไม่พลาดทุกดีลเด็ด แค่แอดไลน์ แชทบอท AI พร้อมตอบทุกคำถาม 24 ชม.</p>
             <a href={LINE_URL} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 bg-white text-emerald-600 hover:bg-emerald-50 px-8 py-3.5 rounded-full font-bold text-base shadow-lg transition-all hover:scale-105">
-              <svg viewBox="0 0 24 24" className="w-5 h-5" fill="currentColor"><path d="M19.365 9.863c.349 0 .63.285.63.631 0 .345-.281.63-.63.63H17.61v1.125h1.755c.349 0 .63.283.63.63 0 .344-.281.629-.63.629h-2.386c-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63h2.386c.346 0 .627.285.627.63 0 .349-.281.63-.63.63H17.61v1.125h1.755zm-3.855 3.016c0 .27-.174.51-.432.596-.064.021-.133.031-.199.031-.211 0-.391-.09-.51-.25l-2.443-3.317v2.94c0 .344-.279.629-.631.629-.346 0-.626-.285-.626-.629V8.108c0-.27.173-.51.43-.595.06-.023.136-.033.194-.033.195 0 .375.104.495.254l2.462 3.33V8.108c0-.345.282-.63.63-.63.345 0 .63.285.63.63v4.771zm-5.741 0c0 .344-.282.629-.631.629-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63.346 0 .628.285.628.63v4.771zm-2.466.629H4.917c-.345 0-.63-.285-.63-.629V8.108c0-.345.285-.63.63-.63.348 0 .63.285.63.63v4.141h1.756c.348 0 .629.283.629.63 0 .344-.282.629-.629.629M24 10.314C24 4.943 18.615.572 12 .572S0 4.943 0 10.314c0 4.811 4.27 8.842 10.035 9.608.391.082.923.258 1.058.59.12.301.079.766.038 1.08l-.164 1.02c-.045.301-.24 1.186 1.049.645 1.291-.539 6.916-4.078 9.436-6.975C23.176 14.393 24 12.458 24 10.314" /></svg>
               แอดไลน์ @jongtour
             </a>
           </div>
