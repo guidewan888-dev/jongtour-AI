@@ -69,7 +69,13 @@ export default function PublicHeader() {
                     <div className={`grid gap-6 ${group.columns.length >= 4 ? 'grid-cols-4' : group.columns.length >= 3 ? 'grid-cols-3' : 'grid-cols-2'}`}>
                       {group.columns.map((col) => (
                         <div key={col.title}>
-                          <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">{col.title}</p>
+                          <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">
+                            {col.titleHref ? (
+                              <Link href={col.titleHref} className="hover:text-primary-600 transition-colors" onClick={() => setOpenMenu(null)}>
+                                {col.title} →
+                              </Link>
+                            ) : col.title}
+                          </p>
                           <ul className="space-y-0.5">
                             {col.items.map((item) => (
                               <li key={item.href + item.label}>

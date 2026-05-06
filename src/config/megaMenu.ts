@@ -13,7 +13,7 @@ export interface MegaMenuItem {
 
 export interface MegaMenuColumn {
   title: string;
-  titleFlagCode?: string;
+  titleHref?: string;
   items: MegaMenuItem[];
 }
 
@@ -31,6 +31,7 @@ export const megaMenuConfig: MegaMenuGroup[] = [
     columns: [
       {
         title: "จีน / ญี่ปุ่น",
+        titleHref: "/region/asia",
         items: [
           { label: "ทัวร์จีน", href: "/country/china", flagCode: "cn" },
           { label: "ทัวร์ญี่ปุ่น", href: "/country/japan", flagCode: "jp" },
@@ -41,6 +42,7 @@ export const megaMenuConfig: MegaMenuGroup[] = [
       },
       {
         title: "ทัวร์เอเชีย",
+        titleHref: "/region/asia",
         items: [
           { label: "ทัวร์เกาหลี", href: "/country/south-korea", flagCode: "kr" },
           { label: "ทัวร์เวียดนาม", href: "/country/vietnam", flagCode: "vn" },
@@ -56,6 +58,7 @@ export const megaMenuConfig: MegaMenuGroup[] = [
       },
       {
         title: "ทัวร์ยุโรป และทัวร์อื่นๆ",
+        titleHref: "/region/europe",
         items: [
           { label: "ทัวร์อังกฤษ", href: "/country/uk", flagCode: "gb" },
           { label: "ทัวร์ฝรั่งเศส", href: "/country/france", flagCode: "fr" },
@@ -71,6 +74,7 @@ export const megaMenuConfig: MegaMenuGroup[] = [
       },
       {
         title: "อเมริกา / โอเชียเนีย",
+        titleHref: "/region/americas",
         items: [
           { label: "ทัวร์อเมริกา", href: "/country/usa", flagCode: "us" },
           { label: "ทัวร์แคนาดา", href: "/country/canada", flagCode: "ca" },
@@ -80,30 +84,6 @@ export const megaMenuConfig: MegaMenuGroup[] = [
       },
     ],
     footerLink: { label: "ดูทัวร์ทั้งหมด →", href: "/search" },
-  },
-  {
-    trigger: "ทัวร์ตามทวีป",
-    columns: [
-      {
-        title: "ทวีป",
-        items: [
-          { label: "ทัวร์เอเชีย", href: "/region/asia", emoji: "🌏" },
-          { label: "ทัวร์ยุโรป", href: "/region/europe", emoji: "🏰" },
-          { label: "ทัวร์แอฟริกา & ตะวันออกกลาง", href: "/region/africa", emoji: "🏜️" },
-          { label: "ทัวร์อเมริกา", href: "/region/americas", emoji: "🗽" },
-          { label: "ทัวร์โอเชียเนีย", href: "/region/oceania", emoji: "🏝️" },
-        ],
-      },
-      {
-        title: "โปรโมชั่น",
-        items: [
-          { label: "ทัวร์ไฟไหม้ Flash Sale", href: "/deals/flash-sale", emoji: "🔥" },
-          { label: "ราคาพิเศษเดือนนี้", href: "/search", emoji: "💰" },
-          { label: "AI ช่วยหาทัวร์", href: "/ai-search", emoji: "🤖" },
-        ],
-      },
-    ],
-    footerLink: { label: "ค้นหาทัวร์ทั้งหมด →", href: "/search" },
   },
 ];
 
