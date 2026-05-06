@@ -225,8 +225,8 @@ export default function FloatingChat() {
     }, 100);
   };
 
-  // Hide floating chat if we are already on ai-planner full page
-  if (pathname === "/ai-planner") {
+  // Hide floating chat on homepage (inline chat) and ai-planner
+  if (pathname === "/" || pathname === "/ai-planner") {
     return null;
   }
 
