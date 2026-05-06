@@ -1,0 +1,606 @@
+﻿  โ–ฒ Next.js 14.2.3
+  - Environments: .env.production.local, .env.local, .env.production, .env
+
+   Creating an optimized production build ...
+ โ“ Compiled successfully
+   Skipping validation of types
+   Linting ...
+
+./src/app/(admin)/affiliate-admin/marketing/page.tsx
+4:640  Warning: Image elements must have an alt prop, either with meaningful text, or an empty string for decorative images.  jsx-a11y/alt-text
+
+./src/app/(admin)/bookings/create/AdminManualBookingForm.tsx
+33:6  Warning: React Hook useEffect has a missing dependency: 'travelers.length'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./src/app/(admin)/payments/AdminPaymentClient.tsx
+251:19  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/app/(admin)/tour-management/AdminToursClient.tsx
+127:23  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/app/(agent)/agent-portal/search/page.tsx
+32:6  Warning: React Hook useEffect has a missing dependency: 'fetchTours'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+151:21  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/app/(info)/affiliate/marketing/page.tsx
+3:538  Warning: Image elements must have an alt prop, either with meaningful text, or an empty string for decorative images.  jsx-a11y/alt-text
+
+./src/app/(info)/blog/[slug]/page.tsx
+39:19  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+59:15  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+82:15  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+147:17  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+147:17  Warning: img elements must have an alt prop, either with meaningful text, or an empty string for decorative images.  jsx-a11y/alt-text
+161:17  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+161:17  Warning: img elements must have an alt prop, either with meaningful text, or an empty string for decorative images.  jsx-a11y/alt-text
+175:17  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+175:17  Warning: img elements must have an alt prop, either with meaningful text, or an empty string for decorative images.  jsx-a11y/alt-text
+
+./src/app/(public)/pub-auth/login/page.tsx
+120:15  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/app/(public)/pub-auth/register/page.tsx
+87:15  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/app/(tour)/account/bookings/[booking_no]/page.tsx
+105:17  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/app/(tour)/account/dashboard/page.tsx
+149:19  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/app/(tour)/account/favorites/FavoritesClient.tsx
+120:17  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/app/(tour)/account/payments/[payment_id]/PaymentSlipClient.tsx
+87:11  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/app/(tour)/account/vouchers/page.tsx
+67:17  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/app/(tour)/account/vouchers/[booking_no]/page.tsx
+118:21  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/app/(tour)/ai-search/page.tsx
+239:33  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/app/(tour)/compare/page.tsx
+171:25  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/app/(tour)/country/[slug]/page.tsx
+125:15  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+198:38  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/app/(tour)/country/[slug]/[city]/page.tsx
+177:31  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/app/(tour)/page.tsx
+169:55  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+214:19  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+246:17  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/app/(tour)/private-group/page.tsx
+102:13  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+303:25  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/app/(tour)/region/[...slug]/page.tsx
+154:17  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+213:57  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/app/(tour)/search/SearchClient.tsx
+297:27  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+332:27  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/app/(tour)/tour/[slug]/page.tsx
+105:11  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/app/(tour)/tours/[...slug]/page.tsx
+197:35  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+224:19  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/app/(tour)/wholesale/[slug]/page.tsx
+139:15  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+204:48  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+248:54  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/app/(tour)/wholesaler/[code]/page.tsx
+139:15  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+204:48  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+248:54  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/components/admin/WholesaleAutomationPanel.tsx
+338:19  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+356:19  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+364:19  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/components/InteractiveItinerary.tsx
+414:13  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+425:13  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+566:25  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+753:23  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+1003:14  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+1007:13  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/components/layout/PublicHeader.tsx
+88:37  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/components/layouts/Header.tsx
+52:13  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/components/seo/RelatedTours.tsx
+37:17  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/components/SocialLoginButtons.tsx
+40:9  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+51:11  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/components/tour/detail/TourGallery.tsx
+20:11  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+27:15  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/components/tour/FlashSaleCard.tsx
+37:9  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/components/tour/TourCard.tsx
+35:11  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+51:31  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/components/ui/FloatingChat.tsx
+305:29  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/components/UserMenu.tsx
+101:15  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+info  - Need to disable some ESLint rules? Learn more here: https://nextjs.org/docs/basic-features/eslint#disabling-rules
+   Collecting page data ...
+node :  โ  Using edge runtime on a page currently disables static generation for that page
+At line:1 char:1
++ node node_modules/next/dist/bin/next build 2>&1 | Out-File -FilePath  ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ( โ  Using edge...n for that page:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+   Generating static pages (0/278) ...
+   Generating static pages (69/278) 
+   Generating static pages (138/278) 
+   Generating static pages (208/278) 
+ โ“ Generating static pages (278/278)
+   Finalizing page optimization ...
+   Collecting build traces ...
+
+Route (app)                                                         Size     First Load JS
+โ” โ— /                                                               5.99 kB         100 kB
+โ” โ— /403                                                            1.68 kB        95.7 kB
+โ” โ— /404                                                            428 B          94.5 kB
+โ” โ— /about                                                          428 B          94.5 kB
+โ” โ— /account                                                        454 B          87.7 kB
+โ” ฦ’ /account/ai-chats                                               429 B          94.5 kB
+โ” ฦ’ /account/bookings                                               8.05 kB         102 kB
+โ” ฦ’ /account/bookings/[booking_no]                                  429 B          94.5 kB
+โ” โ— /account/compare                                                942 B            95 kB
+โ” ฦ’ /account/dashboard                                              428 B          94.5 kB
+โ” ฦ’ /account/documents                                              3.71 kB        90.9 kB
+โ” ฦ’ /account/favorites                                              2.99 kB          97 kB
+โ” ฦ’ /account/invoices                                               429 B          94.5 kB
+โ” โ— /account/notifications                                          2.06 kB        89.3 kB
+โ” ฦ’ /account/payments                                               429 B          94.5 kB
+โ” ฦ’ /account/payments/[payment_id]                                  1.86 kB        95.9 kB
+โ” ฦ’ /account/pdpa                                                   3.84 kB        91.1 kB
+โ” ฦ’ /account/preferences                                            3.64 kB        90.9 kB
+โ” ฦ’ /account/private-groups                                         429 B          94.5 kB
+โ” ฦ’ /account/private-groups/[request_id]                            428 B          94.5 kB
+โ” ฦ’ /account/profile                                                2.92 kB        90.1 kB
+โ” ฦ’ /account/quotations                                             429 B          94.5 kB
+โ” ฦ’ /account/quotations/[quotation_id]                              429 B          94.5 kB
+โ” ฦ’ /account/security                                               4.03 kB        98.1 kB
+โ” ฦ’ /account/social-connections                                     3.23 kB         154 kB
+โ” ฦ’ /account/support                                                1.95 kB          96 kB
+โ” ฦ’ /account/support/[ticket_id]                                    1.48 kB        95.5 kB
+โ” โ— /account/talent-requests                                        429 B          94.5 kB
+โ” ฦ’ /account/talent-requests/[id]                                   429 B          94.5 kB
+โ” โ— /account/visa                                                   2.37 kB        96.4 kB
+โ” ฦ’ /account/visa/[no]                                              3.26 kB        97.3 kB
+โ” ฦ’ /account/vouchers                                               429 B          94.5 kB
+โ” ฦ’ /account/vouchers/[booking_no]                                  429 B          94.5 kB
+โ” โ— /admin/notifications                                            3.27 kB        90.5 kB
+โ” โ— /admin/security                                                 3.28 kB        90.5 kB
+โ” โ— /affiliate                                                      3.48 kB        97.5 kB
+โ” โ— /affiliate-admin                                                429 B          94.5 kB
+โ” โ— /affiliate-admin/affiliates                                     429 B          94.5 kB
+โ” ฦ’ /affiliate-admin/affiliates/[id]                                429 B          94.5 kB
+โ” โ— /affiliate-admin/affiliates/new                                 429 B          94.5 kB
+โ” โ— /affiliate-admin/anti-fraud                                     454 B          87.7 kB
+โ” โ— /affiliate-admin/campaigns                                      429 B          94.5 kB
+โ” ฦ’ /affiliate-admin/campaigns/[id]                                 429 B          94.5 kB
+โ” โ— /affiliate-admin/commissions                                    428 B          94.5 kB
+โ” โ— /affiliate-admin/commissions/batch                              429 B          94.5 kB
+โ” ฦ’ /affiliate-admin/commissions/[id]                               428 B          94.5 kB
+โ” โ— /affiliate-admin/kyc                                            454 B          87.7 kB
+โ” โ— /affiliate-admin/marketing                                      454 B          87.7 kB
+โ” โ— /affiliate-admin/marketing/templates                            453 B          87.7 kB
+โ” โ— /affiliate-admin/payouts                                        429 B          94.5 kB
+โ” โ— /affiliate-admin/payouts/bank-file                              429 B          94.5 kB
+โ” ฦ’ /affiliate-admin/payouts/[id]                                   429 B          94.5 kB
+โ” โ— /affiliate-admin/payouts/tax                                    429 B          94.5 kB
+โ” โ— /affiliate-admin/reports                                        429 B          94.5 kB
+โ” โ— /affiliate-admin/reports/products                               429 B          94.5 kB
+โ” โ— /affiliate-admin/reports/roi                                    428 B          94.5 kB
+โ” โ— /affiliate-admin/reports/top-performers                         429 B          94.5 kB
+โ” โ— /affiliate-admin/rules                                          428 B          94.5 kB
+โ” โ— /affiliate-admin/rules/builder                                  429 B          94.5 kB
+โ” โ— /affiliate-admin/rules/calculator                               1.46 kB        95.5 kB
+โ” โ— /affiliate-admin/rules/overrides                                454 B          87.7 kB
+โ” โ— /affiliate-admin/settings                                       453 B          87.7 kB
+โ” โ— /affiliate-admin/tiers                                          454 B          87.7 kB
+โ” โ— /affiliate-admin/tracking                                       454 B          87.7 kB
+โ” โ— /affiliate-admin/tracking/coupons                               454 B          87.7 kB
+โ” โ— /affiliate-admin/tracking/tree                                  454 B          87.7 kB
+โ” โ— /affiliate/apply                                                1.04 kB        88.3 kB
+โ” โ— /affiliate/bookings                                             454 B          87.7 kB
+โ” โ— /affiliate/commissions                                          454 B          87.7 kB
+โ” โ— /affiliate/links                                                2.02 kB        89.2 kB
+โ” ฦ’ /affiliate/links/[id]                                           429 B          94.5 kB
+โ” โ— /affiliate/marketing                                            452 B          87.7 kB
+โ” โ— /affiliate/payouts                                              454 B          87.7 kB
+โ” โ— /affiliate/performance                                          453 B          87.7 kB
+โ” โ— /affiliate/settings                                             453 B          87.7 kB
+โ” โ— /affiliate/sub-affiliates                                       454 B          87.7 kB
+โ” โ— /affiliate/tax-banking                                          454 B          87.7 kB
+โ” โ— /agent/commission                                               454 B          87.7 kB
+โ” โ— /agent-portal/bookings                                          4.08 kB        91.3 kB
+โ” ฦ’ /agent-portal/bookings/[booking_no]                             4.45 kB        91.7 kB
+โ” โ— /agent-portal/commission                                        454 B          87.7 kB
+โ” โ— /agent-portal/credit                                            454 B          87.7 kB
+โ” โ— /agent-portal/dashboard                                         4.45 kB        91.7 kB
+โ” โ— /agent-portal/login                                             2.27 kB        89.5 kB
+โ” โ— /agent-portal/quotation/new                                     2.77 kB          90 kB
+โ” โ— /agent-portal/quotations                                        4.56 kB        91.8 kB
+โ” โ— /agent-portal/register                                          2.88 kB        90.1 kB
+โ” โ— /agent-portal/search                                            3.45 kB        90.7 kB
+โ” ฦ’ /agent-portal/tours/[id]                                        429 B          94.5 kB
+โ” โ— /agents                                                         454 B          87.7 kB
+โ” โ— /agent/sub-agents                                               454 B          87.7 kB
+โ” ฦ’ /ai-center                                                      429 B          94.5 kB
+โ” โ— /ai-center/chat-logs                                            454 B          87.7 kB
+โ” โ— /ai-center/playground                                           3.13 kB        90.4 kB
+โ” โ— /ai-center/private-group                                        454 B          87.7 kB
+โ” ฦ’ /ai-center/prompts                                              454 B          87.7 kB
+โ” โ— /ai-center/review-queue                                         454 B          87.7 kB
+โ” ฦ’ /ai-center/search-logs                                          453 B          87.7 kB
+โ” โ— /ai-planner                                                     429 B          94.5 kB
+โ” โ— /ai-search                                                      5.1 kB         99.1 kB
+โ” ฦ’ /api/admin/affiliates                                           0 B                0 B
+โ” ฦ’ /api/admin/ai/conversations                                     0 B                0 B
+โ” ฦ’ /api/admin/ai/conversations/[id]/takeover                       0 B                0 B
+โ” ฦ’ /api/admin/ai/dashboard                                         0 B                0 B
+โ” ฦ’ /api/admin/ai/guardrails                                        0 B                0 B
+โ” ฦ’ /api/admin/ai/model-settings                                    0 B                0 B
+โ” ฦ’ /api/admin/ai/playground/run                                    0 B                0 B
+โ” ฦ’ /api/admin/ai/private-group-drafts                              0 B                0 B
+โ” ฦ’ /api/admin/ai/private-group-drafts/[id]/convert-quotation       0 B                0 B
+โ” ฦ’ /api/admin/ai/prompts                                           0 B                0 B
+โ” ฦ’ /api/admin/ai/prompts/[id]/activate                             0 B                0 B
+โ” ฦ’ /api/admin/ai/review-queue                                      0 B                0 B
+โ” ฦ’ /api/admin/ai/search-logs                                       0 B                0 B
+โ” ฦ’ /api/admin/bookings/[id]/copy-helper                            0 B                0 B
+โ” ฦ’ /api/admin/bookings/[id]/external-booking-ref                   0 B                0 B
+โ” ฦ’ /api/admin/bookings/[id]/voucher                                0 B                0 B
+โ” ฦ’ /api/admin/bookings/[id]/wholesale-automation                   0 B                0 B
+โ” ฦ’ /api/admin/bookings/[id]/wholesale-automation/approve           0 B                0 B
+โ” ฦ’ /api/admin/bookings/[id]/wholesale-automation/fill              0 B                0 B
+โ” ฦ’ /api/admin/bookings/[id]/wholesale-automation/manual-follow-up  0 B                0 B
+โ” ฦ’ /api/admin/bookings/[id]/wholesale-automation/request-approval  0 B                0 B
+โ” ฦ’ /api/admin/bookings/[id]/wholesale-automation/screenshots       0 B                0 B
+โ” ฦ’ /api/admin/bookings/[id]/wholesale-automation/start             0 B                0 B
+โ” ฦ’ /api/admin/bookings/[id]/wholesale-automation/stop              0 B                0 B
+โ” ฦ’ /api/admin/bookings/[id]/wholesale-automation/submit            0 B                0 B
+โ” ฦ’ /api/admin/dashboard/kpis                                       0 B                0 B
+โ” ฦ’ /api/admin/generate-embeddings                                  0 B                0 B
+โ” ฦ’ /api/admin/invite                                               0 B                0 B
+โ” ฦ’ /api/admin/line-crm                                             0 B                0 B
+โ” ฦ’ /api/admin/link-monitor                                         0 B                0 B
+โ” ฦ’ /api/admin/reports                                              0 B                0 B
+โ” ฦ’ /api/admin/rpa/start                                            0 B                0 B
+โ” ฦ’ /api/admin/rpa/submit                                           0 B                0 B
+โ” ฦ’ /api/admin/suppliers                                            0 B                0 B
+โ” ฦ’ /api/admin/suppliers/[id]/automation-config                     0 B                0 B
+โ” ฦ’ /api/admin/suppliers/[id]/credentials                           0 B                0 B
+โ” ฦ’ /api/admin/suppliers/[id]/credentials/[credential_id]           0 B                0 B
+โ” ฦ’ /api/admin/suppliers/[id]/credentials/test-login                0 B                0 B
+โ” ฦ’ /api/admin/sync                                                 0 B                0 B
+โ” ฦ’ /api/admin/sync/settings                                        0 B                0 B
+โ” ฦ’ /api/admin/talent-requests                                      0 B                0 B
+โ” ฦ’ /api/admin/talents                                              0 B                0 B
+โ” ฦ’ /api/admin/users                                                0 B                0 B
+โ” ฦ’ /api/affiliate/calculate-commission                             0 B                0 B
+โ” ฦ’ /api/affiliate/track                                            0 B                0 B
+โ” ฦ’ /api/ai/search                                                  0 B                0 B
+โ” ฦ’ /api/analytics/share                                            0 B                0 B
+โ” ฦ’ /api/auth/callback                                              0 B                0 B
+โ” ฦ’ /api/auth/change-password                                       0 B                0 B
+โ” ฦ’ /api/auth/forgot-password                                       0 B                0 B
+โ” ฦ’ /api/auth/line                                                  0 B                0 B
+โ” ฦ’ /api/auth/line/callback                                         0 B                0 B
+โ” ฦ’ /api/auth/login                                                 0 B                0 B
+โ” ฦ’ /api/auth/me                                                    0 B                0 B
+โ” ฦ’ /api/auth/register                                              0 B                0 B
+โ” ฦ’ /api/availability                                               0 B                0 B
+โ” ฦ’ /api/blog                                                       0 B                0 B
+โ” ฦ’ /api/bookings/coupon                                            0 B                0 B
+โ” ฦ’ /api/bookings/create                                            0 B                0 B
+โ” ฦ’ /api/careers/apply                                              0 B                0 B
+โ” ฦ’ /api/careers/[id]                                               0 B                0 B
+โ” ฦ’ /api/chat                                                       0 B                0 B
+โ” ฦ’ /api/chat/buddy                                                 0 B                0 B
+โ” ฦ’ /api/chat/regenerate-day                                        0 B                0 B
+โ” ฦ’ /api/chat/regenerate-flight                                     0 B                0 B
+โ” ฦ’ /api/cms/pages                                                  0 B                0 B
+โ” ฦ’ /api/cron/cleanup-holds                                         0 B                0 B
+โ” ฦ’ /api/cron/document-scheduler                                    0 B                0 B
+โ” ฦ’ /api/cron/link-monitor                                          0 B                0 B
+โ” ฦ’ /api/cron/proactive-alerts                                      0 B                0 B
+โ” ฦ’ /api/cron/seo-monitor                                           0 B                0 B
+โ” ฦ’ /api/cron/sync                                                  0 B                0 B
+โ” ฦ’ /api/documents/deliver                                          0 B                0 B
+โ” ฦ’ /api/documents/download/[id]                                    0 B                0 B
+โ” ฦ’ /api/documents/generate                                         0 B                0 B
+โ” ฦ’ /api/documents/retry                                            0 B                0 B
+โ” ฦ’ /api/fit-request                                                0 B                0 B
+โ” ฦ’ /api/fit-request/recalculate                                    0 B                0 B
+โ” ฦ’ /api/fit-request/save                                           0 B                0 B
+โ” ฦ’ /api/health                                                     0 B                0 B
+โ” ฦ’ /api/leads                                                      0 B                0 B
+โ” ฦ’ /api/leads/track                                                0 B                0 B
+โ” ฦ’ /api/line/webhook                                               0 B                0 B
+โ” ฦ’ /api/links/scan                                                 0 B                0 B
+โ” ฦ’ /api/notifications                                              0 B                0 B
+โ” ฦ’ /api/ocr/passport                                               0 B                0 B
+โ” ฦ’ /api/payments                                                   0 B                0 B
+โ” ฦ’ /api/payments/slip                                              0 B                0 B
+โ” ฦ’ /api/payments/webhook                                           0 B                0 B
+โ” ฦ’ /api/reports/revenue                                            0 B                0 B
+โ” ฦ’ /api/revalidate                                                 0 B                0 B
+โ” ฦ’ /api/search                                                     0 B                0 B
+โ” ฦ’ /api/suppliers                                                  0 B                0 B
+โ” ฦ’ /api/sync/trigger                                               0 B                0 B
+โ” ฦ’ /api/talent                                                     0 B                0 B
+โ” ฦ’ /api/tours                                                      0 B                0 B
+โ” ฦ’ /api/tours/list                                                 0 B                0 B
+โ” ฦ’ /api/tours/[slug]                                               0 B                0 B
+โ” ฦ’ /api/track/conversion                                           0 B                0 B
+โ” โ— /api/visa/addons                                                0 B                0 B
+โ” ฦ’ /api/visa/apply                                                 0 B                0 B
+โ” ฦ’ /api/visa/calculate-price                                       0 B                0 B
+โ” ฦ’ /api/visa/[id]                                                  0 B                0 B
+โ” โ— /api/visa/pricing                                               0 B                0 B
+โ” ฦ’ /api/webhooks/stripe                                            0 B                0 B
+โ” ฦ’ /appointments                                                   454 B          87.7 kB
+โ” ฦ’ /audit-logs                                                     454 B          87.7 kB
+โ” ฦ’ /auth/callback/[provider]                                       0 B                0 B
+โ” โ— /blog                                                           428 B          94.5 kB
+โ” ฦ’ /blog/[slug]                                                    202 B           102 kB
+โ” โ— /book                                                           2.38 kB        96.4 kB
+โ” โ— /book/booking-failed                                            429 B          94.5 kB
+โ” ฦ’ /book/cancel/[booking_no]                                       2.52 kB        96.6 kB
+โ” โ— /book/checkout                                                  454 B          87.7 kB
+โ” โ— /book/checkout/contact                                          2.68 kB        89.9 kB
+โ” โ— /book/checkout/review                                           3.5 kB         97.5 kB
+โ” โ— /book/checkout/travelers                                        4.25 kB        98.3 kB
+โ” ฦ’ /book/confirmation/[booking_no]                                 428 B          94.5 kB
+โ” ฦ’ /book/document-upload/[booking_no]                              2.4 kB         96.4 kB
+โ” โ— /booking-policy                                                 454 B          87.7 kB
+โ” ฦ’ /bookings                                                       3.22 kB        90.4 kB
+โ” ฦ’ /bookings/[booking_no]                                          4.05 kB        91.3 kB
+โ” ฦ’ /bookings/create                                                3.05 kB        90.3 kB
+โ” ฦ’ /book/invoice/[booking_no]                                      429 B          94.5 kB
+โ” โ— /book/payment                                                   4.93 kB          99 kB
+โ” ฦ’ /book/payment/[booking_no]                                      2.56 kB        96.6 kB
+โ” โ— /book/payment/confirm                                           2.51 kB        96.6 kB
+โ” ฦ’ /book/payment-pending/[booking_no]                              2.29 kB        96.3 kB
+โ” ฦ’ /book/status/[booking_no]                                       428 B          94.5 kB
+โ” ฦ’ /book/tour/[slug]                                               3.9 kB         97.9 kB
+โ” ฦ’ /book/tour/[slug]/departure/[departure_id]                      454 B          87.7 kB
+โ” ฦ’ /book/voucher/[booking_no]                                      428 B          94.5 kB
+โ” โ— /careers                                                        428 B          94.5 kB
+โ” โ— /careers/apply                                                  2.09 kB        89.3 kB
+โ” โ— /careers/guides                                                 429 B          94.5 kB
+โ” โ— /careers/status                                                 1.59 kB        88.8 kB
+โ” โ— /careers/tour-leaders                                           429 B          94.5 kB
+โ” โ— /cheap-tours                                                    428 B          94.5 kB
+โ” ฦ’ /cms                                                            429 B          94.5 kB
+โ” โ— /cms/blog                                                       454 B          87.7 kB
+โ” ฦ’ /cms/landing-pages                                              454 B          87.7 kB
+โ” โ— /cms/menu-builder                                               862 B          88.1 kB
+โ” โ— /communications                                                 454 B          87.7 kB
+โ” โ— /compare                                                        4.72 kB          92 kB
+โ” โ— /contact                                                        427 B          94.5 kB
+โ” โ— /cookies                                                        454 B          87.7 kB
+โ” ฦ’ /country/[slug]                                                 4.72 kB        98.8 kB
+โ” ฦ’ /country/[slug]/[city]                                          3.4 kB         97.4 kB
+โ” ฦ’ /customers                                                      2.31 kB        96.4 kB
+โ” ฦ’ /customers/[id]                                                 454 B          87.7 kB
+โ” ฦ’ /customers/[id]/audit-log                                       454 B          87.7 kB
+โ” ฦ’ /customers/[id]/bookings                                        429 B          94.5 kB
+โ” ฦ’ /customers/[id]/documents                                       454 B          87.7 kB
+โ” ฦ’ /customers/[id]/overview                                        454 B          87.7 kB
+โ” ฦ’ /customers/[id]/payments                                        429 B          94.5 kB
+โ” ฦ’ /customers/[id]/pdpa                                            454 B          87.7 kB
+โ” ฦ’ /dashboard                                                      3.26 kB        90.5 kB
+โ” โ— /deals/flash-sale                                               5.94 kB        93.2 kB
+โ” โ— /deals/monthly                                                  428 B          94.5 kB
+โ” โ— /destinations                                                   1.47 kB        95.5 kB
+โ” โ— /document-center                                                2.94 kB        90.2 kB
+โ” โ— /email-templates                                                453 B          87.7 kB
+โ” โ— /faq                                                            2.65 kB        89.9 kB
+โ” โ— /feature-flags                                                  1.76 kB          89 kB
+โ” โ— /forgot-password                                                2.04 kB         153 kB
+โ” ฦ’ /guide-applications                                             454 B          87.7 kB
+โ” โ— /help                                                           428 B          94.5 kB
+โ” โ— /inbox                                                          453 B          87.7 kB
+โ” โ— /integrations                                                   454 B          87.7 kB
+โ” ฦ’ /invoices                                                       428 B          94.5 kB
+โ” โ— /last-minute                                                    428 B          94.5 kB
+โ” โ— /login                                                          2.68 kB         154 kB
+โ” ฦ’ /logout                                                         0 B                0 B
+โ” โ— /manual-booking                                                 2.83 kB        90.1 kB
+โ” โ— /marketing                                                      3.63 kB        97.7 kB
+โ” โ— /marketing/attribution                                          3.08 kB        90.3 kB
+โ” โ— /marketing/blog                                                 3.52 kB        90.7 kB
+โ” โ— /marketing/seo                                                  3.77 kB          91 kB
+โ” โ— /marketing/short-links                                          2.79 kB          90 kB
+โ” โ— /marketing/utm-builder                                          2.93 kB        90.2 kB
+โ” โ— /_not-found                                                     454 B          87.7 kB
+โ” ฦ’ /og/default.jpg                                                 0 B                0 B
+โ” ฦ’ /og/tour/[slug]                                                 0 B                0 B
+โ” ฦ’ /operations                                                     454 B          87.7 kB
+โ” ฦ’ /payments                                                       4.35 kB        91.6 kB
+โ” โ— /payments/refunds                                               1.99 kB        89.2 kB
+โ” โ— /payments/verify                                                2.59 kB        89.8 kB
+โ” โ— /pdpa                                                           453 B          87.7 kB
+โ” โ— /permissions                                                    454 B          87.7 kB
+โ” โ— /privacy                                                        454 B          87.7 kB
+โ” โ— /privacy-policy                                                 454 B          87.7 kB
+โ” โ— /private-group                                                  5.22 kB        92.4 kB
+โ” โ— /private-group/examples                                         429 B          94.5 kB
+โ” ฦ’ /private-group/status/[no]                                      429 B          94.5 kB
+โ” โ— /pub-auth/auth/complete-profile                                 1.53 kB        88.8 kB
+โ” โ— /pub-auth/auth/confirm-link                                     2.46 kB        89.7 kB
+โ” โ— /pub-auth/forgot-password                                       2.44 kB        96.5 kB
+โ” ฦ’ /pub-auth/login                                                 3.58 kB        97.6 kB
+โ” ฦ’ /pub-auth/register                                              4.2 kB         98.2 kB
+โ” โ— /pub-auth/reset-password                                        2.37 kB        96.4 kB
+โ” โ— /pub-auth/verify-email                                          429 B          94.5 kB
+โ” ฦ’ /q/[token]                                                      454 B          87.7 kB
+โ” ฦ’ /receipts                                                       454 B          87.7 kB
+โ” ฦ’ /region/[...slug]                                               5.6 kB         99.6 kB
+โ” ฦ’ /reports                                                        454 B          87.7 kB
+โ” โ— /reset-password                                                 2.21 kB         153 kB
+โ” โ— /robots.txt                                                     0 B                0 B
+โ” ฦ’ /roles                                                          454 B          87.7 kB
+โ” โ— /sales/403                                                      454 B          87.7 kB
+โ” โ— /sales/calendar                                                 1.79 kB          89 kB
+โ” โ— /sales/communication                                            454 B          87.7 kB
+โ” โ— /sales/customers                                                454 B          87.7 kB
+โ” ฦ’ /sales/customers/[id]                                           454 B          87.7 kB
+โ” ฦ’ /sales/dashboard                                                429 B          94.5 kB
+โ” โ— /sales/followups                                                454 B          87.7 kB
+โ” ฦ’ /sales/leads                                                    2.85 kB        90.1 kB
+โ” ฦ’ /sales/leads/[id]                                               454 B          87.7 kB
+โ” โ— /sales/login                                                    1.89 kB        89.1 kB
+โ” ฦ’ /sales/pipeline                                                 453 B          87.7 kB
+โ” โ— /sales/private-groups                                           454 B          87.7 kB
+โ” ฦ’ /sales/quotations                                               454 B          87.7 kB
+โ” ฦ’ /sales/quotations/[id]                                          453 B          87.7 kB
+โ” โ— /sales/reports                                                  454 B          87.7 kB
+โ” โ— /sales/tasks                                                    453 B          87.7 kB
+โ” โ— /sales/visa-leads                                               454 B          87.7 kB
+โ” ฦ’ /search                                                         3.81 kB        97.8 kB
+โ” ฦ’ /settings                                                       453 B          87.7 kB
+โ” โ— /settings/system                                                4.08 kB        91.3 kB
+โ” โ— /sitemap.xml                                                    0 B                0 B
+โ” ฦ’ /system-health                                                  454 B          87.7 kB
+โ” โ— /talent-admin                                                   428 B          94.5 kB
+โ” โ— /talent-admin/auto-assign                                       454 B          87.7 kB
+โ” โ— /talent-admin/blocks                                            454 B          87.7 kB
+โ” โ— /talent-admin/conflicts                                         454 B          87.7 kB
+โ” โ— /talent-admin/emergency                                         453 B          87.7 kB
+โ” โ— /talent-admin/notifications                                     454 B          87.7 kB
+โ” โ— /talent-admin/pricing                                           454 B          87.7 kB
+โ” โ— /talent-admin/reports                                           428 B          94.5 kB
+โ” โ— /talent-admin/reports/earnings                                  428 B          94.5 kB
+โ” โ— /talent-admin/reports/satisfaction                              429 B          94.5 kB
+โ” โ— /talent-admin/requests                                          428 B          94.5 kB
+โ” ฦ’ /talent-admin/requests/[id]                                     429 B          94.5 kB
+โ” โ— /talent-admin/reviews                                           454 B          87.7 kB
+โ” โ— /talent-admin/settings                                          453 B          87.7 kB
+โ” โ— /talent-admin/sla                                               454 B          87.7 kB
+โ” โ— /talent-admin/talents                                           429 B          94.5 kB
+โ” ฦ’ /talent-admin/talents/[id]                                      429 B          94.5 kB
+โ” โ— /talent-admin/talents/new                                       429 B          94.5 kB
+โ” โ— /talent-admin/tiers                                             454 B          87.7 kB
+โ” โ— /talent-portal                                                  428 B          94.5 kB
+โ” โ— /talent-portal/earnings                                         454 B          87.7 kB
+โ” โ— /talent-portal/profile                                          454 B          87.7 kB
+โ” โ— /talent-portal/requests                                         1.01 kB        95.1 kB
+โ” ฦ’ /talent-portal/requests/[id]                                    428 B          94.5 kB
+โ” โ— /talent-portal/reviews                                          453 B          87.7 kB
+โ” โ— /talent-portal/schedule                                         454 B          87.7 kB
+โ” โ— /talent-portal/settings                                         454 B          87.7 kB
+โ” โ— /talent-portal/trips                                            429 B          94.5 kB
+โ” ฦ’ /talent-portal/trips/[id]                                       428 B          94.5 kB
+โ” โ— /talents                                                        4.56 kB        98.6 kB
+โ” โ— /talents/compare                                                429 B          94.5 kB
+โ” โ— /talents/favorites                                              454 B          87.7 kB
+โ” ฦ’ /talents/[id]                                                   3.11 kB        97.1 kB
+โ” โ— /talents/request                                                1.48 kB        95.5 kB
+โ” โ— /talents/request/alternatives                                   429 B          94.5 kB
+โ” โ— /talents/request/review                                         2.35 kB        96.4 kB
+โ” โ— /talents/request/success                                        429 B          94.5 kB
+โ” โ— /terms                                                          453 B          87.7 kB
+โ” โ— /tour-leader-applications                                       454 B          87.7 kB
+โ” ฦ’ /tour-management                                                2.75 kB          90 kB
+โ” โ— /tour-management/categories                                     454 B          87.7 kB
+โ” โ— /tour-management/destinations                                   454 B          87.7 kB
+โ” ฦ’ /tour-management/[id]                                           429 B          94.5 kB
+โ” ฦ’ /tour/[slug]                                                    3.41 kB        97.5 kB
+โ” ฦ’ /tours/[...slug]                                                5.53 kB        99.6 kB
+โ” ฦ’ /users                                                          454 B          87.7 kB
+โ” โ— /visa                                                           428 B          94.5 kB
+โ” โ— /visa/ai-assistant                                              3.34 kB        90.6 kB
+โ” ฦ’ /visa-applications                                              454 B          87.7 kB
+โ” โ— /visa/apply                                                     454 B          87.7 kB
+โ” โ— /visa/apply/applicants                                          2.68 kB        96.7 kB
+โ” โ— /visa/apply/country                                             2.4 kB         96.4 kB
+โ” โ— /visa/apply/documents                                           2.79 kB        96.8 kB
+โ” โ— /visa/apply/payment                                             3.1 kB         97.1 kB
+โ” โ— /visa/apply/review                                              3.66 kB        97.7 kB
+โ” โ— /visa/apply/success                                             429 B          94.5 kB
+โ” โ— /visa/apply/tier                                                2.01 kB        96.1 kB
+โ” โ— /visa/apply/travel-plan                                         2.89 kB        96.9 kB
+โ” โ— /visa/apply/visa-type                                           1.7 kB         95.7 kB
+โ” โ— /visa/booking-ticket                                            429 B          94.5 kB
+โ” โ— /visa-center                                                    454 B          87.7 kB
+โ” โ— /visa-center/calendar                                           454 B          87.7 kB
+โ” โ— /visa-center/countries                                          429 B          94.5 kB
+โ” ฦ’ /visa-center/countries/[id]                                     428 B          94.5 kB
+โ” โ— /visa-center/embassies                                          454 B          87.7 kB
+โ” โ— /visa-center/pricing                                            454 B          87.7 kB
+โ” โ— /visa-center/queue                                              454 B          87.7 kB
+โ” โ— /visa-center/reports                                            454 B          87.7 kB
+โ” โ— /visa-center/requests                                           430 B          94.5 kB
+โ” ฦ’ /visa-center/requests/[id]                                      430 B          94.5 kB
+โ” โ— /visa-center/staff-assignments                                  454 B          87.7 kB
+โ” โ— /visa-center/templates                                          454 B          87.7 kB
+โ” โ— /visa/check-eligibility                                         2.57 kB        96.6 kB
+โ” โ— /visa/compare                                                   428 B          94.5 kB
+โ” ฦ’ /visa/[country]                                                 429 B          94.5 kB
+โ” โ— /visa/embassy-list                                              454 B          87.7 kB
+โ” โ— /visa/hotel-booking                                             428 B          94.5 kB
+โ” โ— /visa/insurance                                                 429 B          94.5 kB
+โ” โ— /visa/pricing                                                   429 B          94.5 kB
+โ” โ— /visa/process                                                   429 B          94.5 kB
+โ” ฦ’ /visa/status/[no]                                               2.93 kB          97 kB
+โ” โ— /visa/translation                                               430 B          94.5 kB
+โ” ฦ’ /vouchers                                                       454 B          87.7 kB
+โ” โ— /wholesale                                                      429 B          94.5 kB
+โ” โ— /wholesale/credentials                                          3.55 kB        90.8 kB
+โ” โ— /wholesale/dashboard                                            2.91 kB        90.1 kB
+โ” ฦ’ /wholesale/diagnostics                                          454 B          87.7 kB
+โ” โ— /wholesale/error-logs                                           454 B          87.7 kB
+โ” โ— /wholesale/human-review                                         454 B          87.7 kB
+โ” ฦ’ /wholesaler/[code]                                              5.33 kB        99.4 kB
+โ” ฦ’ /wholesale/[slug]                                               5.32 kB        99.4 kB
+โ” ฦ’ /wholesale/suppliers                                            428 B          94.5 kB
+โ” ฦ’ /wholesale/suppliers/[id]                                       429 B          94.5 kB
+โ” ฦ’ /wholesale/sync                                                 453 B          87.7 kB
+โ”” โ— /wholesale/sync-logs                                            454 B          87.7 kB
++ First Load JS shared by all                                       87.2 kB
+  โ” chunks/7023-59ba38a98debbf52.js                                 31.6 kB
+  โ” chunks/fd9d1056-27624f274fbf5444.js                             53.6 kB
+  โ”” other shared chunks (total)                                     1.97 kB
+
+
+ฦ’ Middleware                                                        86.5 kB
+
+โ—  (Static)   prerendered as static content
+ฦ’  (Dynamic)  server-rendered on demand
+

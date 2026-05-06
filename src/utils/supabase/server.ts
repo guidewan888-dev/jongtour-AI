@@ -7,10 +7,11 @@ export function createClient(cookieStore?: ReadonlyRequestCookies) {
   const store = cookieStore || cookies()
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-  // ANON_KEY (JWT) is preferred. Fallback to SERVICE_ROLE_KEY (also JWT).
+  // ANON_KEY (JWT) is preferred. Fallback to SERVICE_ROLE_KEY or SB_SERVICE_KEY (also JWT).
   // PUBLISHABLE_KEY (sb_publishable_*) is NOT accepted by @supabase/ssr.
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY 
-    || process.env.SUPABASE_SERVICE_ROLE_KEY!;
+    || process.env.SUPABASE_SERVICE_ROLE_KEY
+    || process.env.SB_SERVICE_KEY!;
 
   return createServerClient(
     supabaseUrl,

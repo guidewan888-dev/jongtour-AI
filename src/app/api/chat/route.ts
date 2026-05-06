@@ -74,9 +74,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ reply: "ขออภัย ระบบ AI ไม่พร้อมใช้งาน 😅", tours: [] }, { status: 500 });
     }
 
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SB_SERVICE_KEY;
+    const supabase = (supabaseUrl && supabaseKey) ? createClient(supabaseUrl, supabaseKey) : null;
+    if (!supabase) {
+      console.warn("[Chat API] Supabase client not created - URL or Key missing. Vector search disabled.");
+    }
 
     // STEP 0: Sensitive Case Guardrail
     const sensitiveCheck = checkSensitiveCase(userMessage);
@@ -93,7 +96,7 @@ export async function POST(request: NextRequest) {
 
     // STEP 1.5: Deep Semantic Search (RAG)
     let semanticMatchedTourIds: string[] = [];
-    if (openai && userMessage.length > 8) {
+    if (supabase && openai && userMessage.length > 8) {
       try {
         const embedResponse = await openai.embeddings.create({
           model: "text-embedding-3-small",
