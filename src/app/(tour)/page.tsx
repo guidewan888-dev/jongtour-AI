@@ -8,16 +8,16 @@ import Link from "next/link";
    ============================================================ */
 
 const destinations = [
-  { name: "ญี่ปุ่น", slug: "japan", flag: "🇯🇵", color: "bg-red-50 border-red-100 text-red-700" },
-  { name: "เกาหลี", slug: "south-korea", flag: "🇰🇷", color: "bg-blue-50 border-blue-100 text-blue-700" },
-  { name: "จีน", slug: "china", flag: "🇨🇳", color: "bg-amber-50 border-amber-100 text-amber-700" },
-  { name: "ไต้หวัน", slug: "taiwan", flag: "🇹🇼", color: "bg-sky-50 border-sky-100 text-sky-700" },
-  { name: "เวียดนาม", slug: "vietnam", flag: "🇻🇳", color: "bg-yellow-50 border-yellow-100 text-yellow-700" },
-  { name: "ยุโรป", slug: "europe", flag: "🇪🇺", color: "bg-indigo-50 border-indigo-100 text-indigo-700" },
-  { name: "อียิปต์", slug: "egypt", flag: "🇪🇬", color: "bg-orange-50 border-orange-100 text-orange-700" },
-  { name: "ตุรกี", slug: "turkey", flag: "🇹🇷", color: "bg-rose-50 border-rose-100 text-rose-700" },
-  { name: "จอร์เจีย", slug: "georgia", flag: "🇬🇪", color: "bg-purple-50 border-purple-100 text-purple-700" },
-  { name: "อินเดีย", slug: "india", flag: "🇮🇳", color: "bg-emerald-50 border-emerald-100 text-emerald-700" },
+  { name: "ญี่ปุ่น", slug: "japan", flagCode: "jp", color: "bg-red-50 border-red-100 text-red-700" },
+  { name: "เกาหลี", slug: "south-korea", flagCode: "kr", color: "bg-blue-50 border-blue-100 text-blue-700" },
+  { name: "จีน", slug: "china", flagCode: "cn", color: "bg-amber-50 border-amber-100 text-amber-700" },
+  { name: "ไต้หวัน", slug: "taiwan", flagCode: "tw", color: "bg-sky-50 border-sky-100 text-sky-700" },
+  { name: "เวียดนาม", slug: "vietnam", flagCode: "vn", color: "bg-yellow-50 border-yellow-100 text-yellow-700" },
+  { name: "ยุโรป", slug: "europe", flagCode: "eu", color: "bg-indigo-50 border-indigo-100 text-indigo-700" },
+  { name: "อียิปต์", slug: "egypt", flagCode: "eg", color: "bg-orange-50 border-orange-100 text-orange-700" },
+  { name: "ตุรกี", slug: "turkey", flagCode: "tr", color: "bg-rose-50 border-rose-100 text-rose-700" },
+  { name: "จอร์เจีย", slug: "georgia", flagCode: "ge", color: "bg-purple-50 border-purple-100 text-purple-700" },
+  { name: "อินเดีย", slug: "india", flagCode: "in", color: "bg-emerald-50 border-emerald-100 text-emerald-700" },
 ];
 
 const quickPrompts = [
@@ -123,7 +123,15 @@ export default function TourHomePage() {
                 href={`/country/${d.slug}`}
                 className={`g-card-interactive flex items-center gap-3 p-4 rounded-2xl border ${d.color}`}
               >
-                <span className="text-3xl">{d.flag}</span>
+                <img
+                  src={`https://flagcdn.com/w40/${d.flagCode}.png`}
+                  srcSet={`https://flagcdn.com/w80/${d.flagCode}.png 2x`}
+                  width="32"
+                  height="24"
+                  alt={d.name}
+                  className="rounded-sm shadow-sm object-cover"
+                  loading="lazy"
+                />
                 <span className="text-sm font-semibold">{d.name}</span>
               </Link>
             ))}

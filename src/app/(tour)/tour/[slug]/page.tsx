@@ -285,8 +285,11 @@ export default function TourDetailPage({ params }: { params: { slug: string } })
                   📥 ดาวน์โหลด PDF โปรแกรม
                 </a>
               )}
-              <Link href={`/contact?tour=${tour.code}`} className="btn-primary w-full text-center block">
-                📞 สอบถาม / จองทัวร์
+              <Link href={`/book/tour/${tour.slug}`} className="btn-primary w-full text-center block">
+                🛒 จองทัวร์นี้
+              </Link>
+              <Link href={`/contact?tour=${tour.code}`} className="btn-secondary w-full text-center block">
+                📞 สอบถามเพิ่มเติม
               </Link>
             </div>
           </div>
@@ -303,8 +306,8 @@ export default function TourDetailPage({ params }: { params: { slug: string } })
             <p className="text-sm font-bold text-slate-400">สอบถามราคา</p>
           )}
         </div>
-        <Link href={`/contact?tour=${tour.code}`} className="btn-primary">
-          สอบถาม / จอง
+        <Link href={`/book/tour/${tour.slug}`} className="btn-primary">
+          🛒 จองเลย
         </Link>
       </div>
     </div>

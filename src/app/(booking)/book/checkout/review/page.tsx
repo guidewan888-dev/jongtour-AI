@@ -1,10 +1,37 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { MapPin, Calendar, Users, Plane, Shield, ChevronRight } from "lucide-react";
+import { MapPin, Calendar, Users, Shield, ChevronRight } from "lucide-react";
+import { getBookingSession, calculateTotal, type BookingSession } from "@/lib/bookingSession";
 
 export default function ReviewPage() {
+  const router = useRouter();
+  const [session, setSession] = useState<BookingSession | null>(null);
+
+  useEffect(() => {
+    const s = getBookingSession();
+    if (!s?.tourId || !s.travelers?.length) {
+      router.replace("/search");
+      return;
+    }
+    setSession(s);
+  }, [router]);
+
+  if (!session) {
+    return (
+      <div className="bg-white min-h-[60vh] flex items-center justify-center">
+        <p className="text-slate-500">กำลังโหลด...</p>
+      </div>
+    );
+  }
+
+  const childTitles = ["เด็กชาย", "เด็กหญิง", "Master", "Miss"];
+  const adults = session.travelers.filter(t => !childTitles.includes(t.titleTh));
+  const children = session.travelers.filter(t => childTitles.includes(t.titleTh));
+  const total = calculateTotal(session);
+
   return (
     <div className="bg-white">
       {/* Stepper */}
@@ -31,24 +58,47 @@ export default function ReviewPage() {
         <div className="g-card p-6">
           <h3 className="font-bold text-slate-900 mb-4 flex items-center gap-2"><MapPin className="w-5 h-5 text-primary" /> ข้อมูลทัวร์</h3>
           <div className="space-y-2 text-sm">
-            <div className="flex justify-between"><span className="text-slate-500">โปรแกรม</span><span className="font-medium">ทัวร์ญี่ปุ่น ไฮไลท์สุดคุ้ม พัก 4 ดาว</span></div>
-            <div className="flex justify-between"><span className="text-slate-500">Wholesale</span><span className="font-medium">LETGO</span></div>
-            <div className="flex justify-between items-center"><span className="text-slate-500 flex items-center gap-1"><Calendar className="w-3.5 h-3.5" /> วันเดินทาง</span><span className="font-medium">15 มิ.ย. 2026</span></div>
-            <div className="flex justify-between items-center"><span className="text-slate-500 flex items-center gap-1"><Plane className="w-3.5 h-3.5" /> สายการบิน</span><span className="font-medium">Thai Airways (TG)</span></div>
+            <div className="flex justify-between"><span className="text-slate-500">รหัสทัวร์</span><span className="font-bold text-primary">{session.tourCode}</span></div>
+            <div className="flex justify-between"><span className="text-slate-500">โปรแกรม</span><span className="font-medium text-right max-w-[60%] line-clamp-2">{session.tourName}</span></div>
+            <div className="flex justify-between"><span className="text-slate-500">Wholesale</span><span className="font-medium">{session.supplier}</span></div>
+            <div className="flex justify-between items-center">
+              <span className="text-slate-500 flex items-center gap-1"><Calendar className="w-3.5 h-3.5" /> วันเดินทาง</span>
+              <span className="font-medium">
+                {new Date(session.departureDate).toLocaleDateString("th-TH", { day: "numeric", month: "short", year: "numeric" })}
+                {" → "}
+                {new Date(session.departureEndDate).toLocaleDateString("th-TH", { day: "numeric", month: "short", year: "numeric" })}
+              </span>
+            </div>
+            <div className="flex justify-between"><span className="text-slate-500">ระยะเวลา</span><span className="font-medium">{session.durationDays} วัน {session.durationNights} คืน</span></div>
           </div>
         </div>
 
         {/* Traveler Summary */}
         <div className="g-card p-6">
-          <h3 className="font-bold text-slate-900 mb-4 flex items-center gap-2"><Users className="w-5 h-5 text-primary" /> ผู้เดินทาง</h3>
+          <h3 className="font-bold text-slate-900 mb-4 flex items-center gap-2"><Users className="w-5 h-5 text-primary" /> ผู้เดินทาง ({session.travelers.length} ท่าน)</h3>
           <div className="space-y-3">
-            <div className="flex items-center justify-between p-3 bg-slate-50 rounded-xl">
-              <div>
-                <div className="font-medium text-slate-900">นาย JOHN DOE</div>
-                <div className="text-xs text-slate-500">Passport: AB1234567 • 08x-xxx-xxxx</div>
+            {session.travelers.map((t, i) => (
+              <div key={i} className="flex items-center justify-between p-3 bg-slate-50 rounded-xl">
+                <div>
+                  <div className="font-medium text-slate-900">{t.titleTh} {t.firstNameEn} {t.lastNameEn}</div>
+                  <div className="text-xs text-slate-500">
+                    {t.passportNumber ? `Passport: ${t.passportNumber}` : "ยังไม่ได้กรอก Passport"}
+                    {" • "}
+                    {childTitles.includes(t.titleTh) ? "เด็ก" : "ผู้ใหญ่"}
+                  </div>
+                </div>
+                <Link href="/book/checkout/travelers" className="text-xs text-primary font-medium hover:underline">แก้ไข</Link>
               </div>
-              <Link href="/book/checkout/travelers" className="text-xs text-primary font-medium hover:underline">แก้ไข</Link>
-            </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Contact Info */}
+        <div className="g-card p-6">
+          <h3 className="font-bold text-slate-900 mb-4">📞 ข้อมูลผู้ติดต่อ</h3>
+          <div className="space-y-2 text-sm">
+            <div className="flex justify-between"><span className="text-slate-500">อีเมล</span><span className="font-medium">{session.contactEmail}</span></div>
+            {session.contactPhone && <div className="flex justify-between"><span className="text-slate-500">เบอร์โทร</span><span className="font-medium">{session.contactPhone}</span></div>}
           </div>
         </div>
 
@@ -56,10 +106,23 @@ export default function ReviewPage() {
         <div className="g-card p-6">
           <h3 className="font-bold text-slate-900 mb-4">สรุปราคา</h3>
           <div className="space-y-2 text-sm">
-            <div className="flex justify-between"><span className="text-slate-500">ผู้ใหญ่ x 1</span><span>฿29,900</span></div>
-            <div className="flex justify-between text-emerald-600"><span>ส่วนลด Agent</span><span>-฿0</span></div>
+            {adults.length > 0 && (
+              <div className="flex justify-between">
+                <span className="text-slate-500">ผู้ใหญ่ x {adults.length}</span>
+                <span>฿{(adults.length * session.priceAdult).toLocaleString()}</span>
+              </div>
+            )}
+            {children.length > 0 && (
+              <div className="flex justify-between">
+                <span className="text-slate-500">เด็ก x {children.length}</span>
+                <span>฿{(children.length * (session.priceChild || session.priceAdult)).toLocaleString()}</span>
+              </div>
+            )}
             <hr className="border-slate-100" />
-            <div className="flex justify-between text-lg font-bold"><span>ยอดรวมทั้งหมด</span><span className="text-primary">฿29,900</span></div>
+            <div className="flex justify-between text-lg font-bold">
+              <span>ยอดรวมทั้งหมด</span>
+              <span className="text-primary">฿{total.toLocaleString()}</span>
+            </div>
           </div>
         </div>
 
