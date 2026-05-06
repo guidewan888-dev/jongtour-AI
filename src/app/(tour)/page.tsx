@@ -77,32 +77,22 @@ export default function TourHomePage() {
         <div className="absolute inset-0 bg-gradient-to-b from-orange-50/60 via-white to-white" />
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[900px] h-[500px] bg-gradient-to-br from-primary-500/[0.06] via-orange-400/[0.04] to-amber-300/[0.03] rounded-full blur-[100px]" />
 
-        <div className="relative z-10 max-w-3xl mx-auto px-4 pt-16 pb-12 md:pt-24 md:pb-16">
-          <div className="text-center mb-10">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-gradient-to-r from-primary-50 to-orange-50 border border-primary-100/80 text-primary-600 text-xs font-bold mb-6 shadow-sm">
-              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
-              </svg>
-              AI-Powered Tour Search
-            </div>
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-slate-900 tracking-tight leading-[1.1] mb-4">
-              ค้นหาทัวร์ที่ใช่
-              <br />
-              <span className="bg-gradient-to-r from-primary-500 via-orange-500 to-amber-500 bg-clip-text text-transparent">
-                ด้วยพลัง AI
+        <div className="relative z-10 max-w-3xl mx-auto px-4 pt-12 pb-10 md:pt-20 md:pb-14">
+          {/* Brand Logo */}
+          <div className="text-center mb-8 md:mb-10">
+            <Link href="/" className="inline-block mb-2">
+              <span className="text-3xl md:text-4xl font-black tracking-tight">
+                <span className="text-primary-500">Jong</span>
+                <span className="text-slate-800">tour</span>
               </span>
-            </h1>
-            <p className="text-slate-500 text-base md:text-lg max-w-lg mx-auto leading-relaxed">
-              รวมทัวร์จาก 4 โฮลเซลชั้นนำ กว่า 300+ โปรแกรม
-              <br className="hidden md:block" />
-              เปรียบเทียบราคา จองง่าย ได้ทัวร์ที่ตรงใจ
-            </p>
+            </Link>
+            <p className="text-slate-400 text-sm">รวมทัวร์จาก 4 โฮลเซลชั้นนำ — ค้นหาด้วย AI</p>
           </div>
 
           {/* Search Bar */}
-          <div className="relative group mb-8">
-            <div className="absolute -inset-0.5 bg-gradient-to-r from-primary-400/60 via-orange-400/60 to-amber-400/60 rounded-2xl opacity-0 group-focus-within:opacity-100 blur-sm transition-opacity duration-500" />
-            <div className="relative bg-white rounded-2xl shadow-lg shadow-slate-200/50 border border-slate-200/80 group-focus-within:border-primary-200 group-focus-within:shadow-xl group-focus-within:shadow-primary-100/30 transition-all duration-300 overflow-hidden">
+          <div className="relative group mb-5">
+            <div className="absolute -inset-0.5 bg-gradient-to-r from-primary-400/50 via-orange-400/50 to-amber-400/50 rounded-full opacity-0 group-focus-within:opacity-100 blur-sm transition-opacity duration-500" />
+            <div className="relative bg-white rounded-full shadow-lg shadow-slate-200/50 border border-slate-200/80 group-focus-within:border-primary-200 group-focus-within:shadow-xl group-focus-within:shadow-primary-100/30 transition-all duration-300 overflow-hidden">
               <div className="flex items-center">
                 <div className="pl-5 flex items-center">
                   <svg className="w-5 h-5 text-slate-400 group-focus-within:text-primary-500 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -115,19 +105,13 @@ export default function TourHomePage() {
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                  className="flex-1 px-4 py-4 md:py-5 text-base md:text-lg text-slate-900 bg-transparent outline-none placeholder:text-slate-300"
+                  className="flex-1 px-4 py-4 md:py-5 text-base md:text-lg text-slate-900 bg-transparent outline-none placeholder:text-slate-400"
                   placeholder={placeholder + (isTyping ? "|" : "")}
                 />
-                <div className="flex items-center gap-2 pr-2.5">
-                  <Link href="/ai-search" className="hidden sm:flex items-center gap-1.5 px-3.5 py-2 bg-gradient-to-r from-primary-50 to-orange-50 text-primary-600 text-xs font-bold rounded-xl border border-primary-100 hover:from-primary-100 hover:to-orange-100 transition-all">
-                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
-                    </svg>
-                    AI
-                  </Link>
+                <div className="flex items-center gap-1.5 pr-2.5">
                   <button
                     onClick={handleSearch}
-                    className="px-5 py-2.5 bg-gradient-to-r from-primary-500 to-orange-500 text-white text-sm font-bold rounded-xl hover:from-primary-600 hover:to-orange-600 transition-all shadow-sm hover:shadow-md active:scale-[0.97]"
+                    className="px-5 py-2.5 bg-gradient-to-r from-primary-500 to-orange-500 text-white text-sm font-bold rounded-full hover:from-primary-600 hover:to-orange-600 transition-all shadow-sm hover:shadow-md active:scale-[0.97]"
                   >
                     ค้นหา
                   </button>
@@ -136,23 +120,74 @@ export default function TourHomePage() {
             </div>
           </div>
 
-          {/* Quick Actions */}
+          {/* Action Buttons: Mic, File, AI Mode */}
+          <div className="flex items-center justify-center gap-3 mb-8">
+            {/* Mic Button */}
+            <button
+              className="flex items-center justify-center w-10 h-10 rounded-full bg-white border border-slate-200 text-slate-500 hover:bg-slate-50 hover:border-slate-300 hover:text-slate-700 transition-all shadow-sm"
+              title="พูดเพื่อค้นหา"
+              onClick={() => {
+                if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+                  const SpeechRecognition = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
+                  const recognition = new SpeechRecognition();
+                  recognition.lang = 'th-TH';
+                  recognition.onresult = (event: any) => {
+                    setQuery(event.results[0][0].transcript);
+                  };
+                  recognition.start();
+                } else {
+                  alert('เบราว์เซอร์ไม่รองรับการพูด');
+                }
+              }}
+            >
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 01-3-3V4.5a3 3 0 116 0v8.25a3 3 0 01-3 3z" />
+              </svg>
+            </button>
+
+            {/* File/Image Button */}
+            <label
+              className="flex items-center justify-center w-10 h-10 rounded-full bg-white border border-slate-200 text-slate-500 hover:bg-slate-50 hover:border-slate-300 hover:text-slate-700 transition-all shadow-sm cursor-pointer"
+              title="ส่งรูปหรือไฟล์"
+            >
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0z" />
+              </svg>
+              <input type="file" className="hidden" accept="image/*,.pdf" onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) router.push(`/ai-search?file=${encodeURIComponent(file.name)}`);
+              }} />
+            </label>
+
+            {/* AI Mode Button */}
+            <Link
+              href="/ai-search"
+              className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-white border border-slate-200 text-slate-600 text-sm font-semibold hover:bg-slate-50 hover:border-slate-300 hover:text-slate-800 transition-all shadow-sm"
+            >
+              <svg className="w-4 h-4 text-primary-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
+              </svg>
+              AI Mode
+            </Link>
+          </div>
+
+          {/* Prompt Suggestions */}
           <div className="flex flex-wrap justify-center gap-2">
             {[
-              { label: "ทัวร์ไฟไหม้", icon: "🔥", href: "/deals/flash-sale" },
-              { label: "ทัวร์ราคาดี", icon: "💰", href: "/cheap-tours" },
-              { label: "กรุ๊ปส่วนตัว", icon: "👥", href: "/private-group" },
-              { label: "เปรียบเทียบทัวร์", icon: "⚖️", href: "/compare" },
-              { label: "บริการวีซ่า", icon: "📋", href: "/visa" },
-            ].map((item) => (
-              <Link
-                key={item.label}
-                href={item.href}
-                className="flex items-center gap-1.5 px-3.5 py-2 rounded-full text-xs font-semibold text-slate-500 bg-white border border-slate-150 hover:bg-slate-50 hover:border-slate-300 hover:text-slate-700 transition-all shadow-sm"
+              "ไปญี่ปุ่น งบ 3 หมื่นบาท",
+              "ไปยุโรป 3 ประเทศ",
+              "ทัวร์จีน เฉิงตู 5 วัน",
+              "เกาหลี ปีใหม่ บินตรง",
+              "ทัวร์ตุรกี คัปปาโดเกีย",
+            ].map((prompt) => (
+              <button
+                key={prompt}
+                onClick={() => { setQuery(prompt); router.push(`/search?q=${encodeURIComponent(prompt)}`); }}
+                className="px-4 py-2 rounded-full text-xs font-medium text-slate-500 bg-white border border-slate-200 hover:bg-primary-50 hover:border-primary-200 hover:text-primary-700 transition-all shadow-sm"
               >
-                <span>{item.icon}</span>
-                {item.label}
-              </Link>
+                {prompt}
+              </button>
             ))}
           </div>
         </div>
