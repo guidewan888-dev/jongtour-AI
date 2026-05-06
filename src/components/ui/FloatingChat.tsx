@@ -95,7 +95,24 @@ export default function FloatingChat() {
         body: JSON.stringify({ message: userMsg, chatHistory })
       });
       
-      if (!response.ok) throw new Error("API failed");
+      if (!response.ok) {
+        // Try to read error body for real error message
+        try {
+          const errData = await response.json();
+          if (errData?.reply) {
+            setToolStatus(null);
+            setMessages(prev => [...prev, {
+              id: (Date.now() + 1).toString(),
+              role: "ai",
+              text: errData.reply,
+              tours: errData.tours || []
+            }]);
+            setIsLoading(false);
+            return;
+          }
+        } catch {}
+        throw new Error("API failed");
+      }
       
       const contentType = response.headers.get("content-type");
       if (contentType && contentType.includes("application/json")) {
@@ -178,12 +195,21 @@ export default function FloatingChat() {
         }
       }
       
-    } catch (error) {
+    } catch (error: any) {
+      console.error("[FloatingChat] API Error:", error);
       setToolStatus(null);
+      let errorText = "ขออภัยครับ ตอนนี้เซิร์ฟเวอร์ระบบ AI กำลังรับคำสั่งจำนวนมาก กรุณาลองใหม่อีกครั้งในภายหลังครับ 😅";
+      // Try to extract real error from the response
+      if (error?.response) {
+        try {
+          const errData = await error.response.json();
+          if (errData?.reply) errorText = errData.reply;
+        } catch {}
+      }
       setMessages(prev => [...prev, {
         id: (Date.now() + 1).toString(),
         role: "ai",
-        text: "ขออภัยครับ ตอนนี้เซิร์ฟเวอร์ระบบ AI กำลังรับคำสั่งจำนวนมาก กรุณาลองใหม่อีกครั้งในภายหลังครับ 😅",
+        text: errorText,
       }]);
     } finally {
       setIsLoading(false);
