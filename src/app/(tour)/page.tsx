@@ -1,304 +1,360 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
-/* ============================================================
-   DESTINATION DATA — flags + emoji icons (no photos)
-   ============================================================ */
+/* ── Animated grid background ─────────────────────────── */
+function AnimatedGrid() {
+  return (
+    <div className="absolute inset-0 overflow-hidden pointer-events-none">
+      {/* Gradient orbs */}
+      <div className="absolute top-[-20%] left-[-10%] w-[500px] h-[500px] bg-orange-500/10 rounded-full blur-[120px] animate-pulse" />
+      <div className="absolute bottom-[-20%] right-[-10%] w-[600px] h-[600px] bg-amber-400/8 rounded-full blur-[150px] animate-pulse" style={{animationDelay: '2s'}} />
+      <div className="absolute top-[30%] right-[20%] w-[300px] h-[300px] bg-primary-500/6 rounded-full blur-[100px] animate-pulse" style={{animationDelay: '4s'}} />
+      {/* Dot grid */}
+      <div className="absolute inset-0 opacity-[0.03]" style={{backgroundImage: 'radial-gradient(circle, #000 1px, transparent 1px)', backgroundSize: '32px 32px'}} />
+    </div>
+  );
+}
 
+/* ── Sparkle icon ─────────────────────────── */
+function SparkleIcon({ className = "w-5 h-5" }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
+    </svg>
+  );
+}
+
+/* ── Data ─────────────────────────── */
 const destinations = [
-  { name: "ญี่ปุ่น", slug: "japan", flagCode: "jp", color: "bg-red-50 border-red-100 text-red-700" },
-  { name: "เกาหลี", slug: "south-korea", flagCode: "kr", color: "bg-blue-50 border-blue-100 text-blue-700" },
-  { name: "จีน", slug: "china", flagCode: "cn", color: "bg-amber-50 border-amber-100 text-amber-700" },
-  { name: "ไต้หวัน", slug: "taiwan", flagCode: "tw", color: "bg-sky-50 border-sky-100 text-sky-700" },
-  { name: "เวียดนาม", slug: "vietnam", flagCode: "vn", color: "bg-yellow-50 border-yellow-100 text-yellow-700" },
-  { name: "ยุโรป", slug: "europe", flagCode: "eu", color: "bg-indigo-50 border-indigo-100 text-indigo-700" },
-  { name: "อียิปต์", slug: "egypt", flagCode: "eg", color: "bg-orange-50 border-orange-100 text-orange-700" },
-  { name: "ตุรกี", slug: "turkey", flagCode: "tr", color: "bg-rose-50 border-rose-100 text-rose-700" },
-  { name: "จอร์เจีย", slug: "georgia", flagCode: "ge", color: "bg-purple-50 border-purple-100 text-purple-700" },
-  { name: "อินเดีย", slug: "india", flagCode: "in", color: "bg-emerald-50 border-emerald-100 text-emerald-700" },
+  { name: "ญี่ปุ่น", slug: "asia/japan", flagCode: "jp", tours: "61 โปรแกรม" },
+  { name: "จีน", slug: "asia/china", flagCode: "cn", tours: "85 โปรแกรม" },
+  { name: "เกาหลี", slug: "asia/south-korea", flagCode: "kr", tours: "42 โปรแกรม" },
+  { name: "เวียดนาม", slug: "asia/vietnam", flagCode: "vn", tours: "28 โปรแกรม" },
+  { name: "ไต้หวัน", slug: "asia/taiwan", flagCode: "tw", tours: "15 โปรแกรม" },
+  { name: "ตุรกี", slug: "europe/turkey", flagCode: "tr", tours: "18 โปรแกรม" },
+  { name: "อียิปต์", slug: "europe/egypt", flagCode: "eg", tours: "12 โปรแกรม" },
+  { name: "ยุโรป", slug: "europe", flagCode: "eu", tours: "30 โปรแกรม" },
 ];
 
-const quickPrompts = [
-  { label: "ทัวร์ไฟไหม้", emoji: "🔥", href: "/deals/flash-sale" },
-  { label: "ทัวร์ปีใหม่", emoji: "🎉", href: "/search?tag=newyear" },
-  { label: "ทัวร์ราคาดี", emoji: "💰", href: "/cheap-tours" },
-  { label: "กรุ๊ปส่วนตัว", emoji: "👨‍👩‍👧‍👦", href: "/private-group" },
-  { label: "เปรียบเทียบทัวร์", emoji: "⚖️", href: "/compare" },
-  { label: "AI แนะนำ", emoji: "✨", href: "/ai-search" },
+const wholesalePartners = [
+  { name: "Let's Go", code: "letsgo", color: "from-green-600 to-emerald-500", textColor: "text-green-700", bgColor: "bg-green-50", borderColor: "border-green-100" },
+  { name: "Go365", code: "go365", color: "from-blue-600 to-indigo-500", textColor: "text-blue-700", bgColor: "bg-blue-50", borderColor: "border-blue-100" },
+  { name: "Checkin Group", code: "checkin", color: "from-teal-600 to-emerald-500", textColor: "text-teal-700", bgColor: "bg-teal-50", borderColor: "border-teal-100" },
+  { name: "Tour Factory", code: "tour-factory", color: "from-purple-600 to-violet-500", textColor: "text-purple-700", bgColor: "bg-purple-50", borderColor: "border-purple-100" },
 ];
 
-const whyCards = [
-  { title: "รวมทุก Wholesale", desc: "เปรียบเทียบราคาจาก 50+ โฮลเซลล์ในที่เดียว", icon: "🏢" },
-  { title: "AI ช่วยค้นหา", desc: "บอก AI ว่าอยากไปไหน จะหาทัวร์ที่ใช่ให้ใน 30 วินาที", icon: "🤖" },
-  { title: "จองง่าย ปลอดภัย", desc: "จองออนไลน์ ชำระผ่านบัตรหรือโอน ปลอดภัย 100%", icon: "🔒" },
-  { title: "ทีมงานคนไทย", desc: "มีทีมงานดูแลตลอดตั้งแต่จองจนกลับบ้าน", icon: "🇹🇭" },
+const aiExamples = [
+  "ทัวร์ญี่ปุ่น ใบไม้เปลี่ยนสี 5 วัน งบ 4 หมื่น",
+  "ทัวร์จีน เฉิงตู จิ่วจ้ายโกว 6 วัน",
+  "ทัวร์เกาหลี ปีใหม่ บินตรง",
+  "ทัวร์ตุรกี คัปปาโดเกีย บอลลูน",
 ];
 
+/* ── Main Page ─────────────────────────── */
 export default function TourHomePage() {
   const [query, setQuery] = useState("");
+  const [placeholder, setPlaceholder] = useState("");
+  const [exampleIdx, setExampleIdx] = useState(0);
+  const [isTyping, setIsTyping] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const router = useRouter();
+
+  // Typewriter placeholder effect
+  useEffect(() => {
+    const example = aiExamples[exampleIdx];
+    let charIdx = 0;
+    setIsTyping(true);
+    setPlaceholder("");
+
+    const typeInterval = setInterval(() => {
+      if (charIdx <= example.length) {
+        setPlaceholder(example.slice(0, charIdx));
+        charIdx++;
+      } else {
+        clearInterval(typeInterval);
+        setIsTyping(false);
+        setTimeout(() => {
+          setExampleIdx((prev) => (prev + 1) % aiExamples.length);
+        }, 2500);
+      }
+    }, 60);
+
+    return () => clearInterval(typeInterval);
+  }, [exampleIdx]);
+
+  const handleSearch = () => {
+    if (query.trim()) {
+      router.push(`/search?q=${encodeURIComponent(query)}`);
+    }
+  };
 
   return (
     <>
-      {/* ============================================================
-          1. HERO — Clean Google-style with search pill
-         ============================================================ */}
-      <section className="bg-white border-b border-slate-100">
-        <div className="g-container py-16 md:py-24 text-center">
-          <h1 className="text-3xl md:text-5xl font-bold text-slate-900 mb-4 tracking-tight">
-            ทัวร์ที่ใช่ <span className="text-primary-500">ในแพลตฟอร์มเดียว</span>
-          </h1>
-          <p className="text-base md:text-lg text-slate-500 mb-10 max-w-xl mx-auto">
-            เปรียบเทียบทัวร์จากทุก Wholesale พร้อม AI ช่วยค้นหาโปรแกรมที่ตรงใจ
-          </p>
+      {/* ══════════════════════════════════════════════════════════
+          HERO — AI Search-First, Clean & Futuristic
+         ══════════════════════════════════════════════════════════ */}
+      <section className="relative bg-white min-h-[80vh] flex items-center justify-center overflow-hidden">
+        <AnimatedGrid />
 
-          {/* Search Pill — Google-style */}
-          <div className="max-w-2xl mx-auto">
-            <div className="relative group">
-              <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
-                <svg className="w-5 h-5 text-slate-400 group-focus-within:text-primary-500 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
-                </svg>
-              </div>
-              <input
-                type="text"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                className="g-search-pill pl-12 pr-32"
-                placeholder="ค้นหาทัวร์ เช่น 'ญี่ปุ่น ใบไม้เปลี่ยนสี 5 วัน'"
-              />
-              <div className="absolute inset-y-0 right-1.5 flex items-center gap-1.5">
-                <Link href="/ai-search" className="flex items-center gap-1.5 px-3 py-1.5 bg-primary-50 text-primary-600 text-xs font-semibold rounded-full border border-primary-200 hover:bg-primary-100 transition-all">
-                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
+        <div className="relative z-10 w-full max-w-3xl mx-auto px-4 py-20 md:py-28">
+          {/* Brand */}
+          <div className="text-center mb-10">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary-50 border border-primary-100 text-primary-600 text-xs font-bold mb-6">
+              <SparkleIcon className="w-3.5 h-3.5" />
+              AI-Powered Tour Search
+            </div>
+            <h1 className="text-4xl md:text-6xl font-black text-slate-900 tracking-tight leading-[1.1] mb-4">
+              ค้นหาทัวร์ที่ใช่
+              <br />
+              <span className="bg-gradient-to-r from-primary-500 via-orange-400 to-amber-500 bg-clip-text text-transparent">
+                ด้วยพลัง AI
+              </span>
+            </h1>
+            <p className="text-slate-500 text-base md:text-lg max-w-lg mx-auto">
+              รวมทัวร์จาก 4 โฮลเซลชั้นนำ กว่า 300+ โปรแกรม
+              <br className="hidden md:block" />
+              เปรียบเทียบราคา จองง่าย ได้ทัวร์ที่ตรงใจ
+            </p>
+          </div>
+
+          {/* Search Bar */}
+          <div className="relative group mb-6">
+            <div className="absolute -inset-0.5 bg-gradient-to-r from-primary-400 via-orange-400 to-amber-400 rounded-2xl opacity-0 group-focus-within:opacity-100 blur transition-opacity duration-500" />
+            <div className="relative bg-white rounded-2xl shadow-lg shadow-slate-200/60 border border-slate-200 group-focus-within:border-primary-300 transition-all overflow-hidden">
+              <div className="flex items-center">
+                <div className="pl-5 flex items-center">
+                  <svg className="w-5 h-5 text-slate-400 group-focus-within:text-primary-500 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
                   </svg>
-                  AI
-                </Link>
-                <Link
-                  href={`/search?q=${encodeURIComponent(query)}`}
-                  className="btn-primary text-xs px-4 py-2"
-                >
-                  ค้นหา
-                </Link>
+                </div>
+                <input
+                  ref={inputRef}
+                  type="text"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                  className="flex-1 px-4 py-4 md:py-5 text-base md:text-lg text-slate-900 bg-transparent outline-none placeholder:text-slate-300"
+                  placeholder={placeholder + (isTyping ? '|' : '')}
+                />
+                <div className="flex items-center gap-2 pr-2">
+                  <Link href="/ai-search" className="flex items-center gap-1.5 px-3.5 py-2 bg-gradient-to-r from-primary-50 to-orange-50 text-primary-600 text-xs font-bold rounded-xl border border-primary-100 hover:from-primary-100 hover:to-orange-100 transition-all">
+                    <SparkleIcon className="w-3.5 h-3.5" />
+                    AI
+                  </Link>
+                  <button
+                    onClick={handleSearch}
+                    className="px-5 py-2 md:py-2.5 bg-gradient-to-r from-primary-500 to-orange-500 text-white text-sm font-bold rounded-xl hover:from-primary-600 hover:to-orange-600 transition-all shadow-sm"
+                  >
+                    ค้นหา
+                  </button>
+                </div>
               </div>
             </div>
           </div>
 
-          {/* Quick Prompt Chips */}
-          <div className="mt-6 flex flex-wrap justify-center gap-2">
-            {quickPrompts.map((p) => (
-              <Link
-                key={p.label}
-                href={p.href}
-                className="g-chip text-xs"
-              >
-                <span>{p.emoji}</span>
-                {p.label}
+          {/* Quick Actions */}
+          <div className="flex flex-wrap justify-center gap-2">
+            {[
+              { label: "ทัวร์ไฟไหม้", icon: "🔥", href: "/deals/flash-sale" },
+              { label: "ทัวร์ราคาดี", icon: "💰", href: "/cheap-tours" },
+              { label: "กรุ๊ปส่วนตัว", icon: "👥", href: "/private-group" },
+              { label: "เปรียบเทียบทัวร์", icon: "⚖️", href: "/compare" },
+              { label: "บริการวีซ่า", icon: "🛂", href: "/visa" },
+            ].map(item => (
+              <Link key={item.label} href={item.href}
+                className="flex items-center gap-1.5 px-3.5 py-2 rounded-full text-xs font-semibold text-slate-500 bg-slate-50 border border-slate-100 hover:bg-white hover:border-slate-200 hover:text-slate-700 transition-all">
+                <span>{item.icon}</span>{item.label}
               </Link>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ============================================================
-          2. POPULAR DESTINATIONS — Flag grid (no photos!)
-         ============================================================ */}
-      <section className="g-section bg-background">
-        <div className="g-container">
-          <div className="flex items-end justify-between mb-8">
-            <div>
-              <h2 className="g-section-title">จุดหมายยอดฮิต</h2>
-              <p className="g-section-subtitle mb-0">เลือกประเทศที่คุณสนใจ</p>
-            </div>
-            <Link href="/destinations" className="text-sm font-semibold text-primary-600 hover:text-primary-700 hidden md:block">
-              ดูทั้งหมด →
-            </Link>
+      {/* ══════════════════════════════════════════════════════════
+          WHOLESALE PARTNERS — Logo Grid with Links
+         ══════════════════════════════════════════════════════════ */}
+      <section className="bg-slate-50 border-y border-slate-100">
+        <div className="max-w-5xl mx-auto px-4 py-12 md:py-16">
+          <div className="text-center mb-8">
+            <p className="text-[11px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-2">Official Wholesale Partners</p>
+            <h2 className="text-xl md:text-2xl font-bold text-slate-900">รวมทัวร์จากโฮลเซลชั้นนำ</h2>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 stagger-children">
-            {destinations.map((d) => (
-              <Link
-                key={d.slug}
-                href={`/country/${d.slug}`}
-                className={`g-card-interactive flex items-center gap-3 p-4 rounded-2xl border ${d.color}`}
-              >
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {wholesalePartners.map(partner => (
+              <Link key={partner.code} href={`/wholesaler/${partner.code}`}
+                className={`group relative flex flex-col items-center justify-center p-6 md:p-8 rounded-2xl ${partner.bgColor} border ${partner.borderColor} hover:shadow-lg hover:-translate-y-1 transition-all duration-300`}>
+                {/* Logo placeholder with gradient circle */}
+                <div className={`w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-gradient-to-br ${partner.color} flex items-center justify-center text-white text-lg md:text-xl font-black shadow-lg mb-4 group-hover:scale-110 transition-transform duration-300`}>
+                  {partner.name.slice(0, 2)}
+                </div>
+                <h3 className={`text-sm md:text-base font-bold ${partner.textColor}`}>{partner.name}</h3>
+                <p className="text-[10px] text-slate-400 mt-1">ดูทัวร์ทั้งหมด →</p>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ══════════════════════════════════════════════════════════
+          DESTINATIONS — Clean Flag Grid
+         ══════════════════════════════════════════════════════════ */}
+      <section className="bg-white">
+        <div className="max-w-5xl mx-auto px-4 py-12 md:py-16">
+          <div className="flex items-end justify-between mb-8">
+            <div>
+              <h2 className="text-xl md:text-2xl font-bold text-slate-900">จุดหมายยอดนิยม</h2>
+              <p className="text-sm text-slate-400 mt-1">เลือกประเทศที่สนใจ</p>
+            </div>
+            <Link href="/tours/asia" className="text-sm font-semibold text-primary-600 hover:text-primary-700 hidden md:block">ดูทั้งหมด →</Link>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {destinations.map(d => (
+              <Link key={d.slug} href={`/tours/${d.slug}`}
+                className="group flex items-center gap-3.5 p-4 rounded-2xl bg-slate-50 border border-slate-100 hover:bg-white hover:border-slate-200 hover:shadow-md transition-all duration-200">
                 <img
-                  src={`https://flagcdn.com/w40/${d.flagCode}.png`}
-                  srcSet={`https://flagcdn.com/w80/${d.flagCode}.png 2x`}
-                  width="32"
-                  height="24"
-                  alt={d.name}
-                  className="rounded-sm shadow-sm object-cover"
+                  src={`https://flagcdn.com/w80/${d.flagCode}.png`}
+                  width="36" height="27" alt={d.name}
+                  className="rounded-sm shadow-sm group-hover:scale-110 transition-transform"
                   loading="lazy"
                 />
-                <span className="text-sm font-semibold">{d.name}</span>
+                <div>
+                  <p className="text-sm font-bold text-slate-900">{d.name}</p>
+                  <p className="text-[10px] text-slate-400">{d.tours}</p>
+                </div>
               </Link>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ============================================================
-          3. FLASH SALE — ทัวร์ไฟไหม้
-         ============================================================ */}
-      <section className="g-section bg-white">
-        <div className="g-container">
-          <div className="flex items-end justify-between mb-8">
+      {/* ══════════════════════════════════════════════════════════
+          AI FEATURE SHOWCASE — Dark Contrast Section
+         ══════════════════════════════════════════════════════════ */}
+      <section className="relative bg-slate-900 text-white overflow-hidden">
+        {/* Glow orbs */}
+        <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary-500/15 rounded-full blur-[120px]" />
+        <div className="absolute bottom-0 right-1/4 w-80 h-80 bg-orange-500/10 rounded-full blur-[100px]" />
+
+        <div className="relative max-w-5xl mx-auto px-4 py-16 md:py-24">
+          <div className="grid md:grid-cols-2 gap-12 items-center">
+            {/* Left — Text */}
             <div>
-              <div className="flex items-center gap-2">
-                <span className="text-2xl">🔥</span>
-                <h2 className="g-section-title">ทัวร์ไฟไหม้</h2>
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur-sm text-primary-300 text-xs font-bold mb-6 border border-white/10">
+                <SparkleIcon className="w-3.5 h-3.5" />
+                Powered by AI
               </div>
-              <p className="g-section-subtitle mb-0">ดีลหลุดจอง ราคาพิเศษสุดๆ ช้าอด!</p>
-            </div>
-            <Link href="/deals/flash-sale" className="text-sm font-semibold text-primary-600 hover:text-primary-700 hidden md:block">
-              ดูทั้งหมด →
-            </Link>
-          </div>
-
-          {/* Empty state */}
-          <div className="g-card p-12 text-center">
-            <div className="g-empty">
-              <span className="text-5xl mb-4">⏰</span>
-              <p className="g-empty-title">ยังไม่มีทัวร์ไฟไหม้ในขณะนี้</p>
-              <p className="g-empty-desc">ทัวร์ไฟไหม้จะปรากฏที่นี่เมื่อมีโปรแกรมเดินทางด่วนในราคาพิเศษ</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ============================================================
-          4. AI SEARCH FEATURE SHOWCASE
-         ============================================================ */}
-      <section className="g-section bg-primary-50 border-y border-primary-100">
-        <div className="g-container">
-          <div className="max-w-3xl mx-auto text-center">
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-primary-100 text-primary-700 text-xs font-bold rounded-full mb-6 border border-primary-200">
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
-              </svg>
-              Powered by AI
-            </div>
-            <h2 className="text-2xl md:text-4xl font-bold text-slate-900 mb-4">
-              AI ช่วยหาทัวร์ <span className="text-primary-600">ใน 30 วินาที</span>
-            </h2>
-            <p className="text-slate-600 mb-8 max-w-lg mx-auto">
-              พิมพ์บอกว่าอยากไปไหน งบเท่าไหร่ กี่วัน AI จะค้นหาทัวร์ที่ตรงใจจากทุก Wholesale แล้วแสดงให้เลือกทันที
-            </p>
-
-            {/* Example Chat Bubbles */}
-            <div className="max-w-md mx-auto space-y-3 mb-8 text-left">
-              <div className="flex justify-end">
-                <div className="bg-primary-500 text-white px-4 py-2.5 rounded-2xl rounded-br-md text-sm max-w-[80%]">
-                  หาทัวร์ญี่ปุ่นให้หน่อย ไปกัน 2 คน งบประมาณ 4 หมื่น ช่วงปีใหม่
-                </div>
-              </div>
-              <div className="flex justify-start">
-                <div className="bg-white border border-slate-200 px-4 py-2.5 rounded-2xl rounded-bl-md text-sm max-w-[80%] text-slate-700">
-                  พบ 12 โปรแกรมที่ตรงกับความต้องการ ราคาเริ่มต้น ฿32,900/ท่าน ✨
-                </div>
-              </div>
-            </div>
-
-            <Link href="/ai-search" className="btn-primary btn-lg">
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
-              </svg>
-              ลองใช้ AI Search เลย
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* ============================================================
-          5. WHY JONGTOUR — 4 cards
-         ============================================================ */}
-      <section className="g-section bg-white">
-        <div className="g-container">
-          <h2 className="g-section-title text-center">ทำไมต้อง Jongtour?</h2>
-          <p className="g-section-subtitle text-center">เหตุผลที่ลูกค้ากว่า 10,000+ เลือกเรา</p>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 stagger-children">
-            {whyCards.map((card) => (
-              <div key={card.title} className="g-card p-6 text-center">
-                <span className="text-4xl mb-4 block">{card.icon}</span>
-                <h3 className="text-base font-bold text-slate-900 mb-2">{card.title}</h3>
-                <p className="text-sm text-slate-500 leading-relaxed">{card.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ============================================================
-          6. PRIVATE GROUP CTA
-         ============================================================ */}
-      <section className="g-section bg-background">
-        <div className="g-container">
-          <div className="g-card-elevated p-8 md:p-12 flex flex-col md:flex-row items-center gap-8 bg-gradient-to-br from-primary-50 to-orange-50 border border-primary-100">
-            <div className="flex-1">
-              <span className="text-4xl mb-4 block">✈️</span>
-              <h2 className="text-2xl font-bold text-slate-900 mb-3">อยากออกแบบทัวร์ส่วนตัว?</h2>
-              <p className="text-slate-600 mb-6">
-                เลือกประเทศ กำหนดวัน กำหนดงบ แล้วให้ AI ช่วยออกแบบ Itinerary ให้ ส่งให้ทีมขายทำใบเสนอราคาได้ทันที
+              <h2 className="text-3xl md:text-4xl font-black mb-4 leading-tight">
+                บอก AI ว่าอยากไปไหน
+                <br />
+                <span className="bg-gradient-to-r from-primary-400 to-amber-400 bg-clip-text text-transparent">จะหาให้ใน 30 วินาที</span>
+              </h2>
+              <p className="text-slate-400 text-sm md:text-base mb-8 leading-relaxed">
+                พิมพ์ภาษาคนได้เลย — งบเท่าไหร่ กี่วัน ชอบอะไร AI จะเข้าใจแล้วค้นจากทุกโฮลเซลให้
               </p>
-              <Link href="/private-group" className="btn-primary">
-                เริ่มออกแบบทริป
+              <Link href="/ai-search" className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-primary-500 to-orange-500 text-white text-sm font-bold rounded-xl hover:from-primary-600 hover:to-orange-600 transition-all shadow-lg shadow-primary-500/30">
+                <SparkleIcon className="w-4 h-4" />
+                ลองใช้ AI Search
               </Link>
             </div>
-            <div className="w-full md:w-64 h-48 bg-white/60 rounded-2xl border border-primary-200 flex items-center justify-center">
-              <span className="text-6xl">🗺️</span>
+
+            {/* Right — Mock Chat */}
+            <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 space-y-4">
+              <div className="flex items-center gap-2 pb-3 border-b border-white/10">
+                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary-500 to-orange-500 flex items-center justify-center">
+                  <SparkleIcon className="w-4 h-4 text-white" />
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-white">Jongtour AI</p>
+                  <p className="text-[10px] text-slate-500">Online • พร้อมช่วย</p>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <div className="flex justify-end">
+                  <div className="bg-primary-500 text-white px-4 py-2.5 rounded-2xl rounded-br-sm text-sm max-w-[85%]">
+                    หาทัวร์ญี่ปุ่นให้หน่อย ไปกัน 2 คน งบ 4 หมื่น ช่วงปีใหม่
+                  </div>
+                </div>
+                <div className="flex justify-start">
+                  <div className="bg-white/10 border border-white/10 px-4 py-2.5 rounded-2xl rounded-bl-sm text-sm max-w-[85%] text-slate-300">
+                    พบ <span className="text-primary-400 font-bold">12 โปรแกรม</span> ที่ตรง! ราคาเริ่ม ฿32,900 จาก 3 โฮลเซล ✨
+                  </div>
+                </div>
+                <div className="flex justify-start">
+                  <div className="bg-white/10 border border-white/10 px-4 py-2.5 rounded-2xl rounded-bl-sm text-sm max-w-[85%] text-slate-300">
+                    แนะนำ: <span className="text-amber-400">โตเกียว-โอซาก้า 5D3N</span> บิน Thai AirAsia X ✈️
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* ============================================================
-          7. VISA SERVICE CTA
-         ============================================================ */}
-      <section className="bg-white py-12">
-        <div className="g-container">
-          <div className="g-card p-8 md:p-10 flex flex-col md:flex-row items-center gap-6">
-            <span className="text-5xl">🛂</span>
-            <div className="flex-1">
-              <h3 className="text-xl font-bold text-slate-900 mb-1">บริการรับทำวีซ่า</h3>
-              <p className="text-sm text-slate-500">ยุ่งยากกับวีซ่า? ให้เราดูแลให้ ครอบคลุมกว่า 10 ประเทศ</p>
-            </div>
-            <Link href="/visa" className="btn-outline whitespace-nowrap">
-              ดูบริการวีซ่า
-            </Link>
-          </div>
-        </div>
-      </section>
+      {/* ══════════════════════════════════════════════════════════
+          WHY JONGTOUR — Glass cards
+         ══════════════════════════════════════════════════════════ */}
+      <section className="bg-white">
+        <div className="max-w-5xl mx-auto px-4 py-12 md:py-16">
+          <h2 className="text-xl md:text-2xl font-bold text-slate-900 text-center mb-2">ทำไมต้อง Jongtour?</h2>
+          <p className="text-sm text-slate-400 text-center mb-8">แพลตฟอร์มที่ลูกค้ากว่า 10,000+ ไว้วางใจ</p>
 
-      {/* ============================================================
-          8. WHOLESALE PARTNERS
-         ============================================================ */}
-      <section className="py-12 bg-background border-t border-slate-200">
-        <div className="g-container text-center">
-          <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-6">
-            เรารวบรวมทัวร์จากโฮลเซลล์ชั้นนำ
-          </p>
-          <div className="flex flex-wrap justify-center items-center gap-6 md:gap-12">
-            {["LET'GO", "GO365", "CHECK IN", "TOUR FACTORY", "ZEGO", "GO HOLIDAY"].map((name) => (
-              <span key={name} className="text-lg font-black tracking-widest text-slate-300 hover:text-primary-400 transition-colors cursor-default">
-                {name}
-              </span>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {[
+              { icon: "🤖", title: "AI ค้นหาทัวร์", desc: "บอกภาษาคน AI หาให้ใน 30 วินาที" },
+              { icon: "🏢", title: "รวมทุก Wholesale", desc: "เปรียบเทียบราคาจาก 4+ โฮลเซล" },
+              { icon: "🔒", title: "จองง่าย ปลอดภัย", desc: "ชำระผ่านบัตรหรือโอน ปลอดภัย 100%" },
+              { icon: "🇹🇭", title: "ทีมงานคนไทย", desc: "ดูแลตั้งแต่จองจนกลับบ้าน" },
+            ].map(card => (
+              <div key={card.title} className="p-5 rounded-2xl bg-slate-50 border border-slate-100 text-center hover:bg-white hover:shadow-md hover:border-slate-200 transition-all duration-200">
+                <span className="text-3xl mb-3 block">{card.icon}</span>
+                <h3 className="text-sm font-bold text-slate-900 mb-1">{card.title}</h3>
+                <p className="text-[11px] text-slate-500 leading-relaxed">{card.desc}</p>
+              </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ============================================================
-          9. CAREER CTA
-         ============================================================ */}
-      <section className="py-12 bg-white border-t border-slate-100">
-        <div className="g-container text-center">
-          <p className="text-sm text-slate-500 mb-2">ร่วมเป็นส่วนหนึ่งของทีม</p>
-          <h3 className="text-xl font-bold text-slate-900 mb-4">สมัครเป็นไกด์ / หัวหน้าทัวร์กับ Jongtour</h3>
-          <Link href="/careers" className="btn-secondary">
-            ดูตำแหน่งที่เปิดรับ
+      {/* ══════════════════════════════════════════════════════════
+          PRIVATE GROUP + VISA CTAs — Side by side
+         ══════════════════════════════════════════════════════════ */}
+      <section className="bg-slate-50 border-t border-slate-100">
+        <div className="max-w-5xl mx-auto px-4 py-12 md:py-16">
+          <div className="grid md:grid-cols-2 gap-4">
+            {/* Private Group */}
+            <Link href="/private-group" className="group p-6 md:p-8 rounded-2xl bg-gradient-to-br from-primary-50 to-orange-50 border border-primary-100 hover:shadow-lg transition-all duration-300">
+              <span className="text-3xl mb-3 block">✈️</span>
+              <h3 className="text-lg font-bold text-slate-900 mb-2 group-hover:text-primary-600 transition-colors">ออกแบบทริปส่วนตัว</h3>
+              <p className="text-sm text-slate-500 mb-4">เลือกประเทศ กำหนดวัน กำหนดงบ ให้ AI ช่วยออกแบบ</p>
+              <span className="text-xs font-bold text-primary-600">เริ่มออกแบบ →</span>
+            </Link>
+
+            {/* Visa */}
+            <Link href="/visa" className="group p-6 md:p-8 rounded-2xl bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-100 hover:shadow-lg transition-all duration-300">
+              <span className="text-3xl mb-3 block">🛂</span>
+              <h3 className="text-lg font-bold text-slate-900 mb-2 group-hover:text-blue-600 transition-colors">บริการรับทำวีซ่า</h3>
+              <p className="text-sm text-slate-500 mb-4">ยุ่งยากกับวีซ่า? ให้เราดูแลให้ ครอบคลุมกว่า 10 ประเทศ</p>
+              <span className="text-xs font-bold text-blue-600">ดูบริการ →</span>
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* ══════════════════════════════════════════════════════════
+          CAREER CTA — Minimal
+         ══════════════════════════════════════════════════════════ */}
+      <section className="bg-white border-t border-slate-100">
+        <div className="max-w-5xl mx-auto px-4 py-10 text-center">
+          <p className="text-xs text-slate-400 mb-1">ร่วมเป็นส่วนหนึ่งของทีม</p>
+          <h3 className="text-base font-bold text-slate-900 mb-3">สมัครเป็นไกด์ / หัวหน้าทัวร์กับ Jongtour</h3>
+          <Link href="/careers" className="text-sm font-semibold text-primary-600 hover:text-primary-700">
+            ดูตำแหน่งที่เปิดรับ →
           </Link>
         </div>
       </section>
