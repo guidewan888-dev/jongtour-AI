@@ -6,14 +6,14 @@ import { useRouter } from "next/navigation";
 
 /* ── Data ─────────────────────────── */
 const destinations = [
-  { name: "ญี่ปุ่น", slug: "asia/japan", flagCode: "jp", tours: "61 โปรแกรม", gradient: "from-rose-50 to-pink-50", border: "border-rose-100" },
-  { name: "จีน", slug: "asia/china", flagCode: "cn", tours: "85 โปรแกรม", gradient: "from-red-50 to-orange-50", border: "border-red-100" },
-  { name: "เกาหลี", slug: "asia/south-korea", flagCode: "kr", tours: "42 โปรแกรม", gradient: "from-blue-50 to-indigo-50", border: "border-blue-100" },
-  { name: "เวียดนาม", slug: "asia/vietnam", flagCode: "vn", tours: "28 โปรแกรม", gradient: "from-amber-50 to-yellow-50", border: "border-amber-100" },
-  { name: "ไต้หวัน", slug: "asia/taiwan", flagCode: "tw", tours: "15 โปรแกรม", gradient: "from-sky-50 to-cyan-50", border: "border-sky-100" },
-  { name: "ตุรกี", slug: "europe/turkey", flagCode: "tr", tours: "18 โปรแกรม", gradient: "from-red-50 to-rose-50", border: "border-red-100" },
-  { name: "อียิปต์", slug: "africa/egypt", flagCode: "eg", tours: "12 โปรแกรม", gradient: "from-amber-50 to-orange-50", border: "border-amber-100" },
-  { name: "ยุโรป", slug: "europe", flagCode: "eu", tours: "30 โปรแกรม", gradient: "from-indigo-50 to-violet-50", border: "border-indigo-100" },
+  { name: "ญี่ปุ่น", slug: "asia/japan", flagCode: "jp", tours: "61 โปรแกรม", bg: "linear-gradient(135deg, #fff1f2, #fce7f3)", borderColor: "#ffe4e6" },
+  { name: "จีน", slug: "asia/china", flagCode: "cn", tours: "85 โปรแกรม", bg: "linear-gradient(135deg, #fef2f2, #fff7ed)", borderColor: "#fecaca" },
+  { name: "เกาหลี", slug: "asia/south-korea", flagCode: "kr", tours: "42 โปรแกรม", bg: "linear-gradient(135deg, #eff6ff, #eef2ff)", borderColor: "#bfdbfe" },
+  { name: "เวียดนาม", slug: "asia/vietnam", flagCode: "vn", tours: "28 โปรแกรม", bg: "linear-gradient(135deg, #fffbeb, #fefce8)", borderColor: "#fde68a" },
+  { name: "ไต้หวัน", slug: "asia/taiwan", flagCode: "tw", tours: "15 โปรแกรม", bg: "linear-gradient(135deg, #f0f9ff, #ecfeff)", borderColor: "#bae6fd" },
+  { name: "ตุรกี", slug: "europe/turkey", flagCode: "tr", tours: "18 โปรแกรม", bg: "linear-gradient(135deg, #fef2f2, #fff1f2)", borderColor: "#fecaca" },
+  { name: "อียิปต์", slug: "africa/egypt", flagCode: "eg", tours: "12 โปรแกรม", bg: "linear-gradient(135deg, #fffbeb, #fff7ed)", borderColor: "#fde68a" },
+  { name: "ยุโรป", slug: "europe", flagCode: "eu", tours: "30 โปรแกรม", bg: "linear-gradient(135deg, #eef2ff, #f5f3ff)", borderColor: "#c7d2fe" },
 ];
 
 const wholesalePartners = [
@@ -202,7 +202,8 @@ export default function TourHomePage() {
               <Link
                 key={d.slug}
                 href={`/tours/${d.slug}`}
-                className={`group flex items-center gap-3 p-3.5 rounded-xl bg-gradient-to-br ${d.gradient} border ${d.border} hover:shadow-md hover:-translate-y-0.5 transition-all duration-200`}
+                className="group flex items-center gap-3 p-3.5 rounded-xl border hover:shadow-md hover:-translate-y-0.5 transition-all duration-200"
+                style={{ background: d.bg, borderColor: d.borderColor }}
               >
                 <img
                   src={`https://flagcdn.com/w80/${d.flagCode}.png`}
