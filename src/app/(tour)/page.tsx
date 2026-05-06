@@ -6,10 +6,10 @@ import { Send, Paperclip, Sparkles, ChevronDown, Headphones } from "lucide-react
 
 /* ── Wholesale Partners ─────────────────────────── */
 const wholesalePartners = [
-  { name: "Let's Go", code: "letsgo", logo: "/images/logos/download.png" },
-  { name: "Check In Group", code: "checkin", logo: "/images/logos/CH7.jpg" },
-  { name: "Go365", code: "go365", logo: "/images/logos/download.jfif" },
-  { name: "Tour Factory", code: "tour-factory", logo: "/images/logos/Tour-Factory.jpg" },
+  { name: "Let's Go", code: "letsgo", logo: "/images/logos/download.png", ring: "#22c55e" },
+  { name: "Check In Group", code: "checkin", logo: "/images/logos/CH7.jpg", ring: "#ef4444" },
+  { name: "Go365", code: "go365", logo: "/images/logos/download.jfif", ring: "#3b82f6" },
+  { name: "Tour Factory", code: "tour-factory", logo: "/images/logos/Tour-Factory.jpg", ring: "#8b5cf6" },
 ];
 
 /* ── Quick Actions ─────────────────────────── */
@@ -200,7 +200,7 @@ export default function TourHomePage() {
       <div className="wholesale-row">
         {wholesalePartners.map((p) => (
           <Link key={p.code} href={`/wholesaler/${p.code}`} className="wholesale-item">
-            <div className="wholesale-logo">
+            <div className="wholesale-logo" style={{ borderColor: p.ring, boxShadow: `0 4px 15px ${p.ring}22` }}>
               <img src={p.logo} alt={p.name} loading="lazy" />
             </div>
             <span className="wholesale-name">{p.name}</span>
@@ -333,12 +333,30 @@ export default function TourHomePage() {
           z-index: 1;
           width: 100%;
           max-width: 520px;
-          background: #fff;
-          border-radius: 1.25rem;
-          box-shadow: 0 8px 40px rgba(0,0,0,0.08), 0 1px 3px rgba(0,0,0,0.04);
-          border: 1px solid rgba(0,0,0,0.06);
+          background: rgba(255,255,255,0.92);
+          backdrop-filter: blur(20px);
+          -webkit-backdrop-filter: blur(20px);
+          border-radius: 1.5rem;
+          box-shadow:
+            0 0 0 1px rgba(249,115,22,0.08),
+            0 8px 40px rgba(0,0,0,0.06),
+            0 20px 60px rgba(249,115,22,0.06);
           overflow: hidden;
           margin-bottom: 2.5rem;
+          animation: card-float 6s ease-in-out infinite;
+        }
+        .chat-card::before {
+          content: '';
+          position: absolute;
+          top: -1px; left: -1px; right: -1px; bottom: -1px;
+          border-radius: 1.5rem;
+          background: linear-gradient(135deg, rgba(249,115,22,0.2), transparent 40%, transparent 60%, rgba(249,115,22,0.15));
+          z-index: -1;
+          pointer-events: none;
+        }
+        @keyframes card-float {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-4px); }
         }
 
         /* ── Chat Header ── */
@@ -361,7 +379,12 @@ export default function TourHomePage() {
           display: flex;
           align-items: center;
           justify-content: center;
-          box-shadow: 0 2px 8px rgba(249,115,22,0.3);
+          box-shadow: 0 2px 12px rgba(249,115,22,0.4), 0 0 20px rgba(249,115,22,0.15);
+          animation: avatar-pulse 3s ease-in-out infinite;
+        }
+        @keyframes avatar-pulse {
+          0%, 100% { box-shadow: 0 2px 12px rgba(249,115,22,0.4), 0 0 20px rgba(249,115,22,0.15); }
+          50% { box-shadow: 0 2px 16px rgba(249,115,22,0.5), 0 0 30px rgba(249,115,22,0.25); }
         }
         .chat-header__name {
           font-size: 0.85rem;
@@ -604,21 +627,20 @@ export default function TourHomePage() {
           transform: translateY(-3px);
         }
         .wholesale-logo {
-          width: 56px; height: 56px;
+          width: 64px; height: 64px;
           border-radius: 50%;
           background: #fff;
-          border: 2px solid #f1f5f9;
+          border: 3px solid #e2e8f0;
           display: flex;
           align-items: center;
           justify-content: center;
           overflow: hidden;
-          padding: 6px;
+          padding: 8px;
           box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-          transition: all 0.2s;
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
         .wholesale-item:hover .wholesale-logo {
-          border-color: #fed7aa;
-          box-shadow: 0 4px 12px rgba(249,115,22,0.12);
+          transform: scale(1.08);
         }
         .wholesale-logo img {
           width: 100%;

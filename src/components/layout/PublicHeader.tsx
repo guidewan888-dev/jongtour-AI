@@ -2,18 +2,33 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import Link from "next/link";
-import { megaMenuConfig, publicNavLinks, mobileDrawerLinks } from "@/config/megaMenu";
+
+/* ── App Launcher Grid Items ─────────────────────────── */
+const gridItems = [
+  { label: "ค้นหาทัวร์", href: "/search", icon: "🔍", color: "#4285F4" },
+  { label: "AI Search", href: "/ai-search", icon: "✨", color: "#EA4335" },
+  { label: "ทัวร์ญี่ปุ่น", href: "/country/japan", icon: "🗼", color: "#FBBC05" },
+  { label: "ทัวร์เกาหลี", href: "/country/south-korea", icon: "🎎", color: "#34A853" },
+  { label: "ทัวร์จีน", href: "/country/china", icon: "🏯", color: "#EA4335" },
+  { label: "ทัวร์ยุโรป", href: "/region/europe", icon: "🏰", color: "#4285F4" },
+  { label: "โปรโมชัน", href: "/deals/flash-sale", icon: "🔥", color: "#FF6D01" },
+  { label: "วีซ่า", href: "/visa", icon: "🛂", color: "#0F9D58" },
+  { label: "กรุ๊ปส่วนตัว", href: "/private-group", icon: "✈️", color: "#4285F4" },
+  { label: "ติดต่อ", href: "/contact", icon: "📞", color: "#34A853" },
+  { label: "เข้าสู่ระบบ", href: "/login", icon: "👤", color: "#7B1FA2" },
+  { label: "B2B Agent", href: "/agent", icon: "🏢", color: "#455A64" },
+];
 
 export default function PublicHeader() {
-  const [openMenu, setOpenMenu] = useState<string | null>(null);
+  const [gridOpen, setGridOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
+  const gridRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 8);
     const handleClickOutside = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setOpenMenu(null);
+      if (gridRef.current && !gridRef.current.contains(e.target as Node)) setGridOpen(false);
     };
     window.addEventListener("scroll", handleScroll);
     document.addEventListener("mousedown", handleClickOutside);
@@ -26,6 +41,17 @@ export default function PublicHeader() {
         className={`sticky top-0 z-50 bg-white transition-shadow duration-200 ${scrolled ? "shadow-md" : "border-b border-slate-200"}`}
       >
         <div className="g-container h-16 flex items-center justify-between gap-4">
+          {/* Hamburger (mobile) */}
+          <button
+            className="lg:hidden btn-icon text-slate-600"
+            onClick={() => setMobileOpen(true)}
+            aria-label="เปิดเมนู"
+          >
+            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+            </svg>
+          </button>
+
           {/* Logo */}
           <Link href="/" className="flex items-center gap-1.5 shrink-0 group">
             <div className="w-8 h-8 bg-primary-500 rounded-lg flex items-center justify-center shadow-sm group-hover:shadow-md transition-shadow">
@@ -39,96 +65,8 @@ export default function PublicHeader() {
             </span>
           </Link>
 
-          {/* Desktop Nav */}
-          <nav ref={menuRef} className="hidden lg:flex items-center gap-1">
-            {/* Mega Menu Triggers */}
-            {megaMenuConfig.map((group) => (
-              <div key={group.trigger} className="relative">
-                <button
-                  className={`px-3 py-2 text-sm font-medium rounded-full transition-all duration-200 flex items-center gap-1 ${
-                    openMenu === group.trigger
-                      ? "bg-primary-50 text-primary-700"
-                      : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
-                  }`}
-                  onMouseEnter={() => setOpenMenu(group.trigger)}
-                  onClick={() => setOpenMenu(openMenu === group.trigger ? null : group.trigger)}
-                >
-                  {group.trigger}
-                  <svg className={`w-3.5 h-3.5 transition-transform duration-200 ${openMenu === group.trigger ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
-                  </svg>
-                </button>
-
-                {/* Mega Dropdown */}
-                {openMenu === group.trigger && (
-                  <div
-                    className={`absolute top-full mt-2 bg-white rounded-2xl border border-slate-200 p-6 mega-menu-enter ${group.wide ? 'left-0 min-w-[780px]' : 'left-1/2 -translate-x-1/2 min-w-[500px]'}`}
-                    style={{ boxShadow: "0 8px 30px rgba(0,0,0,0.12)" }}
-                    onMouseLeave={() => setOpenMenu(null)}
-                  >
-                    <div className={`grid gap-6 ${group.columns.length >= 4 ? 'grid-cols-4' : group.columns.length >= 3 ? 'grid-cols-3' : 'grid-cols-2'}`}>
-                      {group.columns.map((col) => (
-                        <div key={col.title}>
-                          <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">
-                            {col.titleHref ? (
-                              <Link href={col.titleHref} className="hover:text-primary-600 transition-colors" onClick={() => setOpenMenu(null)}>
-                                {col.title} →
-                              </Link>
-                            ) : col.title}
-                          </p>
-                          <ul className="space-y-0.5">
-                            {col.items.map((item) => (
-                              <li key={item.href + item.label}>
-                                <Link
-                                  href={item.href}
-                                  className="flex items-center gap-2.5 px-2.5 py-1.5 text-sm text-slate-700 rounded-lg hover:bg-primary-50 hover:text-primary-700 transition-colors"
-                                  onClick={() => setOpenMenu(null)}
-                                >
-                                  {item.flagCode && (
-                                    <img
-                                      src={`https://flagcdn.com/w20/${item.flagCode}.png`}
-                                      width="16" height="12" alt=""
-                                      className="rounded-sm shrink-0"
-                                    />
-                                  )}
-                                  {item.emoji && !item.flagCode && (
-                                    <span className="text-sm">{item.emoji}</span>
-                                  )}
-                                  <span className="font-medium text-[13px]">{item.label}</span>
-                                </Link>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      ))}
-                    </div>
-                    {group.footerLink && (
-                      <div className="mt-5 pt-4 border-t border-slate-100">
-                        <Link
-                          href={group.footerLink.href}
-                          className="text-sm font-semibold text-primary-600 hover:text-primary-700 transition-colors"
-                          onClick={() => setOpenMenu(null)}
-                        >
-                          {group.footerLink.label}
-                        </Link>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            ))}
-
-            {/* Regular Links */}
-            {publicNavLinks.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className="px-3 py-2 text-sm font-medium text-slate-600 rounded-full hover:bg-slate-100 hover:text-slate-900 transition-all"
-              >
-                {link.label}
-              </Link>
-            ))}
-          </nav>
+          {/* Spacer */}
+          <div className="flex-1" />
 
           {/* Right Actions */}
           <div className="flex items-center gap-2">
@@ -139,39 +77,66 @@ export default function PublicHeader() {
               </svg>
             </Link>
 
-            {/* AI Search */}
-            <Link
-              href="/ai-search"
-              className="hidden md:flex items-center gap-1.5 px-3.5 py-2 bg-primary-50 text-primary-700 text-sm font-semibold rounded-full border border-primary-200 hover:bg-primary-100 transition-all"
-            >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 00-2.455 2.456z" />
-              </svg>
-              AI
-            </Link>
+            {/* Grid App Launcher */}
+            <div ref={gridRef} className="relative">
+              <button
+                onClick={() => setGridOpen(!gridOpen)}
+                className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${gridOpen ? "bg-slate-100" : "hover:bg-slate-100"}`}
+                aria-label="แอปทั้งหมด"
+              >
+                <svg className="w-5 h-5 text-slate-600" viewBox="0 0 24 24" fill="currentColor">
+                  <circle cx="5" cy="5" r="2" />
+                  <circle cx="12" cy="5" r="2" />
+                  <circle cx="19" cy="5" r="2" />
+                  <circle cx="5" cy="12" r="2" />
+                  <circle cx="12" cy="12" r="2" />
+                  <circle cx="19" cy="12" r="2" />
+                  <circle cx="5" cy="19" r="2" />
+                  <circle cx="12" cy="19" r="2" />
+                  <circle cx="19" cy="19" r="2" />
+                </svg>
+              </button>
 
-            {/* LINE */}
-            <a href="https://line.me/R/ti/p/@jongtour" target="_blank" rel="noopener noreferrer" className="btn-icon text-[#06C755] hidden sm:flex items-center justify-center">
-              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M22.5 10.364c0-4.398-4.237-7.973-9.455-7.973-5.216 0-9.454 3.575-9.454 7.973 0 3.963 3.42 7.333 8.01 7.893.313.064.738.197.846.678.097.432-.03.882-.03.882s-.132.793-.162.977c-.038.232-.178.913.805.498 1.154-.486 6.223-3.666 8.163-6.07 1.01-1.238 1.278-2.678 1.278-4.858z"/>
-              </svg>
-            </a>
+              {/* Grid Dropdown */}
+              {gridOpen && (
+                <div className="absolute right-0 top-full mt-2 w-[320px] bg-white rounded-2xl border border-slate-200 shadow-xl p-4 z-50" style={{ animation: "grid-in 0.2s ease-out" }}>
+                  <div className="grid grid-cols-3 gap-1">
+                    {gridItems.map((item) => (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        className="flex flex-col items-center gap-1.5 p-3 rounded-xl hover:bg-slate-50 transition-colors"
+                        onClick={() => setGridOpen(false)}
+                      >
+                        <div
+                          className="w-12 h-12 rounded-full flex items-center justify-center text-xl"
+                          style={{ background: `${item.color}15` }}
+                        >
+                          {item.icon}
+                        </div>
+                        <span className="text-[11px] font-medium text-slate-600 text-center leading-tight">{item.label}</span>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
 
-            {/* Login */}
-            <Link href="/login" className="btn-primary text-sm px-5 py-2">
-              เข้าสู่ระบบ
-            </Link>
-
-            {/* Mobile Hamburger */}
-            <button
-              className="lg:hidden btn-icon text-slate-600"
-              onClick={() => setMobileOpen(true)}
-              aria-label="เปิดเมนู"
-            >
-              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+            {/* Language */}
+            <button className="hidden md:flex items-center gap-1 px-2 py-1.5 text-sm text-slate-500 hover:bg-slate-50 rounded-full transition-colors">
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 017.843 4.582M12 3a8.997 8.997 0 00-7.843 4.582m15.686 0A11.953 11.953 0 0112 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0121 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0112 16.5c-3.162 0-6.133-.815-8.716-2.247m0 0A9.015 9.015 0 013 12c0-1.605.42-3.113 1.157-4.418" />
               </svg>
+              <span className="text-xs font-medium">ไทย</span>
+              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" /></svg>
             </button>
+
+            {/* Avatar / Login */}
+            <Link href="/login" className="w-9 h-9 rounded-full bg-primary-500 flex items-center justify-center text-white hover:bg-primary-600 transition-colors shadow-sm" aria-label="เข้าสู่ระบบ">
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+              </svg>
+            </Link>
           </div>
         </div>
       </header>
@@ -181,7 +146,6 @@ export default function PublicHeader() {
         <>
           <div className="fixed inset-0 bg-black/40 z-50 lg:hidden animate-fade-in" onClick={() => setMobileOpen(false)} />
           <div className="fixed top-0 right-0 bottom-0 w-[300px] bg-white z-50 lg:hidden animate-slide-in-right overflow-y-auto">
-            {/* Drawer Header */}
             <div className="flex items-center justify-between p-4 border-b border-slate-200">
               <span className="text-lg font-bold text-slate-800">
                 <span className="text-primary-600">Jong</span>tour
@@ -192,45 +156,28 @@ export default function PublicHeader() {
                 </svg>
               </button>
             </div>
-
-            {/* Drawer Links */}
             <nav className="p-3">
-              {mobileDrawerLinks.map((link) => (
+              {gridItems.map((item) => (
                 <Link
-                  key={link.href}
-                  href={link.href}
+                  key={item.href}
+                  href={item.href}
                   className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-700 rounded-xl hover:bg-slate-50 transition-colors"
                   onClick={() => setMobileOpen(false)}
                 >
-                  <span className="text-lg">{link.emoji}</span>
-                  {link.label}
+                  <span className="text-lg">{item.icon}</span>
+                  {item.label}
                 </Link>
               ))}
-
-              <div className="my-3 border-t border-slate-200" />
-
-              <Link
-                href="/login"
-                className="flex items-center gap-3 px-4 py-3 text-sm font-semibold text-primary-600 rounded-xl hover:bg-primary-50 transition-colors"
-                onClick={() => setMobileOpen(false)}
-              >
-                <span className="text-lg">👤</span>
-                เข้าสู่ระบบ
-              </Link>
-              <Link
-                href="/register"
-                className="flex items-center gap-3 px-4 py-3 text-sm font-semibold text-primary-600 rounded-xl hover:bg-primary-50 transition-colors"
-                onClick={() => setMobileOpen(false)}
-              >
-                <span className="text-lg">✨</span>
-                สมัครสมาชิก
-              </Link>
             </nav>
           </div>
         </>
       )}
 
       <style jsx>{`
+        @keyframes grid-in {
+          from { opacity: 0; transform: scale(0.95) translateY(-4px); }
+          to { opacity: 1; transform: scale(1) translateY(0); }
+        }
         @keyframes slide-in-right {
           from { transform: translateX(100%); }
           to { transform: translateX(0); }
