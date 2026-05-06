@@ -167,5 +167,11 @@ export default async function TourSearchPage({ searchParams }: { searchParams: {
     formattedTours = await fetchToursViaREST(keyword);
   }
 
+  // Double-check: if Prisma returned 0 tours (possible silent auth failure), try REST
+  if (formattedTours.length === 0) {
+    console.warn('No tours from primary source, trying Supabase REST API...');
+    formattedTours = await fetchToursViaREST(keyword);
+  }
+
   return <SearchClient initialTours={formattedTours} />;
 }
