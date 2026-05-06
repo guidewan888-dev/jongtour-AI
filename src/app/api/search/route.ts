@@ -1,13 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { AISearchService } from '@/services/core/AISearchService';
 import { TourService } from '@/services/core/TourService';
-import { analytics } from '@/hooks/useAnalytics';
 
 export const dynamic = 'force-dynamic';
 
 /**
- * GET /api/search?q=ทัวร์ญี่ปุ่น&country=japan&min=20000&max=80000&duration=5&page=1
- * Hybrid keyword + semantic search
+ * GET /api/search?q=ทัวร์ญี่ปุ่น&mode=keyword
  */
 export async function GET(req: NextRequest) {
   try {
@@ -18,38 +15,27 @@ export async function GET(req: NextRequest) {
     const maxPrice = searchParams.get('max') ? Number(searchParams.get('max')) : undefined;
     const duration = searchParams.get('duration') ? Number(searchParams.get('duration')) : undefined;
     const page = Number(searchParams.get('page') || '1');
-    const mode = searchParams.get('mode') || 'hybrid'; // 'keyword' | 'semantic' | 'hybrid'
+    const mode = searchParams.get('mode') || 'keyword';
 
     if (!q && !country) {
       return NextResponse.json({ error: 'Query or country required' }, { status: 400 });
     }
 
-    let data: any;
+    // Always use keyword search for reliability
+    const results = await TourService.searchTours({
+      keyword: q || undefined,
+      country,
+      minPrice,
+      maxPrice,
+      duration,
+      page,
+      limit: 20,
+    });
 
-    if (mode === 'semantic' && q) {
-      // Pure semantic search
-      const results = await AISearchService.semanticSearch(q, { limit: 10, country });
-      data = { results, total: results.length, mode: 'semantic' };
-    } else if (mode === 'keyword' || !q) {
-      // Pure keyword/filter search
-      const results = await TourService.searchTours({
-        keyword: q || undefined,
-        country,
-        minPrice,
-        maxPrice,
-        duration,
-        page,
-        limit: 20,
-      });
-      data = { ...results, mode: 'keyword' };
-    } else {
-      // Hybrid (default)
-      const results = await AISearchService.hybridSearch(q, { country, minPrice, maxPrice, duration });
-      data = { ...results, mode: 'hybrid' };
-    }
-
-    return NextResponse.json({ success: true, query: q, ...data });
+    return NextResponse.json({ success: true, query: q, ...results, mode });
   } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    console.error('[Search API Error]', err);
+    return NextResponse.json({ error: err.message || 'Search failed' }, { status: 500 });
   }
 }
+

@@ -164,16 +164,16 @@ export default function TourHomePage() {
                 </div>
               )}
               {!searching && results.map((t: any, i: number) => (
-                <Link key={t.id || i} href={`/tours/detail/${t.id}`} className="flex items-center gap-4 px-5 py-3.5 hover:bg-slate-50 border-b border-slate-50 last:border-0 transition-colors">
+                <Link key={t.id || i} href={`/tours/detail/${t.slug || t.id}`} className="flex items-center gap-4 px-5 py-3.5 hover:bg-slate-50 border-b border-slate-50 last:border-0 transition-colors">
                   <div className="w-14 h-10 rounded-lg bg-slate-100 overflow-hidden flex-shrink-0">
-                    {t.image_url && <img src={t.image_url} alt="" className="w-full h-full object-cover" />}
+                    {(t.coverImage || t.image_url) && <img src={t.coverImage || t.image_url} alt="" className="w-full h-full object-cover" />}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-slate-800 truncate">{t.title || t.name}</p>
-                    <p className="text-xs text-slate-400 truncate">{t.duration || ""} {t.supplier_name ? `• ${t.supplier_name}` : ""}</p>
+                    <p className="text-sm font-semibold text-slate-800 truncate">{t.tourName || t.title || t.name}</p>
+                    <p className="text-xs text-slate-400 truncate">{t.durationDays ? `${t.durationDays} วัน` : ""} {t.supplier ? `• ${t.supplier}` : ""}</p>
                   </div>
                   <div className="text-right flex-shrink-0">
-                    <p className="text-sm font-bold text-primary-600">{t.price ? `฿${Number(t.price).toLocaleString()}` : ""}</p>
+                    <p className="text-sm font-bold text-primary-600">{t.startingPrice ? `฿${Number(t.startingPrice).toLocaleString()}` : ""}</p>
                   </div>
                 </Link>
               ))}
