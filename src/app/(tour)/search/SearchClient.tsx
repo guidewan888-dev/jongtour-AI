@@ -15,6 +15,7 @@ interface TourResult {
   nextDeparture: string;
   price: number;
   availableSeats: number;
+  imageUrl: string;
 }
 
 export default function SearchClient({ initialTours }: { initialTours: TourResult[] }) {
@@ -285,37 +286,74 @@ export default function SearchClient({ initialTours }: { initialTours: TourResul
               ))}
             </div>
           ) : filteredTours.length > 0 ? (
-            <div className={`grid gap-4 ${viewMode === 'grid' ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1'}`}>
+            <div className={`grid gap-4 ${viewMode === 'grid' ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3' : 'grid-cols-1'}`}>
               {filteredTours.map(tour => (
-                <Link key={tour.id} href={`/tour/${tour.slug}`} className="g-card-interactive p-5 block group">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-2 flex-wrap">
-                        <span className="text-xs font-semibold text-slate-400 bg-slate-50 px-2 py-0.5 rounded">{tour.code}</span>
-                        <span className="text-xs text-primary-600 font-semibold bg-primary-50 px-2 py-0.5 rounded">{tour.supplier}</span>
+                <Link key={tour.id} href={`/tour/${tour.slug}`} className="group block bg-white rounded-xl border border-slate-200 hover:border-primary-200 hover:shadow-lg transition-all overflow-hidden">
+                  {viewMode === 'grid' ? (
+                    /* Grid View — Image Card */
+                    <>
+                      <div className="relative h-40 bg-slate-100 overflow-hidden">
+                        {tour.imageUrl ? (
+                          <img src={tour.imageUrl} alt={tour.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary-100 to-primary-50"><span className="text-4xl">🌍</span></div>
+                        )}
+                        {tour.availableSeats > 0 && tour.availableSeats <= 10 && (
+                          <div className="absolute top-2 left-2 bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">🔥 เหลือ {tour.availableSeats} ที่</div>
+                        )}
+                        <div className="absolute top-2 right-2 bg-black/50 text-white text-[10px] font-medium px-2 py-0.5 rounded-full backdrop-blur-sm">{tour.durationDays}วัน{tour.durationNights}คืน</div>
+                        <div className="absolute bottom-2 left-2 bg-white/90 text-[10px] font-semibold text-primary-700 px-2 py-0.5 rounded-full backdrop-blur-sm">{tour.supplier}</div>
                       </div>
-                      <h3 className="text-sm font-bold text-slate-900 mb-1 line-clamp-2 group-hover:text-primary-600 transition-colors">{tour.title}</h3>
-                      <p className="text-xs text-slate-500">
-                        🌍 {tour.country} {tour.city && `• ${tour.city}`} • ⏱️ {tour.durationDays}วัน{tour.durationNights}คืน
-                      </p>
-                      {tour.nextDeparture !== 'N/A' && (
-                        <p className="text-xs text-slate-400 mt-1">📅 เดินทาง: {tour.nextDeparture}</p>
-                      )}
+                      <div className="p-3">
+                        <div className="flex items-center gap-1.5 mb-1.5">
+                          <span className="text-[10px] font-bold text-slate-400 bg-slate-50 px-1.5 py-0.5 rounded">{tour.code}</span>
+                          <span className="text-[10px] text-slate-400">🌍 {tour.country}</span>
+                        </div>
+                        <h3 className="text-sm font-bold text-slate-900 group-hover:text-primary-600 transition-colors line-clamp-2 min-h-[2.5rem] leading-tight">{tour.title}</h3>
+                        <div className="flex items-end justify-between mt-2 pt-2 border-t border-slate-50">
+                          <div>
+                            {tour.nextDeparture !== 'N/A' && <p className="text-[11px] text-slate-400">📅 {tour.nextDeparture}</p>}
+                          </div>
+                          <div className="text-right">
+                            {tour.price > 0 ? (
+                              <><div className="text-base font-bold text-primary-600">฿{tour.price.toLocaleString()}</div><div className="text-[10px] text-slate-400">/ท่าน</div></>
+                            ) : (
+                              <span className="text-xs text-slate-400">สอบถามราคา</span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    /* List View — Horizontal */
+                    <div className="flex gap-4 p-4">
+                      <div className="w-32 h-24 rounded-lg overflow-hidden bg-slate-100 shrink-0">
+                        {tour.imageUrl ? (
+                          <img src={tour.imageUrl} alt={tour.title} className="w-full h-full object-cover" loading="lazy" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary-100 to-primary-50"><span className="text-2xl">🌍</span></div>
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1 flex-wrap">
+                          <span className="text-[10px] font-bold text-slate-400 bg-slate-50 px-1.5 py-0.5 rounded">{tour.code}</span>
+                          <span className="text-[10px] text-primary-600 font-semibold bg-primary-50 px-1.5 py-0.5 rounded">{tour.supplier}</span>
+                        </div>
+                        <h3 className="text-sm font-bold text-slate-900 group-hover:text-primary-600 line-clamp-2 transition-colors">{tour.title}</h3>
+                        <p className="text-xs text-slate-500 mt-1">🌍 {tour.country} • ⏱️ {tour.durationDays}วัน{tour.durationNights}คืน</p>
+                      </div>
+                      <div className="text-right shrink-0">
+                        {tour.price > 0 ? (
+                          <><div className="text-lg font-bold text-primary-600">฿{tour.price.toLocaleString()}</div><div className="text-[10px] text-slate-400">/ท่าน</div></>
+                        ) : (
+                          <div className="text-sm text-slate-400">สอบถามราคา</div>
+                        )}
+                        {tour.availableSeats > 0 && tour.availableSeats <= 15 && (
+                          <div className="text-[10px] text-red-600 font-semibold mt-1">🔥 เหลือ {tour.availableSeats} ที่</div>
+                        )}
+                      </div>
                     </div>
-                    <div className="text-right shrink-0">
-                      {tour.price > 0 ? (
-                        <>
-                          <div className="text-lg font-bold text-primary-600">฿{tour.price.toLocaleString()}</div>
-                          <div className="text-xs text-slate-400">/ท่าน</div>
-                        </>
-                      ) : (
-                        <div className="text-sm text-slate-400">สอบถามราคา</div>
-                      )}
-                      {tour.availableSeats > 0 && tour.availableSeats <= 15 && (
-                        <div className="text-xs text-red-600 font-semibold mt-1">🔥 เหลือ {tour.availableSeats} ที่</div>
-                      )}
-                    </div>
-                  </div>
+                  )}
                 </Link>
               ))}
             </div>

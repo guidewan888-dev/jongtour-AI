@@ -75,6 +75,7 @@ export interface TourListItem {
   nextDeparture: string;
   price: number;
   availableSeats: number;
+  imageUrl: string;
 }
 
 export interface TourDetailData {
@@ -153,11 +154,17 @@ export async function getTourList(options?: {
   const supplierMap: Record<string, string> = {};
   (suppliers || []).forEach(s => { supplierMap[s.id] = s.canonicalName; });
 
-  // 3. Get ALL destinations
-  const { data: destinations } = await sb
-    .from('tour_destinations')
-    .select('"tourId", country, city')
-    .in('tourId', tourIds);
+  // 3. Get ALL destinations + images in parallel
+  const [{ data: destinations }, { data: images }] = await Promise.all([
+    sb.from('tour_destinations').select('"tourId", country, city').in('tourId', tourIds),
+    sb.from('tour_images').select('"tourId", "imageUrl"').in('tourId', tourIds),
+  ]);
+
+  // Build image map (first image per tour)
+  const imageMap: Record<string, string> = {};
+  (images || []).forEach(img => {
+    if (!imageMap[img.tourId]) imageMap[img.tourId] = img.imageUrl;
+  });
 
   // Build destination map with NORMALIZED country names
   const destMap: Record<string, { country: string; city: string }> = {};
@@ -236,6 +243,7 @@ export async function getTourList(options?: {
       nextDeparture: dep ? new Date(dep.startDate).toLocaleDateString('th-TH') : 'N/A',
       price: Number(price),
       availableSeats: dep?.remainingSeats || 0,
+      imageUrl: imageMap[t.id] || '',
     };
   });
 }

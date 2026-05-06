@@ -157,39 +157,62 @@ export default function CountryPage({ params }: { params: { slug: string } }) {
 
                   {/* Tour Cards Grid */}
                   <div className="p-5 md:p-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                       {supplierTours.map(tour => (
                         <Link
                           key={tour.id}
                           href={`/tour/${tour.slug}`}
-                          className="group block p-4 rounded-xl border border-slate-100 hover:border-primary-200 hover:shadow-md transition-all duration-200 bg-white hover:bg-primary-50/30"
+                          className="group block rounded-xl border border-slate-100 hover:border-primary-200 hover:shadow-lg transition-all duration-200 bg-white overflow-hidden"
                         >
-                          <div className="flex items-center gap-2 mb-2">
-                            <span className="text-xs font-bold text-slate-400 bg-slate-50 px-2 py-0.5 rounded">{tour.code}</span>
-                          </div>
-                          <h3 className="text-sm font-bold text-slate-900 group-hover:text-primary-600 transition-colors line-clamp-2 mb-3 min-h-[2.5rem]">
-                            {tour.title}
-                          </h3>
-                          <div className="flex items-center justify-between">
-                            <div className="text-xs text-slate-500">
-                              ⏱️ {tour.durationDays}วัน{tour.durationNights}คืน
+                          {/* Image */}
+                          <div className="relative h-40 bg-slate-100 overflow-hidden">
+                            {tour.imageUrl ? (
+                              <img
+                                src={tour.imageUrl}
+                                alt={tour.title}
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                loading="lazy"
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary-100 to-primary-50">
+                                <span className="text-4xl">{countryInfo.emoji}</span>
+                              </div>
+                            )}
+                            {tour.availableSeats > 0 && tour.availableSeats <= 10 && (
+                              <div className="absolute top-2 left-2 bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
+                                🔥 เหลือ {tour.availableSeats} ที่
+                              </div>
+                            )}
+                            <div className="absolute top-2 right-2 bg-black/50 text-white text-[10px] font-medium px-2 py-0.5 rounded-full backdrop-blur-sm">
+                              {tour.durationDays}วัน{tour.durationNights}คืน
                             </div>
-                            <div className="text-right">
-                              {tour.price > 0 ? (
-                                <span className="text-base font-bold text-primary-600">฿{tour.price.toLocaleString()}</span>
-                              ) : (
-                                <span className="text-xs text-slate-400">สอบถามราคา</span>
-                              )}
+                          </div>
+                          {/* Details */}
+                          <div className="p-3">
+                            <div className="flex items-center gap-1.5 mb-1.5">
+                              <span className="text-[10px] font-bold text-slate-400 bg-slate-50 px-1.5 py-0.5 rounded">{tour.code}</span>
+                            </div>
+                            <h3 className="text-sm font-bold text-slate-900 group-hover:text-primary-600 transition-colors line-clamp-2 min-h-[2.5rem] leading-tight">
+                              {tour.title}
+                            </h3>
+                            <div className="flex items-end justify-between mt-2 pt-2 border-t border-slate-50">
+                              <div>
+                                {tour.nextDeparture !== 'N/A' && (
+                                  <p className="text-[11px] text-slate-400">📅 {tour.nextDeparture}</p>
+                                )}
+                              </div>
+                              <div className="text-right">
+                                {tour.price > 0 ? (
+                                  <>
+                                    <div className="text-base font-bold text-primary-600">฿{tour.price.toLocaleString()}</div>
+                                    <div className="text-[10px] text-slate-400">/ท่าน</div>
+                                  </>
+                                ) : (
+                                  <span className="text-xs text-slate-400">สอบถามราคา</span>
+                                )}
+                              </div>
                             </div>
                           </div>
-                          {tour.nextDeparture !== 'N/A' && (
-                            <p className="text-xs text-slate-400 mt-2 flex items-center gap-1">
-                              📅 {tour.nextDeparture}
-                              {tour.availableSeats > 0 && tour.availableSeats <= 10 && (
-                                <span className="text-red-500 font-semibold ml-auto">🔥 เหลือ {tour.availableSeats} ที่</span>
-                              )}
-                            </p>
-                          )}
                         </Link>
                       ))}
                     </div>
