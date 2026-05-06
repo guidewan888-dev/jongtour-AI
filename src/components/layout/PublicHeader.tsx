@@ -62,26 +62,33 @@ export default function PublicHeader() {
                 {/* Mega Dropdown */}
                 {openMenu === group.trigger && (
                   <div
-                    className="absolute top-full left-1/2 -translate-x-1/2 mt-2 bg-white rounded-2xl border border-slate-200 p-6 min-w-[600px] mega-menu-enter"
+                    className={`absolute top-full mt-2 bg-white rounded-2xl border border-slate-200 p-6 mega-menu-enter ${group.wide ? 'left-0 min-w-[780px]' : 'left-1/2 -translate-x-1/2 min-w-[500px]'}`}
                     style={{ boxShadow: "0 8px 30px rgba(0,0,0,0.12)" }}
                     onMouseLeave={() => setOpenMenu(null)}
                   >
-                    <div className={`grid gap-8 ${group.columns.length >= 3 ? "grid-cols-3" : "grid-cols-2"}`}>
+                    <div className={`grid gap-6 ${group.columns.length >= 4 ? 'grid-cols-4' : group.columns.length >= 3 ? 'grid-cols-3' : 'grid-cols-2'}`}>
                       {group.columns.map((col) => (
                         <div key={col.title}>
                           <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">{col.title}</p>
-                          <ul className="space-y-1">
+                          <ul className="space-y-0.5">
                             {col.items.map((item) => (
-                              <li key={item.href}>
+                              <li key={item.href + item.label}>
                                 <Link
                                   href={item.href}
-                                  className="flex items-center gap-2.5 px-3 py-2 text-sm text-slate-700 rounded-lg hover:bg-primary-50 hover:text-primary-700 transition-colors"
+                                  className="flex items-center gap-2.5 px-2.5 py-1.5 text-sm text-slate-700 rounded-lg hover:bg-primary-50 hover:text-primary-700 transition-colors"
                                   onClick={() => setOpenMenu(null)}
                                 >
-                                  {(item.flag || item.emoji) && (
-                                    <span className="text-base">{item.flag || item.emoji}</span>
+                                  {item.flagCode && (
+                                    <img
+                                      src={`https://flagcdn.com/w20/${item.flagCode}.png`}
+                                      width="16" height="12" alt=""
+                                      className="rounded-sm shrink-0"
+                                    />
                                   )}
-                                  <span className="font-medium">{item.label}</span>
+                                  {item.emoji && !item.flagCode && (
+                                    <span className="text-sm">{item.emoji}</span>
+                                  )}
+                                  <span className="font-medium text-[13px]">{item.label}</span>
                                 </Link>
                               </li>
                             ))}
