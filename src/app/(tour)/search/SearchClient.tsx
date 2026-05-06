@@ -21,11 +21,26 @@ export default function SearchClient({ initialTours }: { initialTours: TourResul
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [tours, setTours] = useState<TourResult[]>(initialTours);
 
   useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 600);
-    return () => clearTimeout(timer);
-  }, []);
+    // If SSR returned empty (DB was unreachable at build time), fetch from API at runtime
+    if (initialTours.length === 0) {
+      fetch('/api/tours/list')
+        .then(r => r.json())
+        .then(data => {
+          if (data.tours && data.tours.length > 0) {
+            setTours(data.tours);
+          }
+        })
+        .catch(() => {})
+        .finally(() => setIsLoading(false));
+    } else {
+      setTours(initialTours);
+      const timer = setTimeout(() => setIsLoading(false), 600);
+      return () => clearTimeout(timer);
+    }
+  }, [initialTours]);
 
   useEffect(() => {
     document.body.style.overflow = isMobileFilterOpen ? 'hidden' : 'auto';
@@ -155,7 +170,7 @@ export default function SearchClient({ initialTours }: { initialTours: TourResul
             <div>
               <h1 className="text-xl font-bold text-slate-900">ค้นหาทัวร์</h1>
               <p className="text-sm text-slate-500 mt-1">
-                พบ {isLoading ? '...' : initialTours.length} โปรแกรม
+                พบ {isLoading ? '...' : tours.length} โปรแกรม
               </p>
             </div>
             <div className="flex items-center gap-2">
@@ -187,9 +202,9 @@ export default function SearchClient({ initialTours }: { initialTours: TourResul
                 </div>
               ))}
             </div>
-          ) : initialTours.length > 0 ? (
+          ) : tours.length > 0 ? (
             <div className={`grid gap-4 ${viewMode === 'grid' ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1'}`}>
-              {initialTours.map(tour => (
+              {tours.map(tour => (
                 <Link key={tour.id} href={`/tour/${tour.slug}`} className="g-card-interactive p-5 block">
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex-1 min-w-0">
