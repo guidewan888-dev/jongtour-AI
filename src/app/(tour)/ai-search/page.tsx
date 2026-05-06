@@ -148,54 +148,54 @@ export default function AiSearchPage() {
   };
 
   return (
-    <div className="flex flex-col min-h-[calc(100vh-160px)] bg-slate-50 selection:bg-orange-200 selection:text-orange-900">
+    <div className="flex flex-col min-h-[calc(100vh-80px)] bg-slate-50 selection:bg-orange-200 selection:text-orange-900">
       {/* Main Layout: Chat Area */}
       <div className="flex-1 flex overflow-hidden">
         
         {/* Left Side: Chat Area */}
-        <div className="flex-1 flex flex-col relative max-w-4xl mx-auto w-full bg-white shadow-[0_0_40px_rgba(0,0,0,0.02)] border-x border-slate-100">
+        <div className="flex-1 flex flex-col relative max-w-5xl mx-auto w-full bg-white shadow-[0_0_60px_rgba(0,0,0,0.04)] border-x border-slate-100">
           
           {/* Header */}
-          <div className="px-6 py-4 border-b border-slate-100 bg-white/80 backdrop-blur-md sticky top-0 z-10 flex justify-between items-center">
-            <div className="flex items-center gap-3">
+          <div className="px-8 py-5 border-b border-slate-100 bg-white/80 backdrop-blur-md sticky top-0 z-10 flex justify-between items-center">
+            <div className="flex items-center gap-4">
               <div className="relative">
-                <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-red-500 rounded-xl flex items-center justify-center shadow-sm">
-                  <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                <div className="w-14 h-14 bg-gradient-to-br from-orange-500 to-red-500 rounded-2xl flex items-center justify-center shadow-lg shadow-orange-500/20">
+                  <svg className="w-7 h-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
                 </div>
-                <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></div>
+                <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-white rounded-full"></div>
               </div>
               <div>
-                <h1 className="font-bold text-slate-900 leading-tight">Jongtour AI Elite</h1>
-                <p className="text-xs text-emerald-600 font-medium">Online • พร้อมช่วยหาทัวร์</p>
+                <h1 className="font-bold text-xl text-slate-900 leading-tight">Jongtour AI Elite</h1>
+                <p className="text-sm text-emerald-600 font-medium">Online • พร้อมช่วยหาทัวร์</p>
               </div>
             </div>
-            <button onClick={handleReset} className="text-sm font-bold text-slate-500 hover:text-orange-600 transition-colors bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-200">
+            <button onClick={handleReset} className="text-base font-bold text-slate-500 hover:text-orange-600 transition-colors bg-slate-50 px-5 py-2.5 rounded-xl border border-slate-200 hover:border-orange-300 hover:bg-orange-50">
               เริ่มใหม่
             </button>
           </div>
 
           {/* Chat Messages */}
-          <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6">
+          <div className="flex-1 overflow-y-auto p-6 sm:p-10 space-y-8">
             
             {messages.length === 0 && (
-              <div className="flex flex-col items-center justify-center h-full max-w-lg mx-auto text-center space-y-8 py-10">
-                <div className="w-24 h-24 bg-orange-50 rounded-full flex items-center justify-center mb-2">
-                  <svg className="w-12 h-12 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+              <div className="flex flex-col items-center justify-center h-full max-w-2xl mx-auto text-center space-y-10 py-16">
+                <div className="w-36 h-36 bg-gradient-to-br from-orange-50 to-amber-50 rounded-full flex items-center justify-center mb-4 shadow-lg shadow-orange-100/50">
+                  <svg className="w-16 h-16 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
                 </div>
                 <div>
-                  <h2 className="text-2xl font-extrabold text-slate-900 mb-2">ให้ AI ช่วยหาทัวร์ที่ใช่</h2>
-                  <p className="text-slate-500">พิมพ์ความต้องการของคุณด้วยภาษาธรรมดา หรืออัปโหลดไฟล์โบรชัวร์ PDF เพื่อให้ AI ค้นหาทัวร์ที่คุ้มค่ากว่าจาก 50+ โฮลเซลล์</p>
+                  <h2 className="text-4xl sm:text-5xl font-extrabold text-slate-900 mb-4">ให้ AI ช่วยหาทัวร์ที่ใช่</h2>
+                  <p className="text-lg sm:text-xl text-slate-500 leading-relaxed">พิมพ์ความต้องการของคุณด้วยภาษาธรรมดา หรืออัปโหลดไฟล์โบรชัวร์ PDF เพื่อ<br className="hidden sm:block" />ให้ AI ค้นหาทัวร์ที่คุ้มค่ากว่าจาก 50+ โฮลเซลล์</p>
                 </div>
                 
                 {/* Quick Prompts */}
-                <div className="w-full flex flex-wrap justify-center gap-2">
-                  <button onClick={() => handleSend('หาทัวร์ญี่ปุ่น พ่อแม่ลูก งบไม่เกิน 30,000')} className="bg-white border border-slate-200 hover:border-orange-500 hover:text-orange-600 text-slate-600 px-4 py-2 rounded-xl text-sm transition-all shadow-sm">
+                <div className="w-full flex flex-wrap justify-center gap-3">
+                  <button onClick={() => handleSend('หาทัวร์ญี่ปุ่น พ่อแม่ลูก งบไม่เกิน 30,000')} className="bg-white border border-slate-200 hover:border-orange-500 hover:text-orange-600 text-slate-600 px-6 py-3 rounded-2xl text-base font-medium transition-all shadow-sm hover:shadow-md">
                     หาทัวร์ญี่ปุ่น พ่อแม่ลูก งบไม่เกิน 30,000
                   </button>
-                  <button onClick={() => handleSend('อยากไปดูแสงเหนือช่วงปีใหม่ มีที่ไหนว่างบ้าง?')} className="bg-white border border-slate-200 hover:border-orange-500 hover:text-orange-600 text-slate-600 px-4 py-2 rounded-xl text-sm transition-all shadow-sm">
+                  <button onClick={() => handleSend('อยากไปดูแสงเหนือช่วงปีใหม่ มีที่ไหนว่างบ้าง?')} className="bg-white border border-slate-200 hover:border-orange-500 hover:text-orange-600 text-slate-600 px-6 py-3 rounded-2xl text-base font-medium transition-all shadow-sm hover:shadow-md">
                     อยากไปดูแสงเหนือช่วงปีใหม่ ว่างไหม?
                   </button>
-                  <button onClick={() => handleSend('ทัวร์จีน เฉิงตู จิ่วจ้ายโกว')} className="bg-white border border-slate-200 hover:border-orange-500 hover:text-orange-600 text-slate-600 px-4 py-2 rounded-xl text-sm transition-all shadow-sm">
+                  <button onClick={() => handleSend('ทัวร์จีน เฉิงตู จิ่วจ้ายโกว')} className="bg-white border border-slate-200 hover:border-orange-500 hover:text-orange-600 text-slate-600 px-6 py-3 rounded-2xl text-base font-medium transition-all shadow-sm hover:shadow-md">
                     🇨🇳 ทัวร์จีน เฉิงตู จิ่วจ้ายโกว
                   </button>
                 </div>
@@ -215,7 +215,7 @@ export default function AiSearchPage() {
                   )}
 
                   {/* Message Bubble */}
-                  <div className={`p-4 rounded-2xl shadow-sm text-[15px] leading-relaxed ${
+                  <div className={`p-5 rounded-2xl shadow-sm text-base leading-relaxed ${
                     msg.role === 'user' 
                       ? 'bg-slate-900 text-white rounded-tr-sm' 
                       : 'bg-white border border-slate-100 text-slate-800 rounded-tl-sm'
@@ -323,12 +323,12 @@ export default function AiSearchPage() {
           </div>
 
           {/* Input Area */}
-          <div className="p-4 bg-white border-t border-slate-100">
-            <div className="max-w-4xl mx-auto relative flex items-end gap-2 bg-slate-50 p-2 rounded-3xl border border-slate-200 focus-within:border-orange-400 focus-within:ring-4 focus-within:ring-orange-500/10 transition-all">
+          <div className="p-5 sm:p-6 bg-white border-t border-slate-100">
+            <div className="max-w-4xl mx-auto relative flex items-end gap-3 bg-slate-50 p-3 rounded-3xl border border-slate-200 focus-within:border-orange-400 focus-within:ring-4 focus-within:ring-orange-500/10 transition-all">
               
               {/* Attachment Button */}
-              <button className="w-10 h-10 shrink-0 rounded-full bg-white text-slate-500 hover:text-orange-600 hover:bg-orange-50 flex items-center justify-center transition-colors shadow-sm border border-slate-200" title="อัปโหลดโบรชัวร์ (PDF/JPG) เพื่อเปรียบเทียบราคา">
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" /></svg>
+              <button className="w-12 h-12 shrink-0 rounded-full bg-white text-slate-500 hover:text-orange-600 hover:bg-orange-50 flex items-center justify-center transition-colors shadow-sm border border-slate-200" title="อัปโหลดโบรชัวร์ (PDF/JPG) เพื่อเปรียบเทียบราคา">
+                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" /></svg>
               </button>
 
               {/* Text Input */}
@@ -337,7 +337,7 @@ export default function AiSearchPage() {
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder="บอก AI ว่าอยากไปเที่ยวไหน งบเท่าไหร่..."
-                className="flex-1 bg-transparent border-none focus:ring-0 resize-none py-2 px-2 text-slate-800 placeholder-slate-400 outline-none min-h-[44px] max-h-32"
+                className="flex-1 bg-transparent border-none focus:ring-0 resize-none py-3 px-3 text-lg text-slate-800 placeholder-slate-400 outline-none min-h-[52px] max-h-36"
                 rows={1}
                 disabled={aiState !== 'idle'}
               />
@@ -346,17 +346,17 @@ export default function AiSearchPage() {
               <button 
                 onClick={() => handleSend(inputValue)}
                 disabled={!inputValue.trim() || aiState !== 'idle'}
-                className={`w-10 h-10 shrink-0 rounded-full flex items-center justify-center transition-all ${
+                className={`w-12 h-12 shrink-0 rounded-full flex items-center justify-center transition-all ${
                   inputValue.trim() && aiState === 'idle' 
                     ? 'bg-orange-600 text-white shadow-md hover:bg-orange-700' 
                     : 'bg-slate-200 text-slate-400 cursor-not-allowed'
                 }`}
               >
-                <svg className="w-5 h-5 ml-1" fill="currentColor" viewBox="0 0 20 20"><path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" /></svg>
+                <svg className="w-6 h-6 ml-0.5" fill="currentColor" viewBox="0 0 20 20"><path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" /></svg>
               </button>
             </div>
-            <div className="text-center mt-2">
-              <span className="text-[10px] text-slate-400">AI อาจสร้างข้อมูลที่ไม่ถูกต้อง กรุณาตรวจสอบรายละเอียดอีกครั้งกับเจ้าหน้าที่</span>
+            <div className="text-center mt-3">
+              <span className="text-xs text-slate-400">AI อาจสร้างข้อมูลที่ไม่ถูกต้อง กรุณาตรวจสอบรายละเอียดอีกครั้งกับเจ้าหน้าที่</span>
             </div>
           </div>
 
