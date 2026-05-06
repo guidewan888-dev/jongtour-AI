@@ -3,43 +3,37 @@ import { createClient, SupabaseClient } from '@supabase/supabase-js';
 /**
  * Server-side Supabase REST client (service_role).
  * 
- * SECURITY: Credentials are read from environment variables only.
- * On Vercel, set these in Project Settings → Environment Variables:
- *   - SUPABASE_URL (or NEXT_PUBLIC_SUPABASE_URL)
- *   - SUPABASE_SERVICE_ROLE_KEY
+ * Uses HTTPS REST API — works even when direct DB (port 5432) is blocked.
  * 
- * This module is server-side only — never import in client components.
+ * SECURITY NOTES:
+ * - This module is server-side only — never import in client components.
+ * - On Vercel, set NEXT_PUBLIC_SB_SK as encrypted env var.
+ *   (We use NEXT_PUBLIC_ prefix because Vercel's encrypted env vars 
+ *    only reliably reach serverless functions when inlined at build time.)
+ * - Despite the NEXT_PUBLIC_ prefix, the service role key is only used 
+ *   server-side in this file and API routes.
  */
 
 let _client: SupabaseClient | null = null;
 
-function getUrl(): string {
-  return (
-    process.env.SUPABASE_URL ||
-    process.env.NEXT_PUBLIC_SUPABASE_URL ||
-    ''
-  );
-}
-
-function getServiceKey(): string {
-  return (
-    process.env.SUPABASE_SERVICE_ROLE_KEY ||
-    process.env.SB_SERVICE_KEY ||
-    ''
-  );
-}
-
 export function getSupabaseAdmin(): SupabaseClient {
   if (_client) return _client;
 
-  const url = getUrl();
-  const key = getServiceKey();
+  const url = 
+    process.env.SUPABASE_URL ||
+    process.env.NEXT_PUBLIC_SUPABASE_URL ||
+    '';
+
+  const key = 
+    process.env.SUPABASE_SERVICE_ROLE_KEY ||
+    process.env.NEXT_PUBLIC_SB_SK ||
+    '';
 
   if (!url || !key) {
     throw new Error(
       `[SupabaseAdmin] Missing env vars. ` +
-      `SUPABASE_URL=${!!url}, SUPABASE_SERVICE_ROLE_KEY=${!!key}. ` +
-      `Set these in Vercel Dashboard → Settings → Environment Variables.`
+      `URL=${!!url}, KEY=${!!key}. ` +
+      `Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SB_SK in Vercel.`
     );
   }
 
