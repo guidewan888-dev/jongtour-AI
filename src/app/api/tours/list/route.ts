@@ -13,7 +13,7 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const keyword = searchParams.get('q') || undefined;
     const country = searchParams.get('country') || undefined;
-    const limit = parseInt(searchParams.get('limit') || '50', 10);
+    const limit = parseInt(searchParams.get('limit') || '1000', 10);
 
     const tours = await getTourList({ keyword, country, limit });
 

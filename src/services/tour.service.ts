@@ -9,6 +9,57 @@
 
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
 
+// ─── Country Normalizer ─────────────────────────────────────────────
+// Maps all raw DB country values → standardized Thai names for frontend display
+// This handles mixed English/Thai + composite values from different wholesalers
+
+const COUNTRY_NORMALIZE: Record<string, string> = {
+  // English → Thai
+  'JAPAN': 'ญี่ปุ่น',
+  'CHINA': 'จีน',
+  'VIETNAM': 'เวียดนาม',
+  'TAIWAN': 'ไต้หวัน',
+  'HONG KONG': 'ฮ่องกง',
+  'INDIA': 'อินเดีย',
+  'TURKIYE': 'ตุรกี',
+  'TURKEY': 'ตุรกี',
+  'EGYPT': 'อียิปต์',
+  'GEORGIA': 'จอร์เจีย',
+  'EUROPE': 'ยุโรป',
+  'ITALY': 'ยุโรป',
+  'FRANCE': 'ยุโรป',
+  'ENGLAND': 'ยุโรป',
+  'SINGAPORE': 'สิงคโปร์',
+  // Thai duplicates
+  'มาเก๊า': 'ฮ่องกง',
+  'ภูฎาน': 'ภูฏาน',
+  'สหรัฐอาหรับเอมิเรตส์': 'ดูไบ',
+};
+
+function normalizeCountry(raw: string): string {
+  if (!raw) return '';
+  const upper = raw.trim().toUpperCase();
+  // 1. Exact match (case-insensitive for English)
+  if (COUNTRY_NORMALIZE[upper]) return COUNTRY_NORMALIZE[upper];
+  // 2. Exact match (Thai)
+  if (COUNTRY_NORMALIZE[raw.trim()]) return COUNTRY_NORMALIZE[raw.trim()];
+  // 3. Composite values like "จีน-เฉิงตู", "จีน อี๋ชาง"
+  if (raw.startsWith('จีน')) return 'จีน';
+  // 4. Already Thai standard
+  return raw.trim();
+}
+
+// Reverse map: Thai name → all possible DB values that match
+function getCountrySearchTerms(thaiName: string): string[] {
+  const terms = [thaiName];
+  // Add all keys that normalize to this Thai name
+  for (const [raw, normalized] of Object.entries(COUNTRY_NORMALIZE)) {
+    if (normalized === thaiName) terms.push(raw);
+  }
+  // Add prefix patterns for composite countries (e.g., จีน matches จีน-เฉิงตู)
+  return [...new Set(terms)];
+}
+
 // ─── Types ──────────────────────────────────────────────────────────
 
 export interface TourListItem {
@@ -102,23 +153,39 @@ export async function getTourList(options?: {
   const supplierMap: Record<string, string> = {};
   (suppliers || []).forEach(s => { supplierMap[s.id] = s.canonicalName; });
 
-  // 3. Get destinations (filter by country if specified)
+  // 3. Get ALL destinations
   const { data: destinations } = await sb
     .from('tour_destinations')
     .select('"tourId", country, city')
     .in('tourId', tourIds);
 
+  // Build destination map with NORMALIZED country names
   const destMap: Record<string, { country: string; city: string }> = {};
   (destinations || []).forEach(d => {
-    if (!destMap[d.tourId]) destMap[d.tourId] = { country: d.country || '', city: d.city || '' };
+    if (!destMap[d.tourId]) {
+      destMap[d.tourId] = {
+        country: normalizeCountry(d.country || ''),
+        city: d.city || '',
+      };
+    }
   });
 
-  // Filter by country if specified
+  // Filter by country using normalized matching
   let filteredTours = tours;
   if (country) {
+    const normalizedSearch = normalizeCountry(country);
+    const searchTerms = getCountrySearchTerms(normalizedSearch);
+    
     const matchingTourIds = new Set(
       (destinations || [])
-        .filter(d => d.country?.includes(country))
+        .filter(d => {
+          const rawCountry = (d.country || '').trim();
+          const normalizedRaw = normalizeCountry(rawCountry);
+          // Match by normalized name OR by search terms OR prefix match
+          return normalizedRaw === normalizedSearch
+            || searchTerms.some(term => rawCountry.toUpperCase() === term.toUpperCase())
+            || rawCountry.startsWith(normalizedSearch);
+        })
         .map(d => d.tourId)
     );
     filteredTours = tours.filter(t => matchingTourIds.has(t.id));
@@ -151,7 +218,7 @@ export async function getTourList(options?: {
     }
   });
 
-  // 6. Format results
+  // 6. Format results with normalized countries
   return filteredTours.map(t => {
     const dep = depMap[t.id];
     const dest = destMap[t.id];
@@ -162,7 +229,7 @@ export async function getTourList(options?: {
       code: t.tourCode || '',
       title: t.tourName || '',
       supplier: supplierMap[t.supplierId] || '',
-      country: dest?.country || '',
+      country: dest?.country || '', // Already normalized
       city: dest?.city || '',
       durationDays: t.durationDays || 0,
       durationNights: t.durationNights || 0,
@@ -252,7 +319,7 @@ export async function getTourBySlug(slug: string): Promise<TourDetailData | null
       id: supplier?.canonicalName || '',
       name: supplier?.displayName || '',
     },
-    country: dest?.country || '',
+    country: normalizeCountry(dest?.country || ''),
     city: dest?.city || '',
     duration: { days: tour.durationDays || 0, nights: tour.durationNights || 0 },
     images: (images || []).length > 0 ? images!.map(i => i.imageUrl) : [defaultImg],
@@ -313,11 +380,12 @@ export async function getAvailableCountries(): Promise<{ country: string; tourCo
 
   const publishedIds = new Set((publishedTours || []).map(t => t.id));
 
-  // Count by country
+  // Count by NORMALIZED country
   const countMap: Record<string, number> = {};
   data.forEach(d => {
     if (d.country && publishedIds.has(d.tourId)) {
-      countMap[d.country] = (countMap[d.country] || 0) + 1;
+      const normalized = normalizeCountry(d.country);
+      countMap[normalized] = (countMap[normalized] || 0) + 1;
     }
   });
 
