@@ -218,6 +218,10 @@ export async function middleware(req: NextRequest) {
     const continent = COUNTRY_TO_CONTINENT[countrySlug] || 'asia';
     return NextResponse.redirect(new URL(`/tours/${continent}/${countrySlug}`, req.url), 301);
   }
+  if (url.pathname.startsWith('/wholesale/')) {
+    const slug = url.pathname.split('/')[2];
+    if (slug) return NextResponse.redirect(new URL(`/wholesaler/${slug}`, req.url), 301);
+  }
 
   // 7. Default — tour portal
   return addSecurityHeaders(response);
