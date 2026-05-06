@@ -69,7 +69,6 @@ const nextConfig = {
       // Trailing slash normalization
       { source: '/:path+/', destination: '/:path+', permanent: true },
       // Common misspellings
-      { source: '/tours/:path*', destination: '/tour/:path*', permanent: true },
       { source: '/visas/:path*', destination: '/visa/:path*', permanent: true },
       { source: '/blogs/:path*', destination: '/blog/:path*', permanent: true },
     ];
