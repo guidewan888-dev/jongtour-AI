@@ -1,5 +1,6 @@
 import PublicHeader from "@/components/layout/PublicHeader";
 import PublicFooter from "@/components/layout/PublicFooter";
+import FloatingChat from "@/components/ui/FloatingChat";
 
 export default function TourRouteLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -7,6 +8,7 @@ export default function TourRouteLayout({ children }: { children: React.ReactNod
       <PublicHeader />
       <main className="flex-1">{children}</main>
       <PublicFooter />
+      <FloatingChat />
     </div>
   );
 }

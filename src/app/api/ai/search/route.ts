@@ -77,8 +77,11 @@ export async function POST(req: Request) {
 
     const results = sortedTours.map((t: any) => ({
       id: t.id,
+      slug: t.slug || t.id,
       tourCode: t.tourCode,
       tourName: t.tourName,
+      durationDays: t.durationDays,
+      durationNights: t.durationNights,
       duration: `${t.durationDays}D${t.durationNights}N`,
       destinations: t.destinations?.map((d: any) => d.country),
       supplier: t.supplier?.displayName,
@@ -131,8 +134,11 @@ async function keywordFallback(query: string, limit: number) {
 
   const results = tours.map(t => ({
     id: t.id,
+    slug: t.slug || t.id,
     tourCode: t.tourCode,
     tourName: t.tourName,
+    durationDays: t.durationDays,
+    durationNights: t.durationNights,
     duration: `${t.durationDays}D${t.durationNights}N`,
     destinations: t.destinations?.map(d => d.country),
     supplier: t.supplier?.displayName,

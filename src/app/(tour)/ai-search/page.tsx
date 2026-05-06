@@ -1,53 +1,27 @@
 'use client';
 import React, { useState, useRef, useEffect } from 'react';
-import TourCard, { TourData } from '@/components/tour/TourCard';
+import Link from 'next/link';
 
-// --- MOCK DATA FOR AI RESULTS ---
-const aiRecommendedTours: TourData[] = [
-  {
-    id: 'ai-1',
-    code: 'JP-FUK-5D3N',
-    title: 'ฟุกุโอกะ คิวชู เบปปุ ยูฟุอิน แช่ออนเซ็น (ลดพิเศษ)',
-    image: 'https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?q=80&w=600&auto=format&fit=crop',
-    supplier: 'TOURFACTORY',
-    country: 'ญี่ปุ่น',
-    city: 'ฟุกุโอกะ',
-    durationDays: 5,
-    durationNights: 3,
-    nextDeparture: '25 พ.ย. 69',
-    price: 24900,
-    originalPrice: 29900,
-    isFlashSale: true,
-    isConfirmed: true,
-    availableSeats: 6,
-    aiScore: 98,
-    airline: 'VZ (Thai Vietjet)'
-  },
-  {
-    id: 'ai-2',
-    code: 'JP-TOK-6D4N',
-    title: 'โตเกียว ดิสนีย์แลนด์ ภูเขาไฟฟูจิ โอวาคุดานิ (กรุ๊ปครอบครัว)',
-    image: 'https://images.unsplash.com/photo-1542051841857-5f90071e7989?q=80&w=600&auto=format&fit=crop',
-    supplier: 'LETGO',
-    country: 'ญี่ปุ่น',
-    city: 'โตเกียว',
-    durationDays: 6,
-    durationNights: 4,
-    nextDeparture: '02 ธ.ค. 69',
-    price: 35900,
-    isFlashSale: false,
-    isConfirmed: true,
-    availableSeats: 15,
-    aiScore: 95,
-    airline: 'XJ (AirAsia X)'
-  }
-];
+type TourResult = {
+  id: string;
+  tourCode: string;
+  tourName: string;
+  slug: string;
+  durationDays: number;
+  durationNights: number;
+  coverImage: string | null;
+  supplier: string;
+  startingPrice: number | null;
+  nextDeparture: string | null;
+  remainingSeats: number;
+  similarity?: number;
+};
 
 type Message = {
   id: string;
   role: 'user' | 'ai' | 'system';
   content: string;
-  tours?: TourData[];
+  tours?: TourResult[];
   isLowConfidence?: boolean;
 };
 
@@ -63,8 +37,8 @@ export default function AiSearchPage() {
   };
   useEffect(() => { scrollToBottom(); }, [messages, aiState]);
 
-  const handleSend = (text: string) => {
-    if (!text.trim() && aiState !== 'idle') return;
+  const handleSend = async (text: string) => {
+    if (!text.trim() || aiState !== 'idle') return;
 
     // 1. Add User Message
     const userMsg: Message = { id: Date.now().toString(), role: 'user', content: text };
@@ -73,30 +47,83 @@ export default function AiSearchPage() {
     
     // 2. State: Tool Loading (Searching Database)
     setAiState('searching');
-    
-    setTimeout(() => {
-      // 3. State: AI Generating response
+
+    try {
+      // 3. Call real AI search API first, fallback to keyword search
+      let tours: TourResult[] = [];
+      let fallback = false;
+
+      try {
+        const aiRes = await fetch('/api/ai/search', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query: text.trim(), limit: 5 }),
+        });
+        const aiData = await aiRes.json();
+        if (aiData.success && aiData.data && aiData.data.length > 0) {
+          // Map AI search response to TourResult shape
+          tours = aiData.data.map((t: any) => ({
+            id: t.id,
+            tourCode: t.tourCode || '',
+            tourName: t.tourName || '',
+            slug: t.slug || t.id,
+            durationDays: parseInt(t.duration?.split('D')[0]) || 0,
+            durationNights: parseInt(t.duration?.split('D')[1]?.replace('N', '')) || 0,
+            coverImage: null,
+            supplier: t.supplier || '',
+            startingPrice: t.lowestPrice || null,
+            nextDeparture: t.nextDeparture,
+            remainingSeats: t.remainingSeats || 0,
+            similarity: t.similarity,
+          }));
+        }
+      } catch {
+        // AI search failed, try keyword fallback
+      }
+
+      // Fallback: keyword search via /api/search
+      if (tours.length === 0) {
+        fallback = true;
+        try {
+          const kwRes = await fetch(`/api/search?q=${encodeURIComponent(text.trim())}&mode=keyword`);
+          const kwData = await kwRes.json();
+          if (kwData.tours && kwData.tours.length > 0) {
+            tours = kwData.tours.slice(0, 5);
+          }
+        } catch {
+          // Both searches failed
+        }
+      }
+
+      // 4. State: AI Generating response
       setAiState('typing');
-      
-      setTimeout(() => {
-        // 4. State: Response delivered
-        const isComplexQuery = text.includes('ยุโรป') || text.includes('หายาก');
-        
-        const aiMsg: Message = {
-          id: (Date.now() + 1).toString(),
-          role: 'ai',
-          content: isComplexQuery 
-            ? 'พบรายการทัวร์ที่ใกล้เคียงความต้องการของคุณ 2 รายการค่ะ แต่เนื่องจากเป็นช่วงเทศกาล ที่นั่งอาจจะเต็มเร็วนะคะ'
-            : 'เจอแล้วค่ะ! ฉันพบโปรแกรมทัวร์ญี่ปุ่น 2 รายการที่ตรงกับความต้องการของคุณ (เน้นครอบครัว และมีส่วนลดพิเศษ) ลองดูรายละเอียดด้านล่างได้เลยค่ะ 👇',
-          tours: aiRecommendedTours,
-          isLowConfidence: isComplexQuery
-        };
-        
-        setMessages(prev => [...prev, aiMsg]);
-        setAiState('idle');
-      }, 1500);
-      
-    }, 2000);
+
+      // Small delay for typing animation
+      await new Promise(r => setTimeout(r, 800));
+
+      // 5. Build AI response
+      const aiMsg: Message = {
+        id: (Date.now() + 1).toString(),
+        role: 'ai',
+        content: tours.length > 0
+          ? `เจอแล้วค่ะ! พบโปรแกรมทัวร์ ${tours.length} รายการที่ตรงกับความต้องการ "${text}" ลองดูรายละเอียดด้านล่างได้เลยค่ะ 👇`
+          : `ขอโทษค่ะ ไม่พบโปรแกรมทัวร์ที่ตรงกับ "${text}" ในตอนนี้ ลองเปลี่ยนคำค้นหาดูนะคะ หรือจะให้เจ้าหน้าที่ช่วยหาทัวร์ที่เหมาะกับคุณก็ได้ค่ะ`,
+        tours: tours.length > 0 ? tours : undefined,
+        isLowConfidence: fallback && tours.length > 0,
+      };
+
+      setMessages(prev => [...prev, aiMsg]);
+    } catch (error) {
+      // Error fallback
+      const errMsg: Message = {
+        id: (Date.now() + 1).toString(),
+        role: 'ai',
+        content: 'ขอโทษค่ะ เกิดข้อผิดพลาดในการค้นหา กรุณาลองใหม่อีกครั้งนะคะ',
+      };
+      setMessages(prev => [...prev, errMsg]);
+    }
+    
+    setAiState('idle');
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -104,6 +131,20 @@ export default function AiSearchPage() {
       e.preventDefault();
       handleSend(inputValue);
     }
+  };
+
+  const handleReset = () => {
+    setMessages([]);
+    setInputValue('');
+    setAiState('idle');
+  };
+
+  const formatDate = (dateStr: string | null) => {
+    if (!dateStr) return null;
+    try {
+      const d = new Date(dateStr);
+      return d.toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit' });
+    } catch { return null; }
   };
 
   return (
@@ -128,7 +169,7 @@ export default function AiSearchPage() {
                 <p className="text-xs text-emerald-600 font-medium">Online • พร้อมช่วยหาทัวร์</p>
               </div>
             </div>
-            <button className="text-sm font-bold text-slate-500 hover:text-orange-600 transition-colors bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-200">
+            <button onClick={handleReset} className="text-sm font-bold text-slate-500 hover:text-orange-600 transition-colors bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-200">
               เริ่มใหม่
             </button>
           </div>
@@ -154,8 +195,8 @@ export default function AiSearchPage() {
                   <button onClick={() => handleSend('อยากไปดูแสงเหนือช่วงปีใหม่ มีที่ไหนว่างบ้าง?')} className="bg-white border border-slate-200 hover:border-orange-500 hover:text-orange-600 text-slate-600 px-4 py-2 rounded-xl text-sm transition-all shadow-sm">
                     อยากไปดูแสงเหนือช่วงปีใหม่ ว่างไหม?
                   </button>
-                  <button onClick={() => handleSend('ทัวร์ไฟไหม้ ยุโรป ภายในเดือนนี้')} className="bg-white border border-slate-200 hover:border-orange-500 hover:text-orange-600 text-slate-600 px-4 py-2 rounded-xl text-sm transition-all shadow-sm">
-                    🔥 ทัวร์ไฟไหม้ยุโรป ภายในเดือนนี้
+                  <button onClick={() => handleSend('ทัวร์จีน เฉิงตู จิ่วจ้ายโกว')} className="bg-white border border-slate-200 hover:border-orange-500 hover:text-orange-600 text-slate-600 px-4 py-2 rounded-xl text-sm transition-all shadow-sm">
+                    🇨🇳 ทัวร์จีน เฉิงตู จิ่วจ้ายโกว
                   </button>
                 </div>
               </div>
@@ -163,13 +204,13 @@ export default function AiSearchPage() {
 
             {messages.map((msg) => (
               <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                <div className={`max-w-[85%] sm:max-w-[75%] ${msg.role === 'user' ? 'order-1' : 'order-2'}`}>
+                <div className={`max-w-[85%] sm:max-w-[75%]`}>
                   
                   {/* AI Warning / Context */}
                   {msg.isLowConfidence && (
                     <div className="mb-2 bg-yellow-50 text-yellow-800 border border-yellow-200 p-3 rounded-xl text-xs flex gap-2 items-start shadow-sm">
                       <svg className="w-4 h-4 shrink-0 text-yellow-600" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" /></svg>
-                      <span><strong>AI Note:</strong> คำค้นหาของคุณมีความเฉพาะเจาะจงสูงมาก AI จึงแสดงผลลัพธ์ที่ใกล้เคียงที่สุดแทน หากต้องการให้จัดกรุ๊ปส่วนตัว สามารถกดปุ่มติดต่อเจ้าหน้าที่ด้านล่างได้ค่ะ</span>
+                      <span><strong>AI Note:</strong> ไม่พบผลลัพธ์จาก AI Vector Search จึงแสดงผลจากการค้นหาด้วยคีย์เวิร์ดแทนค่ะ หากต้องการผลลัพธ์ที่แม่นยำกว่า ลองระบุประเทศหรือชื่อเมืองดูนะคะ</span>
                     </div>
                   )}
 
@@ -182,19 +223,63 @@ export default function AiSearchPage() {
                     {msg.content}
                   </div>
 
-                  {/* Embedded Tour Cards */}
+                  {/* Embedded Tour Cards — inline styled, no TourCard dependency */}
                   {msg.tours && msg.tours.length > 0 && (
-                    <div className="mt-4 flex flex-col gap-4">
+                    <div className="mt-4 flex flex-col gap-3">
                       {msg.tours.map(tour => (
-                         // Using List view for chat density
-                        <div key={tour.id} className="w-full">
-                          <TourCard data={tour} viewMode="list" />
-                        </div>
+                        <Link
+                          key={tour.id}
+                          href={`/tour/${tour.slug || tour.id}`}
+                          className="group block bg-white rounded-xl border border-slate-200 hover:border-orange-300 hover:shadow-lg transition-all overflow-hidden"
+                        >
+                          <div className="flex gap-4 p-4">
+                            {/* Thumbnail */}
+                            <div className="w-28 h-20 rounded-lg overflow-hidden bg-slate-100 shrink-0">
+                              {tour.coverImage ? (
+                                <img src={tour.coverImage} alt={tour.tourName} className="w-full h-full object-cover" loading="lazy" />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-orange-100 to-amber-50">
+                                  <span className="text-2xl">✈️</span>
+                                </div>
+                              )}
+                            </div>
+                            {/* Info */}
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-1 flex-wrap">
+                                <span className="text-[10px] font-bold text-slate-400 bg-slate-50 px-1.5 py-0.5 rounded">{tour.tourCode}</span>
+                                <span className="text-[10px] text-orange-600 font-semibold bg-orange-50 px-1.5 py-0.5 rounded">🏢 {tour.supplier}</span>
+                                {tour.similarity && tour.similarity > 0 && (
+                                  <span className="text-[10px] text-emerald-600 font-semibold bg-emerald-50 px-1.5 py-0.5 rounded">🎯 {Math.round(tour.similarity * 100)}% match</span>
+                                )}
+                              </div>
+                              <h3 className="text-sm font-bold text-slate-900 group-hover:text-orange-600 transition-colors line-clamp-2">{tour.tourName}</h3>
+                              <div className="flex items-center gap-2 mt-1 text-xs text-slate-500">
+                                {tour.durationDays > 0 && <span>⏱️ {tour.durationDays} วัน {tour.durationNights} คืน</span>}
+                                {tour.nextDeparture && <span>📅 {formatDate(tour.nextDeparture)}</span>}
+                                {tour.remainingSeats > 0 && tour.remainingSeats <= 10 && (
+                                  <span className="text-red-600 font-semibold">🔥 เหลือ {tour.remainingSeats} ที่</span>
+                                )}
+                              </div>
+                            </div>
+                            {/* Price */}
+                            <div className="text-right shrink-0">
+                              {tour.startingPrice && tour.startingPrice > 0 ? (
+                                <>
+                                  <p className="text-[10px] text-slate-400">เริ่มต้น</p>
+                                  <p className="text-lg font-black text-orange-600 leading-tight">฿{Number(tour.startingPrice).toLocaleString()}</p>
+                                  <p className="text-[10px] text-slate-400">/ท่าน</p>
+                                </>
+                              ) : (
+                                <p className="text-xs text-slate-400">สอบถามราคา</p>
+                              )}
+                            </div>
+                          </div>
+                        </Link>
                       ))}
                     </div>
                   )}
 
-                  {/* Follow-up Suggestions (Only show on latest AI msg) */}
+                  {/* Follow-up Suggestions (Only show on AI msgs) */}
                   {msg.role === 'ai' && (
                     <div className="mt-4 flex flex-wrap gap-2">
                       <button onClick={() => handleSend('ขอราคาถูกกว่านี้')} className="bg-slate-50 border border-slate-200 text-slate-600 px-3 py-1.5 rounded-lg text-xs font-medium hover:bg-orange-50 hover:text-orange-600 transition-colors">
@@ -217,7 +302,7 @@ export default function AiSearchPage() {
             {/* AI Loading States */}
             {aiState === 'searching' && (
               <div className="flex justify-start">
-                <div className="max-w-[75%] order-2 bg-slate-50 border border-slate-100 p-4 rounded-2xl rounded-tl-sm shadow-sm flex items-center gap-3">
+                <div className="max-w-[75%] bg-slate-50 border border-slate-100 p-4 rounded-2xl rounded-tl-sm shadow-sm flex items-center gap-3">
                   <svg className="w-5 h-5 text-orange-500 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
                   <span className="text-sm font-bold text-slate-600 tracking-wide">AI กำลังค้นหาข้อมูลจาก 50+ Wholesale แบบ Real-time...</span>
                 </div>
@@ -226,7 +311,7 @@ export default function AiSearchPage() {
 
             {aiState === 'typing' && (
               <div className="flex justify-start">
-                <div className="max-w-[75%] order-2 bg-white border border-slate-100 p-4 rounded-2xl rounded-tl-sm shadow-sm flex items-center gap-2">
+                <div className="max-w-[75%] bg-white border border-slate-100 p-4 rounded-2xl rounded-tl-sm shadow-sm flex items-center gap-2">
                   <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce"></div>
                   <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
                   <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
