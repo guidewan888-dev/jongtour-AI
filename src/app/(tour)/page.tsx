@@ -40,10 +40,10 @@ const destinations = [
 ];
 
 const wholesalePartners = [
-  { name: "Let's Go", code: "letsgo", color: "from-green-600 to-emerald-500", textColor: "text-green-700", bgColor: "bg-green-50", borderColor: "border-green-100" },
-  { name: "Go365", code: "go365", color: "from-blue-600 to-indigo-500", textColor: "text-blue-700", bgColor: "bg-blue-50", borderColor: "border-blue-100" },
-  { name: "Checkin Group", code: "checkin", color: "from-teal-600 to-emerald-500", textColor: "text-teal-700", bgColor: "bg-teal-50", borderColor: "border-teal-100" },
-  { name: "Tour Factory", code: "tour-factory", color: "from-purple-600 to-violet-500", textColor: "text-purple-700", bgColor: "bg-purple-50", borderColor: "border-purple-100" },
+  { name: "Let's Go", code: "letsgo", logo: "/images/logos/download.png", textColor: "text-green-700", bgColor: "bg-green-50", borderColor: "border-green-100" },
+  { name: "Go365", code: "go365", logo: "/images/logos/download.jfif", textColor: "text-blue-700", bgColor: "bg-blue-50", borderColor: "border-blue-100" },
+  { name: "Checkin Group", code: "checkin", logo: "/images/logos/CH7.jpg", textColor: "text-teal-700", bgColor: "bg-teal-50", borderColor: "border-teal-100" },
+  { name: "Tour Factory", code: "tour-factory", logo: "/images/logos/Tour-Factory.jpg", textColor: "text-purple-700", bgColor: "bg-purple-50", borderColor: "border-purple-100" },
 ];
 
 const aiExamples = [
@@ -187,9 +187,8 @@ export default function TourHomePage() {
             {wholesalePartners.map(partner => (
               <Link key={partner.code} href={`/wholesaler/${partner.code}`}
                 className={`group relative flex flex-col items-center justify-center p-6 md:p-8 rounded-2xl ${partner.bgColor} border ${partner.borderColor} hover:shadow-lg hover:-translate-y-1 transition-all duration-300`}>
-                {/* Logo placeholder with gradient circle */}
-                <div className={`w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-gradient-to-br ${partner.color} flex items-center justify-center text-white text-lg md:text-xl font-black shadow-lg mb-4 group-hover:scale-110 transition-transform duration-300`}>
-                  {partner.name.slice(0, 2)}
+                <div className="w-20 h-20 md:w-24 md:h-24 rounded-2xl bg-white flex items-center justify-center shadow-sm mb-4 group-hover:scale-110 transition-transform duration-300 overflow-hidden p-2">
+                  <img src={partner.logo} alt={partner.name} className="max-w-full max-h-full object-contain" />
                 </div>
                 <h3 className={`text-sm md:text-base font-bold ${partner.textColor}`}>{partner.name}</h3>
                 <p className="text-[10px] text-slate-400 mt-1">ดูทัวร์ทั้งหมด →</p>
@@ -321,43 +320,6 @@ export default function TourHomePage() {
         </div>
       </section>
 
-      {/* ══════════════════════════════════════════════════════════
-          PRIVATE GROUP + VISA CTAs — Side by side
-         ══════════════════════════════════════════════════════════ */}
-      <section className="bg-slate-50 border-t border-slate-100">
-        <div className="max-w-5xl mx-auto px-4 py-12 md:py-16">
-          <div className="grid md:grid-cols-2 gap-4">
-            {/* Private Group */}
-            <Link href="/private-group" className="group p-6 md:p-8 rounded-2xl bg-gradient-to-br from-primary-50 to-orange-50 border border-primary-100 hover:shadow-lg transition-all duration-300">
-              <span className="text-3xl mb-3 block">✈️</span>
-              <h3 className="text-lg font-bold text-slate-900 mb-2 group-hover:text-primary-600 transition-colors">ออกแบบทริปส่วนตัว</h3>
-              <p className="text-sm text-slate-500 mb-4">เลือกประเทศ กำหนดวัน กำหนดงบ ให้ AI ช่วยออกแบบ</p>
-              <span className="text-xs font-bold text-primary-600">เริ่มออกแบบ →</span>
-            </Link>
-
-            {/* Visa */}
-            <Link href="/visa" className="group p-6 md:p-8 rounded-2xl bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-100 hover:shadow-lg transition-all duration-300">
-              <span className="text-3xl mb-3 block">🛂</span>
-              <h3 className="text-lg font-bold text-slate-900 mb-2 group-hover:text-blue-600 transition-colors">บริการรับทำวีซ่า</h3>
-              <p className="text-sm text-slate-500 mb-4">ยุ่งยากกับวีซ่า? ให้เราดูแลให้ ครอบคลุมกว่า 10 ประเทศ</p>
-              <span className="text-xs font-bold text-blue-600">ดูบริการ →</span>
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* ══════════════════════════════════════════════════════════
-          CAREER CTA — Minimal
-         ══════════════════════════════════════════════════════════ */}
-      <section className="bg-white border-t border-slate-100">
-        <div className="max-w-5xl mx-auto px-4 py-10 text-center">
-          <p className="text-xs text-slate-400 mb-1">ร่วมเป็นส่วนหนึ่งของทีม</p>
-          <h3 className="text-base font-bold text-slate-900 mb-3">สมัครเป็นไกด์ / หัวหน้าทัวร์กับ Jongtour</h3>
-          <Link href="/careers" className="text-sm font-semibold text-primary-600 hover:text-primary-700">
-            ดูตำแหน่งที่เปิดรับ →
-          </Link>
-        </div>
-      </section>
     </>
   );
 }
