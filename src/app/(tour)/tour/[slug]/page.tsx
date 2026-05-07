@@ -78,8 +78,8 @@ export default function TourDetailPage({ params }: { params: { slug: string } })
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
           <div className="flex flex-col lg:flex-row gap-5">
             {/* IMAGE */}
-            <div className="lg:w-[45%] rounded-xl overflow-hidden bg-slate-100 relative flex-shrink-0" style={{minHeight:300}}>
-              <img src={tour.images[0]} alt={tour.title} className="w-full h-full object-cover absolute inset-0"/>
+            <div className="lg:w-[45%] rounded-xl overflow-hidden bg-gradient-to-br from-slate-800 to-slate-900 relative flex-shrink-0" style={{minHeight:280}}>
+              <img src={tour.images[0]} alt={tour.title} className="w-full h-full object-contain absolute inset-0"/>
               <div className="absolute top-2.5 left-2.5 bg-black/60 text-white text-xs font-bold px-2.5 py-1 rounded">{tour.code}</div>
               <div className="absolute top-2.5 right-2.5 flex gap-1">
                 <span className="bg-primary-600 text-white text-xs font-bold px-2 py-0.5 rounded">{tour.duration.days}วัน</span>
