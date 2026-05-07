@@ -231,7 +231,7 @@ export default function TourDetailPage({ params }: { params: { slug: string } })
           {recs.map(r => (
             <Link key={r.slug} href={`/tour/${r.slug}`} className="group bg-white rounded-xl border border-slate-200 overflow-hidden hover:shadow-lg hover:-translate-y-0.5 transition-all">
               <div className="relative h-36 bg-slate-100 overflow-hidden">
-                {r.imageUrl ? <img src={r.imageUrl} alt={r.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"/> : <div className="w-full h-full flex items-center justify-center text-3xl">🌍</div>}
+                {r.imageUrl ? <img src={r.imageUrl} alt={r.title} className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"/> : <div className="w-full h-full flex items-center justify-center text-3xl">🌍</div>}
                 <div className="absolute top-1.5 left-1.5 bg-black/50 text-white text-[9px] font-bold px-1.5 py-0.5 rounded">{r.code}</div>
                 {r.days > 0 && <div className="absolute top-1.5 right-1.5 bg-primary-600 text-white text-[9px] font-bold px-1.5 py-0.5 rounded">{r.days}D{r.nights}N</div>}
               </div>
