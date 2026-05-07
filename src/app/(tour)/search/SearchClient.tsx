@@ -21,16 +21,67 @@ interface TourResult {
 
 type BudgetRange = '' | '0-15000' | '15000-25000' | '25000-40000' | '40000+';
 
+const CONTINENT_MAP: Record<string, { name: string; countries: Record<string, { name: string; flagCode: string; cities: string[] }> }> = {
+  asia: { name: 'เอเชีย', countries: {
+    'ญี่ปุ่น': { name: 'ญี่ปุ่น', flagCode: 'jp', cities: ['โตเกียว','โอซาก้า','ฮอกไกโด','เกียวโต','ฟุกุโอกะ','นาโกย่า','โอกินาว่า'] },
+    'จีน': { name: 'จีน', flagCode: 'cn', cities: ['เฉิงตู','จางเจียเจี้ย','คุนหมิง','ปักกิ่ง','เซี่ยงไฮ้','กวางเจา','กุ้ยหลิน','ซีอาน','ฉงชิ่ง','ชิงเต่า'] },
+    'เกาหลี': { name: 'เกาหลีใต้', flagCode: 'kr', cities: ['โซล','ปูซาน','เชจู'] },
+    'ไต้หวัน': { name: 'ไต้หวัน', flagCode: 'tw', cities: ['ไทเป','เกาสง'] },
+    'เวียดนาม': { name: 'เวียดนาม', flagCode: 'vn', cities: ['ดานัง','ฮานอย','โฮจิมินห์'] },
+    'ฮ่องกง': { name: 'ฮ่องกง', flagCode: 'hk', cities: [] },
+    'สิงคโปร์': { name: 'สิงคโปร์', flagCode: 'sg', cities: [] },
+    'มาเลเซีย': { name: 'มาเลเซีย', flagCode: 'my', cities: ['กัวลาลัมเปอร์'] },
+    'อินเดีย': { name: 'อินเดีย', flagCode: 'in', cities: ['เดลี','แคชเมียร์'] },
+    'กัมพูชา': { name: 'กัมพูชา', flagCode: 'kh', cities: [] },
+    'พม่า': { name: 'พม่า', flagCode: 'mm', cities: [] },
+    'ลาว': { name: 'ลาว', flagCode: 'la', cities: [] },
+  }},
+  europe: { name: 'ยุโรป', countries: {
+    'อังกฤษ': { name: 'อังกฤษ', flagCode: 'gb', cities: ['ลอนดอน'] },
+    'ฝรั่งเศส': { name: 'ฝรั่งเศส', flagCode: 'fr', cities: ['ปารีส'] },
+    'อิตาลี': { name: 'อิตาลี', flagCode: 'it', cities: ['โรม','มิลาน'] },
+    'สวิตเซอร์แลนด์': { name: 'สวิตเซอร์แลนด์', flagCode: 'ch', cities: [] },
+    'เยอรมนี': { name: 'เยอรมนี', flagCode: 'de', cities: ['มิวนิค','แฟรงก์เฟิร์ต'] },
+    'สเปน': { name: 'สเปน', flagCode: 'es', cities: [] },
+    'เนเธอร์แลนด์': { name: 'เนเธอร์แลนด์', flagCode: 'nl', cities: ['อัมสเตอร์ดัม'] },
+    'ออสเตรีย': { name: 'ออสเตรีย', flagCode: 'at', cities: [] },
+    'สแกนดิเนเวีย': { name: 'สแกนดิเนเวีย', flagCode: 'se', cities: [] },
+  }},
+  'middle-east': { name: 'ตะวันออกกลาง', countries: {
+    'ตุรกี': { name: 'ตุรกี', flagCode: 'tr', cities: ['อิสตันบูล','คัปปาโดเกีย'] },
+    'อียิปต์': { name: 'อียิปต์', flagCode: 'eg', cities: ['ไคโร'] },
+    'จอร์แดน': { name: 'จอร์แดน', flagCode: 'jo', cities: [] },
+    'ดูไบ': { name: 'ดูไบ', flagCode: 'ae', cities: [] },
+  }},
+  americas: { name: 'อเมริกา', countries: {
+    'อเมริกา': { name: 'อเมริกา', flagCode: 'us', cities: ['นิวยอร์ก','ลอสแอนเจลิส'] },
+    'แคนาดา': { name: 'แคนาดา', flagCode: 'ca', cities: [] },
+  }},
+  oceania: { name: 'โอเชียเนีย', countries: {
+    'ออสเตรเลีย': { name: 'ออสเตรเลีย', flagCode: 'au', cities: ['ซิดนีย์','เมลเบิร์น'] },
+    'นิวซีแลนด์': { name: 'นิวซีแลนด์', flagCode: 'nz', cities: [] },
+  }},
+};
+
+function getContinent(country: string): string | null {
+  for (const [key, cont] of Object.entries(CONTINENT_MAP)) {
+    if (cont.countries[country]) return key;
+  }
+  return null;
+}
+
 export default function SearchClient({ initialTours }: { initialTours: TourResult[] }) {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [tours, setTours] = useState<TourResult[]>(initialTours);
 
-  // Filter states
+  // Filter states — 5 levels
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCountries, setSelectedCountries] = useState<Set<string>>(new Set());
   const [selectedSuppliers, setSelectedSuppliers] = useState<Set<string>>(new Set());
+  const [selectedContinents, setSelectedContinents] = useState<Set<string>>(new Set());
+  const [selectedCountries, setSelectedCountries] = useState<Set<string>>(new Set());
+  const [selectedCities, setSelectedCities] = useState<Set<string>>(new Set());
   const [selectedBudget, setSelectedBudget] = useState<BudgetRange>('');
   const [sortBy, setSortBy] = useState('recommend');
 
@@ -55,19 +106,61 @@ export default function SearchClient({ initialTours }: { initialTours: TourResul
     return () => { document.body.style.overflow = 'auto'; };
   }, [isMobileFilterOpen]);
 
-  // Derive available countries and suppliers from data
-  const { countries, suppliers } = useMemo(() => {
-    const cMap: Record<string, number> = {};
+  // Derive available filters from data
+  const { suppliers, continentCounts, countryCounts, cityCounts } = useMemo(() => {
     const sMap: Record<string, number> = {};
+    const contMap: Record<string, number> = {};
+    const cMap: Record<string, number> = {};
+    const cityMap: Record<string, number> = {};
     tours.forEach(t => {
-      if (t.country) cMap[t.country] = (cMap[t.country] || 0) + 1;
       if (t.supplier) sMap[t.supplier] = (sMap[t.supplier] || 0) + 1;
+      if (t.country) {
+        cMap[t.country] = (cMap[t.country] || 0) + 1;
+        const cont = getContinent(t.country);
+        if (cont) contMap[cont] = (contMap[cont] || 0) + 1;
+      }
+      if (t.city) cityMap[t.city] = (cityMap[t.city] || 0) + 1;
+      // Also extract city keywords from title
+      const allCountries = Object.values(CONTINENT_MAP).flatMap(c => Object.values(c.countries));
+      allCountries.forEach(cc => {
+        cc.cities.forEach(city => {
+          if (city && t.title && t.title.includes(city)) {
+            cityMap[city] = (cityMap[city] || 0) + 1;
+          }
+        });
+      });
     });
     return {
-      countries: Object.entries(cMap).sort((a, b) => b[1] - a[1]),
       suppliers: Object.entries(sMap).sort((a, b) => b[1] - a[1]),
+      continentCounts: contMap,
+      countryCounts: cMap,
+      cityCounts: cityMap,
     };
   }, [tours]);
+
+  // Filtered countries based on selected continents
+  const visibleCountries = useMemo(() => {
+    if (selectedContinents.size === 0) return Object.entries(countryCounts).sort((a, b) => b[1] - a[1]);
+    const allowed = new Set<string>();
+    selectedContinents.forEach(cont => {
+      const c = CONTINENT_MAP[cont];
+      if (c) Object.keys(c.countries).forEach(k => allowed.add(k));
+    });
+    return Object.entries(countryCounts).filter(([k]) => allowed.has(k)).sort((a, b) => b[1] - a[1]);
+  }, [countryCounts, selectedContinents]);
+
+  // Filtered cities based on selected countries
+  const visibleCities = useMemo(() => {
+    const citySet = new Set<string>();
+    const targets = selectedCountries.size > 0 ? [...selectedCountries] : visibleCountries.map(([k]) => k);
+    targets.forEach(country => {
+      for (const cont of Object.values(CONTINENT_MAP)) {
+        const cc = cont.countries[country];
+        if (cc) cc.cities.forEach(c => { if (c && cityCounts[c]) citySet.add(c); });
+      }
+    });
+    return [...citySet].map(c => [c, cityCounts[c] || 0] as [string, number]).sort((a, b) => b[1] - a[1]);
+  }, [cityCounts, selectedCountries, visibleCountries]);
 
   // Apply filters + sort
   const filteredTours = useMemo(() => {
@@ -84,9 +177,25 @@ export default function SearchClient({ initialTours }: { initialTours: TourResul
       );
     }
 
+    // Continent filter
+    if (selectedContinents.size > 0) {
+      result = result.filter(t => {
+        const cont = getContinent(t.country);
+        return cont ? selectedContinents.has(cont) : false;
+      });
+    }
+
     // Country filter
     if (selectedCountries.size > 0) {
       result = result.filter(t => selectedCountries.has(t.country));
+    }
+
+    // City filter
+    if (selectedCities.size > 0) {
+      result = result.filter(t => {
+        if (t.city && selectedCities.has(t.city)) return true;
+        return [...selectedCities].some(city => t.title.includes(city));
+      });
     }
 
     // Supplier filter
@@ -113,7 +222,7 @@ export default function SearchClient({ initialTours }: { initialTours: TourResul
     else if (sortBy === 'price-desc') result = [...result].sort((a, b) => (b.price || 0) - (a.price || 0));
 
     return result;
-  }, [tours, searchQuery, selectedCountries, selectedSuppliers, selectedBudget, sortBy]);
+  }, [tours, searchQuery, selectedContinents, selectedCountries, selectedCities, selectedSuppliers, selectedBudget, sortBy]);
 
   const toggleFilter = (set: Set<string>, value: string, setter: (s: Set<string>) => void) => {
     const next = new Set(set);
@@ -123,8 +232,10 @@ export default function SearchClient({ initialTours }: { initialTours: TourResul
 
   const clearAllFilters = () => {
     setSearchQuery('');
-    setSelectedCountries(new Set());
     setSelectedSuppliers(new Set());
+    setSelectedContinents(new Set());
+    setSelectedCountries(new Set());
+    setSelectedCities(new Set());
     setSelectedBudget('');
     setSortBy('recommend');
   };
@@ -136,67 +247,75 @@ export default function SearchClient({ initialTours }: { initialTours: TourResul
     { label: '฿40,000+', value: '40000+' },
   ];
 
+  const CheckboxItem = ({ checked, onChange, label, count }: { checked: boolean; onChange: () => void; label: string; count?: number }) => (
+    <label className="flex items-center justify-between cursor-pointer group">
+      <div className="flex items-center gap-3">
+        <input type="checkbox" checked={checked} onChange={onChange} className="w-4 h-4 text-primary-600 border-slate-300 rounded focus:ring-primary-500" />
+        <span className="text-sm text-slate-600 group-hover:text-slate-900">{label}</span>
+      </div>
+      {count !== undefined && <span className="text-xs text-slate-400">{count}</span>}
+    </label>
+  );
+
   const FilterSidebar = () => (
-    <div className="space-y-6 pb-20 md:pb-0">
-      {/* Supplier Filter */}
+    <div className="space-y-5 pb-20 md:pb-0">
+      {/* 1. Supplier */}
       <div>
         <h4 className="font-bold text-slate-900 mb-3 text-sm">🏢 โฮลเซล</h4>
         <div className="space-y-2">
           {suppliers.map(([name, count]) => (
-            <label key={name} className="flex items-center justify-between cursor-pointer group">
-              <div className="flex items-center gap-3">
-                <input
-                  type="checkbox"
-                  checked={selectedSuppliers.has(name)}
-                  onChange={() => toggleFilter(selectedSuppliers, name, setSelectedSuppliers)}
-                  className="w-4 h-4 text-primary-600 border-slate-300 rounded focus:ring-primary-500"
-                />
-                <span className="text-sm text-slate-600 group-hover:text-slate-900">{name}</span>
-              </div>
-              <span className="text-xs text-slate-400">{count}</span>
-            </label>
+            <CheckboxItem key={name} checked={selectedSuppliers.has(name)} onChange={() => toggleFilter(selectedSuppliers, name, setSelectedSuppliers)} label={name} count={count} />
           ))}
         </div>
       </div>
-
       <hr className="border-slate-200" />
 
-      {/* Country Filter */}
+      {/* 2. Continent */}
       <div>
-        <h4 className="font-bold text-slate-900 mb-3 text-sm">🌍 ประเทศ / โซน</h4>
-        <div className="space-y-2 max-h-64 overflow-y-auto">
-          {countries.map(([name, count]) => (
-            <label key={name} className="flex items-center justify-between cursor-pointer group">
-              <div className="flex items-center gap-3">
-                <input
-                  type="checkbox"
-                  checked={selectedCountries.has(name)}
-                  onChange={() => toggleFilter(selectedCountries, name, setSelectedCountries)}
-                  className="w-4 h-4 text-primary-600 border-slate-300 rounded focus:ring-primary-500"
-                />
-                <span className="text-sm text-slate-600 group-hover:text-slate-900">{name}</span>
-              </div>
-              <span className="text-xs text-slate-400">{count}</span>
-            </label>
+        <h4 className="font-bold text-slate-900 mb-3 text-sm">🌏 ทวีป</h4>
+        <div className="space-y-2">
+          {Object.entries(CONTINENT_MAP).map(([key, cont]) => {
+            const count = continentCounts[key] || 0;
+            if (count === 0) return null;
+            return <CheckboxItem key={key} checked={selectedContinents.has(key)} onChange={() => { toggleFilter(selectedContinents, key, setSelectedContinents); setSelectedCountries(new Set()); setSelectedCities(new Set()); }} label={cont.name} count={count} />;
+          })}
+        </div>
+      </div>
+      <hr className="border-slate-200" />
+
+      {/* 3. Country */}
+      <div>
+        <h4 className="font-bold text-slate-900 mb-3 text-sm">🏳️ ประเทศ</h4>
+        <div className="space-y-2 max-h-48 overflow-y-auto">
+          {visibleCountries.map(([name, count]) => (
+            <CheckboxItem key={name} checked={selectedCountries.has(name)} onChange={() => { toggleFilter(selectedCountries, name, setSelectedCountries); setSelectedCities(new Set()); }} label={name} count={count} />
           ))}
         </div>
       </div>
-
       <hr className="border-slate-200" />
 
-      {/* Budget Filter */}
+      {/* 4. City */}
+      {visibleCities.length > 0 && (
+        <>
+          <div>
+            <h4 className="font-bold text-slate-900 mb-3 text-sm">🏙️ เมือง</h4>
+            <div className="space-y-2 max-h-48 overflow-y-auto">
+              {visibleCities.map(([name, count]) => (
+                <CheckboxItem key={name} checked={selectedCities.has(name)} onChange={() => toggleFilter(selectedCities, name, setSelectedCities)} label={name} count={count} />
+              ))}
+            </div>
+          </div>
+          <hr className="border-slate-200" />
+        </>
+      )}
+
+      {/* 5. Budget */}
       <div>
         <h4 className="font-bold text-slate-900 mb-3 text-sm">💰 งบประมาณ</h4>
         <div className="space-y-2">
           {budgetOptions.map((opt) => (
             <label key={opt.value} className="flex items-center gap-3 cursor-pointer group">
-              <input
-                type="radio"
-                name="budget"
-                checked={selectedBudget === opt.value}
-                onChange={() => setSelectedBudget(selectedBudget === opt.value ? '' : opt.value)}
-                className="w-4 h-4 text-primary-600 border-slate-300 focus:ring-primary-500"
-              />
+              <input type="radio" name="budget" checked={selectedBudget === opt.value} onChange={() => setSelectedBudget(selectedBudget === opt.value ? '' : opt.value)} className="w-4 h-4 text-primary-600 border-slate-300 focus:ring-primary-500" />
               <span className="text-sm text-slate-600 group-hover:text-slate-900">{opt.label}</span>
             </label>
           ))}
@@ -205,7 +324,7 @@ export default function SearchClient({ initialTours }: { initialTours: TourResul
     </div>
   );
 
-  const activeFilterCount = selectedCountries.size + selectedSuppliers.size + (searchQuery ? 1 : 0) + (selectedBudget ? 1 : 0);
+  const activeFilterCount = selectedSuppliers.size + selectedContinents.size + selectedCountries.size + selectedCities.size + (searchQuery ? 1 : 0) + (selectedBudget ? 1 : 0);
 
   return (
     <>
