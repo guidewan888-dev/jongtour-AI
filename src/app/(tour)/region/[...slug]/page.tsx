@@ -10,87 +10,75 @@ interface Tour {
   airline?: string;
 }
 
-const REGION_DATA: Record<string, { name: string; nameEn: string; desc: string; countries: { name: string; slug: string; flagCode: string }[] }> = {
+const REGION_DATA: Record<string, { name: string; nameEn: string; desc: string; countries: { name: string; slug: string; flagCode: string; searchNames: string[] }[] }> = {
   asia: {
     name: 'เอเชีย', nameEn: 'Asia',
     desc: 'เปิดโลกแห่งเอเชีย ให้ทุกการเดินทางเป็นความทรงจำที่ยิ่งใหญ่',
     countries: [
-      { name: 'ญี่ปุ่น', slug: 'japan', flagCode: 'jp' },
-      { name: 'เกาหลีใต้', slug: 'south-korea', flagCode: 'kr' },
-      { name: 'จีน', slug: 'china', flagCode: 'cn' },
-      { name: 'ไต้หวัน', slug: 'taiwan', flagCode: 'tw' },
-      { name: 'เวียดนาม', slug: 'vietnam', flagCode: 'vn' },
-      { name: 'ฮ่องกง', slug: 'hongkong', flagCode: 'hk' },
-      { name: 'สิงคโปร์', slug: 'singapore', flagCode: 'sg' },
-      { name: 'มาเลเซีย', slug: 'malaysia', flagCode: 'my' },
-      { name: 'อินเดีย', slug: 'india', flagCode: 'in' },
-      { name: 'กัมพูชา', slug: 'cambodia', flagCode: 'kh' },
-      { name: 'พม่า', slug: 'myanmar', flagCode: 'mm' },
-      { name: 'ลาว', slug: 'laos', flagCode: 'la' },
+      { name: 'ญี่ปุ่น', slug: 'japan', flagCode: 'jp', searchNames: ['ญี่ปุ่น', 'JAPAN'] },
+      { name: 'เกาหลีใต้', slug: 'south-korea', flagCode: 'kr', searchNames: ['เกาหลี', 'KOREA', 'SOUTH KOREA'] },
+      { name: 'จีน', slug: 'china', flagCode: 'cn', searchNames: ['จีน', 'CHINA'] },
+      { name: 'ไต้หวัน', slug: 'taiwan', flagCode: 'tw', searchNames: ['ไต้หวัน', 'TAIWAN'] },
+      { name: 'เวียดนาม', slug: 'vietnam', flagCode: 'vn', searchNames: ['เวียดนาม', 'VIETNAM'] },
+      { name: 'ฮ่องกง', slug: 'hongkong', flagCode: 'hk', searchNames: ['ฮ่องกง', 'HONG KONG'] },
+      { name: 'สิงคโปร์', slug: 'singapore', flagCode: 'sg', searchNames: ['สิงคโปร์', 'SINGAPORE'] },
+      { name: 'มาเลเซีย', slug: 'malaysia', flagCode: 'my', searchNames: ['มาเลเซีย', 'MALAYSIA'] },
+      { name: 'อินเดีย', slug: 'india', flagCode: 'in', searchNames: ['อินเดีย', 'INDIA'] },
+      { name: 'กัมพูชา', slug: 'cambodia', flagCode: 'kh', searchNames: ['กัมพูชา', 'CAMBODIA'] },
+      { name: 'พม่า', slug: 'myanmar', flagCode: 'mm', searchNames: ['พม่า', 'MYANMAR'] },
+      { name: 'ลาว', slug: 'laos', flagCode: 'la', searchNames: ['ลาว', 'LAOS'] },
+      { name: 'มาเก๊า', slug: 'macau', flagCode: 'mo', searchNames: ['มาเก๊า', 'MACAU'] },
     ],
   },
   europe: {
     name: 'ยุโรป', nameEn: 'Europe',
     desc: 'สัมผัสเสน่ห์ยุโรป วัฒนธรรมเก่าแก่ สถาปัตยกรรมอลังการ',
     countries: [
-      { name: 'อังกฤษ', slug: 'uk', flagCode: 'gb' },
-      { name: 'ฝรั่งเศส', slug: 'france', flagCode: 'fr' },
-      { name: 'อิตาลี', slug: 'italy', flagCode: 'it' },
-      { name: 'สวิตเซอร์แลนด์', slug: 'switzerland', flagCode: 'ch' },
-      { name: 'สเปน', slug: 'spain', flagCode: 'es' },
-      { name: 'ตุรกี', slug: 'turkey', flagCode: 'tr' },
-      { name: 'รัสเซีย', slug: 'russia', flagCode: 'ru' },
-      { name: 'จอร์เจีย', slug: 'georgia', flagCode: 'ge' },
-    ],
-  },
-  africa: {
-    name: 'แอฟริกา & ตะวันออกกลาง', nameEn: 'Africa & Middle East',
-    desc: 'ดินแดนมหัศจรรย์ อียิปต์ ดูไบ และอีกมากมาย',
-    countries: [
-      { name: 'อียิปต์', slug: 'egypt', flagCode: 'eg' },
-      { name: 'จอร์แดน', slug: 'jordan', flagCode: 'jo' },
-      { name: 'ตุรกี', slug: 'turkey', flagCode: 'tr' },
-      { name: 'ดูไบ', slug: 'dubai', flagCode: 'ae' },
+      { name: 'อังกฤษ', slug: 'uk', flagCode: 'gb', searchNames: ['อังกฤษ', 'ENGLAND', 'UK', 'UNITED KINGDOM'] },
+      { name: 'ฝรั่งเศส', slug: 'france', flagCode: 'fr', searchNames: ['ฝรั่งเศส', 'FRANCE'] },
+      { name: 'อิตาลี', slug: 'italy', flagCode: 'it', searchNames: ['อิตาลี', 'ITALY'] },
+      { name: 'สวิตเซอร์แลนด์', slug: 'switzerland', flagCode: 'ch', searchNames: ['สวิตเซอร์แลนด์', 'SWITZERLAND'] },
+      { name: 'สเปน', slug: 'spain', flagCode: 'es', searchNames: ['สเปน', 'SPAIN'] },
     ],
   },
   'middle-east': {
     name: 'ตะวันออกกลาง', nameEn: 'Middle East',
     desc: 'สัมผัสอารยธรรมโบราณ จากมหาพีระมิดอียิปต์สู่นครดูไบสุดอลังการ',
     countries: [
-      { name: 'อียิปต์', slug: 'egypt', flagCode: 'eg' },
-      { name: 'จอร์แดน', slug: 'jordan', flagCode: 'jo' },
-      { name: 'ตุรกี', slug: 'turkey', flagCode: 'tr' },
-      { name: 'ดูไบ', slug: 'dubai', flagCode: 'ae' },
+      { name: 'ตุรกี', slug: 'turkey', flagCode: 'tr', searchNames: ['ตุรกี', 'TURKIYE', 'TURKEY'] },
+      { name: 'อียิปต์', slug: 'egypt', flagCode: 'eg', searchNames: ['อียิปต์', 'EGYPT'] },
+      { name: 'จอร์แดน', slug: 'jordan', flagCode: 'jo', searchNames: ['จอร์แดน', 'JORDAN'] },
+      { name: 'ดูไบ', slug: 'dubai', flagCode: 'ae', searchNames: ['ดูไบ', 'สหรัฐอาหรับเอมิเรตส์', 'DUBAI', 'UAE'] },
     ],
   },
   americas: {
     name: 'อเมริกา', nameEn: 'Americas',
     desc: 'สำรวจทวีปอเมริกา จากมหานครนิวยอร์กถึงน้ำตกไนแองการ่า',
     countries: [
-      { name: 'อเมริกา', slug: 'usa', flagCode: 'us' },
-      { name: 'แคนาดา', slug: 'canada', flagCode: 'ca' },
+      { name: 'อเมริกา', slug: 'usa', flagCode: 'us', searchNames: ['อเมริกา', 'USA', 'UNITED STATES'] },
+      { name: 'แคนาดา', slug: 'canada', flagCode: 'ca', searchNames: ['แคนาดา', 'CANADA'] },
     ],
   },
   oceania: {
     name: 'โอเชียเนีย', nameEn: 'Oceania',
     desc: 'ออสเตรเลีย นิวซีแลนด์ ดินแดนธรรมชาติอันงดงาม',
     countries: [
-      { name: 'ออสเตรเลีย', slug: 'australia', flagCode: 'au' },
-      { name: 'นิวซีแลนด์', slug: 'newzealand', flagCode: 'nz' },
+      { name: 'ออสเตรเลีย', slug: 'australia', flagCode: 'au', searchNames: ['ออสเตรเลีย', 'AUSTRALIA'] },
+      { name: 'นิวซีแลนด์', slug: 'newzealand', flagCode: 'nz', searchNames: ['นิวซีแลนด์', 'NEW ZEALAND'] },
     ],
   },
   others: {
     name: 'ทวีป/ประเทศอื่นๆ', nameEn: 'Others',
     desc: 'สำรวจจุดหมายปลายทางใหม่ๆ ที่น่าค้นพบทั่วโลก',
     countries: [
-      { name: 'รัสเซีย', slug: 'russia', flagCode: 'ru' },
-      { name: 'จอร์เจีย', slug: 'georgia', flagCode: 'ge' },
-      { name: 'ภูฏาน', slug: 'bhutan', flagCode: 'bt' },
-      { name: 'ศรีลังกา', slug: 'srilanka', flagCode: 'lk' },
-      { name: 'มองโกเลีย', slug: 'mongolia', flagCode: 'mn' },
-      { name: 'เนปาล', slug: 'nepal', flagCode: 'np' },
-      { name: 'มัลดีฟส์', slug: 'maldives', flagCode: 'mv' },
-      { name: 'แอฟริกาใต้', slug: 'south-africa', flagCode: 'za' },
+      { name: 'จอร์เจีย', slug: 'georgia', flagCode: 'ge', searchNames: ['จอร์เจีย', 'GEORGIA'] },
+      { name: 'รัสเซีย', slug: 'russia', flagCode: 'ru', searchNames: ['รัสเซีย', 'RUSSIA'] },
+      { name: 'ภูฏาน', slug: 'bhutan', flagCode: 'bt', searchNames: ['ภูฏาน', 'ภูฎาน', 'BHUTAN'] },
+      { name: 'ศรีลังกา', slug: 'srilanka', flagCode: 'lk', searchNames: ['ศรีลังกา', 'SRI LANKA'] },
+      { name: 'มองโกเลีย', slug: 'mongolia', flagCode: 'mn', searchNames: ['มองโกเลีย', 'MONGOLIA'] },
+      { name: 'เนปาล', slug: 'nepal', flagCode: 'np', searchNames: ['เนปาล', 'NEPAL'] },
+      { name: 'มัลดีฟส์', slug: 'maldives', flagCode: 'mv', searchNames: ['มัลดีฟส์', 'MALDIVES'] },
+      { name: 'แอฟริกาใต้', slug: 'south-africa', flagCode: 'za', searchNames: ['แอฟริกาใต้', 'SOUTH AFRICA'] },
     ],
   },
 };
@@ -113,15 +101,18 @@ export default function RegionPage({ params }: { params: { slug: string[] } }) {
   const [loading, setLoading] = useState(true);
   const [activeCountry, setActiveCountry] = useState<string | null>(null);
 
-  // Fetch tours for EACH country separately then merge
+  // Fetch tours for EACH country (all searchNames) then merge
   useEffect(() => {
     setLoading(true);
     setTours([]);
-    const promises = region.countries.map(c =>
-      fetch(`/api/tours/list?country=${encodeURIComponent(c.name)}&limit=100`)
-        .then(r => r.json())
-        .then(d => (d.tours || []) as Tour[])
-        .catch(() => [] as Tour[])
+    // For each country, fetch all search name variants
+    const promises = region.countries.flatMap(c =>
+      c.searchNames.map(searchName =>
+        fetch(`/api/tours/list?country=${encodeURIComponent(searchName)}&limit=100`)
+          .then(r => r.json())
+          .then(d => (d.tours || []) as Tour[])
+          .catch(() => [] as Tour[])
+      )
     );
     Promise.all(promises).then(results => {
       const allTours = results.flat();
@@ -134,7 +125,13 @@ export default function RegionPage({ params }: { params: { slug: string[] } }) {
   }, [region]);
 
   const supplierGroups = useMemo(() => {
-    const filtered = activeCountry ? tours.filter(t => t.country === activeCountry) : tours;
+    const filtered = activeCountry
+      ? tours.filter(t => {
+          const countryConfig = region.countries.find(c => c.name === activeCountry);
+          if (!countryConfig) return t.country === activeCountry;
+          return countryConfig.searchNames.some(sn => sn.toUpperCase() === (t.country || '').toUpperCase());
+        })
+      : tours;
     const groups: Record<string, { tours: Tour[]; countries: Set<string> }> = {};
     filtered.forEach(t => {
       const key = (t.supplier || 'other').toLowerCase();
