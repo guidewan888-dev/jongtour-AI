@@ -102,10 +102,7 @@ const SUPPLIERS = [
   { key: "go365", name: "Go365", color: 'bg-green-500', logo: '/images/logos/download.jfif', priority: 4 },
 ];
 
-// Hero banners per region
-const REGION_HEROES: Record<string, string> = {
-  asia: '/images/banner/asia-hero.png',
-};
+// Hero banners removed — clean gradient for all regions
 
 const LINE_URL = 'https://line.me/R/ti/p/@jongtour';
 
@@ -156,24 +153,18 @@ export default function RegionPage({ params }: { params: { slug: string[] } }) {
 
   return (
     <div className="bg-white min-h-screen">
-      {/* Hero */}
-      {REGION_HEROES[regionKey] ? (
-        <section className="relative overflow-hidden">
-          <img src={REGION_HEROES[regionKey]} alt={`ทัวร์${region.name}`} className="w-full h-auto object-cover" />
-        </section>
-      ) : (
-        <section className="relative bg-gradient-to-br from-primary-600 via-primary-500 to-orange-400 text-white overflow-hidden">
-          <div className="absolute inset-0 opacity-10"><div className="absolute inset-0" style={{ backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)', backgroundSize: '24px 24px' }} /></div>
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 md:py-20 relative text-center">
-            <h1 className="text-3xl md:text-5xl font-black mb-3">เปิดโลกแห่ง{region.name}</h1>
-            <p className="text-white/80 text-base md:text-lg max-w-2xl mx-auto mb-8">{region.desc}</p>
-            <div className="flex flex-wrap justify-center gap-3">
-              <Link href="/search" className="bg-white text-primary-600 hover:bg-primary-50 px-6 py-3 rounded-full font-bold text-sm shadow-lg transition-all">🔍 ค้นหาแพ็กเกจทัวร์</Link>
-              <Link href="/search?type=wholesale" className="bg-white/20 hover:bg-white/30 text-white px-6 py-3 rounded-full font-bold text-sm backdrop-blur-sm border border-white/30 transition-all">🏢 ทัวร์ค้าส่ง (Wholesale)</Link>
-            </div>
+      {/* Hero — Clean gradient */}
+      <section className="relative bg-gradient-to-br from-primary-600 via-primary-500 to-orange-400 text-white overflow-hidden">
+        <div className="absolute inset-0 opacity-10"><div className="absolute inset-0" style={{ backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)', backgroundSize: '24px 24px' }} /></div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 md:py-20 relative text-center">
+          <h1 className="text-3xl md:text-5xl font-black mb-3">เปิดโลกแห่ง{region.name}</h1>
+          <p className="text-white/80 text-base md:text-lg max-w-2xl mx-auto mb-8">{region.desc}</p>
+          <div className="flex flex-wrap justify-center gap-3">
+            <Link href="/search" className="bg-white text-primary-600 hover:bg-primary-50 px-6 py-3 rounded-full font-bold text-sm shadow-lg transition-all">🔍 ค้นหาแพ็กเกจทัวร์</Link>
+            <Link href="/search?type=wholesale" className="bg-white/20 hover:bg-white/30 text-white px-6 py-3 rounded-full font-bold text-sm backdrop-blur-sm border border-white/30 transition-all">🏢 ทัวร์ค้าส่ง (Wholesale)</Link>
           </div>
-        </section>
-      )}
+        </div>
+      </section>
 
       {/* Trust Bar */}
       <div className="bg-slate-50 border-b border-slate-200 py-3">
