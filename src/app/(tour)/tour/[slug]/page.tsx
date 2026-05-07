@@ -43,15 +43,22 @@ export default function TourDetailPage({ params }: { params: { slug: string } })
     }).catch(()=>setErr('เกิดข้อผิดพลาด')).finally(()=>setLoading(false));
   }, [params.slug]);
 
+  const mapTour = (t: any): RecTour => ({ slug: t.slug, title: t.title || t.tourName || '', code: t.code || t.tourCode || '', imageUrl: t.imageUrl || t.images?.[0] || '', price: t.price || t.startingPrice || 0, days: t.days || t.durationDays || 0, nights: t.nights || t.durationNights || 0, country: t.country || '', supplierName: t.supplierName || '' });
+
   const fetchRecs = async (country: string, currentSlug: string) => {
     try {
-      const r = await fetch(`/api/tours/list?country=${encodeURIComponent(country)}&limit=10`);
-      const d = await r.json();
-      if (d.tours) {
-        const filtered = d.tours.filter((t: any) => t.slug !== currentSlug);
-        const shuffled = filtered.sort(() => Math.random() - 0.5).slice(0, 4);
-        setRecs(shuffled.map((t: any) => ({ slug: t.slug, title: t.title || t.tourName || '', code: t.code || t.tourCode || '', imageUrl: t.imageUrl || t.images?.[0] || '', price: t.price || t.startingPrice || 0, days: t.days || t.durationDays || 0, nights: t.nights || t.durationNights || 0, country: t.country || '', supplierName: t.supplierName || '' })));
+      // Try same country first
+      let r = await fetch(`/api/tours/list?country=${encodeURIComponent(country)}&limit=20`);
+      let d = await r.json();
+      let filtered = (d.tours || []).filter((t: any) => t.slug !== currentSlug);
+      // Fallback to all tours if country returns too few
+      if (filtered.length < 4) {
+        r = await fetch('/api/tours/list?limit=20');
+        d = await r.json();
+        filtered = (d.tours || []).filter((t: any) => t.slug !== currentSlug);
       }
+      const shuffled = filtered.sort(() => Math.random() - 0.5).slice(0, 4);
+      setRecs(shuffled.map(mapTour));
     } catch {}
   };
 
@@ -78,8 +85,8 @@ export default function TourDetailPage({ params }: { params: { slug: string } })
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
           <div className="flex flex-col lg:flex-row gap-5">
             {/* IMAGE */}
-            <div className="lg:w-[45%] rounded-xl overflow-hidden bg-gradient-to-br from-slate-800 to-slate-900 relative flex-shrink-0" style={{minHeight:280}}>
-              <img src={tour.images[0]} alt={tour.title} className="w-full h-full object-contain absolute inset-0"/>
+            <div className="lg:w-[45%] rounded-xl overflow-hidden bg-slate-100 relative flex-shrink-0" style={{minHeight:280}}>
+              <img src={tour.images[0]} alt={tour.title} className="w-full h-full object-fill absolute inset-0" style={{objectPosition:'center'}}/>
               <div className="absolute top-2.5 left-2.5 bg-black/60 text-white text-xs font-bold px-2.5 py-1 rounded">{tour.code}</div>
               <div className="absolute top-2.5 right-2.5 flex gap-1">
                 <span className="bg-primary-600 text-white text-xs font-bold px-2 py-0.5 rounded">{tour.duration.days}วัน</span>
@@ -193,9 +200,19 @@ export default function TourDetailPage({ params }: { params: { slug: string } })
         </div>
       </div>
 
+      {/* ─── TRUST BADGES ─── */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-6">
+        <div className="bg-white rounded-xl border border-slate-200 p-4 flex flex-wrap items-center justify-center gap-6 text-xs text-slate-500">
+          <span className="flex items-center gap-1.5">✅ <b className="text-slate-700">บริษัทจดทะเบียนถูกต้อง</b></span>
+          <span className="flex items-center gap-1.5">⭐ <b className="text-slate-700">รีวิวจากลูกค้าจริง มากกว่า 5,000 รีวิว</b></span>
+          <span className="flex items-center gap-1.5">🔒 <b className="text-slate-700">ชำระเงินปลอดภัย</b></span>
+          <span className="flex items-center gap-1.5">👨‍✈️ <b className="text-slate-700">ทีมงานดูแลตลอดการเดินทาง</b></span>
+        </div>
+      </div>
+
       {/* ─── RECOMMENDED TOURS ─── */}
       {recs.length > 0 && <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-8">
-        <h3 className="text-base font-bold text-slate-900 mb-4">🔥 ทัวร์แนะนำที่คล้ายกัน</h3>
+        <h3 className="text-base font-bold text-slate-900 mb-4">🔥 โปรแกรมทัวร์แนะนำ</h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {recs.map(r => (
             <Link key={r.slug} href={`/tour/${r.slug}`} className="group bg-white rounded-xl border border-slate-200 overflow-hidden hover:shadow-lg hover:-translate-y-0.5 transition-all">
