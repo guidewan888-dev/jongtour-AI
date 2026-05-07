@@ -18,7 +18,7 @@ const quickActions = [
   { icon: "⚖️", label: "เปรียบเทียบโปรแกรม" },
 ];
 
-type Tour = { id: string; title: string; price: number; durationDays: number; slug?: string };
+type Tour = { id: string; title: string; price: number; durationDays: number; slug?: string; code?: string; imageUrl?: string; supplierName?: string; destination?: string };
 type Msg = { role: "user" | "ai"; text: string; time: string; tours?: Tour[] };
 
 export default function TourHomePage() {
@@ -64,9 +64,15 @@ export default function TourHomePage() {
         try {
           const parsed = JSON.parse(dataMatch[1]);
           tours = (parsed.tours || []).map((t: any) => ({
-            id: t.id || String(Math.random()), title: t.title || t.tourName || "",
-            price: t.price || t.startingPrice || 0, durationDays: t.durationDays || 0,
-            slug: t.slug || t.id || "",
+            id: t.id || String(Math.random()),
+            title: t.title || t.tourName || "",
+            price: t.price || t.startingPrice || 0,
+            durationDays: t.durationDays || 0,
+            slug: t.slug || t.code || t.id || "",
+            code: t.code || "",
+            imageUrl: t.imageUrl || null,
+            supplierName: t.supplierName || t.supplier_name || "",
+            destination: t.destination || "",
           }));
         } catch {}
       }
@@ -151,14 +157,35 @@ export default function TourHomePage() {
                   </div>
                 </div>
                 {m.tours && m.tours.length > 0 && (
-                  <div className="flex flex-col gap-1.5 mt-1.5 ml-10">
+                  <div className="flex flex-col gap-2 mt-2 ml-10">
                     {m.tours.slice(0, 5).map((t) => (
-                      <Link key={t.id} href={`/tours/detail/${t.slug || t.id}`} className="flex items-center justify-between gap-3 px-4 py-3 bg-white border border-slate-100 rounded-xl no-underline hover:border-orange-200 hover:shadow-sm transition-all">
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-semibold text-slate-800 m-0 truncate">{t.title}</p>
-                          <p className="text-xs text-slate-400 m-0 mt-0.5">{t.durationDays ? `${t.durationDays} วัน` : ""}</p>
+                      <Link key={t.id} href={`/tour/${t.slug || t.code || t.id}`} className="flex items-center gap-3 px-3 py-2.5 bg-white border border-slate-200 rounded-xl no-underline hover:border-orange-300 hover:shadow-md transition-all group">
+                        {/* Thumbnail */}
+                        <div className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 bg-slate-100">
+                          {t.imageUrl ? (
+                            <img src={t.imageUrl} alt={t.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300" loading="lazy" />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-2xl bg-gradient-to-br from-orange-50 to-amber-50">🏝️</div>
+                          )}
                         </div>
-                        <span className="text-sm font-bold text-orange-600 whitespace-nowrap">{t.price ? `฿${Number(t.price).toLocaleString()}` : ""}</span>
+                        {/* Info */}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold text-slate-800 m-0 truncate group-hover:text-orange-600 transition-colors">{t.title}</p>
+                          <div className="flex items-center gap-2 mt-0.5">
+                            {t.durationDays ? <span className="text-[0.7rem] text-slate-400">⏱ {t.durationDays} วัน</span> : null}
+                            {t.destination ? <span className="text-[0.7rem] text-slate-400">📍 {t.destination}</span> : null}
+                          </div>
+                          {t.supplierName && <p className="text-[0.65rem] text-slate-400 m-0 mt-0.5">🏢 {t.supplierName}</p>}
+                        </div>
+                        {/* Price */}
+                        <div className="text-right flex-shrink-0">
+                          {t.price ? (
+                            <>
+                              <span className="text-base font-bold text-orange-600">฿{Number(t.price).toLocaleString()}</span>
+                              <span className="block text-[0.6rem] text-slate-400">เริ่มต้น/ท่าน</span>
+                            </>
+                          ) : <span className="text-xs text-slate-400">สอบถามราคา</span>}
+                        </div>
                       </Link>
                     ))}
                   </div>

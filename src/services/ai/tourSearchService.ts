@@ -106,7 +106,8 @@ export async function searchTours(
         include: { prices: true }
       },
       destinations: true,
-      supplier: true
+      supplier: true,
+      images: { where: { isCover: true }, take: 1 }
     },
     orderBy: { createdAt: 'desc' },
     take: 50
@@ -114,11 +115,16 @@ export async function searchTours(
 
   let tours = toursData.map((t: any) => ({
     id: t.id,
+    slug: t.slug,
     title: t.tourName,
     code: t.tourCode,
+    imageUrl: t.images?.[0]?.imageUrl || null,
+    durationDays: t.durationDays,
+    durationNights: t.durationNights,
     price: t.departures.length > 0 ? Math.min(...t.departures.map((d: any) => d.prices?.[0]?.sellingPrice || 0)) : 0,
     source: t.supplier?.canonicalName || 'UNKNOWN',
     providerId: t.supplier?.canonicalName,
+    supplierName: t.supplier?.displayName || t.supplier?.canonicalName || '',
     destination: t.destinations?.[0]?.country || 'ไม่ระบุ',
     departures: t.departures.map((d: any) => ({
       startDate: d.startDate,
@@ -196,13 +202,17 @@ export async function searchTours(
 export function formatTourSummary(tours: any[]) {
   return tours.map((t: any) => ({ 
     id: t.id,
+    slug: t.slug,
     title: t.title, 
     price: t.price, 
-    code: t.code, 
+    code: t.code,
+    imageUrl: t.imageUrl || null,
+    durationDays: t.durationDays || 0,
+    durationNights: t.durationNights || 0,
     destination: t.destination,
     airline: t.airlineCode || t.airlines || "-",
     supplier_id: t.source,
-    supplier_name: supplierMaster.find(s => s.supplier_id === t.source)?.canonical_name || t.providerId || t.source,
+    supplier_name: supplierMaster.find(s => s.supplier_id === t.source)?.canonical_name || t.supplierName || t.providerId || t.source,
     available_departures: t.departures ? t.departures
       .filter((d: any) => new Date(d.startDate) >= new Date())
       .sort((a: any, b: any) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime())
