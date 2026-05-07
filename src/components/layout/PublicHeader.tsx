@@ -12,6 +12,8 @@ const gridItems = [
   { label: "เกี่ยวกับเรา", href: "/about", icon: "🏢", color: "#1A73E8" },
   { label: "ชำระเงิน", href: "/payment-guide", icon: "💳", color: "#FBBC05" },
   { label: "ร่วมงานกับเรา", href: "/careers", icon: "🤝", color: "#34A853" },
+  { label: "Affiliate", href: "/affiliate", icon: "🎯", color: "#E91E63" },
+  { label: "Wholesale", href: "/wholesale-partners", icon: "🏭", color: "#00BCD4" },
   { label: "ติดต่อ", href: "/contact", icon: "📞", color: "#34A853" },
   { label: "เข้าสู่ระบบ", href: "/login", icon: "👤", color: "#7B1FA2" },
   { label: "B2B Agent", href: "/agent", icon: "💼", color: "#455A64" },
