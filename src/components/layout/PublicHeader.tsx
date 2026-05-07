@@ -65,6 +65,27 @@ export default function PublicHeader() {
             </span>
           </Link>
 
+          {/* Desktop Nav Links */}
+          <nav className="hidden lg:flex items-center gap-1 ml-6">
+            {[
+              { label: "ค้นหาทัวร์", href: "/search", icon: "🔍" },
+              { label: "บริการวีซ่า", href: "/visa", icon: "🛂" },
+              { label: "AI จัดทริป", href: "/private-group", icon: "✈️" },
+              { label: "ทัวร์ไฟไหม้", href: "/deals/flash-sale", icon: "🔥" },
+              { label: "เกี่ยวกับเรา", href: "/about", icon: "🏢" },
+              { label: "ติดต่อ", href: "/contact", icon: "📞" },
+            ].map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className="flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-slate-600 hover:text-primary-600 hover:bg-primary-50 rounded-full transition-colors"
+              >
+                <span className="text-xs">{item.icon}</span>
+                {item.label}
+              </Link>
+            ))}
+          </nav>
+
           {/* Spacer */}
           <div className="flex-1" />
 
