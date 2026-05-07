@@ -26,18 +26,30 @@ export default function PaymentPage() {
     const s = getBookingSession();
     if (!s?.tourId || !s.travelers?.length) { router.replace("/search"); return; }
     setSession(s);
-    // Default to deposit if available
-    if ((s.totalDeposit || 0) > 0) setPayType("DEPOSIT");
+    // Calculate days until departure
+    const daysUntil = Math.ceil((new Date(s.departureDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+    // Default: deposit if available AND departure > 30 days
+    if ((s.totalDeposit || 0) > 0 && daysUntil > 30) setPayType("DEPOSIT");
+    else setPayType("FULL");
   }, [router]);
 
-  const totalFull = useMemo(() => session?.totalPrice || calculateTotal(session!), [session]);
+  const totalFull = useMemo(() => {
+    if (!session) return 0;
+    return session.totalPrice || calculateTotal(session);
+  }, [session]);
   const depositAmount = useMemo(() => session?.totalDeposit || 0, [session]);
+  const daysUntilDeparture = useMemo(() => {
+    if (!session) return 999;
+    return Math.ceil((new Date(session.departureDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+  }, [session]);
+  const canDeposit = depositAmount > 0 && daysUntilDeparture > 30;
+  const remainingAfterDeposit = totalFull - depositAmount;
 
   const amountToPay = useMemo(() => {
     if (payType === "LATER") return 0;
-    if (payType === "DEPOSIT") return depositAmount;
+    if (payType === "DEPOSIT" && canDeposit) return depositAmount;
     return totalFull;
-  }, [payType, totalFull, depositAmount]);
+  }, [payType, totalFull, depositAmount, canDeposit]);
 
   const copyText = (text: string, label: string) => {
     navigator.clipboard.writeText(text);
@@ -152,8 +164,8 @@ export default function PaymentPage() {
               </div>
             </label>
 
-            {/* Option 2: Deposit */}
-            {depositAmount > 0 && (
+            {/* Option 2: Deposit — only if > 30 days */}
+            {canDeposit && (
               <label className={`flex items-start gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all ${payType === "DEPOSIT" ? "border-orange-400 bg-orange-50" : "border-slate-200 hover:border-slate-300"}`}>
                 <input type="radio" name="payType" checked={payType === "DEPOSIT"} onChange={() => setPayType("DEPOSIT")} className="w-4 h-4 mt-1 text-orange-500 focus:ring-orange-400" />
                 <div className="flex-1">
@@ -161,13 +173,20 @@ export default function PaymentPage() {
                     💳 ชำระมัดจำ
                     <span className="px-2 py-0.5 bg-orange-100 text-orange-700 text-[10px] font-bold rounded-full">ยอดนิยม</span>
                   </div>
-                  <p className="text-xs text-slate-500 mt-1">ชำระมัดจำเพื่อยืนยันที่นั่ง ส่วนที่เหลือชำระก่อนเดินทาง 15 วัน</p>
+                  <p className="text-xs text-slate-500 mt-1">ชำระมัดจำเพื่อยืนยันที่นั่ง ส่วนที่เหลือชำระก่อนการเดินทาง 30 วัน</p>
                 </div>
                 <div className="text-right shrink-0">
                   <div className="font-bold text-orange-600">{fmt(depositAmount)}</div>
                   <div className="text-[10px] text-slate-400">มัดจำ</div>
                 </div>
               </label>
+            )}
+            {/* Deposit not available notice */}
+            {depositAmount > 0 && !canDeposit && (
+              <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-xs text-red-700 flex items-start gap-2">
+                <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
+                <span>วันเดินทางอยู่ภายใน 30 วัน จำเป็นต้อง<strong>ชำระเต็มจำนวน</strong>เท่านั้น (ไม่สามารถเลือกมัดจำได้)</span>
+              </div>
             )}
 
             {/* Option 3: Full */}
@@ -185,6 +204,19 @@ export default function PaymentPage() {
               </div>
             </label>
           </div>
+
+          {/* Deposit explanation */}
+          {payType === "DEPOSIT" && canDeposit && (
+            <div className="mt-4 p-4 bg-orange-50 border border-orange-200 rounded-xl space-y-2">
+              <h4 className="font-bold text-orange-800 text-sm flex items-center gap-2">📋 เงื่อนไขการชำระมัดจำ</h4>
+              <ul className="text-xs text-orange-700 space-y-1.5 list-disc list-inside">
+                <li>ชำระมัดจำ <strong>{fmt(depositAmount)}</strong> เพื่อยืนยันการจองที่นั่ง</li>
+                <li>ส่วนที่เหลือ <strong>{fmt(remainingAfterDeposit)}</strong> ชำระก่อนการเดินทางอย่างน้อย 30 วัน</li>
+                <li>หากไม่ชำระส่วนที่เหลือตามกำหนด ระบบจะยกเลิกการจองและสงวนสิทธิ์ไม่คืนมัดจำ</li>
+                <li>เมื่อชำระมัดจำแล้ว ทีมงานจะส่งอีเมลยืนยันและรายละเอียดการชำระส่วนที่เหลือ</li>
+              </ul>
+            </div>
+          )}
         </div>
 
         {/* ─── STEP 2: Payment Method (hide for "pay later") ─── */}
