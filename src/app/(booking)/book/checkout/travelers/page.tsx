@@ -7,7 +7,7 @@ import { User, Phone, Mail, FileText, Plus, Trash2, AlertCircle } from "lucide-r
 import { getBookingSession, setBookingSession, type BookingTraveler, type BookingSession } from "@/lib/bookingSession";
 
 const emptyTraveler = (): BookingTraveler => ({
-  titleTh: "นาย",
+  titleTh: "Mr.",
   firstNameTh: "",
   lastNameTh: "",
   firstNameEn: "",
@@ -118,13 +118,13 @@ export default function TravelersPage() {
                   <h3 className="font-bold text-slate-900 flex items-center gap-2"><User className="w-5 h-5 text-primary-600" /> ผู้เดินทางคนที่ {idx + 1}</h3>
                   {travelers.length > 1 && <button onClick={() => removeTraveler(idx)} className="text-red-400 hover:text-red-600 transition-colors"><Trash2 className="w-4 h-4" /></button>}
                 </div>
+                <div className="mb-4">
+                  <label className="text-sm font-medium text-slate-700 mb-1 block">Title (คำนำหน้า)</label>
+                  <select value={traveler.titleTh} onChange={e => updateTraveler(idx, "titleTh", e.target.value)} className="w-48 border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-primary-200 focus:border-primary-500 outline-none">
+                    <option>Mr.</option><option>Mrs.</option><option>Miss</option><option>Master</option><option>Ms.</option>
+                  </select>
+                </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div>
-                    <label className="text-sm font-medium text-slate-700 mb-1 block">คำนำหน้า</label>
-                    <select value={traveler.titleTh} onChange={e => updateTraveler(idx, "titleTh", e.target.value)} className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-primary-200 focus:border-primary-500 outline-none">
-                      <option>นาย</option><option>นาง</option><option>นางสาว</option><option>เด็กชาย</option><option>เด็กหญิง</option>
-                    </select>
-                  </div>
                   <div>
                     <label className="text-sm font-medium text-slate-700 mb-1 block">ชื่อ (EN) *</label>
                     <input type="text" placeholder="First Name" value={traveler.firstNameEn} onChange={e => updateTraveler(idx, "firstNameEn", e.target.value)} className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-primary-200 focus:border-primary-500 outline-none" />
@@ -152,6 +152,7 @@ export default function TravelersPage() {
             <button onClick={addTraveler} className="w-full border-2 border-dashed border-slate-200 rounded-2xl py-4 text-slate-500 hover:border-primary-500 hover:text-primary-600 transition-colors flex items-center justify-center gap-2 font-medium">
               <Plus className="w-5 h-5" /> เพิ่มผู้เดินทาง
             </button>
+            <p className="text-center text-xs text-emerald-600 bg-emerald-50 rounded-lg py-2">💡 สามารถใส่ชื่อผู้เดินทางได้ทีหลัง — กรอกแค่ข้อมูลผู้ติดต่อเพื่อจองก่อนได้เลย</p>
 
             {/* Contact Info */}
             <div className="bg-white rounded-xl border border-slate-200 p-5">
