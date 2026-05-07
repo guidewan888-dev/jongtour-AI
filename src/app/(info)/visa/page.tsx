@@ -1,47 +1,61 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Search, Shield, Clock, CheckCircle, Star, Globe, FileText, Plane, Hotel, MessageCircle, ArrowRight, Phone } from "lucide-react";
+import { Search, Shield, Clock, CheckCircle, Star, Phone } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "บริการรับยื่นวีซ่า ครบวงจรทุกประเทศ | Jongtour",
   description: "Jongtour รับทำวีซ่าต่างประเทศ ครอบคลุมกว่า 50 ประเทศ ทั้งวีซ่าท่องเที่ยว เยี่ยมเยียน ธุรกิจ ด้วยทีมมืออาชีพ ปรึกษาฟรี!",
 };
 
+/* ─── Flag Component (uses flagcdn.com for cross-platform flag images) ─── */
+const Flag = ({ code, size = 24 }: { code: string; size?: number }) => (
+  // eslint-disable-next-line @next/next/no-img-element
+  <img
+    src={`https://flagcdn.com/w${size * 2}/${code.toLowerCase()}.png`}
+    srcSet={`https://flagcdn.com/w${size * 3}/${code.toLowerCase()}.png 2x`}
+    width={size}
+    height={Math.round(size * 0.75)}
+    alt={code.toUpperCase()}
+    className="rounded-sm object-cover inline-block"
+    loading="lazy"
+  />
+);
+
 const popular = [
-  { flag: "🇺🇸", name: "อเมริกา", slug: "america", price: "5,500", days: "Interview" },
-  { flag: "🇬🇧", name: "อังกฤษ", slug: "england", price: "4,000", days: "15-20" },
-  { flag: "🇦🇺", name: "ออสเตรเลีย", slug: "australia", price: "3,500", days: "10-15" },
-  { flag: "🇨🇦", name: "แคนาดา", slug: "canada", price: "4,500", days: "15-30" },
-  { flag: "🇯🇵", name: "ญี่ปุ่น", slug: "japan", price: "1,500", days: "5-7" },
-  { flag: "🇨🇳", name: "จีน", slug: "china", price: "2,000", days: "7-10" },
+  { code: "us", name: "อเมริกา", slug: "america", price: "5,500", days: "Interview" },
+  { code: "gb", name: "อังกฤษ", slug: "england", price: "4,000", days: "15-20" },
+  { code: "au", name: "ออสเตรเลีย", slug: "australia", price: "3,500", days: "10-15" },
+  { code: "ca", name: "แคนาดา", slug: "canada", price: "4,500", days: "15-30" },
+  { code: "jp", name: "ญี่ปุ่น", slug: "japan", price: "1,500", days: "5-7" },
+  { code: "cn", name: "จีน", slug: "china", price: "2,000", days: "7-10" },
 ];
 const schengen = [
-  { flag: "🇫🇷", name: "ฝรั่งเศส", slug: "france" }, { flag: "🇩🇪", name: "เยอรมนี", slug: "germany" },
-  { flag: "🇮🇹", name: "อิตาลี", slug: "italy" }, { flag: "🇪🇸", name: "สเปน", slug: "spain" },
-  { flag: "🇨🇭", name: "สวิตเซอร์แลนด์", slug: "switzerland" }, { flag: "🇳🇱", name: "เนเธอร์แลนด์", slug: "netherlands" },
-  { flag: "🇦🇹", name: "ออสเตรีย", slug: "austria" }, { flag: "🇬🇷", name: "กรีซ", slug: "greece" },
-  { flag: "🇵🇹", name: "โปรตุเกส", slug: "portugal" }, { flag: "🇧🇪", name: "เบลเยียม", slug: "belgium" },
-  { flag: "🇸🇪", name: "สวีเดน", slug: "sweden" }, { flag: "🇳🇴", name: "นอร์เวย์", slug: "norway" },
-  { flag: "🇫🇮", name: "ฟินแลนด์", slug: "finland" }, { flag: "🇩🇰", name: "เดนมาร์ก", slug: "denmark" },
-  { flag: "🇨🇿", name: "เช็ก", slug: "czech" }, { flag: "🇭🇺", name: "ฮังการี", slug: "hungary" },
-  { flag: "🇵🇱", name: "โปแลนด์", slug: "poland" }, { flag: "🇮🇸", name: "ไอซ์แลนด์", slug: "iceland" },
-  { flag: "🇮🇪", name: "ไอร์แลนด์", slug: "ireland" }, { flag: "🇭🇷", name: "โครเอเชีย", slug: "croatia" },
+  { code: "fr", name: "ฝรั่งเศส", slug: "france" }, { code: "de", name: "เยอรมนี", slug: "germany" },
+  { code: "it", name: "อิตาลี", slug: "italy" }, { code: "es", name: "สเปน", slug: "spain" },
+  { code: "ch", name: "สวิตเซอร์แลนด์", slug: "switzerland" }, { code: "nl", name: "เนเธอร์แลนด์", slug: "netherlands" },
+  { code: "at", name: "ออสเตรีย", slug: "austria" }, { code: "gr", name: "กรีซ", slug: "greece" },
+  { code: "pt", name: "โปรตุเกส", slug: "portugal" }, { code: "be", name: "เบลเยียม", slug: "belgium" },
+  { code: "se", name: "สวีเดน", slug: "sweden" }, { code: "no", name: "นอร์เวย์", slug: "norway" },
+  { code: "fi", name: "ฟินแลนด์", slug: "finland" }, { code: "dk", name: "เดนมาร์ก", slug: "denmark" },
+  { code: "cz", name: "เช็ก", slug: "czech" }, { code: "hu", name: "ฮังการี", slug: "hungary" },
+  { code: "pl", name: "โปแลนด์", slug: "poland" }, { code: "is", name: "ไอซ์แลนด์", slug: "iceland" },
+  { code: "ie", name: "ไอร์แลนด์", slug: "ireland" }, { code: "hr", name: "โครเอเชีย", slug: "croatia" },
 ];
 const asia = [
-  { flag: "🇰🇷", name: "เกาหลีใต้", slug: "korea" }, { flag: "🇮🇳", name: "อินเดีย", slug: "india" },
-  { flag: "🇹🇼", name: "ไต้หวัน", slug: "taiwan" }, { flag: "🇳🇿", name: "นิวซีแลนด์", slug: "newzealand" },
-  { flag: "🇲🇳", name: "มองโกเลีย", slug: "mongolia" }, { flag: "🇳🇵", name: "เนปาล", slug: "nepal" },
-  { flag: "🇰🇭", name: "กัมพูชา", slug: "cambodia" }, { flag: "🇲🇲", name: "พม่า", slug: "myanmar" },
-  { flag: "🇧🇳", name: "บรูไน", slug: "brunei" }, { flag: "🇧🇩", name: "บังกลาเทศ", slug: "bangladesh" },
+  { code: "kr", name: "เกาหลีใต้", slug: "korea" }, { code: "in", name: "อินเดีย", slug: "india" },
+  { code: "tw", name: "ไต้หวัน", slug: "taiwan" }, { code: "nz", name: "นิวซีแลนด์", slug: "newzealand" },
+  { code: "mn", name: "มองโกเลีย", slug: "mongolia" }, { code: "np", name: "เนปาล", slug: "nepal" },
+  { code: "kh", name: "กัมพูชา", slug: "cambodia" }, { code: "mm", name: "พม่า", slug: "myanmar" },
+  { code: "bn", name: "บรูไน", slug: "brunei" }, { code: "bd", name: "บังกลาเทศ", slug: "bangladesh" },
 ];
 const middleEast = [
-  { flag: "🇹🇷", name: "ตุรกี", slug: "turkey" }, { flag: "🇦🇪", name: "UAE", slug: "uae" },
-  { flag: "🇮🇷", name: "อิหร่าน", slug: "iran" }, { flag: "🇰🇪", name: "เคนยา", slug: "kenya" },
-  { flag: "🇲🇦", name: "โมร็อกโก", slug: "morocco" }, { flag: "🌍", name: "แอฟริกาตะวันออก", slug: "east-africa" },
+  { code: "tr", name: "ตุรกี", slug: "turkey" }, { code: "ae", name: "UAE", slug: "uae" },
+  { code: "ir", name: "อิหร่าน", slug: "iran" }, { code: "ke", name: "เคนยา", slug: "kenya" },
+  { code: "ma", name: "โมร็อกโก", slug: "morocco" }, { code: "tz", name: "แอฟริกาตะวันออก", slug: "east-africa" },
 ];
 const americas = [
-  { flag: "🇺🇸", name: "อเมริกา", slug: "america" }, { flag: "🇨🇦", name: "แคนาดา", slug: "canada" },
-  { flag: "🇲🇽", name: "เม็กซิโก", slug: "mexico" },
+  { code: "us", name: "อเมริกา", slug: "america" }, { code: "ca", name: "แคนาดา", slug: "canada" },
+  { code: "mx", name: "เม็กซิโก", slug: "mexico" },
 ];
 
 const steps = [
@@ -58,11 +72,11 @@ const addons = [
   { icon: "🏨", title: "จองโรงแรม", desc: "ใบจองโชว์วีซ่า ยกเลิกฟรี", price: "฿300/คืน", href: "/visa/hotel-booking" },
 ];
 
-const ChipGrid = ({ items, region }: { items: { flag: string; name: string; slug: string }[]; region?: string }) => (
+const ChipGrid = ({ items }: { items: { code: string; name: string; slug: string }[] }) => (
   <div className="flex flex-wrap gap-2">
     {items.map(c => (
-      <Link key={c.slug} href={`/visa/${c.slug}`} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 rounded-full text-sm hover:border-primary hover:shadow-sm transition-all">
-        <span>{c.flag}</span><span className="font-medium text-slate-700">{c.name}</span>
+      <Link key={c.slug} href={`/visa/${c.slug}`} className="inline-flex items-center gap-2 px-3 py-1.5 bg-white border border-slate-200 rounded-full text-sm hover:border-primary hover:shadow-sm transition-all">
+        <Flag code={c.code} size={20} /><span className="font-medium text-slate-700">{c.name}</span>
       </Link>
     ))}
   </div>
@@ -114,7 +128,7 @@ export default function VisaHubPage() {
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
             {popular.map(c => (
               <Link key={c.slug} href={`/visa/${c.slug}`} className="g-card p-5 flex items-center gap-4 hover:shadow-lg hover:-translate-y-0.5 transition-all">
-                <span className="text-4xl">{c.flag}</span>
+                <Flag code={c.code} size={40} />
                 <div className="flex-1 min-w-0">
                   <h3 className="font-bold text-slate-900">{c.name}</h3>
                   <p className="text-xs text-slate-500">ระยะเวลา {c.days} วัน</p>
@@ -129,9 +143,9 @@ export default function VisaHubPage() {
       {/* 6-9. Region Grids */}
       <section className="g-section bg-slate-50">
         <div className="g-container space-y-8">
-          <div><div className="flex items-center justify-between mb-3"><h3 className="font-bold text-slate-900">🇪🇺 เชงเก้น & ยุโรป</h3><Link href="/visa/schengen" className="text-sm text-primary font-medium">ดูทั้งหมด →</Link></div><ChipGrid items={schengen} /></div>
-          <div><div className="flex items-center justify-between mb-3"><h3 className="font-bold text-slate-900">🌏 เอเชีย & โอเชียเนีย</h3><Link href="/visa/asia-oceania" className="text-sm text-primary font-medium">ดูทั้งหมด →</Link></div><ChipGrid items={asia} /></div>
-          <div><div className="flex items-center justify-between mb-3"><h3 className="font-bold text-slate-900">🌍 ตะวันออกกลาง & แอฟริกา</h3><Link href="/visa/middle-east-africa" className="text-sm text-primary font-medium">ดูทั้งหมด →</Link></div><ChipGrid items={middleEast} /></div>
+          <div><div className="flex items-center justify-between mb-3"><h3 className="font-bold text-slate-900 flex items-center gap-2"><Flag code="eu" size={20} /> เชงเก้น &amp; ยุโรป</h3><Link href="/visa/schengen" className="text-sm text-primary font-medium">ดูทั้งหมด →</Link></div><ChipGrid items={schengen} /></div>
+          <div><div className="flex items-center justify-between mb-3"><h3 className="font-bold text-slate-900">🌏 เอเชีย &amp; โอเชียเนีย</h3><Link href="/visa/asia-oceania" className="text-sm text-primary font-medium">ดูทั้งหมด →</Link></div><ChipGrid items={asia} /></div>
+          <div><div className="flex items-center justify-between mb-3"><h3 className="font-bold text-slate-900">🌍 ตะวันออกกลาง &amp; แอฟริกา</h3><Link href="/visa/middle-east-africa" className="text-sm text-primary font-medium">ดูทั้งหมด →</Link></div><ChipGrid items={middleEast} /></div>
           <div><div className="flex items-center justify-between mb-3"><h3 className="font-bold text-slate-900">🌎 อเมริกา</h3><Link href="/visa/americas" className="text-sm text-primary font-medium">ดูทั้งหมด →</Link></div><ChipGrid items={americas} /></div>
         </div>
       </section>
@@ -161,13 +175,13 @@ export default function VisaHubPage() {
             <table className="w-full text-sm"><thead className="bg-slate-50 border-b"><tr><th className="text-left px-4 py-3">ประเทศ</th><th className="text-center px-3 py-3">ค่าบริการ</th><th className="text-center px-3 py-3">ค่าสถานทูต</th><th className="text-center px-3 py-3">ระยะเวลา</th></tr></thead>
               <tbody className="divide-y divide-slate-50">
                 {[
-                  { f: "🇯🇵", n: "ญี่ปุ่น", s: "฿1,500", e: "ฟรี", d: "5-7 วัน" },
-                  { f: "🇨🇳", n: "จีน", s: "฿2,000", e: "฿1,500", d: "7-10 วัน" },
-                  { f: "🇪🇺", n: "เชงเก้น", s: "฿3,500", e: "€80", d: "10-15 วัน" },
-                  { f: "🇬🇧", n: "อังกฤษ", s: "฿4,000", e: "£100", d: "15-20 วัน" },
-                  { f: "🇺🇸", n: "อเมริกา", s: "฿5,500", e: "$185", d: "สัมภาษณ์" },
-                  { f: "🇦🇺", n: "ออสเตรเลีย", s: "฿3,500", e: "AUD150", d: "10-15 วัน" },
-                ].map(r => (<tr key={r.n} className="hover:bg-slate-50"><td className="px-4 py-3 font-medium">{r.f} {r.n}</td><td className="px-3 py-3 text-center font-bold text-primary">{r.s}</td><td className="px-3 py-3 text-center text-slate-500">{r.e}</td><td className="px-3 py-3 text-center text-slate-500">{r.d}</td></tr>))}
+                  { c: "jp", n: "ญี่ปุ่น", s: "฿1,500", e: "ฟรี", d: "5-7 วัน" },
+                  { c: "cn", n: "จีน", s: "฿2,000", e: "฿1,500", d: "7-10 วัน" },
+                  { c: "eu", n: "เชงเก้น", s: "฿3,500", e: "€80", d: "10-15 วัน" },
+                  { c: "gb", n: "อังกฤษ", s: "฿4,000", e: "£100", d: "15-20 วัน" },
+                  { c: "us", n: "อเมริกา", s: "฿5,500", e: "$185", d: "สัมภาษณ์" },
+                  { c: "au", n: "ออสเตรเลีย", s: "฿3,500", e: "AUD150", d: "10-15 วัน" },
+                ].map(r => (<tr key={r.n} className="hover:bg-slate-50"><td className="px-4 py-3 font-medium"><span className="inline-flex items-center gap-2"><Flag code={r.c} size={20} /> {r.n}</span></td><td className="px-3 py-3 text-center font-bold text-primary">{r.s}</td><td className="px-3 py-3 text-center text-slate-500">{r.e}</td><td className="px-3 py-3 text-center text-slate-500">{r.d}</td></tr>))}
               </tbody>
             </table>
           </div>
