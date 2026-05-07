@@ -3,7 +3,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { Send, Paperclip, Sparkles, ChevronDown, Headphones } from "lucide-react";
-import s from "./home.module.css";
 
 /* ── Data ─────────────────────────── */
 const wholesalePartners = [
@@ -19,7 +18,7 @@ const quickActions = [
   { icon: "⚖️", label: "เปรียบเทียบโปรแกรม" },
 ];
 
-type Tour = { id: string; title: string; price: number; durationDays: number; imageUrl?: string; slug?: string };
+type Tour = { id: string; title: string; price: number; durationDays: number; slug?: string };
 type Msg = { role: "user" | "ai"; text: string; time: string; tours?: Tour[] };
 
 export default function TourHomePage() {
@@ -29,7 +28,6 @@ export default function TourHomePage() {
   const [activePartner, setActivePartner] = useState(0);
   const endRef = useRef<HTMLDivElement>(null);
 
-  // Set initial message client-side to avoid hydration mismatch
   useEffect(() => {
     if (messages.length === 0) {
       setMessages([{
@@ -50,7 +48,6 @@ export default function TourHomePage() {
     setMessages((p) => [...p, { role: "user", text: text.trim(), time: now() }]);
     setInput("");
     setIsLoading(true);
-
     try {
       const res = await fetch("/api/chat", {
         method: "POST",
@@ -67,10 +64,8 @@ export default function TourHomePage() {
         try {
           const parsed = JSON.parse(dataMatch[1]);
           tours = (parsed.tours || []).map((t: any) => ({
-            id: t.id || String(Math.random()),
-            title: t.title || t.tourName || "",
-            price: t.price || t.startingPrice || 0,
-            durationDays: t.durationDays || 0,
+            id: t.id || String(Math.random()), title: t.title || t.tourName || "",
+            price: t.price || t.startingPrice || 0, durationDays: t.durationDays || 0,
             slug: t.slug || t.id || "",
           }));
         } catch {}
@@ -78,78 +73,92 @@ export default function TourHomePage() {
       const replyText = raw.replace(/__DATA__[\s\S]*?__DATA__/g, "").replace(/__CHIPS__[\s\S]*$/g, "").trim();
       setMessages((p) => [...p, { role: "ai", text: replyText || "พบข้อมูลทัวร์แล้วครับ", time: now(), tours }]);
     } catch {
-      setMessages((p) => [...p, { role: "ai", text: "ขออภัยครับ เกิดข้อผิดพลาด กรุณาลองใหม่", time: new Date().toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" }) }]);
+      setMessages((p) => [...p, { role: "ai", text: "ขออภัยครับ เกิดข้อผิดพลาด กรุณาลองใหม่", time: now() }]);
     }
     setIsLoading(false);
   };
 
   return (
     <>
-      {/* ═══ HERO SECTION ═══ */}
-      <section className={s.heroWrap}>
-        <div className={`${s.deco} ${s.deco1}`} />
-        <div className={`${s.deco} ${s.deco2}`} />
-        <div className={`${s.decoDot} ${s.decoDot1}`}>✦</div>
-        <div className={`${s.decoDot} ${s.decoDot2}`}>✦</div>
-        <div className={`${s.decoDot} ${s.decoDot3}`}>+</div>
-        <div className={`${s.decoRing} ${s.decoRing1}`} />
-        <div className={`${s.decoRing} ${s.decoRing2}`} />
+      {/* ═══ HERO ═══ */}
+      <section className="relative flex flex-col items-center px-4 pt-10 pb-16 min-h-[calc(100vh-64px)] overflow-hidden" style={{ background: "linear-gradient(180deg,#fdf8f3 0%,#fff 40%,#fff 100%)" }}>
+        {/* Decorative blobs */}
+        <div className="absolute w-[800px] h-[800px] -top-60 -right-48 rounded-full pointer-events-none" style={{ background: "radial-gradient(circle,rgba(249,115,22,0.07) 0%,transparent 70%)" }} />
+        <div className="absolute w-[600px] h-[600px] -bottom-32 -left-32 rounded-full pointer-events-none" style={{ background: "radial-gradient(circle,rgba(59,130,246,0.04) 0%,transparent 70%)" }} />
 
-        {/* Title */}
-        <div className={s.heroTop}>
-          <div className={s.aiPulse}><Sparkles className="w-6 h-6" /></div>
-          <p className={s.heroTag}>✦ AI-POWERED SEARCH ENGINE</p>
-          <h1 className={s.heroH1}>
-            <span className={s.h1Sm}>Smart</span>
-            <span className={s.h1Big}>Tour Search</span>
+        {/* Title — Hi-tech design */}
+        <div className="relative z-10 text-center mb-8">
+          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl text-white mb-4" style={{ background: "linear-gradient(135deg,#f97316,#ea580c)", boxShadow: "0 6px 24px rgba(249,115,22,0.4)" }}>
+            <Sparkles className="w-7 h-7" />
+          </div>
+          <p className="text-[0.7rem] font-bold tracking-[0.25em] uppercase text-orange-500 mb-3">
+            ✦ AI-POWERED SEARCH ENGINE
+          </p>
+          <h1 className="leading-none" style={{ margin: 0 }}>
+            <span className="block text-sm font-semibold tracking-[0.15em] uppercase text-slate-400 mb-1">
+              Smart
+            </span>
+            <span className="block text-5xl md:text-7xl font-black tracking-tight" style={{ background: "linear-gradient(135deg,#f97316 0%,#ea580c 40%,#dc2626 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+              Tour Search
+            </span>
           </h1>
-          <p className={s.heroSub}>ค้นหาทัวร์ที่ใช่จาก 50+ โฮลเซล — ด้วย AI ที่เข้าใจคุณ</p>
+          <p className="text-base text-slate-400 mt-3 font-medium">
+            ค้นหาทัวร์ที่ใช่จาก 50+ โฮลเซล — ด้วย AI ที่เข้าใจคุณ
+          </p>
         </div>
 
         {/* Chat Card */}
-        <div className={s.card}>
-          <div className={s.cardGlow} />
-          <div className={s.cardHead}>
-            <div className={s.cardHeadL}>
-              <div className={s.aiAv}><Sparkles className="w-5 h-5 text-white" /></div>
+        <div className="relative z-10 w-full max-w-[880px] bg-white/95 backdrop-blur-xl rounded-3xl overflow-hidden mb-8" style={{ border: "1px solid rgba(249,115,22,0.12)", boxShadow: "0 8px 40px rgba(0,0,0,0.05),0 16px 64px rgba(249,115,22,0.07)" }}>
+          {/* Header */}
+          <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-100 bg-white/80 relative z-10">
+            <div className="flex items-center gap-3">
+              <div className="w-11 h-11 rounded-xl flex items-center justify-center" style={{ background: "linear-gradient(135deg,#f97316,#ea580c)", boxShadow: "0 4px 14px rgba(249,115,22,0.35)" }}>
+                <Sparkles className="w-5 h-5 text-white" />
+              </div>
               <div>
-                <span className={s.aiName}>Jongtour AI Assistant</span>
-                <span className={s.aiOnline}>Online</span>
+                <span className="text-base font-bold text-slate-800 block leading-tight">Jongtour AI Assistant</span>
+                <span className="text-xs font-bold text-emerald-500 bg-emerald-50 px-2 py-0.5 rounded-md inline-block mt-0.5">Online</span>
               </div>
             </div>
-            <div className={s.cardHeadR}>
-              <button className={s.hdBtn} aria-label="Support"><Headphones className="w-5 h-5" /></button>
-              <button className={s.hdBtn} aria-label="Toggle"><ChevronDown className="w-5 h-5" /></button>
+            <div className="flex gap-1">
+              <button className="w-9 h-9 rounded-lg flex items-center justify-center text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors" aria-label="Support"><Headphones className="w-5 h-5" /></button>
+              <button className="w-9 h-9 rounded-lg flex items-center justify-center text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors" aria-label="Toggle"><ChevronDown className="w-5 h-5" /></button>
             </div>
           </div>
 
-          <div className={s.chipsRow}>
+          {/* Quick Actions */}
+          <div className="flex gap-2 px-5 py-3 overflow-x-auto no-scrollbar relative z-10">
             {quickActions.map((a) => (
-              <button key={a.label} className={s.chip} onClick={() => send(a.label)}>
+              <button key={a.label} onClick={() => send(a.label)} className="flex-shrink-0 inline-flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-slate-600 bg-slate-50 border border-slate-200 rounded-full hover:bg-orange-50 hover:border-orange-200 hover:text-orange-600 transition-colors whitespace-nowrap">
                 <span>{a.icon}</span> {a.label}
               </button>
             ))}
           </div>
 
-          <div className={s.msgs}>
+          {/* Messages */}
+          <div className="min-h-[320px] max-h-[600px] overflow-y-auto px-5 py-4 flex flex-col gap-3 relative z-10 custom-scrollbar">
             {messages.map((m, i) => (
               <div key={i}>
-                <div className={`${s.msg} ${m.role === "user" ? s.msgU : ""}`}>
-                  {m.role === "ai" && <div className={s.msgAv}><Sparkles className="w-4 h-4 text-white" /></div>}
-                  <div className={`${s.bubble} ${m.role === "user" ? s.bubbleU : s.bubbleA}`}>
-                    <p className={s.btxt}>{m.text}</p>
-                    <span className={s.btime}>{m.time}{m.role === "user" && <span className={s.bchk}>✓✓</span>}</span>
+                <div className={`flex gap-2 items-end ${m.role === "user" ? "flex-row-reverse" : ""}`}>
+                  {m.role === "ai" && (
+                    <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "linear-gradient(135deg,#f97316,#ea580c)" }}>
+                      <Sparkles className="w-4 h-4 text-white" />
+                    </div>
+                  )}
+                  <div className={`max-w-[80%] px-4 py-3 rounded-2xl ${m.role === "user" ? "rounded-br-sm text-white" : "rounded-bl-sm bg-slate-100 text-slate-700"}`} style={m.role === "user" ? { background: "linear-gradient(135deg,#f97316,#ea580c)" } : undefined}>
+                    <p className="text-[0.95rem] leading-relaxed whitespace-pre-line m-0">{m.text}</p>
+                    <span className="block text-[0.7rem] mt-1 opacity-50">{m.time}{m.role === "user" && <span className="ml-1 text-[0.65rem]">✓✓</span>}</span>
                   </div>
                 </div>
                 {m.tours && m.tours.length > 0 && (
-                  <div className={s.tourCards}>
+                  <div className="flex flex-col gap-1.5 mt-1.5 ml-10">
                     {m.tours.slice(0, 5).map((t) => (
-                      <Link key={t.id} href={`/tours/detail/${t.slug || t.id}`} className={s.tourCard}>
-                        <div className={s.tcLeft}>
-                          <p className={s.tcTitle}>{t.title}</p>
-                          <p className={s.tcMeta}>{t.durationDays ? `${t.durationDays} วัน` : ""}</p>
+                      <Link key={t.id} href={`/tours/detail/${t.slug || t.id}`} className="flex items-center justify-between gap-3 px-4 py-3 bg-white border border-slate-100 rounded-xl no-underline hover:border-orange-200 hover:shadow-sm transition-all">
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold text-slate-800 m-0 truncate">{t.title}</p>
+                          <p className="text-xs text-slate-400 m-0 mt-0.5">{t.durationDays ? `${t.durationDays} วัน` : ""}</p>
                         </div>
-                        <div className={s.tcPrice}>{t.price ? `฿${Number(t.price).toLocaleString()}` : ""}</div>
+                        <span className="text-sm font-bold text-orange-600 whitespace-nowrap">{t.price ? `฿${Number(t.price).toLocaleString()}` : ""}</span>
                       </Link>
                     ))}
                   </div>
@@ -157,49 +166,58 @@ export default function TourHomePage() {
               </div>
             ))}
             {isLoading && (
-              <div className={`${s.msg}`}>
-                <div className={s.msgAv}><Sparkles className="w-4 h-4 text-white" /></div>
-                <div className={`${s.bubble} ${s.bubbleA}`}><div className={s.typing}><span /><span /><span /></div></div>
+              <div className="flex gap-2 items-end">
+                <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "linear-gradient(135deg,#f97316,#ea580c)" }}>
+                  <Sparkles className="w-4 h-4 text-white" />
+                </div>
+                <div className="bg-slate-100 px-4 py-3 rounded-2xl rounded-bl-sm">
+                  <div className="flex gap-1.5">
+                    <span className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" />
+                    <span className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: "0.2s" }} />
+                    <span className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: "0.4s" }} />
+                  </div>
+                </div>
               </div>
             )}
             <div ref={endRef} />
           </div>
 
-          <div className={s.inpBar}>
-            <button className={s.inpAttach} aria-label="Attach"><Paperclip className="w-6 h-6" /></button>
+          {/* Input */}
+          <div className="flex items-center gap-2 px-4 py-3 border-t border-slate-100 bg-slate-50/80 relative z-10">
+            <button className="w-11 h-11 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-200 hover:text-slate-600 transition-colors flex-shrink-0" aria-label="Attach"><Paperclip className="w-5 h-5" /></button>
             <input
               type="text"
-              className={s.inp}
+              className="flex-1 h-12 px-5 text-base text-slate-700 bg-white border border-slate-200 rounded-full outline-none transition-colors focus:border-orange-400 focus:ring-2 focus:ring-orange-100 placeholder:text-slate-400"
               placeholder="พิมพ์ข้อความหรือสอบถามได้เลย..."
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => { if (e.key === "Enter") send(input); }}
             />
-            <button className={s.inpSend} onClick={() => send(input)} disabled={!input.trim() || isLoading} aria-label="Send">
-              <Send className="w-6 h-6" />
+            <button onClick={() => send(input)} disabled={!input.trim() || isLoading} className="w-12 h-12 rounded-full flex items-center justify-center text-white flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105 transition-transform" style={{ background: "linear-gradient(135deg,#f97316,#ea580c)", boxShadow: "0 4px 12px rgba(249,115,22,0.3)" }} aria-label="Send">
+              <Send className="w-5 h-5" />
             </button>
           </div>
         </div>
       </section>
 
       {/* ═══ WHOLESALE PARTNERS ═══ */}
-      <section className={s.wsSection}>
-        <p className={s.wsLabel}>OFFICIAL WHOLESALE PARTNERS</p>
-        <h2 className={s.wsTitle}>รวมทัวร์จากโฮลเซลชั้นนำ</h2>
-        <div className={s.wsGrid}>
+      <section className="py-16 px-4 text-center" style={{ background: "linear-gradient(180deg,#fff 0%,#f8fafc 100%)" }}>
+        <p className="text-[0.65rem] font-bold tracking-[0.25em] uppercase text-slate-400 mb-2">OFFICIAL WHOLESALE PARTNERS</p>
+        <h2 className="text-2xl font-extrabold text-teal-700 mb-8">รวมทัวร์จากโฮลเซลชั้นนำ</h2>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 max-w-[880px] mx-auto">
           {wholesalePartners.map((p, idx) => (
             <Link
               key={p.code}
               href={`/wholesaler/${p.code}`}
-              className={`${s.wsCard} ${activePartner === idx ? s.wsCardActive : ""}`}
+              className={`flex flex-col items-center gap-2.5 py-5 px-4 rounded-2xl no-underline transition-all duration-300 cursor-pointer border ${activePartner === idx ? "border-current shadow-lg -translate-y-1.5 bg-white" : "border-slate-200/60 bg-white/70 hover:shadow-lg hover:-translate-y-1.5 hover:bg-white"}`}
               onMouseEnter={() => setActivePartner(idx)}
-              style={{ "--partner-color": p.color } as React.CSSProperties}
+              style={{ color: p.color, backdropFilter: "blur(12px)" }}
             >
-              <div className={s.wsCardLogo}>
-                <img src={p.logo} alt={p.name} loading="lazy" />
+              <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-white to-slate-100 border border-slate-200 flex items-center justify-center overflow-hidden p-2 transition-transform hover:scale-110" style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}>
+                <img src={p.logo} alt={p.name} loading="lazy" className="w-full h-full object-contain" />
               </div>
-              <h3 className={s.wsCardName}>{p.name}</h3>
-              <span className={s.wsCardLink}>ดูทัวร์ทั้งหมด →</span>
+              <h3 className="text-sm font-bold text-slate-800 m-0">{p.name}</h3>
+              <span className="text-xs font-semibold text-teal-600">ดูทัวร์ทั้งหมด →</span>
             </Link>
           ))}
         </div>

@@ -77,7 +77,7 @@ export default function RootLayout({
         {/* GTM + All Pixels */}
         <GTMScript />
       </head>
-      <body className="font-sans antialiased">
+      <body className="font-sans antialiased" suppressHydrationWarning>
         <GTMNoScript />
         {children}
         <CookieConsent />
