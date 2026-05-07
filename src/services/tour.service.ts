@@ -427,7 +427,7 @@ export async function getTourBySlug(slug: string): Promise<TourDetailData | null
   // 1. Get tour
   const { data: tours } = await sb
     .from('tours')
-    .select('id, slug, "tourCode", "tourName", "durationDays", "durationNights", "supplierId", status, "supplierBookingNote"')
+    .select('id, slug, "tourCode", "tourName", "durationDays", "durationNights", "supplierId", "externalTourId", status, "supplierBookingNote"')
     .eq('slug', slug)
     .limit(1);
 
@@ -446,6 +446,7 @@ export async function getTourBySlug(slug: string): Promise<TourDetailData | null
     { data: policies },
     { data: pdfs },
     { data: departures },
+    { data: rawSources },
   ] = await Promise.all([
     sb.from('suppliers').select('id, "canonicalName", "displayName"').eq('id', tour.supplierId).single(),
     sb.from('tour_destinations').select('country, city').eq('tourId', tour.id),
@@ -461,7 +462,34 @@ export async function getTourBySlug(slug: string): Promise<TourDetailData | null
       .eq('tourId', tour.id)
       .gte('startDate', new Date().toISOString())
       .order('startDate', { ascending: true }),
+    sb.from('tour_raw_sources').select('"supplierId", "externalTourId", "rawPayload"').eq('supplierId', tour.supplierId),
   ]);
+
+  // Extract airline, PDF, highlights from raw_sources
+  let detailAirline = extractAirlineFromTitle(tour.tourName || '');
+  let detailPdfUrl = pdfs?.[0]?.pdfUrl || '';
+  let detailHighlights: string[] = [];
+  (rawSources || []).forEach((rs: any) => {
+    if (String(rs.externalTourId) !== String(tour.externalTourId)) return;
+    const payload = rs.rawPayload;
+    if (!payload) return;
+    // Airline
+    let airline = payload.AirlineName || payload.airlineName || payload.airline || payload.air || '';
+    const airlineCode = payload.AirlineCode || payload.airline_code || '';
+    if (!airline && airlineCode && AIRLINE_CODES[airlineCode.toUpperCase()]) airline = AIRLINE_CODES[airlineCode.toUpperCase()];
+    if (airline && airline.length === 2 && AIRLINE_CODES[airline.toUpperCase()]) airline = AIRLINE_CODES[airline.toUpperCase()];
+    if (airline) detailAirline = airline;
+    // PDF — check all possible field names
+    const pdf = payload.FilePDF || payload.pdfUrl || payload.pdf_url || payload.PdfUrl || payload.programPdf || payload.FileWord || '';
+    if (pdf && !detailPdfUrl) detailPdfUrl = pdf;
+    // Highlights from payload
+    const hl = payload.Highlight || payload.highlight || payload.highlights || '';
+    if (hl && typeof hl === 'string') {
+      detailHighlights = hl.split('\n').map((h: string) => h.trim()).filter((h: string) => h.length > 0);
+    } else if (Array.isArray(hl)) {
+      detailHighlights = hl.filter(Boolean);
+    }
+  });
 
   // 3. Get prices for departures
   const depIds = (departures || []).map(d => d.id);
@@ -505,8 +533,8 @@ export async function getTourBySlug(slug: string): Promise<TourDetailData | null
     price: { starting: startingPrice },
     status: tour.status || 'PUBLISHED',
     summary: tour.supplierBookingNote || '',
-    highlights: extractHighlightsFromTitle(tour.tourName || ''),
-    flight: { airline: extractAirlineFromTitle(tour.tourName || '') || 'ตามโปรแกรมทัวร์', details: 'อ้างอิงจากรายละเอียดทัวร์' },
+    highlights: detailHighlights.length > 0 ? detailHighlights : extractHighlightsFromTitle(tour.tourName || ''),
+    flight: { airline: detailAirline || 'ตามโปรแกรมทัวร์', details: 'อ้างอิงจากรายละเอียดทัวร์' },
     hotel: { name: 'โรงแรมมาตรฐาน', rating: 3, details: 'ตามโปรแกรมทัวร์' },
     meals: 'ดูรายละเอียดในโปรแกรม',
     included: (included || []).map(i => i.description),
@@ -515,7 +543,7 @@ export async function getTourBySlug(slug: string): Promise<TourDetailData | null
       payment: policies?.find(p => p.policyType === 'PAYMENT')?.description || 'ตามเงื่อนไขบริษัท',
       cancellation: policies?.find(p => p.policyType === 'CANCELLATION')?.description || 'ตามเงื่อนไขบริษัท',
     },
-    pdfUrl: pdfs?.[0]?.pdfUrl,
+    pdfUrl: detailPdfUrl || undefined,
     itinerary: (itineraries || []).map(it => ({
       day: it.dayNumber,
       title: it.title || `วันที่ ${it.dayNumber}`,

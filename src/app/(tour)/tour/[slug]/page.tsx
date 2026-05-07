@@ -87,7 +87,8 @@ export default function TourDetailPage({ params }: { params: { slug: string } })
     );
   }
 
-  const airlineName = tour.flight?.airline && tour.flight.airline !== 'ตามโปรแกรมทัวร์' ? tour.flight.airline : null;
+  const rawAirline = tour.flight?.airline;
+  const airlineName = (rawAirline && rawAirline !== 'ตามโปรแกรมทัวร์') ? rawAirline : null;
 
   return (
     <div className="bg-slate-50 text-slate-800 pb-32 md:pb-16">
@@ -148,6 +149,18 @@ export default function TourDetailPage({ params }: { params: { slug: string } })
                 </div>
               </div>
 
+              {/* Highlights (in hero) */}
+              {tour.highlights && tour.highlights.length > 0 && (
+                <div className="grid grid-cols-2 gap-x-4 gap-y-1 mb-4">
+                  {tour.highlights.map((h: string, i: number) => (
+                    <div key={i} className="flex items-center gap-1.5 py-0.5">
+                      <span className="w-4 h-4 bg-primary-500 text-white rounded-full flex items-center justify-center text-[9px] font-black shrink-0">{i+1}</span>
+                      <span className="text-xs text-slate-600">{h}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
               {/* Airline */}
               {airlineName && (
                 <div className="flex items-center gap-3 p-2.5 bg-blue-50 rounded-lg border border-blue-100 mb-4">
@@ -190,21 +203,6 @@ export default function TourDetailPage({ params }: { params: { slug: string } })
 
           {/* ── Left Column ── */}
           <div className="w-full lg:w-[65%] space-y-6">
-
-            {/* Highlights */}
-            {tour.highlights && tour.highlights.length > 0 && (
-              <section className="bg-white rounded-xl border border-slate-200 p-5">
-                <h2 className="text-base font-bold text-slate-900 mb-3 flex items-center gap-2">⭐ ไฮไลท์ทัวร์</h2>
-                <div className="grid grid-cols-2 gap-2">
-                  {tour.highlights.map((h: string, i: number) => (
-                    <div key={i} className="flex items-center gap-2 py-1.5">
-                      <span className="w-5 h-5 bg-primary-500 text-white rounded-full flex items-center justify-center text-[10px] font-black shrink-0">{i+1}</span>
-                      <span className="text-sm text-slate-700">{h}</span>
-                    </div>
-                  ))}
-                </div>
-              </section>
-            )}
 
             {/* 2-column: Departures + Itinerary */}
             <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
