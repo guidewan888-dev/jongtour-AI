@@ -48,6 +48,18 @@ const REGION_DATA: Record<string, { name: string; nameEn: string; desc: string; 
     desc: 'ดินแดนมหัศจรรย์ อียิปต์ ดูไบ และอีกมากมาย',
     countries: [
       { name: 'อียิปต์', slug: 'egypt', flagCode: 'eg' },
+      { name: 'จอร์แดน', slug: 'jordan', flagCode: 'jo' },
+      { name: 'ตุรกี', slug: 'turkey', flagCode: 'tr' },
+      { name: 'ดูไบ', slug: 'dubai', flagCode: 'ae' },
+    ],
+  },
+  'middle-east': {
+    name: 'ตะวันออกกลาง', nameEn: 'Middle East',
+    desc: 'สัมผัสอารยธรรมโบราณ จากมหาพีระมิดอียิปต์สู่นครดูไบสุดอลังการ',
+    countries: [
+      { name: 'อียิปต์', slug: 'egypt', flagCode: 'eg' },
+      { name: 'จอร์แดน', slug: 'jordan', flagCode: 'jo' },
+      { name: 'ตุรกี', slug: 'turkey', flagCode: 'tr' },
       { name: 'ดูไบ', slug: 'dubai', flagCode: 'ae' },
     ],
   },
@@ -65,6 +77,20 @@ const REGION_DATA: Record<string, { name: string; nameEn: string; desc: string; 
     countries: [
       { name: 'ออสเตรเลีย', slug: 'australia', flagCode: 'au' },
       { name: 'นิวซีแลนด์', slug: 'newzealand', flagCode: 'nz' },
+    ],
+  },
+  others: {
+    name: 'ทวีป/ประเทศอื่นๆ', nameEn: 'Others',
+    desc: 'สำรวจจุดหมายปลายทางใหม่ๆ ที่น่าค้นพบทั่วโลก',
+    countries: [
+      { name: 'รัสเซีย', slug: 'russia', flagCode: 'ru' },
+      { name: 'จอร์เจีย', slug: 'georgia', flagCode: 'ge' },
+      { name: 'ภูฏาน', slug: 'bhutan', flagCode: 'bt' },
+      { name: 'ศรีลังกา', slug: 'srilanka', flagCode: 'lk' },
+      { name: 'มองโกเลีย', slug: 'mongolia', flagCode: 'mn' },
+      { name: 'เนปาล', slug: 'nepal', flagCode: 'np' },
+      { name: 'มัลดีฟส์', slug: 'maldives', flagCode: 'mv' },
+      { name: 'แอฟริกาใต้', slug: 'south-africa', flagCode: 'za' },
     ],
   },
 };

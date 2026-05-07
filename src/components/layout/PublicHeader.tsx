@@ -65,29 +65,22 @@ export default function PublicHeader() {
             </span>
           </Link>
 
-          {/* Desktop Nav Links — Tour Regions */}
+          {/* Desktop Nav Links — 6 Region Menus */}
           <nav className="hidden lg:flex items-center gap-0.5 ml-6">
             {[
-              { label: "ทัวร์จีน", href: "/country/china", flag: "cn" },
-              { label: "ทัวร์ญี่ปุ่น", href: "/country/japan", flag: "jp" },
-              { label: "ทัวร์เกาหลี", href: "/country/south-korea", flag: "kr" },
-              { label: "ทัวร์เวียดนาม", href: "/country/vietnam", flag: "vn" },
               { label: "ทัวร์เอเชีย", href: "/region/asia", icon: "🌏" },
               { label: "ทัวร์ยุโรป", href: "/region/europe", icon: "🏰" },
-              { label: "ทัวร์อเมริกา", href: "/country/usa", flag: "us" },
-              { label: "ทัวร์ทั้งหมด", href: "/search", icon: "🔍" },
+              { label: "ทัวร์ตะวันออกกลาง", href: "/region/middle-east", icon: "🕌" },
+              { label: "ทัวร์โอเชียเนีย", href: "/region/oceania", icon: "🦘" },
+              { label: "ทัวร์อเมริกา", href: "/region/americas", icon: "🗽" },
+              { label: "ทัวร์อื่นๆ", href: "/region/others", icon: "🌐" },
             ].map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
-                className="flex items-center gap-1.5 px-2.5 py-1.5 text-[13px] font-medium text-slate-600 hover:text-primary-600 hover:bg-primary-50 rounded-full transition-colors whitespace-nowrap"
+                className="flex items-center gap-1.5 px-3 py-1.5 text-[13px] font-medium text-slate-600 hover:text-primary-600 hover:bg-primary-50 rounded-full transition-colors whitespace-nowrap"
               >
-                {"flag" in item && item.flag ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={`https://flagcdn.com/w40/${item.flag}.png`} alt="" className="w-4 h-3 rounded-sm object-cover" />
-                ) : (
-                  <span className="text-xs">{(item as any).icon}</span>
-                )}
+                <span className="text-sm">{item.icon}</span>
                 {item.label}
               </Link>
             ))}
