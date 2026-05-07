@@ -240,7 +240,7 @@ export default function TourHomePage() {
             </Link>
           ))}
         </div>
-        <Link href="/wholesale" className="inline-flex items-center gap-2 mt-8 px-8 py-3 rounded-full text-sm font-bold text-white no-underline hover:scale-105 transition-transform" style={{ background: "linear-gradient(135deg,#f97316,#ea580c)", boxShadow: "0 4px 16px rgba(249,115,22,0.3)" }}>
+        <Link href="/wholesale-partners" className="inline-flex items-center gap-2 mt-8 px-8 py-3 rounded-full text-sm font-bold text-white no-underline hover:scale-105 transition-transform" style={{ background: "linear-gradient(135deg,#f97316,#ea580c)", boxShadow: "0 4px 16px rgba(249,115,22,0.3)" }}>
           ดูโฮลเซลทั้งหมด →
         </Link>
       </section>
