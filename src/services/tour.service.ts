@@ -324,7 +324,6 @@ export async function getTourList(options?: {
     if (!payload) return;
     const periods = payload.Periods || payload.periods || [];
     if (!Array.isArray(periods) || periods.length === 0) return;
-    // Find the matching tour
     const matchingTour = tours.find(t => t.supplierId === rs.supplierId && String(t.externalTourId) === String(rs.externalTourId));
     if (!matchingTour) return;
     // Check if any period has available seats
@@ -333,6 +332,8 @@ export async function getTourList(options?: {
       if (status === 'Close' || status === 'Closed') return false;
       const seats = p.Seat || p.seat || p.GroupSize || p.group || 0;
       const booked = p.Book || p.join || 0;
+      // Seat=0 means unlimited/unknown → treat as available
+      if (seats === 0) return true;
       return (seats - booked) > 0;
     });
     availabilityMap[matchingTour.id] = hasAvailable;

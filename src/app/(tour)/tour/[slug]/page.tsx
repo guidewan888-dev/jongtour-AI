@@ -47,16 +47,30 @@ export default function TourDetailPage({ params }: { params: { slug: string } })
 
   const fetchRecs = async (country: string, currentSlug: string) => {
     try {
-      // Try same country first
+      const mapResults = (tours: any[]) => tours.filter((t: any) => t.slug !== currentSlug);
+      let filtered: any[] = [];
+
+      // 1st: try exact country filter
       let r = await fetch(`/api/tours/list?country=${encodeURIComponent(country)}&limit=20`);
       let d = await r.json();
-      let filtered = (d.tours || []).filter((t: any) => t.slug !== currentSlug);
-      // Fallback to all tours if country returns too few
+      filtered = mapResults(d.tours || []);
+
+      // 2nd: if not enough, search by country name in tour title
+      if (filtered.length < 4 && country) {
+        r = await fetch(`/api/tours/list?q=${encodeURIComponent('ทัวร์' + country)}&limit=20`);
+        d = await r.json();
+        const extra = mapResults(d.tours || []).filter((t: any) => !filtered.some((f: any) => f.slug === t.slug));
+        filtered = [...filtered, ...extra];
+      }
+
+      // 3rd: fallback to all tours
       if (filtered.length < 4) {
         r = await fetch('/api/tours/list?limit=20');
         d = await r.json();
-        filtered = (d.tours || []).filter((t: any) => t.slug !== currentSlug);
+        const extra = mapResults(d.tours || []).filter((t: any) => !filtered.some((f: any) => f.slug === t.slug));
+        filtered = [...filtered, ...extra];
       }
+
       const shuffled = filtered.sort(() => Math.random() - 0.5).slice(0, 4);
       setRecs(shuffled.map(mapTour));
     } catch {}
