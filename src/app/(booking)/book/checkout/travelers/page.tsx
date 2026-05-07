@@ -118,13 +118,13 @@ export default function TravelersPage() {
                   <h3 className="font-bold text-slate-900 flex items-center gap-2"><User className="w-5 h-5 text-primary-600" /> ผู้เดินทางคนที่ {idx + 1}</h3>
                   {travelers.length > 1 && <button onClick={() => removeTraveler(idx)} className="text-red-400 hover:text-red-600 transition-colors"><Trash2 className="w-4 h-4" /></button>}
                 </div>
-                <div className="mb-4">
-                  <label className="text-sm font-medium text-slate-700 mb-1 block">Title (คำนำหน้า)</label>
-                  <select value={traveler.titleTh} onChange={e => updateTraveler(idx, "titleTh", e.target.value)} className="w-48 border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-primary-200 focus:border-primary-500 outline-none">
-                    <option>Mr.</option><option>Mrs.</option><option>Miss</option><option>Master</option><option>Ms.</option>
-                  </select>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="mb-4 grid grid-cols-4 gap-4">
+                  <div>
+                    <label className="text-sm font-medium text-slate-700 mb-1 block">Title</label>
+                    <select value={traveler.titleTh} onChange={e => updateTraveler(idx, "titleTh", e.target.value)} className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-primary-200 focus:border-primary-500 outline-none">
+                      <option>Mr.</option><option>Mrs.</option><option>Miss</option><option>Master</option><option>Ms.</option>
+                    </select>
+                  </div>
                   <div>
                     <label className="text-sm font-medium text-slate-700 mb-1 block">ชื่อ (EN) *</label>
                     <input type="text" placeholder="First Name" value={traveler.firstNameEn} onChange={e => updateTraveler(idx, "firstNameEn", e.target.value)} className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-primary-200 focus:border-primary-500 outline-none" />
@@ -134,16 +134,18 @@ export default function TravelersPage() {
                     <input type="text" placeholder="Last Name" value={traveler.lastNameEn} onChange={e => updateTraveler(idx, "lastNameEn", e.target.value)} className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-primary-200 focus:border-primary-500 outline-none" />
                   </div>
                   <div>
+                    <label className="text-sm font-medium text-slate-700 mb-1 block flex items-center gap-1"><FileText className="w-3.5 h-3.5" /> Passport No.</label>
+                    <input type="text" placeholder="AB1234567" value={traveler.passportNumber || ""} onChange={e => updateTraveler(idx, "passportNumber", e.target.value)} className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-primary-200 focus:border-primary-500 outline-none" />
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
                     <label className="text-sm font-medium text-slate-700 mb-1 block">ชื่อ (TH)</label>
                     <input type="text" placeholder="ชื่อภาษาไทย" value={traveler.firstNameTh} onChange={e => updateTraveler(idx, "firstNameTh", e.target.value)} className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-primary-200 focus:border-primary-500 outline-none" />
                   </div>
                   <div>
                     <label className="text-sm font-medium text-slate-700 mb-1 block">นามสกุล (TH)</label>
                     <input type="text" placeholder="นามสกุลภาษาไทย" value={traveler.lastNameTh} onChange={e => updateTraveler(idx, "lastNameTh", e.target.value)} className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-primary-200 focus:border-primary-500 outline-none" />
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-slate-700 mb-1 block flex items-center gap-1"><FileText className="w-3.5 h-3.5" /> Passport No.</label>
-                    <input type="text" placeholder="AB1234567" value={traveler.passportNumber || ""} onChange={e => updateTraveler(idx, "passportNumber", e.target.value)} className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-primary-200 focus:border-primary-500 outline-none" />
                   </div>
                 </div>
               </div>
