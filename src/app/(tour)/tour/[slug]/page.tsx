@@ -146,7 +146,7 @@ export default function TourDetailPage({ params }: { params: { slug: string } })
               <div className="flex flex-wrap items-center gap-3 mt-auto">
                 {tour.pdfUrl && <a href={tour.pdfUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 px-5 py-3 bg-blue-50 border-2 border-blue-200 text-blue-700 rounded-xl font-bold text-sm hover:bg-blue-100 transition-colors shadow-sm">📥 ดาวน์โหลดโปรแกรมทัวร์</a>}
                 <Link href={`/book/tour/${tour.slug}`} className="px-6 py-3 rounded-xl bg-gradient-to-r from-primary-600 to-orange-500 text-white font-bold text-sm shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all">จองเลย →</Link>
-                <a href={LINE_URL} target="_blank" rel="noopener noreferrer" className="px-5 py-3 rounded-xl bg-emerald-500 text-white font-bold text-sm hover:bg-emerald-600 transition-colors shadow-sm">📱 สอบถามเพิ่มเติม</a>
+                <a href={LINE_URL} target="_blank" rel="noopener noreferrer" className="px-5 py-3 rounded-xl bg-emerald-500 text-white font-bold text-sm hover:bg-emerald-600 transition-colors shadow-sm flex items-center gap-2"><img src="https://upload.wikimedia.org/wikipedia/commons/4/41/LINE_logo.svg" alt="LINE" className="w-5 h-5"/> สอบถามเพิ่มเติม</a>
               </div>
             </div>
           </div>
