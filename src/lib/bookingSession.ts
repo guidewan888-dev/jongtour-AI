@@ -37,7 +37,17 @@ export interface BookingSession {
   departureEndDate: string;
   priceAdult: number;
   priceChild: number;
+  priceSingle?: number;
+  deposit?: number;
   remainingSeats: number;
+
+  // Quantities (set in Step 1: Book Tour)
+  adults?: number;
+  children?: number;
+  singleRooms?: number;
+  addOns?: string[];
+  totalPrice?: number;
+  totalDeposit?: number;
 
   // Travelers (set in Step 2: Travelers)
   travelers: BookingTraveler[];

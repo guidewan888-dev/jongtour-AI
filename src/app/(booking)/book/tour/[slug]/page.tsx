@@ -104,6 +104,8 @@ export default function BookTourPage({ params }: { params: { slug: string } }) {
       departureEndDate: selectedDep.endDate,
       priceAdult: selectedDep.priceAdult,
       priceChild: selectedDep.priceChild || selectedDep.priceAdult,
+      priceSingle: selectedDep.priceSingle || 0,
+      deposit: selectedDep.deposit || 0,
       remainingSeats: selectedDep.remainingSeats,
       adults,
       children,
