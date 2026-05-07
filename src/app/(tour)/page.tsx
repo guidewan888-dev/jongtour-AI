@@ -100,16 +100,8 @@ export default function TourHomePage() {
           <p className="text-[0.7rem] font-bold tracking-[0.25em] uppercase text-orange-500 mb-3">
             ✦ AI-POWERED SEARCH ENGINE
           </p>
-          <h1 className="leading-none" style={{ margin: 0 }}>
-            <span className="block text-sm font-semibold tracking-[0.15em] uppercase text-slate-400 mb-1">
-              Smart
-            </span>
-            <span className="block text-5xl md:text-7xl font-black tracking-tight" style={{ background: "linear-gradient(135deg,#f97316 0%,#ea580c 40%,#dc2626 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
-              Tour Search
-            </span>
-          </h1>
-          <p className="text-base text-slate-400 mt-3 font-medium">
-            ค้นหาทัวร์ที่ใช่จาก 50+ โฮลเซล — ด้วย AI ที่เข้าใจคุณ
+          <p className="text-base text-slate-500 mt-1 font-medium">
+            ค้นหาทัวร์ที่ใช่ — ด้วย AI ที่เข้าใจคุณ
           </p>
         </div>
 
@@ -229,25 +221,28 @@ export default function TourHomePage() {
 
       {/* ═══ WHOLESALE PARTNERS ═══ */}
       <section className="py-16 px-4 text-center" style={{ background: "linear-gradient(180deg,#fff 0%,#f8fafc 100%)" }}>
-        <p className="text-[0.65rem] font-bold tracking-[0.25em] uppercase text-slate-400 mb-2">OFFICIAL WHOLESALE PARTNERS</p>
-        <h2 className="text-2xl font-extrabold text-teal-700 mb-8">รวมทัวร์จากโฮลเซลชั้นนำ</h2>
+        <p className="text-[0.65rem] font-bold tracking-[0.25em] uppercase text-slate-500 mb-2">OFFICIAL WHOLESALE PARTNERS</p>
+        <h2 className="text-2xl font-extrabold text-slate-800 mb-8">รวมทัวร์จากโฮลเซลชั้นนำ</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 max-w-[880px] mx-auto">
           {wholesalePartners.map((p, idx) => (
             <Link
               key={p.code}
               href={`/wholesaler/${p.code}`}
-              className={`flex flex-col items-center gap-2.5 py-5 px-4 rounded-2xl no-underline transition-all duration-300 cursor-pointer border ${activePartner === idx ? "border-current shadow-lg -translate-y-1.5 bg-white" : "border-slate-200/60 bg-white/70 hover:shadow-lg hover:-translate-y-1.5 hover:bg-white"}`}
+              className={`flex flex-col items-center gap-2.5 py-5 px-4 rounded-2xl no-underline transition-all duration-300 cursor-pointer border ${activePartner === idx ? "border-orange-300 shadow-lg -translate-y-1.5 bg-white" : "border-slate-200/60 bg-white/70 hover:shadow-lg hover:-translate-y-1.5 hover:bg-white hover:border-orange-200"}`}
               onMouseEnter={() => setActivePartner(idx)}
-              style={{ color: p.color, backdropFilter: "blur(12px)" }}
+              style={{ backdropFilter: "blur(12px)" }}
             >
-              <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-white to-slate-100 border border-slate-200 flex items-center justify-center overflow-hidden p-2 transition-transform hover:scale-110" style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}>
+              <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-white to-slate-50 border border-slate-200 flex items-center justify-center overflow-hidden p-2 transition-transform hover:scale-110" style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}>
                 <img src={p.logo} alt={p.name} loading="lazy" className="w-full h-full object-contain" />
               </div>
               <h3 className="text-sm font-bold text-slate-800 m-0">{p.name}</h3>
-              <span className="text-xs font-semibold text-teal-600">ดูทัวร์ทั้งหมด →</span>
+              <span className="text-xs font-semibold text-orange-500">ดูทัวร์ทั้งหมด →</span>
             </Link>
           ))}
         </div>
+        <Link href="/wholesale" className="inline-flex items-center gap-2 mt-8 px-8 py-3 rounded-full text-sm font-bold text-white no-underline hover:scale-105 transition-transform" style={{ background: "linear-gradient(135deg,#f97316,#ea580c)", boxShadow: "0 4px 16px rgba(249,115,22,0.3)" }}>
+          ดูโฮลเซลทั้งหมด →
+        </Link>
       </section>
     </>
   );
