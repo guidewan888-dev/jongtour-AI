@@ -140,6 +140,12 @@ export default function TravelersPage() {
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
+                    <label className="text-sm font-medium text-slate-700 mb-1 block">คำนำหน้า (TH)</label>
+                    <select value={({'Mr.':'นาย','Mrs.':'นาง','Miss':'นางสาว','Ms.':'นางสาว','Master':'เด็กชาย'}[traveler.titleTh]) || 'นาย'} onChange={e => { const map: Record<string,string> = {'นาย':'Mr.','นาง':'Mrs.','นางสาว':'Miss','เด็กชาย':'Master','เด็กหญิง':'Miss'}; updateTraveler(idx, "titleTh", map[e.target.value] || 'Mr.'); }} className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-primary-200 focus:border-primary-500 outline-none">
+                      <option>นาย</option><option>นาง</option><option>นางสาว</option><option>เด็กชาย</option><option>เด็กหญิง</option>
+                    </select>
+                  </div>
+                  <div>
                     <label className="text-sm font-medium text-slate-700 mb-1 block">ชื่อ (TH)</label>
                     <input type="text" placeholder="ชื่อภาษาไทย" value={traveler.firstNameTh} onChange={e => updateTraveler(idx, "firstNameTh", e.target.value)} className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-primary-200 focus:border-primary-500 outline-none" />
                   </div>
