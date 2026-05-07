@@ -36,8 +36,8 @@ interface TourData {
 }
 
 const ADD_ONS = [
-  { id: "insurance", label: "ประกันภัยการเดินทาง", desc: "คุ้มครอง 2 ล้านบาท ทุกเหตุการณ์ไม่คาดคิด", price: 590, icon: ShieldCheck },
-  { id: "airport", label: "รถรับส่งสนามบิน", desc: "รับ-ส่งถึงหน้าบ้าน ทั้งขาไปและขากลับ", price: 1500, icon: Car },
+  { id: "insurance", label: "ประกันภัยการเดินทาง", desc: "คุ้มครอง 2 ล้านบาท ทุกเหตุการณ์ไม่คาดคิด", price: 800, unit: "ท่าน", perPerson: true, icon: ShieldCheck },
+  { id: "airport", label: "รถรับส่งสนามบิน", desc: "รับ-ส่งถึงหน้าบ้าน สะดวกสบาย", price: 1500, unit: "เที่ยว", perPerson: false, icon: Car },
 ];
 
 const price = (n: number) => n > 0 ? `฿${n.toLocaleString()}` : '-';
@@ -78,7 +78,7 @@ export default function BookTourPage({ params }: { params: { slug: string } }) {
     total += adults * selectedDep.priceAdult;
     total += children * (selectedDep.priceChild || selectedDep.priceAdult);
     total += singleRooms * (selectedDep.priceSingle || 0);
-    ADD_ONS.forEach(a => { if (addOns[a.id]) total += a.price * (adults + children); });
+    ADD_ONS.forEach(a => { if (addOns[a.id]) total += a.perPerson ? a.price * (adults + children) : a.price; });
     return total;
   }, [selectedDep, adults, children, singleRooms, addOns]);
 
@@ -256,7 +256,7 @@ export default function BookTourPage({ params }: { params: { slug: string } }) {
                     </div>
                     <div className="text-right shrink-0">
                       <div className="font-bold text-primary-600 text-sm">+฿{addon.price.toLocaleString()}</div>
-                      <div className="text-[10px] text-slate-400">/ท่าน</div>
+                      <div className="text-[10px] text-slate-400">/{addon.unit}</div>
                     </div>
                   </label>
                 ))}
@@ -293,8 +293,8 @@ export default function BookTourPage({ params }: { params: { slug: string } }) {
                       <span className="font-medium">{price(selectedDep.priceSingle * singleRooms)}</span>
                     </div>}
                     {ADD_ONS.map(a => addOns[a.id] && <div key={a.id} className="flex justify-between text-xs">
-                      <span className="text-slate-400">{a.label} ×{adults + children}</span>
-                      <span className="text-slate-500">{price(a.price * (adults + children))}</span>
+                      <span className="text-slate-400">{a.label}{a.perPerson ? ` ×${adults + children}` : ''}</span>
+                      <span className="text-slate-500">{price(a.perPerson ? a.price * (adults + children) : a.price)}</span>
                     </div>)}
                     <hr className="border-slate-100" />
                     <div className="flex justify-between text-base font-bold">
