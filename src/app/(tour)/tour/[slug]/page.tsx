@@ -103,31 +103,44 @@ export default function TourDetailPage({ params }: { params: { slug: string } })
         </nav>
       </div>
 
-      {/* Hero Image — Enhanced */}
+      {/* Hero Split Layout: Image Left + Info Right */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-8">
-        <div className="relative rounded-2xl overflow-hidden h-[300px] md:h-[450px] bg-slate-100 group">
-          <img src={tour.images[0]} alt={tour.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
-          <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-slate-900/20 to-transparent" />
-          <div className="absolute top-4 left-4 flex flex-wrap gap-2">
-            <span className="bg-primary-600 text-white text-xs font-black px-3 py-1.5 rounded-full shadow-lg animate-pulse">{tour.code}</span>
-            <span className="bg-white/90 backdrop-blur-md text-slate-700 text-xs font-bold px-3 py-1.5 rounded-full shadow-sm">🏢 {tour.supplier.name}</span>
-            {tour.airline && <span className="bg-blue-600 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg">✈️ {tour.airline}</span>}
-          </div>
-          <div className="absolute bottom-0 left-0 right-0 p-6 md:p-8">
-            <div className="flex flex-wrap items-center gap-3 mb-3 text-white/80 text-sm font-medium">
-              <span className="flex items-center gap-1">🌍 {tour.country}</span>
-              <span className="w-1 h-1 rounded-full bg-white/50" />
-              <span className="flex items-center gap-1">⏱️ {tour.duration.days} วัน {tour.duration.nights} คืน</span>
-              {tour.departures.length > 0 && <><span className="w-1 h-1 rounded-full bg-white/50" /><span>👥 {tour.departures[0].remainingSeats} ที่นั่ง</span></>}
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-lg overflow-hidden">
+          <div className="flex flex-col lg:flex-row">
+            {/* Left: Image */}
+            <div className="lg:w-[45%] relative h-[280px] lg:h-[420px] bg-slate-100 group overflow-hidden">
+              <img src={tour.images[0]} alt={tour.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
             </div>
-            <h1 className="text-2xl md:text-4xl font-black text-white drop-shadow-lg leading-tight">{tour.title}</h1>
+            {/* Right: Info */}
+            <div className="lg:w-[55%] p-6 lg:p-8 flex flex-col justify-center">
+              <div className="flex flex-wrap items-center gap-2 mb-3">
+                <span className="flex items-center gap-1 text-sm text-slate-500 font-medium">🌍 {tour.country}</span>
+                <span className="w-1 h-1 rounded-full bg-slate-300" />
+                <span className="text-sm text-slate-500 font-medium">รหัสทัวร์ : {tour.code}</span>
+              </div>
+              <h1 className="text-xl md:text-2xl lg:text-3xl font-black text-slate-900 leading-tight mb-4">{tour.title}</h1>
+              {tour.summary && <p className="text-sm text-slate-500 mb-5 line-clamp-2">{tour.summary}</p>}
+              <div className="flex flex-wrap items-center gap-4 mb-5 text-sm">
+                <div className="flex items-center gap-2 text-slate-600"><span className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center text-base">🗓️</span><span className="font-bold">{tour.duration.days} วัน {tour.duration.nights} คืน</span></div>
+                <div className="flex items-center gap-2 text-slate-600"><span className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center text-base">👥</span><span className="font-bold">{tour.departures.length > 0 ? `เดินทางขั้นต่ำ ${tour.departures[0].remainingSeats} ท่าน` : 'สอบถาม'}</span></div>
+              </div>
+              {tour.flight?.airline && tour.flight.airline !== 'ตามโปรแกรมทัวร์' && (
+                <div className="flex items-center gap-3 p-3 bg-gradient-to-r from-blue-50 to-sky-50 rounded-xl border border-blue-100 mb-5">
+                  <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white text-lg shrink-0">✈️</div>
+                  <div><div className="font-bold text-slate-900 text-sm">{tour.flight.airline}</div><div className="text-xs text-slate-500">บริการอาหารบนเครื่อง</div></div>
+                </div>
+              )}
+              {tour.pdfUrl && (
+                <a href={tour.pdfUrl} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2 py-3 px-6 bg-gradient-to-r from-primary-600 to-orange-500 text-white rounded-xl font-bold text-sm shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all">📄 ดาวน์โหลดโปรแกรมทัวร์</a>
+              )}
+            </div>
           </div>
         </div>
       </div>
 
       {/* Trust Bar */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-8">
-        <div className="flex flex-wrap justify-center gap-6 md:gap-10 py-4 text-xs text-slate-500 font-semibold">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-6">
+        <div className="flex flex-wrap justify-center gap-6 md:gap-10 py-3 text-xs text-slate-500 font-semibold">
           {['✅ บริษัททัวร์จดทะเบียนถูกต้อง','⭐ รีวิวจากลูกค้าจริง มากกว่า 5,000 รีวิว','💳 ชำระเงินปลอดภัย','📞 ทีมงานดูแลตลอดการเดินทาง'].map(t => <span key={t}>{t}</span>)}
         </div>
       </div>
@@ -138,53 +151,6 @@ export default function TourDetailPage({ params }: { params: { slug: string } })
 
           {/* Left Column */}
           <div className="w-full lg:w-[65%] space-y-8">
-            {/* Quick Info Cards */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 pb-6">
-              <div className="bg-gradient-to-br from-orange-50 to-amber-50 p-4 rounded-xl text-center border border-orange-100">
-                <div className="text-2xl mb-1">⏱️</div>
-                <div className="text-xs text-slate-500">ระยะเวลา</div>
-                <div className="font-black text-slate-900">{tour.duration.days}วัน {tour.duration.nights}คืน</div>
-              </div>
-              <div className="bg-gradient-to-br from-blue-50 to-sky-50 p-4 rounded-xl text-center border border-blue-100">
-                <div className="text-2xl mb-1">🌍</div>
-                <div className="text-xs text-slate-500">ประเทศ</div>
-                <div className="font-black text-slate-900">{tour.country}</div>
-              </div>
-              <div className="bg-gradient-to-br from-emerald-50 to-green-50 p-4 rounded-xl text-center border border-emerald-100">
-                <div className="text-2xl mb-1">📅</div>
-                <div className="text-xs text-slate-500">เดินทางเร็วสุด</div>
-                <div className="font-black text-slate-900">{tour.departures.length > 0 ? new Date(tour.departures[0].startDate).toLocaleDateString('th-TH',{day:'numeric',month:'short'}) : 'สอบถาม'}</div>
-              </div>
-              <div className="bg-gradient-to-br from-violet-50 to-purple-50 p-4 rounded-xl text-center border border-violet-100">
-                <div className="text-2xl mb-1">👥</div>
-                <div className="text-xs text-slate-500">ที่นั่งเหลือ</div>
-                <div className="font-black text-slate-900">{tour.departures.length > 0 ? `${tour.departures[0].remainingSeats} ท่าน` : 'สอบถาม'}</div>
-              </div>
-            </div>
-
-            {/* Airline Badge */}
-            {tour.flight?.airline && tour.flight.airline !== 'ตามโปรแกรมทัวร์' && (
-              <div className="flex items-center gap-3 p-4 bg-gradient-to-r from-blue-50 to-sky-50 rounded-xl border border-blue-100">
-                <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white text-lg">✈️</div>
-                <div>
-                  <div className="font-bold text-slate-900">{tour.flight.airline}</div>
-                  <div className="text-xs text-slate-500">สายการบินประจำโปรแกรม</div>
-                </div>
-              </div>
-            )}
-
-            {/* PDF Download */}
-            {tour.pdfUrl && (
-              <a href={tour.pdfUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-4 p-5 bg-gradient-to-r from-primary-50 to-orange-50 rounded-xl border-2 border-dashed border-primary-200 hover:border-primary-400 hover:shadow-md transition-all group">
-                <div className="w-12 h-12 bg-primary-100 rounded-xl flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">📄</div>
-                <div className="flex-1">
-                  <div className="font-bold text-slate-900">ดาวน์โหลดโปรแกรมทัวร์ (PDF)</div>
-                  <div className="text-xs text-slate-500">ดูรายละเอียดทั้งหมด แผนการเดินทาง ราคา เงื่อนไข</div>
-                </div>
-                <div className="text-primary-600 font-bold text-sm">ดาวน์โหลด →</div>
-              </a>
-            )}
-
             {/* Highlights */}
             {tour.highlights && tour.highlights.length > 0 && (
               <section>
