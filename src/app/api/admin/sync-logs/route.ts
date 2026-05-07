@@ -18,7 +18,7 @@ export async function GET() {
       .from('ApiSyncLog')
       .select('id, "supplierId", type, status, "recordsAdded", "recordsUpdated", "errorMessage", "createdAt"')
       .order('createdAt', { ascending: false })
-      .limit(50);
+      .limit(200);
 
     if (error) {
       console.error('[sync-logs API]', error.message);
