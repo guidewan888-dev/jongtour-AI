@@ -131,7 +131,7 @@ export async function getTourList(options?: {
   // 1. Get published tours
   let query = sb
     .from('tours')
-    .select('id, slug, "tourCode", "tourName", "durationDays", "durationNights", "supplierId"')
+    .select('id, slug, "tourCode", "tourName", "durationDays", "durationNights", "supplierId", "externalTourId"')
     .eq('status', 'PUBLISHED')
     .order('createdAt', { ascending: false })
     .limit(limit);
@@ -250,15 +250,20 @@ export async function getTourList(options?: {
   });
 
   // Build externalTourId map for airline lookup
+  // Match via externalTourId which both tours and raw_sources share
   const externalIdMap: Record<string, string> = {};
   (rawSources || []).forEach((rs: any) => {
-    // Try to find tours matching this raw source
     tours.forEach(t => {
       const key = `${t.supplierId}_${rs.externalTourId}`;
       if (t.supplierId === rs.supplierId && airlineMap[key]) {
-        // Match by tour code or name if possible
+        // Primary match: externalTourId (both tables have this field)
+        if (String(t.externalTourId) === String(rs.externalTourId)) {
+          externalIdMap[t.id] = airlineMap[key];
+          return;
+        }
+        // Fallback: match by tourCode variants
         const payload = rs.rawPayload;
-        if (payload?.tourCode === t.tourCode || payload?.tour_code === t.tourCode) {
+        if (payload?.tourCode === t.tourCode || payload?.tour_code === t.tourCode || payload?.ProductCode === t.tourCode) {
           externalIdMap[t.id] = airlineMap[key];
         }
       }
