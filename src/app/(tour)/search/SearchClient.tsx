@@ -16,7 +16,10 @@ interface TourResult {
   price: number;
   availableSeats: number;
   imageUrl: string;
+  airline: string;
 }
+
+type BudgetRange = '' | '0-15000' | '15000-25000' | '25000-40000' | '40000+';
 
 export default function SearchClient({ initialTours }: { initialTours: TourResult[] }) {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
@@ -28,6 +31,7 @@ export default function SearchClient({ initialTours }: { initialTours: TourResul
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCountries, setSelectedCountries] = useState<Set<string>>(new Set());
   const [selectedSuppliers, setSelectedSuppliers] = useState<Set<string>>(new Set());
+  const [selectedBudget, setSelectedBudget] = useState<BudgetRange>('');
   const [sortBy, setSortBy] = useState('recommend');
 
   useEffect(() => {
@@ -90,12 +94,26 @@ export default function SearchClient({ initialTours }: { initialTours: TourResul
       result = result.filter(t => selectedSuppliers.has(t.supplier));
     }
 
+    // Budget filter
+    if (selectedBudget) {
+      result = result.filter(t => {
+        if (t.price <= 0) return false;
+        switch (selectedBudget) {
+          case '0-15000': return t.price <= 15000;
+          case '15000-25000': return t.price >= 15000 && t.price <= 25000;
+          case '25000-40000': return t.price >= 25000 && t.price <= 40000;
+          case '40000+': return t.price >= 40000;
+          default: return true;
+        }
+      });
+    }
+
     // Sort
     if (sortBy === 'price-asc') result = [...result].sort((a, b) => (a.price || 999999) - (b.price || 999999));
     else if (sortBy === 'price-desc') result = [...result].sort((a, b) => (b.price || 0) - (a.price || 0));
 
     return result;
-  }, [tours, searchQuery, selectedCountries, selectedSuppliers, sortBy]);
+  }, [tours, searchQuery, selectedCountries, selectedSuppliers, selectedBudget, sortBy]);
 
   const toggleFilter = (set: Set<string>, value: string, setter: (s: Set<string>) => void) => {
     const next = new Set(set);
@@ -107,8 +125,16 @@ export default function SearchClient({ initialTours }: { initialTours: TourResul
     setSearchQuery('');
     setSelectedCountries(new Set());
     setSelectedSuppliers(new Set());
+    setSelectedBudget('');
     setSortBy('recommend');
   };
+
+  const budgetOptions: { label: string; value: BudgetRange }[] = [
+    { label: 'ไม่เกิน ฿15,000', value: '0-15000' },
+    { label: '฿15,000 - ฿25,000', value: '15000-25000' },
+    { label: '฿25,000 - ฿40,000', value: '25000-40000' },
+    { label: '฿40,000+', value: '40000+' },
+  ];
 
   const FilterSidebar = () => (
     <div className="space-y-6 pb-20 md:pb-0">
@@ -162,10 +188,16 @@ export default function SearchClient({ initialTours }: { initialTours: TourResul
       <div>
         <h4 className="font-bold text-slate-900 mb-3 text-sm">💰 งบประมาณ</h4>
         <div className="space-y-2">
-          {['ไม่เกิน ฿15,000', '฿15,000 - ฿25,000', '฿25,000 - ฿40,000', '฿40,000+'].map((p, i) => (
-            <label key={i} className="flex items-center gap-3 cursor-pointer group">
-              <input type="radio" name="budget" className="w-4 h-4 text-primary-600 border-slate-300 focus:ring-primary-500" />
-              <span className="text-sm text-slate-600 group-hover:text-slate-900">{p}</span>
+          {budgetOptions.map((opt) => (
+            <label key={opt.value} className="flex items-center gap-3 cursor-pointer group">
+              <input
+                type="radio"
+                name="budget"
+                checked={selectedBudget === opt.value}
+                onChange={() => setSelectedBudget(selectedBudget === opt.value ? '' : opt.value)}
+                className="w-4 h-4 text-primary-600 border-slate-300 focus:ring-primary-500"
+              />
+              <span className="text-sm text-slate-600 group-hover:text-slate-900">{opt.label}</span>
             </label>
           ))}
         </div>
@@ -173,7 +205,7 @@ export default function SearchClient({ initialTours }: { initialTours: TourResul
     </div>
   );
 
-  const activeFilterCount = selectedCountries.size + selectedSuppliers.size + (searchQuery ? 1 : 0);
+  const activeFilterCount = selectedCountries.size + selectedSuppliers.size + (searchQuery ? 1 : 0) + (selectedBudget ? 1 : 0);
 
   return (
     <>
@@ -279,6 +311,7 @@ export default function SearchClient({ initialTours }: { initialTours: TourResul
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {[...Array(6)].map((_, i) => (
                 <div key={i} className="g-card p-5 animate-pulse">
+                  <div className="h-40 bg-slate-200 rounded-lg mb-3" />
                   <div className="h-4 bg-slate-200 rounded w-3/4 mb-3" />
                   <div className="h-3 bg-slate-100 rounded w-1/2 mb-2" />
                   <div className="h-3 bg-slate-100 rounded w-1/3" />
@@ -288,37 +321,38 @@ export default function SearchClient({ initialTours }: { initialTours: TourResul
           ) : filteredTours.length > 0 ? (
             <div className={`grid gap-4 ${viewMode === 'grid' ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3' : 'grid-cols-1'}`}>
               {filteredTours.map(tour => (
-                <Link key={tour.id} href={`/tour/${tour.slug}`} className="group block bg-white rounded-xl border border-slate-200 hover:border-primary-200 hover:shadow-lg transition-all overflow-hidden">
+                <Link key={tour.id} href={`/tour/${tour.slug}`} className="group block bg-white rounded-xl border border-slate-200 hover:border-orange-200 hover:shadow-lg transition-all overflow-hidden">
                   {viewMode === 'grid' ? (
                     /* Grid View — Image Card */
                     <>
-                      <div className="relative h-40 bg-slate-100 overflow-hidden">
+                      <div className="relative h-44 bg-slate-100 overflow-hidden">
                         {tour.imageUrl ? (
                           <img src={tour.imageUrl} alt={tour.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy" />
                         ) : (
-                          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary-100 to-primary-50"><span className="text-4xl">🌍</span></div>
+                          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-orange-50 to-amber-50"><span className="text-4xl">🌍</span></div>
                         )}
                         {tour.availableSeats > 0 && tour.availableSeats <= 10 && (
                           <div className="absolute top-2 left-2 bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">🔥 เหลือ {tour.availableSeats} ที่</div>
                         )}
                         <div className="absolute top-2 right-2 bg-black/50 text-white text-[10px] font-medium px-2 py-0.5 rounded-full backdrop-blur-sm">{tour.durationDays}วัน{tour.durationNights}คืน</div>
-                        <div className="absolute bottom-2 left-2 bg-white/90 text-[10px] font-semibold text-primary-700 px-2 py-0.5 rounded-full backdrop-blur-sm">{tour.supplier}</div>
+                        <div className="absolute bottom-2 left-2 bg-white/90 text-[10px] font-semibold text-orange-700 px-2 py-0.5 rounded-full backdrop-blur-sm">{tour.supplier}</div>
                       </div>
                       <div className="p-3">
-                        <div className="flex items-center gap-1.5 mb-1.5">
+                        <div className="flex items-center gap-1.5 mb-1.5 flex-wrap">
                           <span className="text-[10px] font-bold text-slate-400 bg-slate-50 px-1.5 py-0.5 rounded">{tour.code}</span>
-                          <span className="text-[10px] text-slate-400">🌍 {tour.country}</span>
+                          <span className="text-[10px] text-slate-400">📍 {tour.country}</span>
+                          {tour.airline && <span className="text-[10px] text-blue-500 font-medium">✈ {tour.airline}</span>}
                         </div>
-                        <h3 className="text-sm font-bold text-slate-900 group-hover:text-primary-600 transition-colors line-clamp-2 min-h-[2.5rem] leading-tight">{tour.title}</h3>
+                        <h3 className="text-sm font-bold text-slate-900 group-hover:text-orange-600 transition-colors line-clamp-2 min-h-[2.5rem] leading-tight">{tour.title}</h3>
                         <div className="flex items-end justify-between mt-2 pt-2 border-t border-slate-50">
                           <div>
                             {tour.nextDeparture !== 'N/A' && <p className="text-[11px] text-slate-400">📅 {tour.nextDeparture}</p>}
                           </div>
                           <div className="text-right">
                             {tour.price > 0 ? (
-                              <><div className="text-base font-bold text-primary-600">฿{tour.price.toLocaleString()}</div><div className="text-[10px] text-slate-400">/ท่าน</div></>
+                              <><div className="text-base font-bold text-orange-600">฿{tour.price.toLocaleString()}</div><div className="text-[10px] text-slate-400">/ท่าน</div></>
                             ) : (
-                              <span className="text-xs text-slate-400">สอบถามราคา</span>
+                              <span className="text-xs text-orange-500 font-semibold">ดูรายละเอียด →</span>
                             )}
                           </div>
                         </div>
@@ -327,26 +361,31 @@ export default function SearchClient({ initialTours }: { initialTours: TourResul
                   ) : (
                     /* List View — Horizontal */
                     <div className="flex gap-4 p-4">
-                      <div className="w-32 h-24 rounded-lg overflow-hidden bg-slate-100 shrink-0">
+                      <div className="w-36 h-28 rounded-lg overflow-hidden bg-slate-100 shrink-0">
                         {tour.imageUrl ? (
-                          <img src={tour.imageUrl} alt={tour.title} className="w-full h-full object-cover" loading="lazy" />
+                          <img src={tour.imageUrl} alt={tour.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy" />
                         ) : (
-                          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary-100 to-primary-50"><span className="text-2xl">🌍</span></div>
+                          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-orange-50 to-amber-50"><span className="text-2xl">🌍</span></div>
                         )}
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1 flex-wrap">
                           <span className="text-[10px] font-bold text-slate-400 bg-slate-50 px-1.5 py-0.5 rounded">{tour.code}</span>
-                          <span className="text-[10px] text-primary-600 font-semibold bg-primary-50 px-1.5 py-0.5 rounded">{tour.supplier}</span>
+                          <span className="text-[10px] text-orange-600 font-semibold bg-orange-50 px-1.5 py-0.5 rounded">{tour.supplier}</span>
+                          {tour.airline && <span className="text-[10px] text-blue-500 font-medium">✈ {tour.airline}</span>}
                         </div>
-                        <h3 className="text-sm font-bold text-slate-900 group-hover:text-primary-600 line-clamp-2 transition-colors">{tour.title}</h3>
-                        <p className="text-xs text-slate-500 mt-1">🌍 {tour.country} • ⏱️ {tour.durationDays}วัน{tour.durationNights}คืน</p>
+                        <h3 className="text-sm font-bold text-slate-900 group-hover:text-orange-600 line-clamp-2 transition-colors">{tour.title}</h3>
+                        <div className="flex items-center gap-3 mt-1 text-xs text-slate-500">
+                          <span>📍 {tour.country}</span>
+                          <span>⏱️ {tour.durationDays}วัน{tour.durationNights}คืน</span>
+                          {tour.nextDeparture !== 'N/A' && <span>📅 {tour.nextDeparture}</span>}
+                        </div>
                       </div>
-                      <div className="text-right shrink-0">
+                      <div className="text-right shrink-0 flex flex-col justify-center">
                         {tour.price > 0 ? (
-                          <><div className="text-lg font-bold text-primary-600">฿{tour.price.toLocaleString()}</div><div className="text-[10px] text-slate-400">/ท่าน</div></>
+                          <><div className="text-lg font-bold text-orange-600">฿{tour.price.toLocaleString()}</div><div className="text-[10px] text-slate-400">/ท่าน</div></>
                         ) : (
-                          <div className="text-sm text-slate-400">สอบถามราคา</div>
+                          <span className="text-sm font-semibold text-orange-500">ดูรายละเอียด →</span>
                         )}
                         {tour.availableSeats > 0 && tour.availableSeats <= 15 && (
                           <div className="text-[10px] text-red-600 font-semibold mt-1">🔥 เหลือ {tour.availableSeats} ที่</div>

@@ -12,6 +12,7 @@ type FormattedTour = {
   id: string; slug: string; code: string; title: string; supplier: string;
   country: string; city: string; durationDays: number; durationNights: number;
   nextDeparture: string; price: number; availableSeats: number;
+  imageUrl: string; airline: string;
 };
 
 /** Fallback: fetch tours via Supabase REST API when Prisma DB connection fails */
@@ -105,6 +106,8 @@ async function fetchToursViaREST(keyword: string): Promise<FormattedTour[]> {
         nextDeparture: dep ? new Date(dep.startDate).toLocaleDateString('th-TH') : 'N/A',
         price: Number(price),
         availableSeats: dep?.remainingSeats || 0,
+        imageUrl: '',
+        airline: '',
       };
     });
   } catch (e) {
@@ -132,6 +135,7 @@ export default async function TourSearchPage({ searchParams }: { searchParams: {
       include: {
         supplier: true,
         destinations: true,
+        images: { where: { isCover: true }, take: 1 },
         departures: {
           where: { startDate: { gte: new Date() } },
           orderBy: { startDate: 'asc' },
@@ -146,6 +150,10 @@ export default async function TourSearchPage({ searchParams }: { searchParams: {
     formattedTours = tours.map(t => {
       const nextDep = t.departures[0];
       const price = nextDep?.prices[0]?.sellingPrice || 0;
+      // Extract airline from title
+      const airMatch = t.tourName.match(/[\(\[](\w{2})[\)\]]/);
+      const AIRLINES: Record<string, string> = { 'TG': 'Thai Airways', 'VZ': 'Thai VietJet', 'FD': 'AirAsia', 'SL': 'Lion Air', 'CX': 'Cathay Pacific', 'SQ': 'Singapore Airlines', 'NH': 'ANA', 'JL': 'JAL', 'VJ': 'VietJet', 'VN': 'Vietnam Airlines', 'MU': 'China Eastern', 'CI': 'China Airlines', 'BR': 'EVA Air', 'KE': 'Korean Air', 'EK': 'Emirates', 'TK': 'Turkish Airlines', 'QR': 'Qatar Airways' };
+      const airline = airMatch && AIRLINES[airMatch[1]] ? AIRLINES[airMatch[1]] : '';
       return {
         id: t.id,
         slug: t.slug,
@@ -159,6 +167,8 @@ export default async function TourSearchPage({ searchParams }: { searchParams: {
         nextDeparture: nextDep ? nextDep.startDate.toLocaleDateString('th-TH') : 'N/A',
         price: Number(price),
         availableSeats: nextDep?.remainingSeats || 0,
+        imageUrl: (t as any).images?.[0]?.imageUrl || '',
+        airline,
       };
     });
   } catch (_e) {
