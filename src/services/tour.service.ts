@@ -465,10 +465,12 @@ export async function getTourBySlug(slug: string): Promise<TourDetailData | null
     sb.from('tour_raw_sources').select('"supplierId", "externalTourId", "rawPayload"').eq('supplierId', tour.supplierId),
   ]);
 
-  // Extract airline, PDF, highlights from raw_sources
+  // Extract airline, PDF, highlights, periods, flights from raw_sources
   let detailAirline = extractAirlineFromTitle(tour.tourName || '');
   let detailPdfUrl = pdfs?.[0]?.pdfUrl || '';
   let detailHighlights: string[] = [];
+  let rawPeriods: any[] = [];
+  let rawFlights: any[] = [];
   (rawSources || []).forEach((rs: any) => {
     if (String(rs.externalTourId) !== String(tour.externalTourId)) return;
     const payload = rs.rawPayload;
@@ -479,16 +481,27 @@ export async function getTourBySlug(slug: string): Promise<TourDetailData | null
     if (!airline && airlineCode && AIRLINE_CODES[airlineCode.toUpperCase()]) airline = AIRLINE_CODES[airlineCode.toUpperCase()];
     if (airline && airline.length === 2 && AIRLINE_CODES[airline.toUpperCase()]) airline = AIRLINE_CODES[airline.toUpperCase()];
     if (airline) detailAirline = airline;
-    // PDF — check all possible field names
+    // PDF
     const pdf = payload.FilePDF || payload.pdfUrl || payload.pdf_url || payload.PdfUrl || payload.programPdf || payload.FileWord || '';
     if (pdf && !detailPdfUrl) detailPdfUrl = pdf;
-    // Highlights from payload
+    // Highlights
     const hl = payload.Highlight || payload.highlight || payload.highlights || '';
     if (hl && typeof hl === 'string') {
       detailHighlights = hl.split('\n').map((h: string) => h.trim()).filter((h: string) => h.length > 0);
     } else if (Array.isArray(hl)) {
       detailHighlights = hl.filter(Boolean);
     }
+    // Periods (departure details with deposit/prices)
+    if (Array.isArray(payload.Periods) && payload.Periods.length > 0) rawPeriods = payload.Periods;
+    // Flights
+    if (Array.isArray(payload.Flights) && payload.Flights.length > 0) rawFlights = payload.Flights;
+  });
+
+  // Build period lookup by start date
+  const periodByDate: Record<string, any> = {};
+  rawPeriods.forEach(p => {
+    const key = p.PeriodStartDate || p.periodStartDate || '';
+    if (key) periodByDate[key] = p;
   });
 
   // 3. Get prices for departures
@@ -510,22 +523,72 @@ export async function getTourBySlug(slug: string): Promise<TourDetailData | null
     mealsByDay[m.dayNumber].add(m.mealType);
   });
 
-  // 5. Calculate starting price
-  const allPrices = (prices || []).map(p => p.sellingPrice).filter(p => p > 0);
-  const startingPrice = allPrices.length > 0 ? Math.min(...allPrices) : 0;
+  // 5. Calculate starting price (prefer rawPeriods)
+  let startingPrice = 0;
+  if (rawPeriods.length > 0) {
+    const rawPrices = rawPeriods.map(p => p.Price || 0).filter(p => p > 0);
+    startingPrice = rawPrices.length > 0 ? Math.min(...rawPrices) : 0;
+  }
+  if (!startingPrice) {
+    const allPrices = (prices || []).map(p => p.sellingPrice).filter(p => p > 0);
+    startingPrice = allPrices.length > 0 ? Math.min(...allPrices) : 0;
+  }
 
   const dest = destinations?.[0];
   const defaultImg = 'https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?q=80&w=1200';
+
+  // Build enriched departures — merge DB departures + rawPeriods
+  const enrichedDeps = rawPeriods.length > 0
+    ? rawPeriods.map((p: any) => ({
+        id: `raw_${p.PeriodID || p.periodId || Math.random()}`,
+        startDate: p.PeriodStartDate || p.periodStartDate || '',
+        endDate: p.PeriodEndDate || p.periodEndDate || '',
+        priceAdult: p.Price || 0,
+        priceChild: p.Price_Child || p.priceChild || 0,
+        priceSingle: p.Price_Single_Bed || p.priceSingle || 0,
+        priceInfant: p.Price_Infant || 0,
+        priceJoinLand: p.Price_JoinLand || 0,
+        deposit: p.Deposit || 0,
+        totalSeats: p.Seat || p.GroupSize || 0,
+        booked: p.Book || 0,
+        remainingSeats: Math.max((p.Seat || p.GroupSize || 0) - (p.Book || 0), 0),
+        status: (p.Seat || 0) - (p.Book || 0) <= 0 ? 'FULL' : (p.PeriodStatus || 'Book'),
+        bus: p.Bus || '',
+        periodCode: p.PeriodCode || '',
+      }))
+    : (departures || []).map(d => ({
+        id: d.id,
+        startDate: d.startDate,
+        endDate: d.endDate,
+        priceAdult: pricesByDep[d.id]?.ADULT || 0,
+        priceChild: pricesByDep[d.id]?.CHILD || 0,
+        priceSingle: pricesByDep[d.id]?.SINGLE_SUPP || 0,
+        priceInfant: 0,
+        priceJoinLand: 0,
+        deposit: 0,
+        totalSeats: 0,
+        booked: 0,
+        remainingSeats: d.remainingSeats || 0,
+        status: d.status || 'AVAILABLE',
+        bus: '',
+        periodCode: '',
+      }));
+
+  // Build flights info
+  const flightInfo = rawFlights.map((f: any) => ({
+    route: f.Route || '',
+    flightNo: f.FlightNo || '',
+    departure: (f.DepartureTime || '').slice(0, 5),
+    arrival: (f.ArrivalTime || '').slice(0, 5),
+    airline: f.AirlineName || detailAirline || '',
+  }));
 
   return {
     id: tour.id,
     slug: tour.slug,
     code: tour.tourCode || '',
     title: tour.tourName || '',
-    supplier: {
-      id: supplier?.canonicalName || '',
-      name: supplier?.displayName || '',
-    },
+    supplier: { id: supplier?.canonicalName || '', name: supplier?.displayName || '' },
     country: normalizeCountry(dest?.country || ''),
     city: dest?.city || '',
     duration: { days: tour.durationDays || 0, nights: tour.durationNights || 0 },
@@ -535,6 +598,7 @@ export async function getTourBySlug(slug: string): Promise<TourDetailData | null
     summary: tour.supplierBookingNote || '',
     highlights: detailHighlights.length > 0 ? detailHighlights : extractHighlightsFromTitle(tour.tourName || ''),
     flight: { airline: detailAirline || 'ตามโปรแกรมทัวร์', details: 'อ้างอิงจากรายละเอียดทัวร์' },
+    flights: flightInfo,
     hotel: { name: 'โรงแรมมาตรฐาน', rating: 3, details: 'ตามโปรแกรมทัวร์' },
     meals: 'ดูรายละเอียดในโปรแกรม',
     included: (included || []).map(i => i.description),
@@ -554,16 +618,7 @@ export async function getTourBySlug(slug: string): Promise<TourDetailData | null
         dinner: mealsByDay[it.dayNumber]?.has('DINNER') || false,
       },
     })),
-    departures: (departures || []).map(d => ({
-      id: d.id,
-      startDate: d.startDate,
-      endDate: d.endDate,
-      priceAdult: pricesByDep[d.id]?.ADULT || 0,
-      priceChild: pricesByDep[d.id]?.CHILD || 0,
-      priceSingle: pricesByDep[d.id]?.SINGLE_SUPP || 0,
-      status: d.status || 'AVAILABLE',
-      remainingSeats: d.remainingSeats || 0,
-    })),
+    departures: enrichedDeps,
   };
 }
 
