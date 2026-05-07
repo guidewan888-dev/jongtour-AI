@@ -484,12 +484,17 @@ export async function getTourBySlug(slug: string): Promise<TourDetailData | null
     // PDF
     const pdf = payload.FilePDF || payload.pdfUrl || payload.pdf_url || payload.PdfUrl || payload.programPdf || payload.FileWord || payload.pdf || payload.word || '';
     if (pdf && !detailPdfUrl) detailPdfUrl = pdf;
-    // Highlights
+    // Highlights — strip HTML tags, split on <br/> and newlines
     const hl = payload.Highlight || payload.highlight || payload.highlights || '';
     if (hl && typeof hl === 'string') {
-      detailHighlights = hl.split('\n').map((h: string) => h.trim()).filter((h: string) => h.length > 0);
+      detailHighlights = hl
+        .replace(/<br\s*\/?>/gi, '\n')
+        .replace(/<[^>]+>/g, '')
+        .split('\n')
+        .map((h: string) => h.replace(/^[\s•✦▸►●○◆→]+/, '').trim())
+        .filter((h: string) => h.length > 2);
     } else if (Array.isArray(hl)) {
-      detailHighlights = hl.filter(Boolean);
+      detailHighlights = hl.map((h: string) => typeof h === 'string' ? h.replace(/<[^>]+>/g, '').trim() : '').filter(Boolean);
     }
     // Periods (departure details with deposit/prices) — Periods (Let's Go) or periods (Check In / Tour Factory)
     const periodArr = payload.Periods || payload.periods || [];
@@ -596,13 +601,15 @@ export async function getTourBySlug(slug: string): Promise<TourDetailData | null
         airline: f.AirlineName || detailAirline || '',
       }))
     : (() => {
-        // Parse flight string from Check In/Tour Factory format: "(BKK-PEK)TG614 10.00-15.45//(PEK-BKK)TG615 17.05-21.15"
+        // Parse flight string: "(BKK-PEK)TG614 10.00-15.45//(PEK-BKK)TG615 17.05-21.15"
+        // Also handles: "(BKK-TFU) VZ3680 17.50-22.00", "(DMK-NRT)  XJ600  23.55 -08.00"
         const flightStr = rawPeriods.find((p: any) => p.flight)?.flight || '';
         if (!flightStr) return [];
         return flightStr.split('//').filter(Boolean).map((seg: string) => {
-          const m = seg.match(/\(([^)]+)\)(\w+)\s+([\d.:]+)-([\d.:]+)/);
+          const cleaned = seg.trim().replace(/\t/g, ' ').replace(/\s+/g, ' ');
+          const m = cleaned.match(/\(([^)]+)\)\s*(\w+)\s+([\d.:]+)\s*-\s*([\d.:+]+)/);
           if (!m) return null;
-          return { route: m[1], flightNo: m[2], departure: m[3], arrival: m[4], airline: detailAirline || '' };
+          return { route: m[1].trim(), flightNo: m[2].trim(), departure: m[3].replace('.', ':'), arrival: m[4].replace('+1','').replace('.', ':'), airline: detailAirline || '' };
         }).filter(Boolean);
       })();
 
