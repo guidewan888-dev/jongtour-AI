@@ -149,7 +149,7 @@ export const footerColumns: FooterColumn[] = [
       { label: "กรุ๊ปส่วนตัว", href: "/private-group" },
       { label: "บริการวีซ่า", href: "/visa" },
       { label: "AI ค้นหาทัวร์", href: "/ai-search" },
-      { label: "B2B Agent", href: "/agent" },
+      { label: "B2B Agent", href: "/agent-portal/register" },
     ],
   },
   {

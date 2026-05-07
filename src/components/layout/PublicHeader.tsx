@@ -16,7 +16,7 @@ const gridItems = [
   { label: "Wholesale", href: "/wholesale-partners", icon: "🏭", color: "#00BCD4" },
   { label: "ติดต่อ", href: "/contact", icon: "📞", color: "#34A853" },
   { label: "เข้าสู่ระบบ", href: "/login", icon: "👤", color: "#7B1FA2" },
-  { label: "B2B Agent", href: "/agent", icon: "💼", color: "#455A64" },
+  { label: "B2B Agent", href: "/agent-portal/register", icon: "💼", color: "#455A64" },
 ];
 
 export default function PublicHeader() {
