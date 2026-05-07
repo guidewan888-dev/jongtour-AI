@@ -3,6 +3,7 @@ import { SyncManager, AdapterFactory } from '@/services/suppliers/core/SyncManag
 import { LetgoAdapter } from '@/services/suppliers/adapters/LetgoAdapter';
 import { TourFactoryAdapter } from '@/services/suppliers/adapters/TourFactoryAdapter';
 import { CheckinAdapter } from '@/services/suppliers/adapters/CheckinAdapter';
+import { prisma } from '@/lib/prisma';
 import { createClient } from '@supabase/supabase-js';
 
 export const dynamic = 'force-dynamic';
@@ -25,11 +26,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, message: 'supplierId is required' }, { status: 400 });
     }
 
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
-
     const startTime = new Date();
     const syncManager = new SyncManager();
     await syncManager.syncSupplierTours(supplierId);
@@ -37,6 +33,11 @@ export async function POST(request: Request) {
     const duration = Math.round((endTime.getTime() - startTime.getTime()) / 1000);
 
     // Get latest ApiSyncLog to find record count
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
+
     const { data: latestLog } = await supabase
       .from('ApiSyncLog')
       .select('id, status, recordsAdded')
@@ -46,22 +47,24 @@ export async function POST(request: Request) {
       .single();
 
     const recordCount = latestLog?.recordsAdded || 0;
+    const syncStatus = latestLog?.status === 'SUCCESS' ? 'SUCCESS' : 'FAILED';
 
-    // Write to supplier_sync_logs (Prisma table = SupplierSyncLog)
-    // Uses snake_case table name from @@map("supplier_sync_logs")
-    const { error: syncLogError } = await supabase.from('supplier_sync_logs').insert({
-      supplierId,
-      syncType: 'FULL',
-      status: latestLog?.status === 'SUCCESS' ? 'SUCCESS' : 'FAILED',
-      startedAt: startTime.toISOString(),
-      finishedAt: endTime.toISOString(),
-      totalRecords: recordCount,
-      successRecords: recordCount,
-      failedRecords: 0,
-    });
-
-    if (syncLogError) {
-      console.error('[Admin Sync] Failed to write sync log:', syncLogError.message);
+    // Write to SupplierSyncLog via Prisma (same table the admin pages read from)
+    try {
+      await prisma.supplierSyncLog.create({
+        data: {
+          supplierId,
+          syncType: 'FULL',
+          status: syncStatus,
+          startedAt: startTime,
+          finishedAt: endTime,
+          totalRecords: recordCount,
+          successRecords: recordCount,
+          failedRecords: 0,
+        },
+      });
+    } catch (logErr: any) {
+      console.error('[Admin Sync] Failed to write SupplierSyncLog:', logErr.message);
     }
 
     return NextResponse.json({

@@ -1,6 +1,5 @@
 'use client';
 import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
 
 const SUPPLIERS = [
   { id: 'SUP_LETGO', name: "Let's Go" },
@@ -9,7 +8,6 @@ const SUPPLIERS = [
 ];
 
 export default function SyncButtons() {
-  const router = useRouter();
   const [syncing, setSyncing] = useState<Record<string, boolean>>({});
   const [results, setResults] = useState<Record<string, { ok: boolean; msg: string }>>({});
 
@@ -51,13 +49,13 @@ export default function SyncButtons() {
     for (const s of SUPPLIERS) {
       await handleSync(s.id);
     }
-    // Reload page to update server-rendered stats
-    router.refresh();
+    // Hard reload to update server-rendered stats
+    window.location.reload();
   };
 
   const handleSyncOne = async (supplierId: string) => {
     await handleSync(supplierId);
-    router.refresh();
+    window.location.reload();
   };
 
   const isAnySyncing = Object.values(syncing).some(Boolean);
