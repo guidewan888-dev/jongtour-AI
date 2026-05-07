@@ -126,7 +126,7 @@ export default function TourDetailPage({ params }: { params: { slug: string } })
                 <div className="w-9 h-9 bg-white rounded-full flex items-center justify-center shadow-sm border border-blue-100 shrink-0 overflow-hidden">
                   {airLogo ? <img src={airLogo} alt="" className="w-6 h-6 object-contain" onError={e=>{(e.target as HTMLImageElement).outerHTML='<span class="text-base">✈️</span>'}}/> : <span className="text-base">✈️</span>}
                 </div>
-                <div><div className="font-bold text-slate-800 text-sm">{airName}</div><div className="text-xs text-slate-400">บริการอาหารบนเครื่อง</div></div>
+                <div><div className="font-bold text-slate-800 text-sm">{airName}</div></div>
               </div>}
 
               {/* Highlights */}
