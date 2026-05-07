@@ -159,7 +159,7 @@ export async function middleware(req: NextRequest) {
   // Admin paths require admin role
   if (ADMIN_PATHS.some(p => url.pathname.startsWith(p))) {
     if (!isAuthenticated) {
-      return NextResponse.redirect(new URL(`/login?redirect=${encodeURIComponent(url.pathname)}`, req.url));
+      return NextResponse.redirect(new URL(`/admin-login?redirect=${encodeURIComponent(url.pathname)}`, req.url));
     }
     if (role !== 'ADMIN' && role !== 'SUPER_ADMIN') {
       return NextResponse.redirect(new URL('/403', req.url));
@@ -193,7 +193,7 @@ export async function middleware(req: NextRequest) {
 
   // 6. Main domain auth routes → rewrite to /pub-auth/*
   const authPaths = ['/login', '/register', '/forgot-password', '/reset-password', '/verify-email'];
-  if (authPaths.some(p => url.pathname === p || url.pathname.startsWith(p + '/'))) {
+  if (authPaths.some(p => url.pathname === p || url.pathname.startsWith(p + '/')) && !url.pathname.startsWith('/admin-login')) {
     url.pathname = `/pub-auth${url.pathname}`;
     return NextResponse.rewrite(url);
   }
