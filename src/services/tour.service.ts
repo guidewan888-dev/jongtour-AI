@@ -167,9 +167,18 @@ export async function getTourList(options?: {
   (rawSources || []).forEach((rs: any) => {
     const payload = rs.rawPayload;
     if (!payload) return;
-    const airline = payload.airline || payload.airlineName || payload.air || '';
+    // Check all possible field names (lowercase and PascalCase)
+    let airline = payload.airline || payload.airlineName || payload.air || payload.AirlineName || '';
+    const airlineCode = payload.AirlineCode || payload.airline_code || '';
+    // If we have a code but no name, resolve it
+    if (!airline && airlineCode && AIRLINE_CODES[airlineCode.toUpperCase()]) {
+      airline = AIRLINE_CODES[airlineCode.toUpperCase()];
+    }
+    // If airline is a raw code like "FD", resolve to full name
+    if (airline && airline.length === 2 && AIRLINE_CODES[airline.toUpperCase()]) {
+      airline = AIRLINE_CODES[airline.toUpperCase()];
+    }
     if (airline) {
-      // Map by externalTourId since we can't join directly to tourId
       const key = `${rs.supplierId}_${rs.externalTourId}`;
       airlineMap[key] = typeof airline === 'string' ? airline : '';
     }
