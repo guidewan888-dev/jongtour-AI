@@ -96,9 +96,9 @@ const REGION_DATA: Record<string, { name: string; nameEn: string; desc: string; 
 };
 
 const SUPPLIERS = [
-  { key: "let's go", name: "Let's Go", color: 'bg-green-600', logo: '/images/logos/download.png', priority: 1 },
-  { key: "checkin", name: "Checkin Group", color: 'bg-teal-600', logo: '/images/logos/Check in group.jpg', priority: 2 },
-  { key: "tour factory", name: "Tour Factory", color: 'bg-purple-600', logo: '/images/logos/Tour-Factory.jpg', priority: 3 },
+  { key: "let'sgo", name: "Let's Go", color: 'bg-green-600', logo: '/images/logos/download.png', priority: 1 },
+  { key: "checkingroup", name: "Checkin Group", color: 'bg-teal-600', logo: '/images/logos/Check in group.jpg', priority: 2 },
+  { key: "tourfactory", name: "Tour Factory", color: 'bg-purple-600', logo: '/images/logos/Tour-Factory.jpg', priority: 3 },
   { key: "go365", name: "Go365", color: 'bg-green-500', logo: '/images/logos/download.jfif', priority: 4 },
 ];
 

@@ -44,15 +44,12 @@ const COUNTRY_MAP: Record<string, { name: string; flagCode: string }> = {
   'macau': { name: 'มาเก๊า', flagCode: 'mo' },
 };
 
-const SUPPLIER_DISPLAY: Record<string, { name: string; color: string }> = {
-  "let's go": { name: "Let's Go Group", color: 'bg-blue-500' },
-  "letgo": { name: "Let's Go Group", color: 'bg-blue-500' },
-  'checkingroup': { name: 'Checkin Group', color: 'bg-emerald-500' },
-  'checkin': { name: 'Checkin Group', color: 'bg-emerald-500' },
-  'tourfactory': { name: 'Tour Factory', color: 'bg-purple-500' },
-  'tour factory': { name: 'Tour Factory', color: 'bg-purple-500' },
-  'go365': { name: 'Go365', color: 'bg-green-500' },
-};
+const SUPPLIER_PRIORITY = [
+  { key: "let'sgo", name: "Let's Go", color: 'bg-green-600', logo: '/images/logos/download.png', priority: 1 },
+  { key: "checkingroup", name: "Checkin Group", color: 'bg-teal-600', logo: '/images/logos/Check in group.jpg', priority: 2 },
+  { key: "tourfactory", name: "Tour Factory", color: 'bg-purple-600', logo: '/images/logos/Tour-Factory.jpg', priority: 3 },
+  { key: "go365", name: "Go365", color: 'bg-green-500', logo: '/images/logos/download.jfif', priority: 4 },
+];
 
 export default function CountryPage({ params }: { params: { slug: string } }) {
   const [tours, setTours] = useState<Tour[]>([]);
@@ -95,14 +92,15 @@ export default function CountryPage({ params }: { params: { slug: string } }) {
       if (!groups[key]) groups[key] = [];
       groups[key].push(t);
     });
-    return Object.entries(groups).sort((a, b) => b[1].length - a[1].length);
+    return Object.entries(groups).sort((a, b) => {
+      const infoA = SUPPLIER_PRIORITY.find(s => a[0].includes(s.key));
+      const infoB = SUPPLIER_PRIORITY.find(s => b[0].includes(s.key));
+      return (infoA?.priority || 99) - (infoB?.priority || 99);
+    });
   }, [displayedTours]);
 
   const getSupplierInfo = (key: string) => {
-    for (const [k, v] of Object.entries(SUPPLIER_DISPLAY)) {
-      if (key.includes(k)) return v;
-    }
-    return { name: key, color: 'bg-slate-500' };
+    return SUPPLIER_PRIORITY.find(s => key.includes(s.key)) || { name: key, color: 'bg-slate-500', logo: '', priority: 99 };
   };
 
   return (
@@ -168,18 +166,19 @@ export default function CountryPage({ params }: { params: { slug: string } }) {
                 <section key={supplier} className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
                   <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-5 md:p-6 border-b border-slate-100 bg-slate-50 gap-3">
                     <div className="flex items-center gap-3">
-                      <div className={`w-11 h-11 ${display.color} rounded-xl flex items-center justify-center text-white text-xs font-black shadow-sm`}>
-                        {display.name.slice(0, 2).toUpperCase()}
+                      <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-sm border border-slate-100 overflow-hidden p-1">
+                        {display.logo ? (
+                          <img src={display.logo} alt={display.name} className="w-full h-full object-contain" />
+                        ) : (
+                          <div className={`w-full h-full ${display.color} rounded-lg flex items-center justify-center text-white text-xs font-black`}>{display.name.slice(0, 2)}</div>
+                        )}
                       </div>
                       <div>
-                        <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                          ดีลหลุดจองจาก {display.name}
-                          <svg className="w-5 h-5 text-blue-500" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
-                        </h2>
-                        <p className="text-sm text-slate-500">{supplierTours.length} โปรแกรม • อัปเดตสถานะที่นั่ง Real-time</p>
+                        <h2 className="text-lg font-bold text-slate-900">ดีลจาก {display.name}</h2>
+                        <p className="text-sm text-slate-500">{supplierTours.length} โปรแกรม</p>
                       </div>
                     </div>
-                    <span className="text-xs font-bold text-red-500 bg-red-50 px-3 py-1.5 rounded-full border border-red-200">⚡ ต้องตัดสินใจด่วน!</span>
+                    <Link href={`/search?supplier=${encodeURIComponent(display.name)}`} className="text-xs font-bold text-primary-600 hover:text-primary-700">ดูทัวร์ทั้งหมดจาก {display.name} →</Link>
                   </div>
 
                   <div className="p-5 md:p-6">

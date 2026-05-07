@@ -68,10 +68,10 @@ const CONTINENTS: Record<string, {
 };
 
 const SUPPLIERS = [
-  { key: "let's go", name: "Let's Go", color: 'bg-blue-500' },
-  { key: "go365", name: "Go365", color: 'bg-green-500' },
-  { key: "checkin", name: "Checkin Group", color: 'bg-teal-500' },
-  { key: "tour factory", name: "Tour Factory", color: 'bg-purple-500' },
+  { key: "let'sgo", name: "Let's Go", color: 'bg-green-600', logo: '/images/logos/download.png', priority: 1 },
+  { key: "checkingroup", name: "Checkin Group", color: 'bg-teal-600', logo: '/images/logos/Check in group.jpg', priority: 2 },
+  { key: "tourfactory", name: "Tour Factory", color: 'bg-purple-600', logo: '/images/logos/Tour-Factory.jpg', priority: 3 },
+  { key: "go365", name: "Go365", color: 'bg-green-500', logo: '/images/logos/download.jfif', priority: 4 },
 ];
 
 // ── Helper: find continent for a country ────────────────────────────
@@ -161,10 +161,14 @@ export default function ToursPage({ params }: { params: { slug: string[] } }) {
       if (!groups[key]) groups[key] = [];
       groups[key].push(t);
     });
-    return Object.entries(groups).sort((a, b) => b[1].length - a[1].length);
+    return Object.entries(groups).sort((a, b) => {
+      const infoA = SUPPLIERS.find(s => a[0].includes(s.key));
+      const infoB = SUPPLIERS.find(s => b[0].includes(s.key));
+      return (infoA?.priority || 99) - (infoB?.priority || 99);
+    });
   }, [tours]);
 
-  const getSupplierInfo = (key: string) => SUPPLIERS.find(s => key.includes(s.key)) || { name: key, color: 'bg-slate-500' };
+  const getSupplierInfo = (key: string) => SUPPLIERS.find(s => key.includes(s.key)) || { name: key, color: 'bg-slate-500', logo: '', priority: 99 };
 
   // If redirecting to tour detail, show nothing
   if (tourSlug) return null;
@@ -264,13 +268,19 @@ export default function ToursPage({ params }: { params: { slug: string[] } }) {
                 <section key={supplier} className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
                   <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-5 border-b border-slate-100 bg-slate-50 gap-3">
                     <div className="flex items-center gap-3">
-                      <div className={`w-11 h-11 ${info.color} rounded-xl flex items-center justify-center text-white text-xs font-black shadow-sm`}>{info.name.slice(0,2)}</div>
+                      <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-sm border border-slate-100 overflow-hidden p-1">
+                        {info.logo ? (
+                          <img src={info.logo} alt={info.name} className="w-full h-full object-contain" />
+                        ) : (
+                          <div className={`w-full h-full ${info.color} rounded-lg flex items-center justify-center text-white text-xs font-black`}>{info.name.slice(0,2)}</div>
+                        )}
+                      </div>
                       <div>
                         <h3 className="text-base font-bold text-slate-900">ดีลจาก {info.name}</h3>
                         <p className="text-xs text-slate-500">{sTours.length} โปรแกรม</p>
                       </div>
                     </div>
-                    <Link href={`/wholesaler/${supplier.replace(/['\s]/g,'-')}`} className="text-xs font-bold text-primary-600 bg-primary-50 px-3 py-1.5 rounded-full hover:bg-primary-100">ดูทัวร์ทั้งหมดจาก {info.name} →</Link>
+                    <Link href={`/search?supplier=${encodeURIComponent(info.name)}`} className="text-xs font-bold text-primary-600 hover:text-primary-700">ดูทัวร์ทั้งหมดจาก {info.name} →</Link>
                   </div>
                   <div className="p-5">
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
