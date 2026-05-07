@@ -417,6 +417,8 @@ export async function getTourBySlug(slug: string): Promise<TourDetailData | null
     { data: policies },
     { data: pdfs },
     { data: departures },
+    { data: highlightsData },
+    { data: rawSources },
   ] = await Promise.all([
     sb.from('suppliers').select('id, "canonicalName", "displayName"').eq('id', tour.supplierId).single(),
     sb.from('tour_destinations').select('country, city').eq('tourId', tour.id),
@@ -432,6 +434,8 @@ export async function getTourBySlug(slug: string): Promise<TourDetailData | null
       .eq('tourId', tour.id)
       .gte('startDate', new Date().toISOString())
       .order('startDate', { ascending: true }),
+    sb.from('tour_highlights').select('description').eq('tourId', tour.id),
+    sb.from('tour_raw_sources').select('"rawPayload"').eq('supplierId', tour.supplierId),
   ]);
 
   // 3. Get prices for departures
@@ -476,8 +480,8 @@ export async function getTourBySlug(slug: string): Promise<TourDetailData | null
     price: { starting: startingPrice },
     status: tour.status || 'PUBLISHED',
     summary: tour.supplierBookingNote || '',
-    highlights: [],
-    flight: { airline: 'ตามโปรแกรมทัวร์', details: 'อ้างอิงจากรายละเอียดทัวร์' },
+    highlights: (highlightsData || []).map(h => h.description).filter(Boolean),
+    flight: { airline: extractAirlineFromTitle(tour.tourName || '') || 'ตามโปรแกรมทัวร์', details: 'อ้างอิงจากรายละเอียดทัวร์' },
     hotel: { name: 'โรงแรมมาตรฐาน', rating: 3, details: 'ตามโปรแกรมทัวร์' },
     meals: 'ดูรายละเอียดในโปรแกรม',
     included: (included || []).map(i => i.description),

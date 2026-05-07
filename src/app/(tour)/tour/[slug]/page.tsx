@@ -39,6 +39,7 @@ interface TourData {
     remainingSeats: number;
   }[];
   airline?: string;
+  flight?: { airline: string; details: string };
 }
 
 export default function TourDetailPage({ params }: { params: { slug: string } }) {
@@ -160,6 +161,44 @@ export default function TourDetailPage({ params }: { params: { slug: string } })
                 <div className="font-black text-slate-900">{tour.departures.length > 0 ? `${tour.departures[0].remainingSeats} ท่าน` : 'สอบถาม'}</div>
               </div>
             </div>
+
+            {/* Airline Badge */}
+            {tour.flight?.airline && tour.flight.airline !== 'ตามโปรแกรมทัวร์' && (
+              <div className="flex items-center gap-3 p-4 bg-gradient-to-r from-blue-50 to-sky-50 rounded-xl border border-blue-100">
+                <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white text-lg">✈️</div>
+                <div>
+                  <div className="font-bold text-slate-900">{tour.flight.airline}</div>
+                  <div className="text-xs text-slate-500">สายการบินประจำโปรแกรม</div>
+                </div>
+              </div>
+            )}
+
+            {/* PDF Download */}
+            {tour.pdfUrl && (
+              <a href={tour.pdfUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-4 p-5 bg-gradient-to-r from-primary-50 to-orange-50 rounded-xl border-2 border-dashed border-primary-200 hover:border-primary-400 hover:shadow-md transition-all group">
+                <div className="w-12 h-12 bg-primary-100 rounded-xl flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">📄</div>
+                <div className="flex-1">
+                  <div className="font-bold text-slate-900">ดาวน์โหลดโปรแกรมทัวร์ (PDF)</div>
+                  <div className="text-xs text-slate-500">ดูรายละเอียดทั้งหมด แผนการเดินทาง ราคา เงื่อนไข</div>
+                </div>
+                <div className="text-primary-600 font-bold text-sm">ดาวน์โหลด →</div>
+              </a>
+            )}
+
+            {/* Highlights */}
+            {tour.highlights && tour.highlights.length > 0 && (
+              <section>
+                <h2 className="text-xl font-bold text-slate-900 mb-4 flex items-center gap-2">⭐ ไฮไลท์ทัวร์</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {tour.highlights.map((h: string, i: number) => (
+                    <div key={i} className="flex items-start gap-3 p-3 bg-amber-50/50 rounded-xl border border-amber-100/50">
+                      <span className="w-6 h-6 bg-amber-400 text-white rounded-full flex items-center justify-center text-xs font-black shrink-0 mt-0.5">{i+1}</span>
+                      <span className="text-sm text-slate-700">{h}</span>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
 
             {/* Summary */}
             {tour.summary && (
