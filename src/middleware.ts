@@ -156,8 +156,8 @@ export async function middleware(req: NextRequest) {
   }
 
   // ─── Path-based Auth Guards (main domain) ─────────
-  // Admin paths require admin role
-  if (ADMIN_PATHS.some(p => url.pathname.startsWith(p))) {
+  // Admin paths require admin role (exclude admin-login to prevent redirect loop)
+  if (ADMIN_PATHS.some(p => url.pathname.startsWith(p)) && !url.pathname.startsWith('/admin-login')) {
     if (!isAuthenticated) {
       return NextResponse.redirect(new URL(`/admin-login?redirect=${encodeURIComponent(url.pathname)}`, req.url));
     }
