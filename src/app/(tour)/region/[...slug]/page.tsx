@@ -96,11 +96,16 @@ const REGION_DATA: Record<string, { name: string; nameEn: string; desc: string; 
 };
 
 const SUPPLIERS = [
-  { key: "let's go", name: "Let's Go", color: 'bg-blue-500' },
-  { key: "go365", name: "Go365", color: 'bg-green-500' },
-  { key: "checkin", name: "Checkin Group", color: 'bg-teal-500' },
-  { key: "tour factory", name: "Tour Factory", color: 'bg-purple-500' },
+  { key: "let's go", name: "Let's Go", color: 'bg-green-600', logo: '/images/logos/download.png', priority: 1 },
+  { key: "checkin", name: "Checkin Group", color: 'bg-teal-600', logo: '/images/logos/Check in group.jpg', priority: 2 },
+  { key: "tour factory", name: "Tour Factory", color: 'bg-purple-600', logo: '/images/logos/Tour-Factory.jpg', priority: 3 },
+  { key: "go365", name: "Go365", color: 'bg-green-500', logo: '/images/logos/download.jfif', priority: 4 },
 ];
+
+// Hero banners per region
+const REGION_HEROES: Record<string, string> = {
+  asia: '/images/banner/asia-hero.png',
+};
 
 const LINE_URL = 'https://line.me/R/ti/p/@jongtour';
 
@@ -140,25 +145,35 @@ export default function RegionPage({ params }: { params: { slug: string[] } }) {
       groups[key].tours.push(t);
       groups[key].countries.add(t.country);
     });
-    return Object.entries(groups).sort((a, b) => b[1].tours.length - a[1].tours.length);
+    return Object.entries(groups).sort((a, b) => {
+      const infoA = SUPPLIERS.find(s => a[0].includes(s.key));
+      const infoB = SUPPLIERS.find(s => b[0].includes(s.key));
+      return (infoA?.priority || 99) - (infoB?.priority || 99);
+    });
   }, [tours, activeCountry]);
 
-  const getSupplierInfo = (key: string) => SUPPLIERS.find(s => key.includes(s.key)) || { name: key, color: 'bg-slate-500' };
+  const getSupplierInfo = (key: string) => SUPPLIERS.find(s => key.includes(s.key)) || { name: key, color: 'bg-slate-500', logo: '', priority: 99 };
 
   return (
     <div className="bg-white min-h-screen">
       {/* Hero */}
-      <section className="relative bg-gradient-to-br from-primary-600 via-primary-500 to-orange-400 text-white overflow-hidden">
-        <div className="absolute inset-0 opacity-10"><div className="absolute inset-0" style={{ backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)', backgroundSize: '24px 24px' }} /></div>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 md:py-20 relative text-center">
-          <h1 className="text-3xl md:text-5xl font-black mb-3">เปิดโลกแห่ง{region.name}</h1>
-          <p className="text-white/80 text-base md:text-lg max-w-2xl mx-auto mb-8">{region.desc}</p>
-          <div className="flex flex-wrap justify-center gap-3">
-            <Link href="/search" className="bg-white text-primary-600 hover:bg-primary-50 px-6 py-3 rounded-full font-bold text-sm shadow-lg transition-all">🔍 ค้นหาแพ็กเกจทัวร์</Link>
-            <Link href="/search?type=wholesale" className="bg-white/20 hover:bg-white/30 text-white px-6 py-3 rounded-full font-bold text-sm backdrop-blur-sm border border-white/30 transition-all">🏢 ทัวร์ค้าส่ง (Wholesale)</Link>
+      {REGION_HEROES[regionKey] ? (
+        <section className="relative overflow-hidden">
+          <img src={REGION_HEROES[regionKey]} alt={`ทัวร์${region.name}`} className="w-full h-auto object-cover" />
+        </section>
+      ) : (
+        <section className="relative bg-gradient-to-br from-primary-600 via-primary-500 to-orange-400 text-white overflow-hidden">
+          <div className="absolute inset-0 opacity-10"><div className="absolute inset-0" style={{ backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)', backgroundSize: '24px 24px' }} /></div>
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 md:py-20 relative text-center">
+            <h1 className="text-3xl md:text-5xl font-black mb-3">เปิดโลกแห่ง{region.name}</h1>
+            <p className="text-white/80 text-base md:text-lg max-w-2xl mx-auto mb-8">{region.desc}</p>
+            <div className="flex flex-wrap justify-center gap-3">
+              <Link href="/search" className="bg-white text-primary-600 hover:bg-primary-50 px-6 py-3 rounded-full font-bold text-sm shadow-lg transition-all">🔍 ค้นหาแพ็กเกจทัวร์</Link>
+              <Link href="/search?type=wholesale" className="bg-white/20 hover:bg-white/30 text-white px-6 py-3 rounded-full font-bold text-sm backdrop-blur-sm border border-white/30 transition-all">🏢 ทัวร์ค้าส่ง (Wholesale)</Link>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* Trust Bar */}
       <div className="bg-slate-50 border-b border-slate-200 py-3">
@@ -194,7 +209,9 @@ export default function RegionPage({ params }: { params: { slug: string[] } }) {
             <div className="flex items-center gap-6">
               {SUPPLIERS.map(s => (
                 <div key={s.key} className="flex flex-col items-center gap-1">
-                  <div className={`w-12 h-12 ${s.color} rounded-xl flex items-center justify-center text-white text-[10px] font-black leading-tight text-center shadow-sm`}>{s.name.slice(0, 3)}</div>
+                  <div className="w-14 h-14 bg-white rounded-xl flex items-center justify-center shadow-sm border border-slate-100 overflow-hidden p-1">
+                    <img src={s.logo} alt={s.name} className="w-full h-full object-contain" />
+                  </div>
                   <span className="text-[10px] font-bold text-slate-500">{s.name}</span>
                 </div>
               ))}
@@ -219,13 +236,19 @@ export default function RegionPage({ params }: { params: { slug: string[] } }) {
                 <section key={supplier} className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
                   <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-5 border-b border-slate-100 bg-slate-50 gap-3">
                     <div className="flex items-center gap-3">
-                      <div className={`w-11 h-11 ${info.color} rounded-xl flex items-center justify-center text-white text-xs font-black shadow-sm`}>{info.name.slice(0, 2)}</div>
+                      <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-sm border border-slate-100 overflow-hidden p-1">
+                        {info.logo ? (
+                          <img src={info.logo} alt={info.name} className="w-full h-full object-contain" />
+                        ) : (
+                          <div className={`w-full h-full ${info.color} rounded-lg flex items-center justify-center text-white text-xs font-black`}>{info.name.slice(0, 2)}</div>
+                        )}
+                      </div>
                       <div>
-                        <h3 className="text-base font-bold text-slate-900">ดีลหลุดจองจาก {info.name}</h3>
+                        <h3 className="text-base font-bold text-slate-900">ดีลจาก {info.name}</h3>
                         <p className="text-xs text-slate-500">{data.tours.length} โปรแกรม • {countriesInGroup.join(', ')}</p>
                       </div>
                     </div>
-                    <span className="text-xs font-bold text-red-500 bg-red-50 px-3 py-1.5 rounded-full border border-red-200">⚡ ต้องตัดสินใจด่วน!</span>
+                    <Link href={`/search?supplier=${encodeURIComponent(info.name)}`} className="text-xs font-bold text-primary-600 hover:text-primary-700">ดูทัวร์ทั้งหมดจาก {info.name} →</Link>
                   </div>
 
                   <div className="p-5 space-y-6">
