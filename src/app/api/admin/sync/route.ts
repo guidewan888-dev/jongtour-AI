@@ -25,17 +25,18 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, message: 'supplierId is required' }, { status: 400 });
     }
 
-    const start = Date.now();
-    const syncManager = new SyncManager();
-    await syncManager.syncSupplierTours(supplierId);
-    const duration = Math.round((Date.now() - start) / 1000);
-
-    // Query latest sync log to get record count
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     );
 
+    const startTime = new Date();
+    const syncManager = new SyncManager();
+    await syncManager.syncSupplierTours(supplierId);
+    const endTime = new Date();
+    const duration = Math.round((endTime.getTime() - startTime.getTime()) / 1000);
+
+    // Get latest ApiSyncLog to find record count
     const { data: latestLog } = await supabase
       .from('ApiSyncLog')
       .select('id, status, recordsAdded')
@@ -46,32 +47,29 @@ export async function POST(request: Request) {
 
     const recordCount = latestLog?.recordsAdded || 0;
 
-    // Also write to supplierSyncLog (the table the admin dashboard reads)
-    const { data: supplier } = await supabase
-      .from('suppliers')
-      .select('id')
-      .eq('id', supplierId)
-      .single();
+    // Write to supplier_sync_logs (Prisma table = SupplierSyncLog)
+    // Uses snake_case table name from @@map("supplier_sync_logs")
+    const { error: syncLogError } = await supabase.from('supplier_sync_logs').insert({
+      supplierId,
+      syncType: 'FULL',
+      status: latestLog?.status === 'SUCCESS' ? 'SUCCESS' : 'FAILED',
+      startedAt: startTime.toISOString(),
+      finishedAt: endTime.toISOString(),
+      totalRecords: recordCount,
+      successRecords: recordCount,
+      failedRecords: 0,
+    });
 
-    if (supplier) {
-      await supabase.from('supplierSyncLog').insert({
-        supplierId: supplier.id,
-        syncType: 'MANUAL',
-        status: latestLog?.status === 'SUCCESS' ? 'SUCCESS' : 'PARTIAL',
-        totalRecords: recordCount,
-        successRecords: recordCount,
-        durationMs: duration * 1000,
-        startedAt: new Date(Date.now() - duration * 1000).toISOString(),
-        finishedAt: new Date().toISOString(),
-      });
+    if (syncLogError) {
+      console.error('[Admin Sync] Failed to write sync log:', syncLogError.message);
     }
 
     return NextResponse.json({
       success: true,
-      message: `Sync สำเร็จ! ${recordCount} โปรแกรม`,
+      message: `Sync สำเร็จ! ${recordCount} โปรแกรม (${duration}s)`,
       recordCount,
       duration,
-      syncedAt: new Date().toISOString(),
+      syncedAt: endTime.toISOString(),
     });
   } catch (error: any) {
     console.error('[Admin Sync]', error.message);
