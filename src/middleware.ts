@@ -68,8 +68,8 @@ export async function middleware(req: NextRequest) {
   // ─── Security Headers ─────────────────────────────
   response = addSecurityHeaders(response);
 
-  // Local dev and Vercel preview → treat as main tour portal
-  if (currentHost.includes('vercel.app') || currentHost === 'localhost' || currentHost === '127.0.0.1') {
+  // Local dev, Vercel preview, and bare domain → treat as main tour portal
+  if (currentHost.includes('vercel.app') || currentHost === 'localhost' || currentHost === '127.0.0.1' || currentHost === 'jongtour.com' || currentHost === 'www.jongtour.com') {
     currentHost = 'tour.jongtour.com'; 
   }
 
@@ -225,8 +225,15 @@ export async function middleware(req: NextRequest) {
     const continent = COUNTRY_TO_CONTINENT[countrySlug] || 'asia';
     return NextResponse.redirect(new URL(`/tours/${continent}/${countrySlug}`, req.url), 301);
   }
-  // Note: Removed legacy /wholesale/ → /wholesaler/ redirect.
-  // Admin wholesale pages live at /wholesale/* inside (admin) route group.
+  // Legacy /wholesale/<partner-code> → /wholesaler/<partner-code> redirect
+  // Only redirect public partner pages, NOT admin sub-paths
+  const ADMIN_WHOLESALE_PATHS = ['dashboard', 'suppliers', 'sync', 'sync-logs', 'diagnostics', 'error-logs', 'human-review', 'credentials'];
+  if (url.pathname.startsWith('/wholesale/')) {
+    const slug = url.pathname.split('/')[2];
+    if (slug && !ADMIN_WHOLESALE_PATHS.includes(slug)) {
+      return NextResponse.redirect(new URL(`/wholesaler/${slug}`, req.url), 301);
+    }
+  }
 
   // 7. Default — tour portal
   return addSecurityHeaders(response);
