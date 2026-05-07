@@ -36,9 +36,16 @@ function addSecurityHeaders(response: NextResponse): NextResponse {
 }
 
 // ─── Protected Paths ───────────────────────────────────
-const ADMIN_PATHS = ['/dashboard', '/bookings', '/customers', '/payments', '/operations',
-  '/affiliate-admin', '/talent-admin', '/visa-admin', '/document-center',
-  '/feature-flags', '/recruitment', '/settings', '/admin'];
+const ADMIN_PATHS = [
+  '/dashboard', '/bookings', '/customers', '/payments', '/operations',
+  '/affiliate-admin', '/talent-admin', '/visa-admin', '/visa-center', '/document-center',
+  '/feature-flags', '/recruitment', '/settings', '/admin',
+  '/wholesale', '/sales', '/communications', '/invoices', '/manual-booking',
+  '/agents', '/ai-center', '/cms', '/reports', '/marketing', '/system-health',
+  '/tour-management', '/users', '/roles', '/permissions', '/audit-logs',
+  '/email-templates', '/integrations', '/vouchers', '/receipts', '/inbox',
+  '/guide-applications', '/tour-leader-applications', '/appointments',
+];
 const ACCOUNT_PATHS = ['/account'];
 const TALENT_PORTAL_PATHS = ['/talent-portal'];
 const AFFILIATE_PORTAL_PATHS = ['/affiliate'];
@@ -218,10 +225,8 @@ export async function middleware(req: NextRequest) {
     const continent = COUNTRY_TO_CONTINENT[countrySlug] || 'asia';
     return NextResponse.redirect(new URL(`/tours/${continent}/${countrySlug}`, req.url), 301);
   }
-  if (url.pathname.startsWith('/wholesale/')) {
-    const slug = url.pathname.split('/')[2];
-    if (slug) return NextResponse.redirect(new URL(`/wholesaler/${slug}`, req.url), 301);
-  }
+  // Note: Removed legacy /wholesale/ → /wholesaler/ redirect.
+  // Admin wholesale pages live at /wholesale/* inside (admin) route group.
 
   // 7. Default — tour portal
   return addSecurityHeaders(response);
