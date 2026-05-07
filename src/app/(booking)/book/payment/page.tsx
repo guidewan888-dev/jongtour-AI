@@ -122,18 +122,48 @@ export default function PaymentPage() {
       </div>
 
       <div className="max-w-3xl mx-auto px-4 py-6 space-y-5">
-        {/* Tour Info */}
-        <div className="bg-white rounded-xl border border-slate-200 p-4 bg-gradient-to-r from-primary-50/50 to-transparent">
-          <div className="flex justify-between items-start">
+        {/* Detailed Price Summary */}
+        <div className="bg-white rounded-xl border border-slate-200 p-5">
+          <div className="flex justify-between items-start mb-4">
             <div>
               <div className="text-xs text-slate-400 font-bold">{session.tourCode}</div>
               <div className="text-sm font-bold text-slate-900 line-clamp-1">{session.tourName}</div>
-              <div className="text-xs text-slate-400 mt-0.5">{session.travelers.length} ท่าน · {new Date(session.departureDate).toLocaleDateString("th-TH", { day: "numeric", month: "short", year: "numeric" })}</div>
+              <div className="text-xs text-slate-400 mt-0.5">📅 {new Date(session.departureDate).toLocaleDateString("th-TH", { day: "numeric", month: "long", year: "numeric" })} · {session.durationDays} วัน {session.durationNights} คืน</div>
             </div>
-            <div className="text-right">
-              <div className="text-xs text-slate-400">ยอดรวม</div>
-              <div className="text-2xl font-black text-primary-600">{fmt(totalFull)}</div>
+          </div>
+          <hr className="border-slate-100 mb-3" />
+          <div className="space-y-2 text-sm">
+            <div className="flex justify-between">
+              <span className="text-slate-500">ผู้ใหญ่ ×{session.adults || 1}</span>
+              <span className="font-medium">{fmt((session.adults || 1) * session.priceAdult)}</span>
             </div>
+            {(session.children || 0) > 0 && <div className="flex justify-between">
+              <span className="text-slate-500">เด็ก ×{session.children}</span>
+              <span className="font-medium">{fmt((session.children || 0) * (session.priceChild || session.priceAdult))}</span>
+            </div>}
+            {(session.singleRooms || 0) > 0 && session.priceSingle && <div className="flex justify-between">
+              <span className="text-slate-500">พักเดี่ยว ×{session.singleRooms}</span>
+              <span className="font-medium">{fmt((session.singleRooms || 0) * session.priceSingle)}</span>
+            </div>}
+            {session.addOns?.includes('insurance') && <div className="flex justify-between text-xs">
+              <span className="text-slate-400">ประกันภัยการเดินทาง ×{(session.adults || 1) + (session.children || 0)}</span>
+              <span className="text-slate-500">{fmt(800 * ((session.adults || 1) + (session.children || 0)))}</span>
+            </div>}
+            {session.addOns?.includes('airport') && <div className="flex justify-between text-xs">
+              <span className="text-slate-400">รถรับส่งสนามบิน</span>
+              <span className="text-slate-500">{fmt(1500)}</span>
+            </div>}
+            <hr className="border-slate-100" />
+            <div className="flex justify-between text-lg font-bold">
+              <span className="text-slate-800">ยอดรวมทั้งหมด</span>
+              <span className="text-primary-600">{fmt(totalFull)}</span>
+            </div>
+            {depositAmount > 0 && (
+              <div className="flex justify-between bg-orange-50 rounded-lg px-3 py-2">
+                <span className="text-orange-700 font-medium text-xs">💰 มัดจำ/ท่าน</span>
+                <span className="text-orange-700 font-bold">{fmt(depositAmount)}</span>
+              </div>
+            )}
           </div>
         </div>
 
