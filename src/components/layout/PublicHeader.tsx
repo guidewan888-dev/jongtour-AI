@@ -5,18 +5,16 @@ import Link from "next/link";
 
 /* ── App Launcher Grid Items ─────────────────────────── */
 const gridItems = [
-  { label: "ค้นหาทัวร์", href: "/search", icon: "🔍", color: "#4285F4" },
+  { label: "ทัวร์ไฟไหม้", href: "/deals/flash-sale", icon: "🔥", color: "#FF6D01" },
+  { label: "บริการวีซ่า", href: "/visa", icon: "🛂", color: "#0F9D58" },
+  { label: "AI จัดทริป", href: "/private-group", icon: "✈️", color: "#4285F4" },
   { label: "AI Search", href: "/ai-search", icon: "✨", color: "#EA4335" },
-  { label: "ทัวร์ญี่ปุ่น", href: "/country/japan", icon: "🗼", color: "#FBBC05" },
-  { label: "ทัวร์เกาหลี", href: "/country/south-korea", icon: "🎎", color: "#34A853" },
-  { label: "ทัวร์จีน", href: "/country/china", icon: "🏯", color: "#EA4335" },
-  { label: "ทัวร์ยุโรป", href: "/region/europe", icon: "🏰", color: "#4285F4" },
-  { label: "โปรโมชัน", href: "/deals/flash-sale", icon: "🔥", color: "#FF6D01" },
-  { label: "วีซ่า", href: "/visa", icon: "🛂", color: "#0F9D58" },
-  { label: "กรุ๊ปส่วนตัว", href: "/private-group", icon: "✈️", color: "#4285F4" },
+  { label: "เกี่ยวกับเรา", href: "/about", icon: "🏢", color: "#1A73E8" },
+  { label: "ชำระเงิน", href: "/payment-guide", icon: "💳", color: "#FBBC05" },
+  { label: "ร่วมงานกับเรา", href: "/careers", icon: "🤝", color: "#34A853" },
   { label: "ติดต่อ", href: "/contact", icon: "📞", color: "#34A853" },
   { label: "เข้าสู่ระบบ", href: "/login", icon: "👤", color: "#7B1FA2" },
-  { label: "B2B Agent", href: "/agent", icon: "🏢", color: "#455A64" },
+  { label: "B2B Agent", href: "/agent", icon: "💼", color: "#455A64" },
 ];
 
 export default function PublicHeader() {
