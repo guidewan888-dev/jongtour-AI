@@ -389,6 +389,35 @@ function extractAirlineFromTitle(title: string): string {
   return '';
 }
 
+// Extract highlights/destinations from tour title
+function extractHighlightsFromTitle(title: string): string[] {
+  if (!title) return [];
+  const highlights: string[] = [];
+  // Remove airline codes and common prefixes
+  let cleaned = title
+    .replace(/\(.*?\)/g, '') // Remove parentheses content
+    .replace(/\[.*?\]/g, '') // Remove bracket content
+    .replace(/#\S+/g, '')    // Remove hashtags
+    .replace(/บิน\s*\w{2}/g, '') // Remove "บิน XX"
+    .replace(/\d+\s*วัน\s*\d+\s*คืน/g, '') // Remove "X วัน X คืน"
+    .replace(/ทัวร์/g, '')
+    .trim();
+  // Split by common delimiters
+  const parts = cleaned.split(/[\s]+/).filter(p => p.length > 1);
+  // Find place-like words (Thai words typically 3+ chars, not common words)
+  const skipWords = new Set(['และ','กับ','ที่','จาก','ไป','มา','ใน','ของ','เที่ยว','พัก','เดินทาง','ราคา','พิเศษ','โปรโมชั่น','ฟรี','รวม','ไม่','บิน','สาย','การ','แอร์','ไลน์','วัน','คืน']);
+  const destinations: string[] = [];
+  // Also try splitting by spaces and finding destination clusters
+  const rawParts = cleaned.split(/\s+/);
+  for (const p of rawParts) {
+    if (p.length >= 3 && !skipWords.has(p) && !/^\d+$/.test(p)) {
+      destinations.push(p);
+    }
+  }
+  // Return unique, max 6
+  return [...new Set(destinations)].slice(0, 6);
+}
+
 
 // ─── Tour Detail ────────────────────────────────────────────────────
 
@@ -417,8 +446,6 @@ export async function getTourBySlug(slug: string): Promise<TourDetailData | null
     { data: policies },
     { data: pdfs },
     { data: departures },
-    { data: highlightsData },
-    { data: rawSources },
   ] = await Promise.all([
     sb.from('suppliers').select('id, "canonicalName", "displayName"').eq('id', tour.supplierId).single(),
     sb.from('tour_destinations').select('country, city').eq('tourId', tour.id),
@@ -434,8 +461,6 @@ export async function getTourBySlug(slug: string): Promise<TourDetailData | null
       .eq('tourId', tour.id)
       .gte('startDate', new Date().toISOString())
       .order('startDate', { ascending: true }),
-    sb.from('tour_highlights').select('description').eq('tourId', tour.id),
-    sb.from('tour_raw_sources').select('"rawPayload"').eq('supplierId', tour.supplierId),
   ]);
 
   // 3. Get prices for departures
@@ -480,7 +505,7 @@ export async function getTourBySlug(slug: string): Promise<TourDetailData | null
     price: { starting: startingPrice },
     status: tour.status || 'PUBLISHED',
     summary: tour.supplierBookingNote || '',
-    highlights: (highlightsData || []).map(h => h.description).filter(Boolean),
+    highlights: extractHighlightsFromTitle(tour.tourName || ''),
     flight: { airline: extractAirlineFromTitle(tour.tourName || '') || 'ตามโปรแกรมทัวร์', details: 'อ้างอิงจากรายละเอียดทัวร์' },
     hotel: { name: 'โรงแรมมาตรฐาน', rating: 3, details: 'ตามโปรแกรมทัวร์' },
     meals: 'ดูรายละเอียดในโปรแกรม',

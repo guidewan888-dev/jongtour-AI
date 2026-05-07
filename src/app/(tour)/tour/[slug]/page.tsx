@@ -103,35 +103,52 @@ export default function TourDetailPage({ params }: { params: { slug: string } })
         </nav>
       </div>
 
-      {/* Hero Split Layout: Image Left + Info Right */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-8">
+      {/* Hero Split Layout */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-6">
         <div className="bg-white rounded-2xl border border-slate-200 shadow-lg overflow-hidden">
-          <div className="flex flex-col lg:flex-row">
-            {/* Left: Image */}
-            <div className="lg:w-[45%] relative h-[280px] lg:h-[420px] bg-slate-100 group overflow-hidden">
-              <img src={tour.images[0]} alt={tour.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
+          <div className="flex flex-col lg:flex-row min-h-[380px]">
+            {/* Left: Image — full fit */}
+            <div className="lg:w-[48%] relative bg-slate-100 overflow-hidden">
+              <img src={tour.images[0]} alt={tour.title} className="w-full h-full object-cover min-h-[260px] lg:min-h-[380px]" />
             </div>
             {/* Right: Info */}
-            <div className="lg:w-[55%] p-6 lg:p-8 flex flex-col justify-center">
+            <div className="lg:w-[52%] p-6 lg:p-8 flex flex-col">
+              {/* Badges */}
               <div className="flex flex-wrap items-center gap-2 mb-3">
-                <span className="flex items-center gap-1 text-sm text-slate-500 font-medium">🌍 {tour.country}</span>
-                <span className="w-1 h-1 rounded-full bg-slate-300" />
-                <span className="text-sm text-slate-500 font-medium">รหัสทัวร์ : {tour.code}</span>
+                <span className="bg-primary-100 text-primary-700 text-xs font-bold px-3 py-1 rounded-full">🌍 {tour.country}</span>
+                <span className="bg-slate-100 text-slate-600 text-xs font-bold px-3 py-1 rounded-full">รหัสทัวร์ : {tour.code}</span>
+                <span className="bg-blue-100 text-blue-700 text-xs font-bold px-3 py-1 rounded-full">🏢 {tour.supplier.name}</span>
               </div>
-              <h1 className="text-xl md:text-2xl lg:text-3xl font-black text-slate-900 leading-tight mb-4">{tour.title}</h1>
-              {tour.summary && <p className="text-sm text-slate-500 mb-5 line-clamp-2">{tour.summary}</p>}
-              <div className="flex flex-wrap items-center gap-4 mb-5 text-sm">
-                <div className="flex items-center gap-2 text-slate-600"><span className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center text-base">🗓️</span><span className="font-bold">{tour.duration.days} วัน {tour.duration.nights} คืน</span></div>
-                <div className="flex items-center gap-2 text-slate-600"><span className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center text-base">👥</span><span className="font-bold">{tour.departures.length > 0 ? `เดินทางขั้นต่ำ ${tour.departures[0].remainingSeats} ท่าน` : 'สอบถาม'}</span></div>
+              {/* Title */}
+              <h1 className="text-lg md:text-xl lg:text-2xl font-black text-slate-900 leading-snug mb-4">{tour.title}</h1>
+              {/* Summary */}
+              {tour.summary && <p className="text-sm text-slate-500 mb-4 line-clamp-3 leading-relaxed">{tour.summary}</p>}
+              {/* Quick Stats Row */}
+              <div className="flex flex-wrap items-center gap-3 mb-4">
+                <div className="flex items-center gap-2 bg-orange-50 px-3 py-2 rounded-lg border border-orange-100">
+                  <span className="text-lg">🗓️</span>
+                  <span className="text-sm font-bold text-slate-800">{tour.duration.days} วัน {tour.duration.nights} คืน</span>
+                </div>
+                <div className="flex items-center gap-2 bg-blue-50 px-3 py-2 rounded-lg border border-blue-100">
+                  <span className="text-lg">👥</span>
+                  <span className="text-sm font-bold text-slate-800">เดินทางขั้นต่ำ {tour.departures.length > 0 ? `${tour.departures[0].remainingSeats} ท่าน` : 'สอบถาม'}</span>
+                </div>
               </div>
+              {/* Airline Badge with Logo */}
               {tour.flight?.airline && tour.flight.airline !== 'ตามโปรแกรมทัวร์' && (
-                <div className="flex items-center gap-3 p-3 bg-gradient-to-r from-blue-50 to-sky-50 rounded-xl border border-blue-100 mb-5">
-                  <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white text-lg shrink-0">✈️</div>
-                  <div><div className="font-bold text-slate-900 text-sm">{tour.flight.airline}</div><div className="text-xs text-slate-500">บริการอาหารบนเครื่อง</div></div>
+                <div className="flex items-center gap-3 p-3 bg-gradient-to-r from-sky-50 to-blue-50 rounded-xl border border-blue-200 mb-4">
+                  <div className="w-11 h-11 bg-white rounded-full flex items-center justify-center shadow-sm border border-blue-100 shrink-0">
+                    <span className="text-xl">✈️</span>
+                  </div>
+                  <div>
+                    <div className="font-bold text-blue-900 text-sm">{tour.flight.airline}</div>
+                    <div className="text-xs text-blue-500">บริการอาหารบนเครื่อง</div>
+                  </div>
                 </div>
               )}
+              {/* PDF Download */}
               {tour.pdfUrl && (
-                <a href={tour.pdfUrl} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2 py-3 px-6 bg-gradient-to-r from-primary-600 to-orange-500 text-white rounded-xl font-bold text-sm shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all">📄 ดาวน์โหลดโปรแกรมทัวร์</a>
+                <a href={tour.pdfUrl} target="_blank" rel="noopener noreferrer" className="mt-auto flex items-center justify-center gap-2 py-3 px-6 bg-gradient-to-r from-primary-600 to-orange-500 text-white rounded-xl font-bold text-sm shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all">📄 ดาวน์โหลดโปรแกรมทัวร์</a>
               )}
             </div>
           </div>
