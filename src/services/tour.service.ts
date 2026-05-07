@@ -482,7 +482,7 @@ export async function getTourBySlug(slug: string): Promise<TourDetailData | null
     if (airline && airline.length === 2 && AIRLINE_CODES[airline.toUpperCase()]) airline = AIRLINE_CODES[airline.toUpperCase()];
     if (airline) detailAirline = airline;
     // PDF
-    const pdf = payload.FilePDF || payload.pdfUrl || payload.pdf_url || payload.PdfUrl || payload.programPdf || payload.FileWord || '';
+    const pdf = payload.FilePDF || payload.pdfUrl || payload.pdf_url || payload.PdfUrl || payload.programPdf || payload.FileWord || payload.pdf || payload.word || '';
     if (pdf && !detailPdfUrl) detailPdfUrl = pdf;
     // Highlights
     const hl = payload.Highlight || payload.highlight || payload.highlights || '';
@@ -491,8 +491,9 @@ export async function getTourBySlug(slug: string): Promise<TourDetailData | null
     } else if (Array.isArray(hl)) {
       detailHighlights = hl.filter(Boolean);
     }
-    // Periods (departure details with deposit/prices)
-    if (Array.isArray(payload.Periods) && payload.Periods.length > 0) rawPeriods = payload.Periods;
+    // Periods (departure details with deposit/prices) — Periods (Let's Go) or periods (Check In / Tour Factory)
+    const periodArr = payload.Periods || payload.periods || [];
+    if (Array.isArray(periodArr) && periodArr.length > 0) rawPeriods = periodArr;
     // Flights
     if (Array.isArray(payload.Flights) && payload.Flights.length > 0) rawFlights = payload.Flights;
   });
@@ -526,7 +527,7 @@ export async function getTourBySlug(slug: string): Promise<TourDetailData | null
   // 5. Calculate starting price (prefer rawPeriods)
   let startingPrice = 0;
   if (rawPeriods.length > 0) {
-    const rawPrices = rawPeriods.map(p => p.Price || 0).filter(p => p > 0);
+    const rawPrices = rawPeriods.map((p: any) => p.Price || p.price || 0).filter((p: number) => p > 0);
     startingPrice = rawPrices.length > 0 ? Math.min(...rawPrices) : 0;
   }
   if (!startingPrice) {
@@ -537,25 +538,35 @@ export async function getTourBySlug(slug: string): Promise<TourDetailData | null
   const dest = destinations?.[0];
   const defaultImg = 'https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?q=80&w=1200';
 
-  // Build enriched departures — merge DB departures + rawPeriods
+  // Build enriched departures — universal mapping for all suppliers
+  // Let's Go: PeriodStartDate, Price, Price_Child, Price_Single_Bed, Deposit, Seat, Book
+  // Check In / Tour Factory: start, price, priceChild, priceSingleRoomAdd, deposit, seat, join
   const enrichedDeps = rawPeriods.length > 0
-    ? rawPeriods.map((p: any) => ({
-        id: `raw_${p.PeriodID || p.periodId || Math.random()}`,
-        startDate: p.PeriodStartDate || p.periodStartDate || '',
-        endDate: p.PeriodEndDate || p.periodEndDate || '',
-        priceAdult: p.Price || 0,
-        priceChild: p.Price_Child || p.priceChild || 0,
-        priceSingle: p.Price_Single_Bed || p.priceSingle || 0,
-        priceInfant: p.Price_Infant || 0,
-        priceJoinLand: p.Price_JoinLand || 0,
-        deposit: p.Deposit || 0,
-        totalSeats: p.Seat || p.GroupSize || 0,
-        booked: p.Book || 0,
-        remainingSeats: Math.max((p.Seat || p.GroupSize || 0) - (p.Book || 0), 0),
-        status: (p.Seat || 0) - (p.Book || 0) <= 0 ? 'FULL' : (p.PeriodStatus || 'Book'),
-        bus: p.Bus || '',
-        periodCode: p.PeriodCode || '',
-      }))
+    ? rawPeriods.map((p: any) => {
+        const seats = p.Seat || p.seat || p.GroupSize || p.group || 0;
+        const booked = p.Book || p.join || 0;
+        const remaining = Math.max(seats - booked, 0);
+        const status = p.status || p.PeriodStatus || '';
+        const isClosed = status === 'Close' || status === 'Closed' || remaining <= 0;
+        return {
+          id: `raw_${p.PeriodID || p.periodId || p.id || Math.random()}`,
+          startDate: p.PeriodStartDate || p.start || '',
+          endDate: p.PeriodEndDate || p.end || '',
+          priceAdult: p.Price || p.price || 0,
+          priceChild: p.Price_Child || p.priceChild || 0,
+          priceSingle: p.Price_Single_Bed || p.priceSingleRoomAdd || p.priceForOne || 0,
+          priceInfant: p.Price_Infant || p.priceInfant || 0,
+          priceJoinLand: p.Price_JoinLand || 0,
+          deposit: p.Deposit || p.deposit || 0,
+          totalSeats: seats,
+          booked: booked,
+          remainingSeats: isClosed ? 0 : remaining,
+          status: isClosed ? 'FULL' : 'AVAILABLE',
+          bus: p.Bus || p.bus || '',
+          periodCode: p.PeriodCode || '',
+          flightInfo: p.flight || '',
+        };
+      })
     : (departures || []).map(d => ({
         id: d.id,
         startDate: d.startDate,
@@ -572,16 +583,28 @@ export async function getTourBySlug(slug: string): Promise<TourDetailData | null
         status: d.status || 'AVAILABLE',
         bus: '',
         periodCode: '',
+        flightInfo: '',
       }));
 
-  // Build flights info
-  const flightInfo = rawFlights.map((f: any) => ({
-    route: f.Route || '',
-    flightNo: f.FlightNo || '',
-    departure: (f.DepartureTime || '').slice(0, 5),
-    arrival: (f.ArrivalTime || '').slice(0, 5),
-    airline: f.AirlineName || detailAirline || '',
-  }));
+  // Build flights info — Let's Go has Flights array, Check In/Tour Factory have flight string in periods
+  const flightInfo = rawFlights.length > 0
+    ? rawFlights.map((f: any) => ({
+        route: f.Route || '',
+        flightNo: f.FlightNo || '',
+        departure: (f.DepartureTime || '').slice(0, 5),
+        arrival: (f.ArrivalTime || '').slice(0, 5),
+        airline: f.AirlineName || detailAirline || '',
+      }))
+    : (() => {
+        // Parse flight string from Check In/Tour Factory format: "(BKK-PEK)TG614 10.00-15.45//(PEK-BKK)TG615 17.05-21.15"
+        const flightStr = rawPeriods.find((p: any) => p.flight)?.flight || '';
+        if (!flightStr) return [];
+        return flightStr.split('//').filter(Boolean).map((seg: string) => {
+          const m = seg.match(/\(([^)]+)\)(\w+)\s+([\d.:]+)-([\d.:]+)/);
+          if (!m) return null;
+          return { route: m[1], flightNo: m[2], departure: m[3], arrival: m[4], airline: detailAirline || '' };
+        }).filter(Boolean);
+      })();
 
   return {
     id: tour.id,
