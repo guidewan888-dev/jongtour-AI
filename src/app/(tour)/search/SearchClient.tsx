@@ -165,9 +165,10 @@ export default function SearchClient({ initialTours }: { initialTours: TourResul
     return Object.entries(countryCounts).filter(([k]) => allowed.has(k)).sort((a, b) => b[1] - a[1]);
   }, [countryCounts, selectedContinents]);
 
-  // Filtered cities based on selected countries
+  // Filtered cities based on selected countries — include ALL city data from tours too
   const visibleCities = useMemo(() => {
     const citySet = new Set<string>();
+    // 1. Add cities from CONTINENT_MAP
     const targets = selectedCountries.size > 0 ? [...selectedCountries] : visibleCountries.map(([k]) => k);
     targets.forEach(country => {
       for (const cont of Object.values(CONTINENT_MAP)) {
@@ -175,7 +176,11 @@ export default function SearchClient({ initialTours }: { initialTours: TourResul
         if (cc) cc.cities.forEach(c => { if (c && cityCounts[c]) citySet.add(c); });
       }
     });
-    return [...citySet].map(c => [c, cityCounts[c] || 0] as [string, number]).sort((a, b) => b[1] - a[1]);
+    // 2. Also add ALL cities that appear in actual tour data
+    Object.keys(cityCounts).forEach(city => {
+      if (city && city.length > 1) citySet.add(city);
+    });
+    return [...citySet].map(c => [c, cityCounts[c] || 0] as [string, number]).filter(([,count]) => count > 0).sort((a, b) => b[1] - a[1]);
   }, [cityCounts, selectedCountries, visibleCountries]);
 
   // Apply filters + sort
@@ -302,7 +307,7 @@ export default function SearchClient({ initialTours }: { initialTours: TourResul
       {/* 3. Country */}
       <div>
         <h4 className="font-bold text-slate-900 mb-3 text-sm">🏳️ ประเทศ</h4>
-        <div className="space-y-2 max-h-48 overflow-y-auto">
+        <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
           {visibleCountries.map(([name, count]) => (
             <CheckboxItem key={name} checked={selectedCountries.has(name)} onChange={() => { toggleFilter(selectedCountries, name, setSelectedCountries); setSelectedCities(new Set()); }} label={name} count={count} />
           ))}
@@ -315,7 +320,7 @@ export default function SearchClient({ initialTours }: { initialTours: TourResul
         <>
           <div>
             <h4 className="font-bold text-slate-900 mb-3 text-sm">🏙️ เมือง</h4>
-            <div className="space-y-2 max-h-48 overflow-y-auto">
+            <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
               {visibleCities.map(([name, count]) => (
                 <CheckboxItem key={name} checked={selectedCities.has(name)} onChange={() => toggleFilter(selectedCities, name, setSelectedCities)} label={name} count={count} />
               ))}
@@ -384,7 +389,7 @@ export default function SearchClient({ initialTours }: { initialTours: TourResul
       <div className="g-container py-8 flex gap-8">
         {/* Desktop Filter Sidebar */}
         <aside className="hidden md:block w-64 shrink-0">
-          <div className="sticky top-40 g-card p-5">
+          <div className="sticky top-40 g-card p-5 max-h-[calc(100vh-200px)] overflow-y-auto">
             <div className="flex justify-between items-center mb-5">
               <h3 className="text-base font-bold text-slate-900">ตัวกรอง</h3>
               {activeFilterCount > 0 && (
