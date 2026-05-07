@@ -38,7 +38,8 @@ export default function TourDetailPage({ params }: { params: { slug: string } })
   const rawAir = tour.flight?.airline;
   const airName = (rawAir && rawAir !== 'ตามโปรแกรมทัวร์') ? rawAir : null;
   const airLogo = airName ? AL[airName.toUpperCase()] || '' : '';
-  const deps = showAll ? tour.departures : tour.departures.slice(0, 4);
+  const availableDeps = tour.departures.filter(d => d.remainingSeats > 0);
+  const deps = showAll ? availableDeps : availableDeps.slice(0, 4);
   const fmt = (s:string) => { try { return new Date(s).toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'numeric'}); } catch { return s; } };
   const price = (n:number) => n > 0 ? `฿${n.toLocaleString()}` : '-';
 
@@ -163,7 +164,7 @@ export default function TourDetailPage({ params }: { params: { slug: string } })
                 <div className="grid grid-cols-2 gap-1 text-[11px] text-slate-500"><span>ราคา: <b className="text-slate-800">{price(d.priceAdult)}</b></span><span>เด็ก: <b>{price(d.priceChild)}</b></span><span>พักเดี่ยว: <b>{price(d.priceSingle)}</b></span><span>มัดจำ: <b className="text-orange-600">{price(d.deposit)}</b></span></div>
               </div>)}
             </div>
-            {tour.departures.length > 4 && <div className="px-5 pb-4"><button onClick={()=>setShowAll(!showAll)} className="text-xs text-primary-600 font-bold hover:underline">📅 {showAll ? '▲ ย่อ' : `ดูวันอื่นเพิ่มเติม (${tour.departures.length-4} รอบ)`}</button></div>}
+            {tour.departures.length > 4 && <div className="px-5 pb-4"><button onClick={()=>setShowAll(!showAll)} className="text-xs text-primary-600 font-bold hover:underline">📅 {showAll ? '▲ ย่อ' : `ดูวันอื่นเพิ่มเติม (${availableDeps.length-4} รอบ)`}</button></div>}
           </> : <p className="text-sm text-slate-400 px-5 py-6 text-center">ยังไม่มีรอบเดินทาง — สอบถามทาง LINE</p>}
         </div>
       </div>
