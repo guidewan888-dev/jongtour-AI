@@ -27,16 +27,33 @@ export default function TourHomePage() {
   const [isLoading, setIsLoading] = useState(false);
   const [activePartner, setActivePartner] = useState(0);
   const endRef = useRef<HTMLDivElement>(null);
+  const initialized = useRef(false);
 
+  // Load messages from sessionStorage on mount
   useEffect(() => {
-    if (messages.length === 0) {
-      setMessages([{
-        role: "ai",
-        text: "ได้เลย! ฉันช่วยค้นหา เปรียบเทียบ\nและแนะนำโปรแกรมทัวร์ที่ดีที่สุดให้คุณได้",
-        time: new Date().toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" }),
-      }]);
+    if (initialized.current) return;
+    initialized.current = true;
+    try {
+      const saved = sessionStorage.getItem("jt_chat");
+      if (saved) {
+        const parsed = JSON.parse(saved) as Msg[];
+        if (parsed.length > 0) { setMessages(parsed); return; }
+      }
+    } catch {}
+    // Default welcome message
+    setMessages([{
+      role: "ai",
+      text: "ได้เลย! ฉันช่วยค้นหา เปรียบเทียบ\nและแนะนำโปรแกรมทัวร์ที่ดีที่สุดให้คุณได้",
+      time: new Date().toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" }),
+    }]);
+  }, []);
+
+  // Save messages to sessionStorage on every change
+  useEffect(() => {
+    if (messages.length > 0) {
+      try { sessionStorage.setItem("jt_chat", JSON.stringify(messages)); } catch {}
     }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [messages]);
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
