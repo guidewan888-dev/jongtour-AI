@@ -104,25 +104,49 @@ export default function ReviewPage() {
 
         {/* Price Summary */}
         <div className="g-card p-6">
-          <h3 className="font-bold text-slate-900 mb-4">สรุปราคา</h3>
+          <h3 className="font-bold text-slate-900 mb-4">🧾 สรุปราคา</h3>
           <div className="space-y-2 text-sm">
-            {adults.length > 0 && (
+            {(session.adults || 1) > 0 && (
               <div className="flex justify-between">
-                <span className="text-slate-500">ผู้ใหญ่ x {adults.length}</span>
-                <span>฿{(adults.length * session.priceAdult).toLocaleString()}</span>
+                <span className="text-slate-500">ผู้ใหญ่ ×{session.adults || 1}</span>
+                <span>฿{((session.adults || 1) * session.priceAdult).toLocaleString()}</span>
               </div>
             )}
-            {children.length > 0 && (
+            {(session.children || 0) > 0 && (
               <div className="flex justify-between">
-                <span className="text-slate-500">เด็ก x {children.length}</span>
-                <span>฿{(children.length * (session.priceChild || session.priceAdult)).toLocaleString()}</span>
+                <span className="text-slate-500">เด็ก ×{session.children}</span>
+                <span>฿{((session.children || 0) * (session.priceChild || session.priceAdult)).toLocaleString()}</span>
+              </div>
+            )}
+            {(session.singleRooms || 0) > 0 && session.priceSingle && (
+              <div className="flex justify-between">
+                <span className="text-slate-500">พักเดี่ยว ×{session.singleRooms}</span>
+                <span>฿{((session.singleRooms || 0) * session.priceSingle).toLocaleString()}</span>
+              </div>
+            )}
+            {session.addOns?.includes('insurance') && (
+              <div className="flex justify-between text-xs">
+                <span className="text-slate-400">ประกันภัยการเดินทาง ×{(session.adults || 1) + (session.children || 0)}</span>
+                <span className="text-slate-500">฿{(800 * ((session.adults || 1) + (session.children || 0))).toLocaleString()}</span>
+              </div>
+            )}
+            {session.addOns?.includes('airport') && (
+              <div className="flex justify-between text-xs">
+                <span className="text-slate-400">รถรับส่งสนามบิน</span>
+                <span className="text-slate-500">฿1,500</span>
               </div>
             )}
             <hr className="border-slate-100" />
             <div className="flex justify-between text-lg font-bold">
               <span>ยอดรวมทั้งหมด</span>
-              <span className="text-primary">฿{total.toLocaleString()}</span>
+              <span className="text-primary">฿{(session.totalPrice || total).toLocaleString()}</span>
             </div>
+            {(session.totalDeposit || 0) > 0 && (
+              <div className="flex justify-between bg-orange-50 rounded-lg px-3 py-2">
+                <span className="text-orange-700 font-medium text-xs">💰 ชำระมัดจำ</span>
+                <span className="text-orange-700 font-bold">฿{session.totalDeposit!.toLocaleString()}</span>
+              </div>
+            )}
           </div>
         </div>
 
