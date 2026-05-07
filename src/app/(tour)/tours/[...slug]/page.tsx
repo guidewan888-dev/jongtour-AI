@@ -14,55 +14,66 @@ interface Tour {
 // ── Continent → Country → cities mapping ────────────────────────────
 const CONTINENTS: Record<string, {
   name: string; desc: string;
-  countries: Record<string, { name: string; flagCode: string; cities: Record<string, string> }>
+  countries: Record<string, { name: string; flagCode: string; cities: Record<string, string>; searchNames?: string[] }>
 }> = {
   asia: {
     name: 'เอเชีย', desc: 'เปิดโลกแห่งเอเชีย ให้ทุกการเดินทางเป็นความทรงจำที่ยิ่งใหญ่',
     countries: {
-      japan: { name: 'ญี่ปุ่น', flagCode: 'jp', cities: { tokyo: 'โตเกียว', osaka: 'โอซาก้า', hokkaido: 'ฮอกไกโด', kyoto: 'เกียวโต', fukuoka: 'ฟุกุโอกะ', nagoya: 'นาโกย่า', okinawa: 'โอกินาว่า' }},
-      china: { name: 'จีน', flagCode: 'cn', cities: { chengdu: 'เฉิงตู', zhangjiajie: 'จางเจียเจี้ย', kunming: 'คุนหมิง', beijing: 'ปักกิ่ง', shanghai: 'เซี่ยงไฮ้', guangzhou: 'กวางเจา', guilin: 'กุ้ยหลิน', xian: 'ซีอาน', chongqing: 'ฉงชิ่ง' }},
-      'south-korea': { name: 'เกาหลีใต้', flagCode: 'kr', cities: { seoul: 'โซล', busan: 'ปูซาน', jeju: 'เชจู' }},
-      taiwan: { name: 'ไต้หวัน', flagCode: 'tw', cities: { taipei: 'ไทเป', kaohsiung: 'เกาสง' }},
-      vietnam: { name: 'เวียดนาม', flagCode: 'vn', cities: { danang: 'ดานัง', hanoi: 'ฮานอย', hochiminh: 'โฮจิมินห์', sapa: 'ซาปา' }},
-      hongkong: { name: 'ฮ่องกง', flagCode: 'hk', cities: {} },
-      singapore: { name: 'สิงคโปร์', flagCode: 'sg', cities: {} },
-      malaysia: { name: 'มาเลเซีย', flagCode: 'my', cities: { 'kuala-lumpur': 'กัวลาลัมเปอร์' }},
-      india: { name: 'อินเดีย', flagCode: 'in', cities: { delhi: 'เดลี', kashmir: 'แคชเมียร์' }},
-      cambodia: { name: 'กัมพูชา', flagCode: 'kh', cities: {} },
-      myanmar: { name: 'พม่า', flagCode: 'mm', cities: {} },
-      laos: { name: 'ลาว', flagCode: 'la', cities: {} },
-      philippines: { name: 'ฟิลิปปินส์', flagCode: 'ph', cities: {} },
-      srilanka: { name: 'ศรีลังกา', flagCode: 'lk', cities: {} },
-      macau: { name: 'มาเก๊า', flagCode: 'mo', cities: {} },
+      japan: { name: 'ญี่ปุ่น', flagCode: 'jp', searchNames: ['ญี่ปุ่น', 'JAPAN'], cities: { tokyo: 'โตเกียว', osaka: 'โอซาก้า', hokkaido: 'ฮอกไกโด', kyoto: 'เกียวโต', fukuoka: 'ฟุกุโอกะ', nagoya: 'นาโกย่า', okinawa: 'โอกินาว่า' }},
+      china: { name: 'จีน', flagCode: 'cn', searchNames: ['จีน', 'CHINA'], cities: { chengdu: 'เฉิงตู', zhangjiajie: 'จางเจียเจี้ย', kunming: 'คุนหมิง', beijing: 'ปักกิ่ง', shanghai: 'เซี่ยงไฮ้', guangzhou: 'กวางเจา', guilin: 'กุ้ยหลิน', xian: 'ซีอาน', chongqing: 'ฉงชิ่ง' }},
+      'south-korea': { name: 'เกาหลีใต้', flagCode: 'kr', searchNames: ['เกาหลี', 'KOREA', 'SOUTH KOREA'], cities: { seoul: 'โซล', busan: 'ปูซาน', jeju: 'เชจู' }},
+      taiwan: { name: 'ไต้หวัน', flagCode: 'tw', searchNames: ['ไต้หวัน', 'TAIWAN'], cities: { taipei: 'ไทเป', kaohsiung: 'เกาสง' }},
+      vietnam: { name: 'เวียดนาม', flagCode: 'vn', searchNames: ['เวียดนาม', 'VIETNAM'], cities: { danang: 'ดานัง', hanoi: 'ฮานอย', hochiminh: 'โฮจิมินห์', sapa: 'ซาปา' }},
+      hongkong: { name: 'ฮ่องกง', flagCode: 'hk', searchNames: ['ฮ่องกง', 'HONG KONG'], cities: {} },
+      singapore: { name: 'สิงคโปร์', flagCode: 'sg', searchNames: ['สิงคโปร์', 'SINGAPORE'], cities: {} },
+      malaysia: { name: 'มาเลเซีย', flagCode: 'my', searchNames: ['มาเลเซีย', 'MALAYSIA'], cities: { 'kuala-lumpur': 'กัวลาลัมเปอร์' }},
+      india: { name: 'อินเดีย', flagCode: 'in', searchNames: ['อินเดีย', 'INDIA'], cities: { delhi: 'เดลี', kashmir: 'แคชเมียร์' }},
+      cambodia: { name: 'กัมพูชา', flagCode: 'kh', searchNames: ['กัมพูชา', 'CAMBODIA'], cities: {} },
+      myanmar: { name: 'พม่า', flagCode: 'mm', searchNames: ['พม่า', 'MYANMAR'], cities: {} },
+      laos: { name: 'ลาว', flagCode: 'la', searchNames: ['ลาว', 'LAOS'], cities: {} },
+      macau: { name: 'มาเก๊า', flagCode: 'mo', searchNames: ['มาเก๊า', 'MACAU'], cities: {} },
     },
   },
   europe: {
     name: 'ยุโรป', desc: 'สัมผัสเสน่ห์ยุโรป วัฒนธรรมเก่าแก่ สถาปัตยกรรมอลังการ',
     countries: {
-      uk: { name: 'อังกฤษ', flagCode: 'gb', cities: { london: 'ลอนดอน' }},
-      france: { name: 'ฝรั่งเศส', flagCode: 'fr', cities: { paris: 'ปารีส' }},
-      italy: { name: 'อิตาลี', flagCode: 'it', cities: { rome: 'โรม', milan: 'มิลาน' }},
-      switzerland: { name: 'สวิตเซอร์แลนด์', flagCode: 'ch', cities: {} },
-      spain: { name: 'สเปน', flagCode: 'es', cities: {} },
-      turkey: { name: 'ตุรกี', flagCode: 'tr', cities: { istanbul: 'อิสตันบูล', cappadocia: 'คัปปาโดเกีย' }},
-      russia: { name: 'รัสเซีย', flagCode: 'ru', cities: {} },
-      georgia: { name: 'จอร์เจีย', flagCode: 'ge', cities: {} },
-      egypt: { name: 'อียิปต์', flagCode: 'eg', cities: { cairo: 'ไคโร' }},
-      dubai: { name: 'ดูไบ', flagCode: 'ae', cities: {} },
+      uk: { name: 'อังกฤษ', flagCode: 'gb', searchNames: ['อังกฤษ', 'ENGLAND', 'UK', 'UNITED KINGDOM'], cities: { london: 'ลอนดอน' }},
+      france: { name: 'ฝรั่งเศส', flagCode: 'fr', searchNames: ['ฝรั่งเศส', 'FRANCE'], cities: { paris: 'ปารีส' }},
+      italy: { name: 'อิตาลี', flagCode: 'it', searchNames: ['อิตาลี', 'ITALY'], cities: { rome: 'โรม', milan: 'มิลาน' }},
+      switzerland: { name: 'สวิตเซอร์แลนด์', flagCode: 'ch', searchNames: ['สวิตเซอร์แลนด์', 'SWITZERLAND'], cities: {} },
+      spain: { name: 'สเปน', flagCode: 'es', searchNames: ['สเปน', 'SPAIN'], cities: {} },
+    },
+  },
+  'middle-east': {
+    name: 'ตะวันออกกลาง', desc: 'สัมผัสอารยธรรมโบราณ จากมหาพีระมิดอียิปต์สู่นครดูไบสุดอลังการ',
+    countries: {
+      turkey: { name: 'ตุรกี', flagCode: 'tr', searchNames: ['ตุรกี', 'TURKIYE', 'TURKEY'], cities: { istanbul: 'อิสตันบูล', cappadocia: 'คัปปาโดเกีย' }},
+      egypt: { name: 'อียิปต์', flagCode: 'eg', searchNames: ['อียิปต์', 'EGYPT'], cities: { cairo: 'ไคโร' }},
+      jordan: { name: 'จอร์แดน', flagCode: 'jo', searchNames: ['จอร์แดน', 'JORDAN'], cities: {} },
+      dubai: { name: 'ดูไบ', flagCode: 'ae', searchNames: ['ดูไบ', 'สหรัฐอาหรับเอมิเรตส์', 'DUBAI', 'UAE'], cities: {} },
     },
   },
   americas: {
     name: 'อเมริกา', desc: 'สำรวจทวีปอเมริกา จากมหานครนิวยอร์กถึงน้ำตกไนแองการ่า',
     countries: {
-      usa: { name: 'อเมริกา', flagCode: 'us', cities: { 'new-york': 'นิวยอร์ก', 'los-angeles': 'ลอสแอนเจลิส' }},
-      canada: { name: 'แคนาดา', flagCode: 'ca', cities: {} },
+      usa: { name: 'อเมริกา', flagCode: 'us', searchNames: ['อเมริกา', 'USA', 'UNITED STATES'], cities: { 'new-york': 'นิวยอร์ก', 'los-angeles': 'ลอสแอนเจลิส' }},
+      canada: { name: 'แคนาดา', flagCode: 'ca', searchNames: ['แคนาดา', 'CANADA'], cities: {} },
     },
   },
   oceania: {
     name: 'โอเชียเนีย', desc: 'ออสเตรเลีย นิวซีแลนด์ ดินแดนธรรมชาติอันงดงาม',
     countries: {
-      australia: { name: 'ออสเตรเลีย', flagCode: 'au', cities: { sydney: 'ซิดนีย์', melbourne: 'เมลเบิร์น' }},
-      newzealand: { name: 'นิวซีแลนด์', flagCode: 'nz', cities: {} },
+      australia: { name: 'ออสเตรเลีย', flagCode: 'au', searchNames: ['ออสเตรเลีย', 'AUSTRALIA'], cities: { sydney: 'ซิดนีย์', melbourne: 'เมลเบิร์น' }},
+      newzealand: { name: 'นิวซีแลนด์', flagCode: 'nz', searchNames: ['นิวซีแลนด์', 'NEW ZEALAND'], cities: {} },
+    },
+  },
+  others: {
+    name: 'ทวีป/ประเทศอื่นๆ', desc: 'สำรวจจุดหมายปลายทางใหม่ๆ ที่น่าค้นพบทั่วโลก',
+    countries: {
+      georgia: { name: 'จอร์เจีย', flagCode: 'ge', searchNames: ['จอร์เจีย', 'GEORGIA'], cities: {} },
+      russia: { name: 'รัสเซีย', flagCode: 'ru', searchNames: ['รัสเซีย', 'RUSSIA'], cities: {} },
+      bhutan: { name: 'ภูฏาน', flagCode: 'bt', searchNames: ['ภูฏาน', 'ภูฎาน', 'BHUTAN'], cities: {} },
+      srilanka: { name: 'ศรีลังกา', flagCode: 'lk', searchNames: ['ศรีลังกา', 'SRI LANKA'], cities: {} },
     },
   },
 };
@@ -117,11 +128,12 @@ export default function ToursPage({ params }: { params: { slug: string[] } }) {
     setLoading(true);
 
     if (level === 'continent' && continent) {
-      // Fetch ALL countries in this continent
-      const countryNames = Object.values(continent.countries).map(c => c.name);
-      const promises = countryNames.map(name =>
-        fetch(`/api/tours/list?country=${encodeURIComponent(name)}&limit=200`)
-          .then(r => r.json()).then(d => (d.tours || []) as Tour[]).catch(() => [] as Tour[])
+      // Fetch ALL countries in this continent using all searchNames
+      const promises = Object.values(continent.countries).flatMap(c =>
+        (c.searchNames || [c.name]).map(searchName =>
+          fetch(`/api/tours/list?country=${encodeURIComponent(searchName)}&limit=200`)
+            .then(r => r.json()).then(d => (d.tours || []) as Tour[]).catch(() => [] as Tour[])
+        )
       );
       Promise.all(promises).then(results => {
         const all = results.flat();
@@ -130,17 +142,28 @@ export default function ToursPage({ params }: { params: { slug: string[] } }) {
         setLoading(false);
       });
     } else if (level === 'country' && country) {
-      fetch(`/api/tours/list?country=${encodeURIComponent(country.name)}&limit=1000`)
-        .then(r => r.json()).then(d => { if (d.tours) setTours(d.tours); })
-        .catch(() => {}).finally(() => setLoading(false));
+      const names = country.searchNames || [country.name];
+      const promises = names.map(n =>
+        fetch(`/api/tours/list?country=${encodeURIComponent(n)}&limit=1000`)
+          .then(r => r.json()).then(d => (d.tours || []) as Tour[]).catch(() => [] as Tour[])
+      );
+      Promise.all(promises).then(results => {
+        const all = results.flat();
+        const seen = new Set<string>();
+        setTours(all.filter(t => { if (seen.has(t.id)) return false; seen.add(t.id); return true; }));
+      }).finally(() => setLoading(false));
     } else if (level === 'city' && country && cityName) {
-      fetch(`/api/tours/list?country=${encodeURIComponent(country.name)}&limit=1000`)
-        .then(r => r.json()).then(d => {
-          if (d.tours) {
-            const cityTours = (d.tours as Tour[]).filter(t => t.city === cityName || t.title.includes(cityName));
-            setTours(cityTours);
-          }
-        }).catch(() => {}).finally(() => setLoading(false));
+      const names = country.searchNames || [country.name];
+      const promises = names.map(n =>
+        fetch(`/api/tours/list?country=${encodeURIComponent(n)}&limit=1000`)
+          .then(r => r.json()).then(d => (d.tours || []) as Tour[]).catch(() => [] as Tour[])
+      );
+      Promise.all(promises).then(results => {
+        const all = results.flat();
+        const seen = new Set<string>();
+        const unique = all.filter(t => { if (seen.has(t.id)) return false; seen.add(t.id); return true; });
+        setTours(unique.filter(t => t.city === cityName || t.title.includes(cityName)));
+      }).finally(() => setLoading(false));
     } else {
       setLoading(false);
     }
