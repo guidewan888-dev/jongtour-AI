@@ -325,9 +325,9 @@ export default function SearchClient({ initialTours }: { initialTours: TourResul
                   {viewMode === 'grid' ? (
                     /* Grid View — Image Card */
                     <>
-                      <div className="relative aspect-[3/4] bg-slate-100 overflow-hidden">
+                      <div className="relative aspect-[3/4] bg-white overflow-hidden">
                         {tour.imageUrl ? (
-                          <img src={tour.imageUrl} alt={tour.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy" />
+                          <img src={tour.imageUrl} alt={tour.title} className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300" loading="lazy" />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-orange-50 to-amber-50"><span className="text-4xl">🌍</span></div>
                         )}

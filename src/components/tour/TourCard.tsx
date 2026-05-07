@@ -30,9 +30,9 @@ export default function TourCard({ tour }: { tour: TourCardProps }) {
       className="group block bg-white rounded-2xl border border-slate-200 hover:border-primary-300 hover:shadow-xl transition-all duration-300 overflow-hidden"
     >
       {/* Image Section */}
-      <div className="relative aspect-[4/3] overflow-hidden bg-slate-100">
+      <div className="relative aspect-[3/4] overflow-hidden bg-white">
         {hasImage ? (
-          <img src={tour.imageUrl} alt={tour.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" />
+          <img src={tour.imageUrl} alt={tour.title} className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500" loading="lazy" />
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary-100 to-orange-50">
             <span className="text-4xl opacity-30">✈️</span>
