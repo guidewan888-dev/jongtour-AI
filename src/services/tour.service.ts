@@ -316,12 +316,49 @@ export async function getTourList(options?: {
     });
   });
 
-  // 6. Format results with normalized countries
-  return filteredTours.map(t => {
+  // 6a. Build availability map from rawPayload periods
+  // Tours with NO available departures (all sold out / closed) are hidden
+  const availabilityMap: Record<string, boolean> = {};
+  (rawSources || []).forEach((rs: any) => {
+    const payload = rs.rawPayload;
+    if (!payload) return;
+    const periods = payload.Periods || payload.periods || [];
+    if (!Array.isArray(periods) || periods.length === 0) return;
+    // Find the matching tour
+    const matchingTour = tours.find(t => t.supplierId === rs.supplierId && String(t.externalTourId) === String(rs.externalTourId));
+    if (!matchingTour) return;
+    // Check if any period has available seats
+    const hasAvailable = periods.some((p: any) => {
+      const status = p.status || p.PeriodStatus || '';
+      if (status === 'Close' || status === 'Closed') return false;
+      const seats = p.Seat || p.seat || p.GroupSize || p.group || 0;
+      const booked = p.Book || p.join || 0;
+      return (seats - booked) > 0;
+    });
+    availabilityMap[matchingTour.id] = hasAvailable;
+  });
+
+  // Filter: only show tours with available departures (or those without rawPayload data — keep visible)
+  const availableTours = filteredTours.filter(t => {
+    if (availabilityMap[t.id] === undefined) return true; // no raw data → show anyway
+    return availabilityMap[t.id]; // has raw data → only if available
+  });
+
+  // 6b. Format results with normalized countries
+  return availableTours.map(t => {
     const dep = depMap[t.id];
     const dest = destMap[t.id];
     const price = dep ? (priceMap[dep.id] || 0) : 0;
-    // Extract airline from tour title as fallback
+    // Try rawPayload starting price if DB price is 0
+    let startingPrice = Number(price);
+    if (!startingPrice) {
+      const rs = (rawSources || []).find((r: any) => r.supplierId === t.supplierId && String(r.externalTourId) === String(t.externalTourId));
+      if (rs?.rawPayload) {
+        const periods = rs.rawPayload.Periods || rs.rawPayload.periods || [];
+        const rawPrices = periods.map((p: any) => p.Price || p.price || 0).filter((p: number) => p > 0);
+        if (rawPrices.length > 0) startingPrice = Math.min(...rawPrices);
+      }
+    }
     const titleAirline = extractAirlineFromTitle(t.tourName || '');
     return {
       id: t.id,
@@ -334,7 +371,7 @@ export async function getTourList(options?: {
       durationDays: t.durationDays || 0,
       durationNights: t.durationNights || 0,
       nextDeparture: dep ? new Date(dep.startDate).toLocaleDateString('th-TH') : 'N/A',
-      price: Number(price),
+      price: startingPrice,
       availableSeats: dep?.remainingSeats || 0,
       imageUrl: imageMap[t.id] || '',
       airline: externalIdMap[t.id] || titleAirline || '',
