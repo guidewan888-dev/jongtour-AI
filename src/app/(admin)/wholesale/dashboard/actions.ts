@@ -2,6 +2,14 @@
 
 import { prisma } from '@/lib/prisma';
 
+function toThaiDate(date: Date): string {
+  return date.toLocaleDateString('sv-SE', { timeZone: 'Asia/Bangkok' }); // YYYY-MM-DD
+}
+
+function toThaiTime(date: Date): string {
+  return date.toLocaleString('th-TH', { timeZone: 'Asia/Bangkok' });
+}
+
 export async function getWholesaleDashboardData() {
   const suppliers = await prisma.supplier.findMany({
     include: {
@@ -34,6 +42,21 @@ export async function getWholesaleDashboardData() {
     select: { startedAt: true },
   });
 
+  // Failed sync logs (real data for Failed Jobs Queue)
+  const failedLogs = await prisma.supplierSyncLog.findMany({
+    where: { status: 'FAILED' },
+    include: { supplier: { select: { displayName: true } } },
+    orderBy: { startedAt: 'desc' },
+    take: 5,
+  });
+
+  // Recent sync logs (real data for Real-time System Logs)
+  const recentLogs = await prisma.supplierSyncLog.findMany({
+    include: { supplier: { select: { displayName: true } } },
+    orderBy: { startedAt: 'desc' },
+    take: 10,
+  });
+
   const colors = ['blue', 'emerald', 'indigo', 'violet', 'orange', 'rose'];
 
   const mappedSuppliers = suppliers.map((sup) => {
@@ -49,9 +72,27 @@ export async function getWholesaleDashboardData() {
       toursCount: sup._count.tours,
       errorRate: '0.0%',
       lastPulled: lastSync
-        ? lastSync.startedAt.toISOString().split('T')[0]
+        ? toThaiDate(lastSync.startedAt)
         : 'ยังไม่เคย sync',
     };
+  });
+
+  const mappedFailedLogs = failedLogs.map((log) => ({
+    id: log.id,
+    supplier: log.supplier.displayName,
+    error: log.errorMessage || 'Unknown error',
+    time: toThaiTime(log.startedAt),
+  }));
+
+  const mappedRecentLogs = recentLogs.map((log) => {
+    const time = log.startedAt.toLocaleTimeString('th-TH', { timeZone: 'Asia/Bangkok', hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    const status = log.status === 'SUCCESS' ? 'OK' : log.status === 'FAILED' ? 'ERROR' : 'INFO';
+    const msg = log.status === 'SUCCESS'
+      ? `${log.supplier.displayName}: Synced ${log.totalRecords} tours successfully.`
+      : log.status === 'FAILED'
+      ? `${log.supplier.displayName}: ${log.errorMessage || 'Sync failed'}`
+      : `${log.supplier.displayName}: Sync ${log.status}...`;
+    return { time: `[${time}]`, status, msg };
   });
 
   return {
@@ -59,7 +100,7 @@ export async function getWholesaleDashboardData() {
       supplierCount: suppliers.length,
       apiStatus: 'ONLINE',
       lastSync: latestSync
-        ? latestSync.startedAt.toISOString().split('T')[0]
+        ? toThaiDate(latestSync.startedAt)
         : 'ไม่มีข้อมูล',
       syncErrors,
       missingLinks,
@@ -67,5 +108,7 @@ export async function getWholesaleDashboardData() {
       totalSyncedTours: mappedSuppliers.reduce((sum, s) => sum + s.toursCount, 0),
     },
     suppliers: mappedSuppliers,
+    failedLogs: mappedFailedLogs,
+    recentLogs: mappedRecentLogs,
   };
 }

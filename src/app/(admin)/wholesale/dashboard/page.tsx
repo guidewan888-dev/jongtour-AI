@@ -5,23 +5,14 @@ import { getWholesaleDashboardData } from './actions';
 
 export default function AdminWholesaleDashboardPage() {
   const [data, setData] = useState<any>(null);
-  const [isSyncing, setIsSyncing] = useState(false);
 
   useEffect(() => {
     getWholesaleDashboardData().then(setData);
   }, []);
 
-  const handleForceSync = () => {
-    setIsSyncing(true);
-    setTimeout(() => {
-      setIsSyncing(false);
-    }, 2000);
-  };
-
   const getStatusBadge = (status: string) => {
     if (status === 'ONLINE') return <span className="bg-emerald-100 text-emerald-700 border border-emerald-200 text-[10px] font-black px-2 py-0.5 rounded tracking-wider flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> ONLINE</span>;
     if (status === 'ERROR') return <span className="bg-red-100 text-red-700 border border-red-200 text-[10px] font-black px-2 py-0.5 rounded tracking-wider flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-red-500"></span> CONNECTION ERROR</span>;
-    if (status === 'SYNCING') return <span className="bg-blue-100 text-blue-700 border border-blue-200 text-[10px] font-black px-2 py-0.5 rounded tracking-wider flex items-center gap-1.5"><svg className="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> SYNCING</span>;
     return null;
   };
 
@@ -154,44 +145,50 @@ export default function AdminWholesaleDashboardPage() {
             </div>
           </div>
 
-          {/* Sync Queue / Logs Placeholder */}
+          {/* Failed Jobs + Real-time Logs */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-fade-in-up">
+            {/* Failed Jobs Queue — REAL DATA */}
             <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
               <h3 className="font-bold text-slate-800 mb-4 flex items-center justify-between">
                 Failed Jobs Queue
-                <button className="text-[10px] bg-red-50 text-red-600 px-2 py-1 rounded font-bold hover:bg-red-100 transition-colors">Retry All Failed</button>
+                {data.failedLogs.length > 0 && (
+                  <span className="text-[10px] bg-red-50 text-red-600 px-2 py-1 rounded font-bold">{data.failedLogs.length} Failed</span>
+                )}
               </h3>
               <div className="space-y-3">
-                <div className="p-3 border border-red-100 bg-red-50/50 rounded-xl flex items-center justify-between">
-                  <div>
-                    <div className="text-sm font-bold text-slate-900">E-How Scraper (TR-TW-008)</div>
-                    <div className="text-xs text-red-600 mt-0.5">Timeout Error: Destination page took too long to load.</div>
+                {data.failedLogs.length === 0 ? (
+                  <div className="text-center py-8">
+                    <p className="text-3xl mb-2">✅</p>
+                    <p className="text-sm font-bold text-slate-500">ไม่มี Job ที่ล้มเหลว</p>
                   </div>
-                  <button className="text-slate-400 hover:text-orange-600"><svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg></button>
-                </div>
-                <div className="p-3 border border-red-100 bg-red-50/50 rounded-xl flex items-center justify-between">
-                  <div>
-                    <div className="text-sm font-bold text-slate-900">Zego API (TR-EU-012)</div>
-                    <div className="text-xs text-red-600 mt-0.5">Validation Error: Missing PNR field.</div>
-                  </div>
-                  <button className="text-slate-400 hover:text-orange-600"><svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg></button>
-                </div>
+                ) : (
+                  data.failedLogs.map((log: any) => (
+                    <div key={log.id} className="p-3 border border-red-100 bg-red-50/50 rounded-xl">
+                      <div className="text-sm font-bold text-slate-900">{log.supplier}</div>
+                      <div className="text-xs text-red-600 mt-0.5">{log.error}</div>
+                      <div className="text-[10px] text-slate-400 mt-1">{log.time}</div>
+                    </div>
+                  ))
+                )}
               </div>
             </div>
             
+            {/* Real-time System Logs — REAL DATA */}
             <div className="bg-slate-900 rounded-2xl border border-slate-800 shadow-sm p-6 text-green-400 font-mono text-xs overflow-hidden flex flex-col">
               <h3 className="font-bold text-white mb-4 flex items-center justify-between font-sans">
                 Real-time System Logs
-                <span className="flex items-center gap-1.5 text-[10px] text-slate-400"><span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Streaming</span>
+                <span className="flex items-center gap-1.5 text-[10px] text-slate-400"><span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Live</span>
               </h3>
-              <div className="flex-1 overflow-y-auto space-y-1 opacity-80">
-                <div>[10:30:45] SYSTEM: Initializing cron job for Zego API...</div>
-                <div>[10:30:46] ZEGO: Fetching /v2/tours?status=active</div>
-                <div>[10:30:48] ZEGO: Received 850 records. Parsing payload...</div>
-                <div>[10:30:52] DB: Upserted 848 records successfully.</div>
-                <div className="text-red-400">[10:30:52] ERROR: Validation failed for 2 records. Sent to DLQ.</div>
-                <div>[10:45:00] TOURLINES: Starting Delta Sync...</div>
-                <div>[10:45:05] TOURLINES: Delta Sync Complete. 0 changes detected.</div>
+              <div className="flex-1 overflow-y-auto space-y-1 opacity-80 max-h-[200px]">
+                {data.recentLogs.length === 0 ? (
+                  <div className="text-slate-500">ยังไม่มี Sync Log...</div>
+                ) : (
+                  data.recentLogs.map((log: any, i: number) => (
+                    <div key={i} className={log.status === 'ERROR' ? 'text-red-400' : log.status === 'OK' ? 'text-green-400' : 'text-yellow-400'}>
+                      {log.time} {log.msg}
+                    </div>
+                  ))
+                )}
               </div>
             </div>
           </div>
