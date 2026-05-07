@@ -1,5 +1,6 @@
 export const dynamic = 'force-dynamic';
 import { prisma } from '@/lib/prisma';
+import SyncButtons from './SyncButtons';
 
 export default async function WholesaleSyncPage() {
   const syncLogs = await prisma.supplierSyncLog.findMany({
@@ -65,6 +66,11 @@ export default async function WholesaleSyncPage() {
             );
           })}
         </div>
+      </div>
+
+      {/* Manual Sync Buttons */}
+      <div className="bg-white rounded-2xl border border-slate-200 p-6">
+        <SyncButtons />
       </div>
 
       {/* Sync Logs Table */}
