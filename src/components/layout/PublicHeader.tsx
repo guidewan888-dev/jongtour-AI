@@ -65,22 +65,29 @@ export default function PublicHeader() {
             </span>
           </Link>
 
-          {/* Desktop Nav Links */}
-          <nav className="hidden lg:flex items-center gap-1 ml-6">
+          {/* Desktop Nav Links — Tour Regions */}
+          <nav className="hidden lg:flex items-center gap-0.5 ml-6">
             {[
-              { label: "ค้นหาทัวร์", href: "/search", icon: "🔍" },
-              { label: "บริการวีซ่า", href: "/visa", icon: "🛂" },
-              { label: "AI จัดทริป", href: "/private-group", icon: "✈️" },
-              { label: "ทัวร์ไฟไหม้", href: "/deals/flash-sale", icon: "🔥" },
-              { label: "เกี่ยวกับเรา", href: "/about", icon: "🏢" },
-              { label: "ติดต่อ", href: "/contact", icon: "📞" },
+              { label: "ทัวร์จีน", href: "/country/china", flag: "cn" },
+              { label: "ทัวร์ญี่ปุ่น", href: "/country/japan", flag: "jp" },
+              { label: "ทัวร์เกาหลี", href: "/country/south-korea", flag: "kr" },
+              { label: "ทัวร์เวียดนาม", href: "/country/vietnam", flag: "vn" },
+              { label: "ทัวร์เอเชีย", href: "/region/asia", icon: "🌏" },
+              { label: "ทัวร์ยุโรป", href: "/region/europe", icon: "🏰" },
+              { label: "ทัวร์อเมริกา", href: "/country/usa", flag: "us" },
+              { label: "ทัวร์ทั้งหมด", href: "/search", icon: "🔍" },
             ].map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
-                className="flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-slate-600 hover:text-primary-600 hover:bg-primary-50 rounded-full transition-colors"
+                className="flex items-center gap-1.5 px-2.5 py-1.5 text-[13px] font-medium text-slate-600 hover:text-primary-600 hover:bg-primary-50 rounded-full transition-colors whitespace-nowrap"
               >
-                <span className="text-xs">{item.icon}</span>
+                {"flag" in item && item.flag ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={`https://flagcdn.com/w40/${item.flag}.png`} alt="" className="w-4 h-3 rounded-sm object-cover" />
+                ) : (
+                  <span className="text-xs">{(item as any).icon}</span>
+                )}
                 {item.label}
               </Link>
             ))}
