@@ -38,7 +38,7 @@ const REGION_DATA: Record<string, { name: string; nameEn: string; desc: string; 
       { name: 'ฝรั่งเศส', slug: 'france', flagCode: 'fr', searchNames: ['ฝรั่งเศส', 'FRANCE'] },
       { name: 'อิตาลี', slug: 'italy', flagCode: 'it', searchNames: ['อิตาลี', 'ITALY'] },
       { name: 'สวิตเซอร์แลนด์', slug: 'switzerland', flagCode: 'ch', searchNames: ['สวิตเซอร์แลนด์', 'SWITZERLAND'] },
-      { name: 'เยอรมนี', slug: 'germany', flagCode: 'de', searchNames: ['เยอรมนี', 'GERMANY'] },
+      { name: 'เยอรมนี', slug: 'germany', flagCode: 'de', searchNames: ['เยอรมนี', 'เยอรมัน', 'GERMANY'] },
       { name: 'สเปน', slug: 'spain', flagCode: 'es', searchNames: ['สเปน', 'SPAIN'] },
       { name: 'เนเธอร์แลนด์', slug: 'netherlands', flagCode: 'nl', searchNames: ['เนเธอร์แลนด์', 'NETHERLANDS'] },
       { name: 'ออสเตรีย', slug: 'austria', flagCode: 'at', searchNames: ['ออสเตรีย', 'AUSTRIA'] },
@@ -114,22 +114,26 @@ export default function RegionPage({ params }: { params: { slug: string[] } }) {
   const [loading, setLoading] = useState(true);
   const [activeCountry, setActiveCountry] = useState<string | null>(null);
 
-  // Fetch tours for EACH country (all searchNames) then merge
+  // Fetch tours: search by country filter AND keyword (for multi-country tours under 'EUROPE')
   useEffect(() => {
     setLoading(true);
     setTours([]);
-    // For each country, fetch all search name variants
-    const promises = region.countries.flatMap(c =>
-      c.searchNames.map(searchName =>
+    const promises = region.countries.flatMap(c => [
+      // Search by country filter
+      ...c.searchNames.map(searchName =>
         fetch(`/api/tours/list?country=${encodeURIComponent(searchName)}&limit=100`)
           .then(r => r.json())
           .then(d => (d.tours || []) as Tour[])
           .catch(() => [] as Tour[])
-      )
-    );
+      ),
+      // Also search by keyword in title (catches "ทัวร์เยอรมัน" stored under EUROPE)
+      fetch(`/api/tours/list?q=${encodeURIComponent(c.name)}&limit=50`)
+        .then(r => r.json())
+        .then(d => (d.tours || []) as Tour[])
+        .catch(() => [] as Tour[]),
+    ]);
     Promise.all(promises).then(results => {
       const allTours = results.flat();
-      // Deduplicate by id
       const seen = new Set<string>();
       const unique = allTours.filter(t => { if (seen.has(t.id)) return false; seen.add(t.id); return true; });
       setTours(unique);
@@ -142,7 +146,11 @@ export default function RegionPage({ params }: { params: { slug: string[] } }) {
       ? tours.filter(t => {
           const countryConfig = region.countries.find(c => c.name === activeCountry);
           if (!countryConfig) return t.country === activeCountry;
-          return countryConfig.searchNames.some(sn => sn.toUpperCase() === (t.country || '').toUpperCase());
+          const tc = (t.country || '').toUpperCase();
+          // Match by raw DB name OR normalized Thai name OR tour title containing country name
+          return countryConfig.searchNames.some(sn => 
+            sn.toUpperCase() === tc || (t.title && t.title.includes(sn))
+          );
         })
       : tours;
     const groups: Record<string, { tours: Tour[]; countries: Set<string> }> = {};
@@ -167,8 +175,8 @@ export default function RegionPage({ params }: { params: { slug: string[] } }) {
       <section className="relative bg-gradient-to-br from-primary-600 via-primary-500 to-orange-400 text-white overflow-hidden">
         <div className="absolute inset-0 opacity-10"><div className="absolute inset-0" style={{ backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)', backgroundSize: '24px 24px' }} /></div>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 md:py-20 relative text-center">
-          <h1 className="text-3xl md:text-5xl font-black mb-3">เปิดโลกแห่ง{region.name}</h1>
-          <p className="text-white/80 text-base md:text-lg max-w-2xl mx-auto mb-8">{region.desc}</p>
+          <h1 className="text-3xl md:text-5xl font-black mb-2">ทัวร์{region.name}</h1>
+          <p className="text-white/70 text-sm mb-1">พบ {tours.length} โปรแกรม • {region.desc}</p>
           <div className="flex flex-wrap justify-center gap-3">
             <Link href="/search" className="bg-white text-primary-600 hover:bg-primary-50 px-6 py-3 rounded-full font-bold text-sm shadow-lg transition-all">🔍 ค้นหาแพ็กเกจทัวร์</Link>
             <Link href="/search?type=wholesale" className="bg-white/20 hover:bg-white/30 text-white px-6 py-3 rounded-full font-bold text-sm backdrop-blur-sm border border-white/30 transition-all">🏢 ทัวร์ค้าส่ง (Wholesale)</Link>
