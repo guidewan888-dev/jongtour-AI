@@ -325,28 +325,28 @@ export default function SearchClient({ initialTours }: { initialTours: TourResul
                   {viewMode === 'grid' ? (
                     /* Grid View — Image Card */
                     <>
-                      <div className="relative h-44 bg-slate-100 overflow-hidden">
+                      <div className="relative aspect-[16/10] bg-slate-100 overflow-hidden">
                         {tour.imageUrl ? (
-                          <img src={tour.imageUrl} alt={tour.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy" />
+                          <img src={tour.imageUrl} alt={tour.title} className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-300" loading="lazy" />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-orange-50 to-amber-50"><span className="text-4xl">🌍</span></div>
                         )}
                         {tour.availableSeats > 0 && tour.availableSeats <= 10 && (
-                          <div className="absolute top-2 left-2 bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">🔥 เหลือ {tour.availableSeats} ที่</div>
+                          <div className="absolute top-2 left-2 bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm">🔥 เหลือ {tour.availableSeats} ที่</div>
                         )}
-                        <div className="absolute top-2 right-2 bg-black/50 text-white text-[10px] font-medium px-2 py-0.5 rounded-full backdrop-blur-sm">{tour.durationDays}วัน{tour.durationNights}คืน</div>
-                        <div className="absolute bottom-2 left-2 bg-white/90 text-[10px] font-semibold text-orange-700 px-2 py-0.5 rounded-full backdrop-blur-sm">{tour.supplier}</div>
+                        <div className="absolute top-2 right-2 bg-black/60 text-white text-[10px] font-medium px-2 py-0.5 rounded-full backdrop-blur-sm">{tour.durationDays}วัน{tour.durationNights}คืน</div>
+                        <div className="absolute bottom-2 left-2 bg-white/90 text-[10px] font-semibold text-orange-700 px-2 py-0.5 rounded-full backdrop-blur-sm shadow-sm">{tour.supplier}</div>
                       </div>
                       <div className="p-3">
                         <div className="flex items-center gap-1.5 mb-1.5 flex-wrap">
                           <span className="text-[10px] font-bold text-slate-400 bg-slate-50 px-1.5 py-0.5 rounded">{tour.code}</span>
                           <span className="text-[10px] text-slate-400">📍 {tour.country}</span>
-                          {tour.airline && <span className="text-[10px] text-blue-500 font-medium">✈ {tour.airline}</span>}
+                          {tour.airline && <span className="text-[10px] text-blue-600 font-semibold bg-blue-50 px-1.5 py-0.5 rounded">✈ {tour.airline}</span>}
                         </div>
                         <h3 className="text-sm font-bold text-slate-900 group-hover:text-orange-600 transition-colors line-clamp-2 min-h-[2.5rem] leading-tight">{tour.title}</h3>
                         <div className="flex items-end justify-between mt-2 pt-2 border-t border-slate-50">
                           <div>
-                            {tour.nextDeparture !== 'N/A' && <p className="text-[11px] text-slate-400">📅 {tour.nextDeparture}</p>}
+                            {tour.nextDeparture !== 'N/A' && <p className="text-[11px] text-emerald-600 font-medium">📅 เริ่ม {tour.nextDeparture}</p>}
                           </div>
                           <div className="text-right">
                             {tour.price > 0 ? (

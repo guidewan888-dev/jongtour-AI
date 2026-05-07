@@ -297,15 +297,38 @@ const AIRLINE_CODES: Record<string, string> = {
 };
 
 function extractAirlineFromTitle(title: string): string {
-  // Match patterns like (TG), [TG], by TG, สายการบิน TG
-  const match = title.match(/[\(\[](\w{2})[\)\]]/);
-  if (match && AIRLINE_CODES[match[1]]) return AIRLINE_CODES[match[1]];
-  // Check if any airline name appears in the title
+  // 1. Match (TG), [TG]
+  const bm = title.match(/[\(\[](\w{2})[\)\]]/);
+  if (bm && AIRLINE_CODES[bm[1].toUpperCase()]) return AIRLINE_CODES[bm[1].toUpperCase()];
+
+  // 2. Match "บิน XX"
+  const fm = title.match(/บิน\s*(\w{2})\b/i);
+  if (fm && AIRLINE_CODES[fm[1].toUpperCase()]) return AIRLINE_CODES[fm[1].toUpperCase()];
+
+  // 3. Direct airline name mentions
+  const tl = title.toLowerCase();
+  const names: [string, string][] = [
+    ['vietjet', 'VietJet Air'], ['thai airways', 'Thai Airways'], ['thai airasia', 'Thai AirAsia'],
+    ['cathay pacific', 'Cathay Pacific'], ['singapore airlines', 'Singapore Airlines'],
+    ['china eastern', 'China Eastern'], ['china southern', 'China Southern'],
+    ['air china', 'Air China'], ['korean air', 'Korean Air'], ['eva air', 'EVA Air'],
+    ['china airlines', 'China Airlines'], ['japan airlines', 'Japan Airlines'],
+    ['turkish airlines', 'Turkish Airlines'], ['emirates', 'Emirates'],
+    ['qatar airways', 'Qatar Airways'], ['peach', 'Peach Aviation'],
+    ['scoot', 'Scoot'], ['airasia', 'AirAsia'], ['thai lion', 'Thai Lion Air'],
+    ['thai smile', 'Thai Smile'], ['vietnam airlines', 'Vietnam Airlines'],
+    ['etihad', 'Etihad Airways'], ['malaysia airlines', 'Malaysia Airlines'],
+    ['asiana', 'Asiana Airlines'],
+  ];
+  for (const [p, n] of names) { if (tl.includes(p)) return n; }
+
+  // 4. Standalone 2-letter IATA codes
   for (const [code, name] of Object.entries(AIRLINE_CODES)) {
-    if (title.includes(code) && title.includes('บิน')) return name;
+    if (new RegExp('\\b' + code + '\\b').test(title)) return name;
   }
   return '';
 }
+
 
 // ─── Tour Detail ────────────────────────────────────────────────────
 
