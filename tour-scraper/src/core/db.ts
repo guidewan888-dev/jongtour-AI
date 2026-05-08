@@ -62,6 +62,9 @@ export async function upsertTour(
         cover_image_url: images[0]?.publicUrl ?? null,
         last_scraped_at: new Date().toISOString(),
         is_active: true,
+        deposit: tour.deposit ?? null,
+        hotel_rating: tour.hotelRating ?? null,
+        highlights: tour.highlights ?? null,
       },
       { onConflict: 'source_url' },
     )

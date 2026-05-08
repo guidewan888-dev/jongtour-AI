@@ -7,6 +7,21 @@ import { BaseScraper } from './base.js';
 import { discoverUrls } from '../core/sitemap.js';
 import type { TourData, TourPeriod } from '../types.js';
 
+// ── Airline code mapping ──
+const AIRLINE_MAP: Record<string, string> = {
+  'TG': 'Thai Airways', 'QR': 'Qatar Airways', 'EK': 'Emirates',
+  'SQ': 'Singapore Airlines', 'CX': 'Cathay Pacific', 'TK': 'Turkish Airlines',
+  'SV': 'Saudia', 'OZ': 'Asiana Airlines', 'BR': 'EVA Air',
+  'CI': 'China Airlines', 'MH': 'Malaysia Airlines', 'WY': 'Oman Air',
+  'AZ': 'ITA Airways', 'LH': 'Lufthansa', 'AF': 'Air France',
+  'BA': 'British Airways', 'KL': 'KLM', 'NH': 'ANA', 'JL': 'Japan Airlines',
+  'KE': 'Korean Air', 'CZ': 'China Southern', 'MU': 'China Eastern',
+  'ET': 'Ethiopian Airlines', 'MS': 'EgyptAir', 'AI': 'Air India',
+  'GA': 'Garuda Indonesia', 'VN': 'Vietnam Airlines', 'UL': 'SriLankan Airlines',
+  'FD': 'Thai AirAsia', 'VZ': 'Thai Vietjet', 'WE': 'Thai Smile',
+  'PG': 'Bangkok Airways', 'RJ': 'Royal Jordanian', 'GF': 'Gulf Air',
+};
+
 export class OneWorldTourScraper extends BaseScraper {
 
   async discoverUrls(): Promise<string[]> {
@@ -76,6 +91,7 @@ export class OneWorldTourScraper extends BaseScraper {
     if (!res.ok) throw new Error(`HTTP ${res.status} for ${url}`);
     const html = await res.text();
     const $ = cheerio.load(html);
+    const bodyText = $('body').text();
 
     // ── Extract tour code from URL: /tour/owtt210079/ ──
     const tourCode = (url.match(/\/tour\/([a-z0-9]+)/i)?.[1] ?? '').toUpperCase();
@@ -85,22 +101,56 @@ export class OneWorldTourScraper extends BaseScraper {
     const title = rawTitle.replace(/\s*[-–|].*One\s*World.*$/i, '').trim()
       || $('h1').first().text().trim();
 
-    // ── Breadcrumb → country ──
-    const breadcrumbs = $('a').filter((_, el) => {
-      const href = $(el).attr('href') || '';
-      return /\/(intertours|custom-landingpage)\//.test(href);
-    }).map((_, el) => $(el).text().trim()).get();
-    const country = breadcrumbs.find(b => b.length > 1 && !/หน้าแรก|Home/i.test(b)) || '';
+    // ── Duration — parse "X วัน" from title (most reliable) ──
+    const durMatch = title.match(/(\d+)\s*วัน\s*(\d+)?\s*คืน?/);
+    const durationDays = durMatch ? parseInt(durMatch[1]) : 0;
+    const durationNights = durMatch && durMatch[2] 
+      ? parseInt(durMatch[2]) 
+      : (durationDays > 0 ? Math.max(0, durationDays - 2) : 0);
+    const duration = durationDays > 0 ? `${durationDays} วัน ${durationNights} คืน` : '';
 
-    // ── Itinerary description from bullet points ──
-    const itineraryBullets: string[] = [];
+    // ── Airline — parse "(TG)", "(QR)" etc from title ──
+    const airlineCodeMatch = title.match(/\(([A-Z]{2})\)/);
+    const airlineCode = airlineCodeMatch?.[1] || '';
+    const airline = AIRLINE_MAP[airlineCode] || airlineCode;
+
+    // ── Country — from breadcrumb /intertours/XXX/ ──
+    const breadcrumbLinks = $('a[href*="/intertours/"]')
+      .map((_, el) => $(el).text().trim())
+      .get()
+      .filter(t => t.length > 1 && !/ต่างประเทศ|หน้าแรก|Home/i.test(t));
+    // Remove "ทัวร์" prefix for clean country name
+    const country = (breadcrumbLinks[0] || '').replace(/^ทัวร์/, '').trim();
+
+    // ── Price — look for "เริ่มเพียง XX,XXX" or large number patterns ──
+    let priceFrom: number | undefined;
+    const pricePatterns = [
+      /(?:เริ่ม(?:ต้น|เพียง)?)\s*[^\d]*([\d,]+)\s*(?:บ\.?|฿)?/,
+      /ราคา\s*[^\d]*([\d,]+)\s*(?:บ\.?|฿)?/,
+    ];
+    for (const pat of pricePatterns) {
+      const m = bodyText.match(pat);
+      if (m) {
+        const parsed = parseInt(m[1].replace(/,/g, ''), 10);
+        if (parsed > 1000) { priceFrom = parsed; break; }
+      }
+    }
+
+    // ── Hotel Rating — "X ดาว" ──
+    const starMatch = bodyText.match(/(\d)\s*ดาว/);
+    const hotelRating = starMatch ? parseInt(starMatch[1]) : undefined;
+
+    // ── Highlights — bullet points with "–" or "—" separators ──
+    const highlights: string[] = [];
     $('li, .wpb_text_column p, .entry-content p').each((_, el) => {
       const text = $(el).text().trim();
-      if (text.length > 20 && text.length < 500) {
-        itineraryBullets.push(text);
+      if (text.length > 30 && text.length < 500 && /[–—\-]/.test(text)) {
+        highlights.push(text);
       }
     });
-    const description = itineraryBullets.slice(0, 3).join(' | ') 
+
+    // ── Description from highlights or meta ──
+    const description = highlights.slice(0, 3).join(' | ')
       || $('meta[name="description"]').attr('content') || '';
 
     // ── Full itinerary HTML ──
@@ -110,15 +160,9 @@ export class OneWorldTourScraper extends BaseScraper {
     // ── PDF link (weon.website pattern) ──
     const pdfUrl = $('a[href*="pdf.weon.website"], a[href$=".pdf"]').first().attr('href') || '';
 
-    // ── Star rating ──
-    const duration = $('[class*=star], [class*=rating]').text().trim().slice(0, 20)
-      || `${(html.match(/(\d+)\s*ดาว/)?.[1] || '')} ดาว`;
-
-    // ── Price from periods ──
-    let priceFrom: number | undefined;
-
-    // ── Airline ──
-    const airline = $('[class*=airline]').first().text().trim();
+    // ── Deposit — look for "มัดจำ XX,XXX" ──
+    const depositMatch = bodyText.match(/มัดจำ\s*[^\d]*([\d,]+)/);
+    const deposit = depositMatch ? parseInt(depositMatch[1].replace(/,/g, ''), 10) : undefined;
 
     // ── Images (filter out logos/icons/nav images) ──
     const imageUrls = new Set<string>();
@@ -134,10 +178,11 @@ export class OneWorldTourScraper extends BaseScraper {
       }
     });
 
-    // ── Periods (departure dates: "แสดง/ซ่อน" + "ติดต่อเรา" toggles) ──
-    const periods = this.parsePeriods($);
-    if (periods.length > 0 && !priceFrom) {
-      const validPrices = periods.map(p => p.price).filter((p): p is number => !!p);
+    // ── Periods (departure dates table) ──
+    const periods = this.parsePeriods($, bodyText);
+    // Fallback price from periods
+    if (!priceFrom && periods.length > 0) {
+      const validPrices = periods.map(p => p.price).filter((p): p is number => !!p && p > 1000);
       priceFrom = validPrices.length > 0 ? Math.min(...validPrices) : undefined;
     }
 
@@ -152,25 +197,50 @@ export class OneWorldTourScraper extends BaseScraper {
       description,
       itineraryHtml,
       pdfUrl,
-      imageUrls: [...imageUrls].slice(0, 20), // Max 20 images per tour
+      imageUrls: [...imageUrls].slice(0, 20),
       periods,
+      deposit,
+      hotelRating,
+      highlights: highlights.slice(0, 10),
     };
   }
 
-  private parsePeriods($: cheerio.CheerioAPI): TourPeriod[] {
+  private parsePeriods($: cheerio.CheerioAPI, bodyText: string): TourPeriod[] {
     const periods: TourPeriod[] = [];
 
-    // Look for date + price patterns in toggle sections
+    // Look for date + price patterns in table rows
     $('table tr, .period-row, [class*=departure]').each((_, row) => {
       const cells = $(row).find('td, span, div').map((_, c) => $(c).text().trim()).get();
       if (cells.length >= 2) {
+        // Try to extract price from cells (look for numbers > 1000)
+        const priceCell = cells.find(c => {
+          const num = parseInt(c.replace(/[,\s]/g, ''), 10);
+          return num > 1000;
+        });
+        const price = priceCell ? parseInt(priceCell.replace(/[,\s]/g, ''), 10) : undefined;
+
+        // Try to extract seats from "Group Size" column
+        const seatsCell = cells.find(c => /^\d{1,3}$/.test(c.trim()));
+        const seatsLeft = seatsCell ? parseInt(seatsCell) : undefined;
+
         periods.push({
           rawText: cells.join(' | '),
-          price: this.parsePrice(cells.find(c => /[\d,]+/.test(c)) || ''),
+          price,
+          seatsLeft,
           status: cells.find(c => /เปิด|ว่าง|open|available/i.test(c)) ? 'open' : 'open',
         });
       }
     });
+
+    // Fallback: look for date patterns in body text
+    if (periods.length === 0) {
+      const dateMatches = bodyText.matchAll(
+        /(\d{1,2})\s*[-–]\s*(\d{1,2})\s*(ม\.?ค|ก\.?พ|มี\.?ค|เม\.?ย|พ\.?ค|มิ\.?ย|ก\.?ค|ส\.?ค|ก\.?ย|ต\.?ค|พ\.?ย|ธ\.?ค)\.?\s*(\d{2,4})/g
+      );
+      for (const m of dateMatches) {
+        periods.push({ rawText: m[0] });
+      }
+    }
 
     return periods;
   }

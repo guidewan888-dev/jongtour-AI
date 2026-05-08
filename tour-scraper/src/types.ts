@@ -5,6 +5,7 @@ export interface TourData {
   sourceUrl: string;
   title: string;
   country?: string;
+  city?: string;
   duration?: string;
   priceFrom?: number;
   airline?: string;
@@ -13,6 +14,9 @@ export interface TourData {
   pdfUrl?: string;
   imageUrls: string[];
   periods: TourPeriod[];
+  deposit?: number;         // มัดจำ
+  hotelRating?: number;     // ระดับโรงแรม (1-5)
+  highlights?: string[];    // ไฮไลท์ทัวร์
 }
 
 export interface TourPeriod {

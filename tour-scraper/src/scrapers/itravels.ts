@@ -92,6 +92,7 @@ export class ITravelsScraper extends BaseScraper {
 
   private parseFromHtml(url: string, html: string): TourData {
     const $ = cheerio.load(html);
+    const bodyText = $('body').text();
 
     // ── Tour Code from URL or page text ──
     const tourCode = url.match(/\/programs\/([A-Z0-9]+)/i)?.[1] ?? '';
@@ -100,37 +101,72 @@ export class ITravelsScraper extends BaseScraper {
     const title = $('h1, h2').first().text().trim()
       || $('title').text().replace(/\s*[-|].*$/, '').trim();
 
-    // ── Price ──
+    // ── Country — "ประเทศ : XXX" label ──
+    const countryMatch = bodyText.match(/ประเทศ\s*:\s*([^\n\r]+)/);
+    const country = countryMatch?.[1]?.trim().split(/\s+/)[0] || '';
+
+    // ── City — "เมือง : XXX" label ──
+    const cityMatch = bodyText.match(/เมือง\s*:\s*([^\n\r]+)/);
+    const city = cityMatch?.[1]?.trim().split(/\s+/)[0] || '';
+
+    // ── Duration — "จำนวนวัน : X วัน Y คืน" ──
+    const durationMatch = bodyText.match(/จำนวนวัน\s*:\s*(\d+)\s*วัน\s*(\d+)\s*คืน/)
+      || bodyText.match(/(\d+)\s*วัน\s*(\d+)\s*คืน/);
+    const duration = durationMatch ? `${durationMatch[1]} วัน ${durationMatch[2]} คืน` : '';
+
+    // ── Airline — "สายการบิน : XXX (XX)" ──
+    const airlineMatch = bodyText.match(/สายการบิน\s*:\s*([^\n\r(]+(?:\([A-Z]{2}\))?)/);
+    const airline = airlineMatch?.[1]?.trim() || '';
+
+    // ── Price — "เริ่มต้นเพียง XX,XXX" or "เริ่มเพียง" ──
     let priceFrom: number | undefined;
-    const priceText = $('body').text().match(/(?:เริ่มต้น|ราคา)[^\d]*?([\d,]+)/)?.[1];
-    if (priceText) {
-      priceFrom = parseInt(priceText.replace(/,/g, ''), 10) || undefined;
+    const pricePatterns = [
+      /เริ่ม(?:ต้น)?(?:เพียง)?\s*[^\d]*([\d,]+)/,
+      /ราคา\s*[^\d]*([\d,]+)/,
+      /([\d,]{5,})\s*(?:บ\.?|฿|-)/,
+    ];
+    for (const pat of pricePatterns) {
+      const m = bodyText.match(pat);
+      if (m) {
+        const parsed = parseInt(m[1].replace(/,/g, ''), 10);
+        if (parsed > 1000) { priceFrom = parsed; break; }
+      }
     }
 
-    // ── Country ──
-    const countryLink = $('a[href*="/programs?countries="]').first().text().trim();
-    const country = countryLink || '';
+    // ── Hotel Rating — "ระดับโรงแรม : ★★★" ──
+    const hotelSection = bodyText.match(/ระดับโรงแรม\s*:\s*([^\n\r]+)/)?.[1] || '';
+    const starCount = (hotelSection.match(/★/g) || []).length;
+    const hotelRating = starCount > 0 ? starCount : undefined;
 
-    // ── Airline ──
-    const airlineLink = $('a[href*="/programs?airlines="]').first().text().trim();
-    const airline = airlineLink || '';
+    // ── PDF — button with "PDF" text or href containing pdf ──
+    const pdfUrl = $('a:contains("PDF")').first().attr('href')
+      || $('a[href*=".pdf"]').first().attr('href')
+      || $('a[href*="/pdf"]').first().attr('href')
+      || '';
 
-    // ── Duration ──
-    const durationMatch = $('body').text().match(/(\d+)\s*วัน\s*(\d+)\s*คืน/);
-    const duration = durationMatch ? `${durationMatch[1]} วัน ${durationMatch[2]} คืน` : '';
+    // ── Deposit — "มัดจำ XX,XXX" ──
+    const depositMatch = bodyText.match(/มัดจำ\s*[^\d]*([\d,]+)/);
+    const deposit = depositMatch ? parseInt(depositMatch[1].replace(/,/g, ''), 10) : undefined;
 
     // ── Description ──
     const description = $('meta[name="description"]').attr('content') || '';
 
-    // ── PDF URL ──
-    const pdfUrl = $('a[href*="/pdf"]').first().attr('href') || '';
+    // ── Highlights — from itinerary section ──
+    const highlights: string[] = [];
+    // Look for day-by-day itinerary headers
+    $('h3, h4, strong').each((_, el) => {
+      const text = $(el).text().trim();
+      if (/วันที่\s*\d|Day\s*\d/i.test(text) && text.length > 10 && text.length < 300) {
+        highlights.push(text);
+      }
+    });
 
-    // ── Images ──
+    // ── Images — both <img> and background-image ──
     const imageUrls = new Set<string>();
     $('img[src]').each((_, el) => {
       const src = $(el).attr('src');
       if (src
-        && !/logo|icon|avatar|spacer|svg|data:/i.test(src)
+        && !/logo|icon|avatar|spacer|svg|data:|flag/i.test(src)
         && /\.(jpe?g|png|webp)/i.test(src)
       ) {
         try {
@@ -138,13 +174,36 @@ export class ITravelsScraper extends BaseScraper {
         } catch {}
       }
     });
+    // Also try data-src and lazy-loaded images
+    $('img[data-src]').each((_, el) => {
+      const src = $(el).attr('data-src');
+      if (src && /\.(jpe?g|png|webp)/i.test(src)) {
+        try { imageUrls.add(new URL(src, url).href); } catch {}
+      }
+    });
+    // Background images
+    $('[style*="background-image"]').each((_, el) => {
+      const bgMatch = $(el).attr('style')?.match(/url\(['"]?([^'")\s]+)/);
+      if (bgMatch?.[1] && /\.(jpe?g|png|webp)/i.test(bgMatch[1])) {
+        try { imageUrls.add(new URL(bgMatch[1], url).href); } catch {}
+      }
+    });
 
     // ── Periods ──
     const periods: TourPeriod[] = [];
-    // Look for date patterns in page text
-    const dateMatches = $('body').text().matchAll(/(\d{1,2})\s*[-–]\s*(\d{1,2})\s*(ม\.?ค|ก\.?พ|มี\.?ค|เม\.?ย|พ\.?ค|มิ\.?ย|ก\.?ค|ส\.?ค|ก\.?ย|ต\.?ค|พ\.?ย|ธ\.?ค)\.?\s*(\d{2,4})/g);
+    // Look for date patterns: "X - Y เดือน ปี" or structured date rows
+    const dateMatches = bodyText.matchAll(
+      /(\d{1,2})\s*[-–]\s*(\d{1,2})\s*(ม\.?ค|ก\.?พ|มี\.?ค|เม\.?ย|พ\.?ค|มิ\.?ย|ก\.?ค|ส\.?ค|ก\.?ย|ต\.?ค|พ\.?ย|ธ\.?ค)\.?\s*(\d{2,4})/g
+    );
     for (const m of dateMatches) {
       periods.push({ rawText: m[0] });
+    }
+    // Also try "ช่วงเดือน : XXX" pattern
+    if (periods.length === 0) {
+      const periodText = bodyText.match(/ช่วงเดือน\s*:\s*([^\n\r]+)/)?.[1]?.trim();
+      if (periodText) {
+        periods.push({ rawText: periodText });
+      }
     }
 
     return {
@@ -152,6 +211,7 @@ export class ITravelsScraper extends BaseScraper {
       sourceUrl: url,
       title,
       country,
+      city,
       duration,
       priceFrom,
       airline,
@@ -160,6 +220,9 @@ export class ITravelsScraper extends BaseScraper {
       pdfUrl,
       imageUrls: [...imageUrls].slice(0, 15),
       periods,
+      deposit,
+      hotelRating,
+      highlights: highlights.slice(0, 10),
     };
   }
 

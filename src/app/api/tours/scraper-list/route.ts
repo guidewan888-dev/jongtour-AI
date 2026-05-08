@@ -10,7 +10,7 @@ export async function GET(req: NextRequest) {
 
   let query = supabase
     .from('scraper_tours')
-    .select('id, site, tour_code, title, country, duration, price_from, airline, cover_image_url, source_url, is_active')
+    .select('id, site, tour_code, title, country, duration, price_from, airline, cover_image_url, source_url, is_active, pdf_url, deposit, hotel_rating, highlights')
     .eq('is_active', true)
     .order('last_scraped_at', { ascending: false })
     .limit(limit);
@@ -46,12 +46,17 @@ export async function GET(req: NextRequest) {
       city: '',
       durationDays,
       durationNights,
+      duration: t.duration || '',
       nextDeparture: '',
       price: t.price_from || 0,
       availableSeats: 0,
       imageUrl: t.cover_image_url || '',
       airline: t.airline || '',
       sourceUrl: t.source_url || '',
+      pdfUrl: t.pdf_url || '',
+      deposit: t.deposit || 0,
+      hotelRating: t.hotel_rating || 0,
+      highlights: t.highlights || [],
     };
   });
 
