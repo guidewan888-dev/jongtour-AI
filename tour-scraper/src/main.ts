@@ -7,6 +7,8 @@ import 'dotenv/config';
 import { sites } from './config/sites.js';
 import { OneWorldTourScraper } from './scrapers/oneworldtour.js';
 import { ITravelsScraper } from './scrapers/itravels.js';
+import { BestInternationalScraper } from './scrapers/bestintl.js';
+import { GS25Scraper } from './scrapers/gs25.js';
 import { downloadAndStore } from './core/downloader.js';
 import { upsertTour, startRun, finishRun } from './core/db.js';
 import type { BaseScraper } from './scrapers/base.js';
@@ -16,6 +18,8 @@ import type { ScrapeStats } from './types.js';
 const scraperMap: Record<string, new (cfg: any) => BaseScraper> = {
   oneworldtour: OneWorldTourScraper,
   itravels: ITravelsScraper,
+  bestintl: BestInternationalScraper,
+  gs25: GS25Scraper,
 };
 
 async function runSite(siteCfg: (typeof sites)[number]): Promise<void> {

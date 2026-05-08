@@ -19,6 +19,20 @@ const SUPPLIER_INFO: Record<string, { displayName: string; logo: string; accent:
     gradient: 'from-sky-600 to-cyan-500',
     landingPath: '/wholesaler/itravels',
   },
+  bestintl: {
+    displayName: 'Best International',
+    logo: '/images/logos/bestintl.png',
+    accent: 'text-red-600',
+    gradient: 'from-red-600 to-rose-500',
+    landingPath: '/wholesaler/bestintl',
+  },
+  gs25: {
+    displayName: 'GS25 Travel',
+    logo: '/images/logos/gs25.png',
+    accent: 'text-emerald-600',
+    gradient: 'from-emerald-600 to-green-500',
+    landingPath: '/wholesaler/gs25',
+  },
 };
 
 interface ScraperTour {

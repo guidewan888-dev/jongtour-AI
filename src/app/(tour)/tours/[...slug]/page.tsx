@@ -20,6 +20,8 @@ const SUPPLIERS = [
   { key: "go365", name: "Go365", color: 'bg-green-500', logo: '/images/logos/download.jfif', priority: 4 },
   { key: "oneworldtour", name: "One World Tour", color: 'bg-orange-600', logo: '/images/logos/oneworldtour.png', priority: 5 },
   { key: "itravels", name: "iTravels Center", color: 'bg-sky-600', logo: '/images/logos/itravels.png', priority: 6 },
+  { key: "bestintl", name: "Best International", color: 'bg-red-600', logo: '/images/logos/bestintl.png', priority: 7 },
+  { key: "gs25", name: "GS25 Travel", color: 'bg-emerald-600', logo: '/images/logos/gs25.png', priority: 8 },
 ];
 
 // ── Helper: find continent for a country ────────────────────────────
