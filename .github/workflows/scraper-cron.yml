@@ -1,8 +1,8 @@
 name: Tour Scraper Cron
 on:
   schedule:
-    # ทุกวัน 03:00 ไทย = 20:00 UTC วันก่อนหน้า
-    - cron: '0 20 * * *'
+    # ทุกวัน 12:15 ไทย = 05:15 UTC
+    - cron: '15 5 * * *'
   workflow_dispatch:  # สามารถกดรัน manual ได้
 
 jobs:
