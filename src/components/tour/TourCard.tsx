@@ -29,14 +29,13 @@ export interface TourCardProps {
 export default function TourCard({ tour }: { tour: TourCardProps }) {
   const hasImage = !!tour.imageUrl;
   const isUrgent = tour.availableSeats > 0 && tour.availableSeats <= 5;
-  const isExternal = !!tour.sourceUrl;
-  const href = isExternal ? tour.sourceUrl : `/tour/${tour.slug}`;
+  // Scraper tours (with sourceUrl) go to internal detail page /tour/s/CODE
+  const isScraperTour = !!tour.sourceUrl;
+  const href = isScraperTour ? `/tour/s/${tour.code.toLowerCase()}` : `/tour/${tour.slug}`;
 
   return (
     <Link
       href={href}
-      target={isExternal ? '_blank' : undefined}
-      rel={isExternal ? 'noopener noreferrer' : undefined}
       className="group block bg-white rounded-2xl border border-slate-200 hover:border-primary-300 hover:shadow-xl transition-all duration-300 overflow-hidden"
     >
       {/* Image Section */}
