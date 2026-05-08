@@ -72,22 +72,22 @@ export default function ToursPage({ params }: { params: { slug: string[] } }) {
       });
 
     if (level === 'continent' && continent) {
-      // Single fetch: search by continent name (e.g. "ยุโรป" → matches all EUROPE tours)
-      // Plus fetch by each country name as keyword to catch more
-      const regionNames = [continent.name];
-      // Add the first searchName of each country for broader coverage
-      Object.values(continent.countries).forEach(c => {
-        if (c.searchNames?.[0] && !regionNames.includes(c.searchNames[0])) {
-          regionNames.push(c.searchNames[0]);
-        }
-      });
-      // Deduplicate: use country filter for the main name, keyword for others
+      // Fetch by continent name (covers Europe-style: all tours stored as "EUROPE")
+      // AND by each country name (covers Asia/Middle East: tours stored per-country as "JAPAN", "TURKEY" etc.)
       const promises: Promise<Tour[]>[] = [
         fetch(`/api/tours/list?country=${encodeURIComponent(continent.name)}&limit=500`)
           .then(r => r.json()).then(d => (d.tours || []) as Tour[]).catch(() => [] as Tour[]),
-        fetch(`/api/tours/list?q=${encodeURIComponent(continent.name)}&limit=500`)
-          .then(r => r.json()).then(d => (d.tours || []) as Tour[]).catch(() => [] as Tour[]),
       ];
+      // Add a fetch for each country's primary search name
+      Object.values(continent.countries).forEach(c => {
+        const primaryName = c.searchNames?.[0] || c.name;
+        if (primaryName !== continent.name) { // skip if same as continent name (avoid duplicate)
+          promises.push(
+            fetch(`/api/tours/list?country=${encodeURIComponent(primaryName)}&limit=200`)
+              .then(r => r.json()).then(d => (d.tours || []) as Tour[]).catch(() => [] as Tour[])
+          );
+        }
+      });
       fetchAndDedupe(promises).then(tours => {
         setTours(tours);
         setLoading(false);

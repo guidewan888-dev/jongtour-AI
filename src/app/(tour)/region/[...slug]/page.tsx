@@ -114,19 +114,28 @@ export default function RegionPage({ params }: { params: { slug: string[] } }) {
   const [loading, setLoading] = useState(true);
   const [activeCountry, setActiveCountry] = useState<string | null>(null);
 
-  // Fetch tours — optimized: just 2 calls (country filter + keyword search)
-  // All European tours in DB use country="EUROPE", so fetch by region name and filter client-side
+  // Fetch tours — fetch by region name AND each country name
+  // Europe tours stored as country="EUROPE", Asia/ME stored per-country (JAPAN, TURKEY etc.)
   useEffect(() => {
     setLoading(true);
     setTours([]);
+
     const promises: Promise<Tour[]>[] = [
-      // Main search by region name (e.g. "ยุโรป" → matches all EUROPE tours)
+      // Fetch by region name (covers Europe-style storage)
       fetch(`/api/tours/list?country=${encodeURIComponent(region.name)}&limit=500`)
         .then(r => r.json()).then(d => (d.tours || []) as Tour[]).catch(() => [] as Tour[]),
-      // Also search by keyword (catches tours with region name in title)
-      fetch(`/api/tours/list?q=${encodeURIComponent(region.name)}&limit=500`)
-        .then(r => r.json()).then(d => (d.tours || []) as Tour[]).catch(() => [] as Tour[]),
     ];
+    // Fetch by each country's primary search name (covers per-country storage)
+    region.countries.forEach(c => {
+      const primaryName = c.searchNames[0] || c.name;
+      if (primaryName !== region.name) {
+        promises.push(
+          fetch(`/api/tours/list?country=${encodeURIComponent(primaryName)}&limit=200`)
+            .then(r => r.json()).then(d => (d.tours || []) as Tour[]).catch(() => [] as Tour[])
+        );
+      }
+    });
+
     Promise.all(promises).then(results => {
       const allTours = results.flat();
       const seen = new Set<string>();
