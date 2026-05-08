@@ -18,15 +18,20 @@ export interface TourCardProps {
   imageUrl?: string;
   airline?: string;
   flagCode?: string;
+  sourceUrl?: string;
 }
 
 export default function TourCard({ tour }: { tour: TourCardProps }) {
   const hasImage = !!tour.imageUrl;
   const isUrgent = tour.availableSeats > 0 && tour.availableSeats <= 5;
+  const isExternal = !!tour.sourceUrl;
+  const href = isExternal ? tour.sourceUrl : `/tour/${tour.slug}`;
 
   return (
     <Link
-      href={`/tour/${tour.slug}`}
+      href={href}
+      target={isExternal ? '_blank' : undefined}
+      rel={isExternal ? 'noopener noreferrer' : undefined}
       className="group block bg-white rounded-2xl border border-slate-200 hover:border-primary-300 hover:shadow-xl transition-all duration-300 overflow-hidden"
     >
       {/* Image Section */}

@@ -42,15 +42,6 @@ const allWholesalePartners = [
     tags: ["ยุโรป", "ออสเตรเลีย", "แอฟริกา"],
   },
   {
-    name: "iTravel",
-    code: "itravel",
-    logo: "/images/logos/itravel.jpg",
-    description: "ทัวร์ต่างประเทศ หลากหลายเส้นทาง ราคาเริ่มต้นสบายกระเป๋า",
-    tourCount: 110,
-    rating: 4.5,
-    tags: ["ญี่ปุ่น", "เกาหลี", "เวียดนาม"],
-  },
-  {
     name: "World Connection",
     code: "worldconnection",
     logo: "/images/logos/world connections.jpg",

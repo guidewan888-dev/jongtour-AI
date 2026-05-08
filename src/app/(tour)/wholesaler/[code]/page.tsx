@@ -7,7 +7,7 @@ interface Tour {
   id: string; slug: string; code: string; title: string; supplier: string;
   country: string; city: string; durationDays: number; durationNights: number;
   nextDeparture: string; price: number; availableSeats: number; imageUrl?: string;
-  airline?: string;
+  airline?: string; sourceUrl?: string;
 }
 
 const SUPPLIER_CONFIG: Record<string, {
@@ -91,21 +91,34 @@ export default function WholesalePage({ params }: { params: { code: string } }) 
   const [activeCity, setActiveCity] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
+  // Scraper-sourced sites use a different API
+  const isScraperSite = params.code === 'oneworldtour' || params.code === 'itravels';
+
   useEffect(() => {
     setLoading(true);
-    fetch(`/api/tours/list?limit=2000`)
+
+    const url = isScraperSite
+      ? `/api/tours/scraper-list?site=${config.name}&limit=500`
+      : `/api/tours/list?limit=2000`;
+
+    fetch(url)
       .then(r => r.json())
       .then(d => {
         if (d.tours) {
-          const filtered = (d.tours as Tour[]).filter(t =>
-            t.supplier.toLowerCase().replace(/['\s]/g, '').includes(config.name.replace(/['\s]/g, ''))
-          );
-          setTours(filtered);
+          if (isScraperSite) {
+            // Scraper API already filters by site
+            setTours(d.tours as Tour[]);
+          } else {
+            const filtered = (d.tours as Tour[]).filter(t =>
+              t.supplier.toLowerCase().replace(/['\s]/g, '').includes(config.name.replace(/['\s]/g, ''))
+            );
+            setTours(filtered);
+          }
         }
       })
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, [config.name]);
+  }, [config.name, isScraperSite]);
 
   // Build taxonomy: continent → country → city
   const taxonomy = useMemo(() => {
@@ -295,7 +308,7 @@ export default function WholesalePage({ params }: { params: { code: string } }) 
             ) : filteredTours.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
                 {filteredTours.map(tour => (
-                  <TourCard key={tour.id} tour={{ ...tour, flagCode: COUNTRY_FLAGS[tour.country] || '' }} />
+                  <TourCard key={tour.id} tour={{ ...tour, flagCode: COUNTRY_FLAGS[tour.country] || '', sourceUrl: tour.sourceUrl }} />
                 ))}
               </div>
             ) : (
