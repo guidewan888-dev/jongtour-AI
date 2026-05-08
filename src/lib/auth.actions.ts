@@ -80,6 +80,11 @@ export async function signUpWithEmail(formData: FormData) {
 }
 
 export async function loginWithOAuth(provider: 'google' | 'facebook' | 'line') {
+  // LINE is NOT a native Supabase OAuth provider — use our custom LINE OAuth flow
+  if (provider === 'line') {
+    redirect('/api/auth/line')
+  }
+
   const supabase = createClient()
   
   // Specific routes as requested by user
