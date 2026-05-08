@@ -164,7 +164,9 @@ export async function middleware(req: NextRequest) {
 
   // ─── Path-based Auth Guards (main domain) ─────────
   // Admin paths require admin role (exclude admin-login to prevent redirect loop)
-  if (ADMIN_PATHS.some(p => url.pathname.startsWith(p)) && !url.pathname.startsWith('/admin-login')) {
+  // Also exclude /wholesaler/* and /wholesale-partners which are public pages
+  const isPublicWholesale = url.pathname.startsWith('/wholesaler') || url.pathname.startsWith('/wholesale-partners');
+  if (ADMIN_PATHS.some(p => url.pathname.startsWith(p)) && !url.pathname.startsWith('/admin-login') && !isPublicWholesale) {
     if (!isAuthenticated) {
       return NextResponse.redirect(new URL(`/admin-login?redirect=${encodeURIComponent(url.pathname)}`, req.url));
     }
