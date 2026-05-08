@@ -83,8 +83,20 @@ export class ITravelsScraper extends BaseScraper {
       await page.goto(url, { waitUntil: 'networkidle', timeout: 60_000 });
       await page.waitForTimeout(5000); // Wait for SPA to fully render
 
+      // Extract images via Playwright (iTravels uses UUID URLs without file extensions)
+      const playwrightImages = await page.$$eval('img[src*="file.itravels.center/attachments/tour_program"]', els =>
+        els.map(el => el.getAttribute('src') || '').filter(Boolean)
+      );
+
       const html = await page.content();
-      return this.parseFromHtml(url, html);
+      const data = this.parseFromHtml(url, html);
+
+      // Merge Playwright images (these are the real tour images)
+      if (playwrightImages.length > 0 && data.imageUrls.length === 0) {
+        data.imageUrls = [...new Set(playwrightImages)];
+      }
+
+      return data;
     } finally {
       await ctx.close();
     }
