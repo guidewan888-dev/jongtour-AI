@@ -8,7 +8,8 @@
     "build": "tsc",
     "start": "node dist/main.js",
     "scrape:oneworldtour": "tsx src/main.ts --site oneworldtour",
-    "scrape:itravels": "tsx src/main.ts --site itravels"
+    "scrape:itravels": "tsx src/main.ts --site itravels",
+    "scrape:gs25": "tsx src/main.ts --site gs25"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.45.0",

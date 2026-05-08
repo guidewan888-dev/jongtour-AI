@@ -128,34 +128,66 @@ export class BestInternationalScraper extends BaseScraper {
     const ctx = await this.browser.newContext({ userAgent: this.cfg.userAgent });
     const page = await ctx.newPage();
 
+    // Intercept image network requests to capture dynamically-loaded tour flyer images
+    const networkImages = new Set<string>();
+    page.on('response', (response) => {
+      const reqUrl = response.url();
+      const ct = response.headers()['content-type'] || '';
+      if (ct.startsWith('image/') && reqUrl.startsWith('http') && !/(logo|icon|favicon|flag|social|badge|line\.|facebook|google|apple)/i.test(reqUrl)) {
+        networkImages.add(reqUrl);
+      }
+    });
+
     try {
       await page.goto(url, { waitUntil: 'networkidle', timeout: 60_000 });
       await page.waitForTimeout(5000);
 
-      // Extract images via Playwright
-      const imageUrls = await page.$$eval('img[src]', els =>
-        els.map(el => el.getAttribute('src') || '')
-          .filter(src => src && !/(logo|icon|avatar|flag|svg|data:|line|facebook|instagram|tiktok|youtube|google|apple)/i.test(src))
-          .filter(src => /\.(jpe?g|png|webp)/i.test(src) || /cloudfront|amazonaws|bestinternational/i.test(src))
-      );
-
-      // Extract PDF link
-      const pdfUrl = await page.$$eval('a[href*=".pdf"], a[href*="cloudfront"]', els => {
-        for (const el of els) {
-          const href = el.getAttribute('href') || '';
-          if (/\.pdf/i.test(href) || /program/i.test(href)) return href;
-        }
-        return '';
-      });
+      // Scroll down to trigger lazy-loaded images
+      await page.evaluate(() => window.scrollBy(0, 2000));
+      await page.waitForTimeout(2000);
 
       const html = await page.content();
+      const $ = cheerio.load(html);
+
+      // Extract images from HTML (img src, ng-src, data-src, background-image)
+      const htmlImages = new Set<string>();
+
+      // Standard img + Angular attributes
+      $('img[src], img[ng-src], img[data-src], [style*="background-image"]').each((_, el) => {
+        const src = $(el).attr('src') || $(el).attr('ng-src') || $(el).attr('data-src') || '';
+        if (src && src.startsWith('http') && !/logo|icon|avatar|flag|svg|data:|line|facebook|instagram|tiktok|youtube|google|apple/i.test(src)) {
+          htmlImages.add(src);
+        }
+        // Check background-image style
+        const style = $(el).attr('style') || '';
+        const bgMatch = style.match(/background-image:\s*url\(['"]?([^'")\s]+)/);
+        if (bgMatch && bgMatch[1].startsWith('http')) {
+          htmlImages.add(bgMatch[1]);
+        }
+      });
+
+      // Extract PDF link
+      let pdfUrl = '';
+      $('a[href*=".pdf"], a[href*="cloudfront"]').each((_, el) => {
+        const href = $(el).attr('href');
+        if (href && (/\.pdf/i.test(href) || /program/i.test(href))) {
+          if (!pdfUrl) pdfUrl = href.startsWith('http') ? href : `https://www.bestinternational.com${href}`;
+        }
+      });
+
       const data = this.parseFromHtml(url, html);
 
-      // Merge Playwright images
-      if (imageUrls.length > 0) {
-        const uniqueImgs = [...new Set([...data.imageUrls, ...imageUrls])];
-        data.imageUrls = uniqueImgs.slice(0, 5);
-      }
+      // Prioritize CloudFront CDN images (tour flyers), then network images, then HTML images
+      const allImages = [...networkImages, ...htmlImages, ...data.imageUrls];
+      const tourImages = allImages.filter(img =>
+        /cloudfront|amazonaws/i.test(img) && !/\.pdf/i.test(img)
+      );
+      const otherImages = allImages.filter(img =>
+        !tourImages.includes(img) &&
+        !/logo|icon|avatar|flag|svg|banner.*site|header/i.test(img) &&
+        /\.(jpe?g|png|webp)/i.test(img)
+      );
+      data.imageUrls = [...new Set([...tourImages, ...otherImages])].slice(0, 5);
 
       if (pdfUrl && !data.pdfUrl) {
         data.pdfUrl = pdfUrl;

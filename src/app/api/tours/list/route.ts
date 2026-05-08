@@ -72,7 +72,9 @@ async function getScraperTours(options: {
 
       // Map site name to display name
       const supplierName = t.site === 'oneworldtour' ? 'oneworldtour'
-        : t.site === 'itravels' ? 'itravels' : t.site || '';
+        : t.site === 'itravels' ? 'itravels'
+        : t.site === 'bestintl' ? 'bestintl'
+        : t.site === 'gs25' ? 'gs25' : t.site || '';
 
       return {
         id: `scraper-${t.id}`,

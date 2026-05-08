@@ -77,7 +77,7 @@ export default function TourCard({ tour }: { tour: TourCardProps }) {
         <h3 className="text-sm font-bold text-slate-900 group-hover:text-primary-600 transition-colors line-clamp-2 min-h-[2.5rem] leading-snug mb-2">{tour.title}</h3>
         <div className="flex items-center gap-1.5 mb-3 flex-wrap">
           {tour.airline && <span className="inline-flex items-center gap-1 text-[10px] font-bold bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full">✈️ {tour.airline}</span>}
-          {tour.pdfUrl && <a href={tour.pdfUrl} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} className="inline-flex items-center gap-1 text-[10px] font-bold bg-green-50 text-green-600 px-2 py-0.5 rounded-full hover:bg-green-100">📄 PDF</a>}
+          {tour.pdfUrl && !tour.pdfUrl.includes('gs25travel.com') && <a href={tour.pdfUrl} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} className="inline-flex items-center gap-1 text-[10px] font-bold bg-green-50 text-green-600 px-2 py-0.5 rounded-full hover:bg-green-100">📄 PDF</a>}
           <span className="text-[10px] text-slate-400 font-mono">{tour.code}</span>
         </div>
         <div className="flex items-end justify-between pt-2.5 border-t border-slate-100">

@@ -63,12 +63,29 @@ const SUPPLIER_CONFIG: Record<string, {
     accentBorder: 'border-sky-200',
     tagline: 'ศูนย์รวมทัวร์ต่างประเทศ ครบทุกเส้นทาง ราคาดีที่สุด',
   },
+  'bestinternational': {
+    name: 'bestintl', displayName: 'Best International',
+    logo: '/images/logos/Bestinternational.png',
+    gradient: 'from-red-800 via-red-700 to-rose-600',
+    heroBg: 'bg-red-800', accent: 'text-red-600', accentLight: 'bg-red-50',
+    accentBorder: 'border-red-200',
+    tagline: 'โฮลเซลระดับนานาชาติ ครอบคลุมทุกทวีป บริการเกรดพรีเมียม',
+  },
+  'gs25': {
+    name: 'gs25', displayName: 'GS25 Travel',
+    logo: '/images/logos/GS Group.png',
+    gradient: 'from-emerald-800 via-emerald-700 to-green-600',
+    heroBg: 'bg-emerald-800', accent: 'text-emerald-600', accentLight: 'bg-emerald-50',
+    accentBorder: 'border-emerald-200',
+    tagline: 'ทัวร์คุณภาพราคามิตรภาพ เส้นทางยอดนิยมพร้อมดูแลทุกขั้นตอน',
+  },
 };
 
 const CONTINENT_MAP: Record<string, { name: string; countries: string[] }> = {
   asia: { name: 'เอเชีย', countries: ['ญี่ปุ่น','จีน','เกาหลีใต้','ไต้หวัน','เวียดนาม','ฮ่องกง','สิงคโปร์','มาเลเซีย','อินเดีย','กัมพูชา','พม่า','ลาว','ฟิลิปปินส์','ศรีลังกา'] },
   europe: { name: 'ยุโรป', countries: ['ยุโรป','อังกฤษ','ฝรั่งเศส','อิตาลี','สวิตเซอร์แลนด์','สเปน','รัสเซีย','จอร์เจีย'] },
   middleeast: { name: 'ตะวันออกกลาง & แอฟริกา', countries: ['ตุรกี','อียิปต์','ดูไบ'] },
+  centralasia: { name: 'เอเชียกลาง', countries: ['คาซัคสถาน'] },
   americas: { name: 'อเมริกา', countries: ['อเมริกา','แคนาดา'] },
   oceania: { name: 'โอเชียเนีย', countries: ['ออสเตรเลีย','นิวซีแลนด์'] },
 };
@@ -80,6 +97,7 @@ const COUNTRY_FLAGS: Record<string, string> = {
   'ยุโรป':'eu','อังกฤษ':'gb','ฝรั่งเศส':'fr','อิตาลี':'it','สวิตเซอร์แลนด์':'ch',
   'สเปน':'es','รัสเซีย':'ru','จอร์เจีย':'ge','ตุรกี':'tr','อียิปต์':'eg','ดูไบ':'ae',
   'อเมริกา':'us','แคนาดา':'ca','ออสเตรเลีย':'au','นิวซีแลนด์':'nz',
+  'คาซัคสถาน':'kz',
 };
 
 export default function WholesalePage({ params }: { params: { code: string } }) {
@@ -92,7 +110,7 @@ export default function WholesalePage({ params }: { params: { code: string } }) 
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
   // Scraper-sourced sites use a different API
-  const isScraperSite = params.code === 'oneworldtour' || params.code === 'itravels';
+  const isScraperSite = ['oneworldtour', 'itravels', 'bestinternational', 'gs25'].includes(params.code);
 
   useEffect(() => {
     setLoading(true);
@@ -207,7 +225,7 @@ export default function WholesalePage({ params }: { params: { code: string } }) 
                   🌍 ทั้งหมด ({tours.length})
                 </button>
                 {Object.entries(taxonomy).sort((a,b) => {
-                  const order = ['asia','europe','middleeast','americas','oceania','other'];
+                  const order = ['asia','centralasia','europe','middleeast','americas','oceania','other'];
                   return order.indexOf(a[0]) - order.indexOf(b[0]);
                 }).map(([continent, data]) => {
                   const continentName = CONTINENT_MAP[continent]?.name || 'อื่นๆ';

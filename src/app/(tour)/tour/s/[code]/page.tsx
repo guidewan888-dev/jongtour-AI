@@ -35,6 +35,16 @@ const SUPPLIER_INFO: Record<string, { displayName: string; logo: string; accent:
   },
 };
 
+interface TourPeriod {
+  id: number;
+  startDate: string | null;
+  endDate: string | null;
+  price: number | null;
+  seatsLeft: number | null;
+  status: string;
+  rawText: string;
+}
+
 interface ScraperTour {
   id: string;
   code: string;
@@ -53,6 +63,7 @@ interface ScraperTour {
   hotelRating: number;
   highlights: string[];
   lastScraped: string;
+  periods: TourPeriod[];
 }
 
 export default function ScraperTourDetailPage({ params }: { params: { code: string } }) {
@@ -205,7 +216,7 @@ export default function ScraperTourDetailPage({ params }: { params: { code: stri
 
               {/* Actions */}
               <div className="flex flex-wrap items-center gap-3 mt-auto">
-                {tour.pdfUrl && (
+                {tour.pdfUrl && !tour.pdfUrl.includes('gs25travel.com') && (
                   <a href={tour.pdfUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 px-5 py-3 bg-blue-50 border-2 border-blue-200 text-blue-700 rounded-xl font-bold text-sm hover:bg-blue-100 transition-colors shadow-sm">
                     📥 ดาวน์โหลดโปรแกรมทัวร์
                   </a>
@@ -213,7 +224,7 @@ export default function ScraperTourDetailPage({ params }: { params: { code: stri
                 <a href={LINE_URL} target="_blank" rel="noopener noreferrer" className="px-5 py-3 rounded-xl bg-emerald-500 text-white font-bold text-sm hover:bg-emerald-600 transition-colors shadow-sm flex items-center gap-2">
                   <img src="https://upload.wikimedia.org/wikipedia/commons/4/41/LINE_logo.svg" alt="LINE" className="w-5 h-5" /> สอบถาม / จองทัวร์
                 </a>
-                {tour.sourceUrl && (
+                {tour.sourceUrl && !tour.sourceUrl.includes('gs25travel.com') && (
                   <a href={tour.sourceUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-slate-600 transition-colors">
                     🔗 ดูที่เว็บต้นทาง
                   </a>
@@ -253,8 +264,88 @@ export default function ScraperTourDetailPage({ params }: { params: { code: stri
         </div>
       </div>
 
-      {/* ─── PDF Download CTA ─── */}
-      {tour.pdfUrl && (
+      {/* ─── TRAVEL PERIODS / DATES ─── */}
+      {tour.periods && tour.periods.length > 0 && (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4">
+          <div className="bg-white rounded-xl border border-slate-200 p-5">
+            <h3 className="text-sm font-bold text-slate-900 mb-3 flex items-center gap-1.5">📅 วันเดินทาง & ที่นั่งว่าง</h3>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-slate-100 text-left">
+                    <th className="pb-2 font-semibold text-slate-500 text-xs">วันเดินทาง</th>
+                    <th className="pb-2 font-semibold text-slate-500 text-xs text-center">ที่นั่ง</th>
+                    <th className="pb-2 font-semibold text-slate-500 text-xs text-right">ราคา</th>
+                    <th className="pb-2 font-semibold text-slate-500 text-xs text-center">สถานะ</th>
+                    <th className="pb-2 text-xs"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {tour.periods.map((p) => {
+                    const dateText = p.startDate && p.endDate
+                      ? `${new Date(p.startDate).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit' })} - ${new Date(p.endDate).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit' })}`
+                      : p.rawText || '-';
+                    const isFull = p.status === 'full' || (p.seatsLeft !== null && p.seatsLeft <= 0);
+                    const isUrgent = p.seatsLeft !== null && p.seatsLeft > 0 && p.seatsLeft <= 5;
+                    return (
+                      <tr key={p.id} className="border-b border-slate-50 hover:bg-slate-50/50 transition-colors">
+                        <td className="py-2.5 text-slate-700 font-medium">{dateText}</td>
+                        <td className="py-2.5 text-center">
+                          {p.seatsLeft !== null ? (
+                            <span className={`inline-flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded-full ${isFull ? 'bg-red-50 text-red-500' : isUrgent ? 'bg-orange-50 text-orange-600' : 'bg-green-50 text-green-600'}`}>
+                              {isFull ? 'เต็ม' : `${p.seatsLeft} ที่`}
+                            </span>
+                          ) : (
+                            <span className="text-xs text-slate-400">สอบถาม</span>
+                          )}
+                        </td>
+                        <td className="py-2.5 text-right">
+                          {p.price && p.price > 0 ? (
+                            <span className="font-bold text-primary-600">฿{p.price.toLocaleString()}</span>
+                          ) : (
+                            <span className="text-xs text-slate-400">สอบถาม</span>
+                          )}
+                        </td>
+                        <td className="py-2.5 text-center">
+                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${isFull ? 'bg-slate-100 text-slate-400' : 'bg-emerald-50 text-emerald-600'}`}>
+                            {isFull ? 'เต็ม' : 'ว่าง'}
+                          </span>
+                        </td>
+                        <td className="py-2.5 text-right">
+                          {!isFull && (
+                            <a href={LINE_URL} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-[10px] font-bold bg-emerald-500 text-white px-3 py-1 rounded-full hover:bg-emerald-600 transition-colors">
+                              จอง
+                            </a>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ─── BOOKING CTA (prominent) ─── */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4">
+        <div className="bg-gradient-to-r from-primary-50 via-orange-50 to-amber-50 rounded-xl border border-primary-200 p-5 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div>
+            <h4 className="font-bold text-slate-800 text-sm mb-1">🎉 สนใจจองทัวร์นี้?</h4>
+            <p className="text-xs text-slate-500">แอดไลน์ @jongtour เพื่อสอบถามราคา เช็ควันว่าง และจองทัวร์</p>
+          </div>
+          <div className="flex gap-3">
+            <a href={LINE_URL} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 px-6 py-3 bg-emerald-500 text-white rounded-xl font-bold text-sm hover:bg-emerald-600 transition-colors shadow-lg whitespace-nowrap">
+              <img src="https://upload.wikimedia.org/wikipedia/commons/4/41/LINE_logo.svg" alt="LINE" className="w-5 h-5" /> จองทัวร์เลย
+            </a>
+            <a href="tel:0612345678" className="flex items-center gap-2 px-5 py-3 bg-white border-2 border-slate-200 text-slate-700 rounded-xl font-bold text-sm hover:bg-slate-50 transition-colors whitespace-nowrap">
+              📱 โทรจอง
+            </a>
+          </div>
+        </div>
+      </div>
+      {tour.pdfUrl && !tour.pdfUrl.includes('gs25travel.com') && (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4">
           <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-200 p-5 flex flex-col md:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-3">
@@ -313,7 +404,7 @@ export default function ScraperTourDetailPage({ params }: { params: { code: stri
         </div>
         <div className="flex gap-2">
           <a href={LINE_URL} target="_blank" rel="noopener noreferrer" className="px-3 py-2 rounded-lg bg-emerald-500 text-white font-bold text-sm shadow">💬</a>
-          {tour.pdfUrl && (
+          {tour.pdfUrl && !tour.pdfUrl.includes('gs25travel.com') && (
             <a href={tour.pdfUrl} target="_blank" rel="noopener noreferrer" className="px-3 py-2 rounded-lg bg-blue-500 text-white font-bold text-sm shadow">📄</a>
           )}
         </div>

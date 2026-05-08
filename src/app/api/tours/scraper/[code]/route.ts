@@ -18,6 +18,13 @@ export async function GET(
     return NextResponse.json({ error: 'ไม่พบทัวร์' }, { status: 404 });
   }
 
+  // Fetch periods (travel dates) for this tour
+  const { data: periods } = await supabase
+    .from('scraper_tour_periods')
+    .select('*')
+    .eq('tour_id', data.id)
+    .order('start_date', { ascending: true });
+
   // Parse duration
   const durMatch = data.duration?.match(/(\d+)\s*วัน\s*(\d+)?/);
   const durationDays = durMatch ? parseInt(durMatch[1]) : 0;
@@ -41,6 +48,15 @@ export async function GET(
     hotelRating: data.hotel_rating || 0,
     highlights: data.highlights || [],
     lastScraped: data.last_scraped_at || '',
+    periods: (periods || []).map(p => ({
+      id: p.id,
+      startDate: p.start_date,
+      endDate: p.end_date,
+      price: p.price,
+      seatsLeft: p.seats_left,
+      status: p.status,
+      rawText: p.raw_text,
+    })),
   };
 
   return NextResponse.json({ tour });

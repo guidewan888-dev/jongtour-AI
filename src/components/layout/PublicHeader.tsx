@@ -6,14 +6,14 @@ import Link from "next/link";
 /* ── App Launcher Grid Items ─────────────────────────── */
 const gridItems = [
   { label: "ทัวร์ไฟไหม้", href: "/deals/flash-sale", icon: "🔥", color: "#FF6D01" },
-  { label: "บริการวีซ่า", href: "/visa", icon: "🛂", color: "#0F9D58" },
+  { label: "วีซ่า", href: "/visa", icon: "🛂", color: "#0F9D58" },
   { label: "AI จัดทริป", href: "/private-group", icon: "✈️", color: "#4285F4" },
   { label: "AI Search", href: "/ai-search", icon: "✨", color: "#EA4335" },
   { label: "เกี่ยวกับเรา", href: "/about", icon: "🏢", color: "#1A73E8" },
   { label: "ชำระเงิน", href: "/payment-guide", icon: "💳", color: "#FBBC05" },
-  { label: "ร่วมงานกับเรา", href: "/careers", icon: "🤝", color: "#34A853" },
-  { label: "Affiliate", href: "/affiliate", icon: "🎯", color: "#E91E63" },
   { label: "Wholesale", href: "/wholesale-partners", icon: "🏭", color: "#00BCD4" },
+  { label: "สมัครงาน", href: "/careers", icon: "🤝", color: "#34A853" },
+  { label: "Affiliate", href: "/affiliate", icon: "🎯", color: "#E91E63" },
   { label: "ติดต่อ", href: "/contact", icon: "📞", color: "#34A853" },
   { label: "เข้าสู่ระบบ", href: "/login", icon: "👤", color: "#7B1FA2" },
   { label: "B2B Agent", href: "/agent-portal/register", icon: "💼", color: "#455A64" },
@@ -119,22 +119,22 @@ export default function PublicHeader() {
 
               {/* Grid Dropdown */}
               {gridOpen && (
-                <div className="absolute right-0 top-full mt-2 w-[300px] bg-white rounded-2xl border border-slate-100 shadow-xl p-3 z-50" style={{ animation: "grid-in 0.2s ease-out" }}>
-                  <div className="grid grid-cols-3 gap-0.5">
+                <div className="absolute right-0 top-full mt-2 w-[340px] bg-white rounded-2xl border border-slate-100 shadow-xl p-4 z-50" style={{ animation: "grid-in 0.2s ease-out" }}>
+                  <div className="grid grid-cols-4 gap-1">
                     {gridItems.map((item) => (
                       <Link
                         key={item.href}
                         href={item.href}
-                        className="flex flex-col items-center gap-1 p-3 rounded-xl hover:bg-slate-50 transition-colors"
+                        className="flex flex-col items-center gap-1.5 py-3 px-1 rounded-xl hover:bg-slate-50 transition-colors"
                         onClick={() => setGridOpen(false)}
                       >
                         <div
-                          className="w-11 h-11 rounded-full flex items-center justify-center text-lg"
+                          className="w-10 h-10 rounded-full flex items-center justify-center text-base"
                           style={{ background: `${item.color}12` }}
                         >
                           {item.icon}
                         </div>
-                        <span className="text-[11px] font-normal text-slate-500 text-center leading-tight">{item.label}</span>
+                        <span className="text-[10px] font-medium text-slate-500 text-center leading-tight w-full truncate">{item.label}</span>
                       </Link>
                     ))}
                   </div>
