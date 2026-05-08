@@ -9,7 +9,8 @@ interface Tour {
   id: string; slug: string; code: string; title: string; supplier: string;
   country: string; city: string; durationDays: number; durationNights: number;
   nextDeparture: string; price: number; availableSeats: number; imageUrl?: string;
-  airline?: string;
+  airline?: string; sourceUrl?: string; pdfUrl?: string;
+  duration?: string; deposit?: number; hotelRating?: number; highlights?: string[];
 }
 
 const SUPPLIERS = [
@@ -17,6 +18,8 @@ const SUPPLIERS = [
   { key: "checkingroup", name: "Checkin Group", color: 'bg-teal-600', logo: '/images/logos/Check in group.jpg', priority: 2 },
   { key: "tourfactory", name: "Tour Factory", color: 'bg-purple-600', logo: '/images/logos/Tour-Factory.jpg', priority: 3 },
   { key: "go365", name: "Go365", color: 'bg-green-500', logo: '/images/logos/download.jfif', priority: 4 },
+  { key: "oneworldtour", name: "One World Tour", color: 'bg-orange-600', logo: '/images/logos/oneworldtour.png', priority: 5 },
+  { key: "itravels", name: "iTravels Center", color: 'bg-sky-600', logo: '/images/logos/itravels.png', priority: 6 },
 ];
 
 // ── Helper: find continent for a country ────────────────────────────
@@ -274,7 +277,7 @@ export default function ToursPage({ params }: { params: { slug: string[] } }) {
                   <div className="p-5">
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                       {sTours.slice(0, 8).map(tour => (
-                        <TourCard key={tour.id} tour={{ ...tour, flagCode: findFlagCode(tour.country) }} />
+                        <TourCard key={tour.id} tour={{ ...tour, flagCode: findFlagCode(tour.country), sourceUrl: tour.sourceUrl, pdfUrl: tour.pdfUrl, duration: tour.duration, deposit: tour.deposit, hotelRating: tour.hotelRating, highlights: tour.highlights }} />
                       ))}
                     </div>
                     {sTours.length > 8 && (
