@@ -101,13 +101,13 @@ export class ITravelsScraper extends BaseScraper {
     const title = $('h1, h2').first().text().trim()
       || $('title').text().replace(/\s*[-|].*$/, '').trim();
 
-    // ── Country — "ประเทศ : XXX" label ──
-    const countryMatch = bodyText.match(/ประเทศ\s*:\s*([^\n\r]+)/);
-    const country = countryMatch?.[1]?.trim().split(/\s+/)[0] || '';
+    // ── Country — "ประเทศ : XXX" label (stop at next label like "เมือง") ──
+    const countryMatch = bodyText.match(/ประเทศ\s*:\s*(.+?)(?=เมือง|ระดับ|จำนวน|ช่วง|สายการบิน|\n|\r|$)/);
+    const country = countryMatch?.[1]?.trim() || '';
 
-    // ── City — "เมือง : XXX" label ──
-    const cityMatch = bodyText.match(/เมือง\s*:\s*([^\n\r]+)/);
-    const city = cityMatch?.[1]?.trim().split(/\s+/)[0] || '';
+    // ── City — "เมือง : XXX" label (stop at next label) ──
+    const cityMatch = bodyText.match(/เมือง\s*:\s*(.+?)(?=ระดับ|จำนวน|ช่วง|สายการบิน|ประเทศ|\n|\r|$)/);
+    const city = cityMatch?.[1]?.trim() || '';
 
     // ── Duration — "จำนวนวัน : X วัน Y คืน" ──
     const durationMatch = bodyText.match(/จำนวนวัน\s*:\s*(\d+)\s*วัน\s*(\d+)\s*คืน/)
@@ -133,10 +133,14 @@ export class ITravelsScraper extends BaseScraper {
       }
     }
 
-    // ── Hotel Rating — "ระดับโรงแรม : ★★★" ──
+    // ── Hotel Rating — "ระดับโรงแรม : ★★★" or SVG star icons ──
     const hotelSection = bodyText.match(/ระดับโรงแรม\s*:\s*([^\n\r]+)/)?.[1] || '';
-    const starCount = (hotelSection.match(/★/g) || []).length;
-    const hotelRating = starCount > 0 ? starCount : undefined;
+    // Count filled star characters (★, ⭐, ☆ doesn't count)
+    const starCount = (hotelSection.match(/[★⭐🌟]/g) || []).length;
+    // Fallback: try to find digit-based "X ดาว" pattern  
+    const starDigitMatch = hotelSection.match(/(\d)\s*ดาว/) || bodyText.match(/(\d)\s*ดาว/);
+    const hotelRating = starCount > 0 ? starCount 
+      : (starDigitMatch ? parseInt(starDigitMatch[1]) : undefined);
 
     // ── PDF — button with "PDF" text or href containing pdf ──
     const pdfUrl = $('a:contains("PDF")').first().attr('href')
