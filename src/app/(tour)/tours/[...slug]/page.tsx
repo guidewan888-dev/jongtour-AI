@@ -3,6 +3,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import TourCard from '@/components/tour/TourCard';
+import { CONTINENTS } from '@/config/continents';
 
 interface Tour {
   id: string; slug: string; code: string; title: string; supplier: string;
@@ -10,73 +11,6 @@ interface Tour {
   nextDeparture: string; price: number; availableSeats: number; imageUrl?: string;
   airline?: string;
 }
-
-// ── Continent → Country → cities mapping ────────────────────────────
-const CONTINENTS: Record<string, {
-  name: string; desc: string;
-  countries: Record<string, { name: string; flagCode: string; cities: Record<string, string>; searchNames?: string[] }>
-}> = {
-  asia: {
-    name: 'เอเชีย', desc: 'เปิดโลกแห่งเอเชีย ให้ทุกการเดินทางเป็นความทรงจำที่ยิ่งใหญ่',
-    countries: {
-      japan: { name: 'ญี่ปุ่น', flagCode: 'jp', searchNames: ['ญี่ปุ่น', 'JAPAN'], cities: { tokyo: 'โตเกียว', osaka: 'โอซาก้า', hokkaido: 'ฮอกไกโด', kyoto: 'เกียวโต', fukuoka: 'ฟุกุโอกะ', nagoya: 'นาโกย่า', okinawa: 'โอกินาว่า' }},
-      china: { name: 'จีน', flagCode: 'cn', searchNames: ['จีน', 'CHINA'], cities: { chengdu: 'เฉิงตู', zhangjiajie: 'จางเจียเจี้ย', kunming: 'คุนหมิง', beijing: 'ปักกิ่ง', shanghai: 'เซี่ยงไฮ้', guangzhou: 'กวางเจา', guilin: 'กุ้ยหลิน', xian: 'ซีอาน', chongqing: 'ฉงชิ่ง' }},
-      'south-korea': { name: 'เกาหลีใต้', flagCode: 'kr', searchNames: ['เกาหลี', 'KOREA', 'SOUTH KOREA'], cities: { seoul: 'โซล', busan: 'ปูซาน', jeju: 'เชจู' }},
-      taiwan: { name: 'ไต้หวัน', flagCode: 'tw', searchNames: ['ไต้หวัน', 'TAIWAN'], cities: { taipei: 'ไทเป', kaohsiung: 'เกาสง' }},
-      vietnam: { name: 'เวียดนาม', flagCode: 'vn', searchNames: ['เวียดนาม', 'VIETNAM'], cities: { danang: 'ดานัง', hanoi: 'ฮานอย', hochiminh: 'โฮจิมินห์', sapa: 'ซาปา' }},
-      hongkong: { name: 'ฮ่องกง', flagCode: 'hk', searchNames: ['ฮ่องกง', 'HONG KONG'], cities: {} },
-      singapore: { name: 'สิงคโปร์', flagCode: 'sg', searchNames: ['สิงคโปร์', 'SINGAPORE'], cities: {} },
-      malaysia: { name: 'มาเลเซีย', flagCode: 'my', searchNames: ['มาเลเซีย', 'MALAYSIA'], cities: { 'kuala-lumpur': 'กัวลาลัมเปอร์' }},
-      india: { name: 'อินเดีย', flagCode: 'in', searchNames: ['อินเดีย', 'INDIA'], cities: { delhi: 'เดลี', kashmir: 'แคชเมียร์' }},
-      cambodia: { name: 'กัมพูชา', flagCode: 'kh', searchNames: ['กัมพูชา', 'CAMBODIA'], cities: {} },
-      myanmar: { name: 'พม่า', flagCode: 'mm', searchNames: ['พม่า', 'MYANMAR'], cities: {} },
-      laos: { name: 'ลาว', flagCode: 'la', searchNames: ['ลาว', 'LAOS'], cities: {} },
-      macau: { name: 'มาเก๊า', flagCode: 'mo', searchNames: ['มาเก๊า', 'MACAU'], cities: {} },
-    },
-  },
-  europe: {
-    name: 'ยุโรป', desc: 'สัมผัสเสน่ห์ยุโรป วัฒนธรรมเก่าแก่ สถาปัตยกรรมอลังการ',
-    countries: {
-      uk: { name: 'อังกฤษ', flagCode: 'gb', searchNames: ['อังกฤษ', 'ENGLAND', 'UK', 'UNITED KINGDOM'], cities: { london: 'ลอนดอน' }},
-      france: { name: 'ฝรั่งเศส', flagCode: 'fr', searchNames: ['ฝรั่งเศส', 'FRANCE'], cities: { paris: 'ปารีส' }},
-      italy: { name: 'อิตาลี', flagCode: 'it', searchNames: ['อิตาลี', 'ITALY'], cities: { rome: 'โรม', milan: 'มิลาน' }},
-      switzerland: { name: 'สวิตเซอร์แลนด์', flagCode: 'ch', searchNames: ['สวิตเซอร์แลนด์', 'SWITZERLAND'], cities: {} },
-      spain: { name: 'สเปน', flagCode: 'es', searchNames: ['สเปน', 'SPAIN'], cities: {} },
-    },
-  },
-  'middle-east': {
-    name: 'ตะวันออกกลาง', desc: 'สัมผัสอารยธรรมโบราณ จากมหาพีระมิดอียิปต์สู่นครดูไบสุดอลังการ',
-    countries: {
-      turkey: { name: 'ตุรกี', flagCode: 'tr', searchNames: ['ตุรกี', 'TURKIYE', 'TURKEY'], cities: { istanbul: 'อิสตันบูล', cappadocia: 'คัปปาโดเกีย' }},
-      egypt: { name: 'อียิปต์', flagCode: 'eg', searchNames: ['อียิปต์', 'EGYPT'], cities: { cairo: 'ไคโร' }},
-      jordan: { name: 'จอร์แดน', flagCode: 'jo', searchNames: ['จอร์แดน', 'JORDAN'], cities: {} },
-      dubai: { name: 'ดูไบ', flagCode: 'ae', searchNames: ['ดูไบ', 'สหรัฐอาหรับเอมิเรตส์', 'DUBAI', 'UAE'], cities: {} },
-    },
-  },
-  americas: {
-    name: 'อเมริกา', desc: 'สำรวจทวีปอเมริกา จากมหานครนิวยอร์กถึงน้ำตกไนแองการ่า',
-    countries: {
-      usa: { name: 'อเมริกา', flagCode: 'us', searchNames: ['อเมริกา', 'USA', 'UNITED STATES'], cities: { 'new-york': 'นิวยอร์ก', 'los-angeles': 'ลอสแอนเจลิส' }},
-      canada: { name: 'แคนาดา', flagCode: 'ca', searchNames: ['แคนาดา', 'CANADA'], cities: {} },
-    },
-  },
-  oceania: {
-    name: 'โอเชียเนีย', desc: 'ออสเตรเลีย นิวซีแลนด์ ดินแดนธรรมชาติอันงดงาม',
-    countries: {
-      australia: { name: 'ออสเตรเลีย', flagCode: 'au', searchNames: ['ออสเตรเลีย', 'AUSTRALIA'], cities: { sydney: 'ซิดนีย์', melbourne: 'เมลเบิร์น' }},
-      newzealand: { name: 'นิวซีแลนด์', flagCode: 'nz', searchNames: ['นิวซีแลนด์', 'NEW ZEALAND'], cities: {} },
-    },
-  },
-  others: {
-    name: 'ทวีป/ประเทศอื่นๆ', desc: 'สำรวจจุดหมายปลายทางใหม่ๆ ที่น่าค้นพบทั่วโลก',
-    countries: {
-      georgia: { name: 'จอร์เจีย', flagCode: 'ge', searchNames: ['จอร์เจีย', 'GEORGIA'], cities: {} },
-      russia: { name: 'รัสเซีย', flagCode: 'ru', searchNames: ['รัสเซีย', 'RUSSIA'], cities: {} },
-      bhutan: { name: 'ภูฏาน', flagCode: 'bt', searchNames: ['ภูฏาน', 'ภูฎาน', 'BHUTAN'], cities: {} },
-      srilanka: { name: 'ศรีลังกา', flagCode: 'lk', searchNames: ['ศรีลังกา', 'SRI LANKA'], cities: {} },
-    },
-  },
-};
 
 const SUPPLIERS = [
   { key: "let'sgo", name: "Let's Go", color: 'bg-green-600', logo: '/images/logos/download.png', priority: 1 },
@@ -122,48 +56,80 @@ export default function ToursPage({ params }: { params: { slug: string[] } }) {
   const [tours, setTours] = useState<Tour[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Fetch tours
+  // Fetch tours — optimized: use continent name as single search key
+  // European tours in DB are stored with country="EUROPE" (not per-country)
+  // So we fetch once with the continent/region name and filter client-side
   useEffect(() => {
-    if (tourSlug) return; // Don't fetch if redirecting to tour detail
+    if (tourSlug) return;
     setLoading(true);
 
-    if (level === 'continent' && continent) {
-      // Fetch ALL countries in this continent using all searchNames
-      const promises = Object.values(continent.countries).flatMap(c =>
-        (c.searchNames || [c.name]).map(searchName =>
-          fetch(`/api/tours/list?country=${encodeURIComponent(searchName)}&limit=200`)
-            .then(r => r.json()).then(d => (d.tours || []) as Tour[]).catch(() => [] as Tour[])
-        )
-      );
+    // Helper: fetch unique tours from multiple queries (max 2-3 calls)
+    const fetchAndDedupe = (promises: Promise<Tour[]>[]) =>
       Promise.all(promises).then(results => {
         const all = results.flat();
         const seen = new Set<string>();
-        setTours(all.filter(t => { if (seen.has(t.id)) return false; seen.add(t.id); return true; }));
+        return all.filter(t => { if (seen.has(t.id)) return false; seen.add(t.id); return true; });
+      });
+
+    if (level === 'continent' && continent) {
+      // Single fetch: search by continent name (e.g. "ยุโรป" → matches all EUROPE tours)
+      // Plus fetch by each country name as keyword to catch more
+      const regionNames = [continent.name];
+      // Add the first searchName of each country for broader coverage
+      Object.values(continent.countries).forEach(c => {
+        if (c.searchNames?.[0] && !regionNames.includes(c.searchNames[0])) {
+          regionNames.push(c.searchNames[0]);
+        }
+      });
+      // Deduplicate: use country filter for the main name, keyword for others
+      const promises: Promise<Tour[]>[] = [
+        fetch(`/api/tours/list?country=${encodeURIComponent(continent.name)}&limit=500`)
+          .then(r => r.json()).then(d => (d.tours || []) as Tour[]).catch(() => [] as Tour[]),
+        fetch(`/api/tours/list?q=${encodeURIComponent(continent.name)}&limit=500`)
+          .then(r => r.json()).then(d => (d.tours || []) as Tour[]).catch(() => [] as Tour[]),
+      ];
+      fetchAndDedupe(promises).then(tours => {
+        setTours(tours);
         setLoading(false);
       });
+
     } else if (level === 'country' && country) {
-      const names = country.searchNames || [country.name];
-      const promises = names.map(n =>
-        fetch(`/api/tours/list?country=${encodeURIComponent(n)}&limit=1000`)
-          .then(r => r.json()).then(d => (d.tours || []) as Tour[]).catch(() => [] as Tour[])
-      );
-      Promise.all(promises).then(results => {
-        const all = results.flat();
-        const seen = new Set<string>();
-        setTours(all.filter(t => { if (seen.has(t.id)) return false; seen.add(t.id); return true; }));
-      }).finally(() => setLoading(false));
+      // Fetch by country searchNames + keyword in title
+      const mainSearchName = country.searchNames?.[0] || country.name;
+      const promises: Promise<Tour[]>[] = [
+        fetch(`/api/tours/list?country=${encodeURIComponent(mainSearchName)}&limit=500`)
+          .then(r => r.json()).then(d => (d.tours || []) as Tour[]).catch(() => [] as Tour[]),
+        fetch(`/api/tours/list?q=${encodeURIComponent(country.name)}&limit=200`)
+          .then(r => r.json()).then(d => (d.tours || []) as Tour[]).catch(() => [] as Tour[]),
+      ];
+      // If there are English searchNames, also search by those
+      if (country.searchNames && country.searchNames.length > 1) {
+        const englishName = country.searchNames.find(n => /^[A-Z]/.test(n));
+        if (englishName) {
+          promises.push(
+            fetch(`/api/tours/list?q=${encodeURIComponent(englishName)}&limit=200`)
+              .then(r => r.json()).then(d => (d.tours || []) as Tour[]).catch(() => [] as Tour[])
+          );
+        }
+      }
+      fetchAndDedupe(promises).then(tours => {
+        setTours(tours);
+        setLoading(false);
+      });
+
     } else if (level === 'city' && country && cityName) {
-      const names = country.searchNames || [country.name];
-      const promises = names.map(n =>
-        fetch(`/api/tours/list?country=${encodeURIComponent(n)}&limit=1000`)
-          .then(r => r.json()).then(d => (d.tours || []) as Tour[]).catch(() => [] as Tour[])
-      );
-      Promise.all(promises).then(results => {
-        const all = results.flat();
-        const seen = new Set<string>();
-        const unique = all.filter(t => { if (seen.has(t.id)) return false; seen.add(t.id); return true; });
-        setTours(unique.filter(t => t.city === cityName || t.title.includes(cityName)));
-      }).finally(() => setLoading(false));
+      const mainSearchName = country.searchNames?.[0] || country.name;
+      const promises: Promise<Tour[]>[] = [
+        fetch(`/api/tours/list?country=${encodeURIComponent(mainSearchName)}&limit=500`)
+          .then(r => r.json()).then(d => (d.tours || []) as Tour[]).catch(() => [] as Tour[]),
+        fetch(`/api/tours/list?q=${encodeURIComponent(cityName)}&limit=200`)
+          .then(r => r.json()).then(d => (d.tours || []) as Tour[]).catch(() => [] as Tour[]),
+      ];
+      fetchAndDedupe(promises).then(tours => {
+        setTours(tours.filter(t => t.city === cityName || t.title.includes(cityName)));
+        setLoading(false);
+      });
+
     } else {
       setLoading(false);
     }
