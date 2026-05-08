@@ -21,11 +21,11 @@ export const sites: SiteConfig[] = [
     enabled: true,
     type: 'nextjs_spa',
     baseUrl: 'https://itravels.center',
-    sitemapUrls: ['https://itravels.center/sitemap.xml'],
-    tourUrlPattern: /\/(tour|package)\/[\w-]+\/?$/i,
+    sitemapUrls: [], // No sitemap — discover via listing pages
+    tourUrlPattern: /\/programs\/[A-Z0-9]{3,}\/?$/i,
     requestDelayMs: 3000,
     userAgent: 'JongtourBot/1.0 (+https://jongtour.com)',
     usePlaywright: true,
-    waitSelector: 'main, [data-tour-id], .tour-detail',
+    waitSelector: 'main, h1, h2',
   },
 ];

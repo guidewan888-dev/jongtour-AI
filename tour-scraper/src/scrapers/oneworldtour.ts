@@ -29,7 +29,7 @@ export class OneWorldTourScraper extends BaseScraper {
 
     // 2. Crawl a sample of landing pages to find /tour/ links
     const tourUrls = new Set<string>(directTourUrls);
-    const maxLandingPages = 30; // Crawl up to 30 landing pages
+    const maxLandingPages = 200; // Crawl ALL landing pages
 
     for (const [i, lpUrl] of landingUrls.slice(0, maxLandingPages).entries()) {
       try {
