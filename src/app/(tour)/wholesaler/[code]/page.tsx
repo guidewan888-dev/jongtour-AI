@@ -47,6 +47,22 @@ const SUPPLIER_CONFIG: Record<string, {
     accentBorder: 'border-purple-200',
     tagline: 'สร้างสรรค์ทริปพิเศษ โปรแกรมเอ็กซ์คลูซีฟ',
   },
+  'oneworldtour': {
+    name: 'oneworldtour', displayName: 'One World Tour',
+    logo: '/images/logos/oneworldtour.png',
+    gradient: 'from-amber-800 via-orange-700 to-red-600',
+    heroBg: 'bg-amber-800', accent: 'text-orange-600', accentLight: 'bg-orange-50',
+    accentBorder: 'border-orange-200',
+    tagline: 'โฮลเซลพรีเมี่ยม ทัวร์ยุโรป สวิตเซอร์แลนด์ อิตาลี และเอเชีย',
+  },
+  'itravels': {
+    name: 'itravels', displayName: 'iTravels Center',
+    logo: '/images/logos/itravels.png',
+    gradient: 'from-sky-800 via-sky-700 to-cyan-600',
+    heroBg: 'bg-sky-800', accent: 'text-sky-600', accentLight: 'bg-sky-50',
+    accentBorder: 'border-sky-200',
+    tagline: 'ศูนย์รวมทัวร์ต่างประเทศ ครบทุกเส้นทาง ราคาดีที่สุด',
+  },
 };
 
 const CONTINENT_MAP: Record<string, { name: string; countries: string[] }> = {

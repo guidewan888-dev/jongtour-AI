@@ -77,6 +77,24 @@ const allWholesalePartners = [
     rating: 4.4,
     tags: ["เกาหลี", "ญี่ปุ่น", "จีน"],
   },
+  {
+    name: "One World Tour",
+    code: "oneworldtour",
+    logo: "/images/logos/oneworldtour.png",
+    description: "โฮลเซลพรีเมี่ยม เชี่ยวชาญทัวร์ยุโรป สวิตเซอร์แลนด์ อิตาลี และเอเชีย ราคาคุ้มค่า",
+    tourCount: 221,
+    rating: 4.9,
+    tags: ["ยุโรป", "สวิตเซอร์แลนด์", "ญี่ปุ่น"],
+  },
+  {
+    name: "iTravels Center",
+    code: "itravels",
+    logo: "/images/logos/itravels.png",
+    description: "ศูนย์รวมทัวร์ต่างประเทศ ครบทุกเส้นทาง ญี่ปุ่น จีน ยุโรป อเมริกา ราคาดีที่สุด",
+    tourCount: 54,
+    rating: 4.7,
+    tags: ["ญี่ปุ่น", "จีน", "ยุโรป"],
+  },
 ];
 
 export default function WholesalePage() {
