@@ -102,25 +102,35 @@ export class OneWorldTourScraper extends BaseScraper {
       || $('h1').first().text().trim();
 
     // ── Duration — parse "X วัน" from title (most reliable) ──
-    const durMatch = title.match(/(\d+)\s*วัน\s*(\d+)?\s*คืน?/);
-    const durationDays = durMatch ? parseInt(durMatch[1]) : 0;
-    const durationNights = durMatch && durMatch[2] 
-      ? parseInt(durMatch[2]) 
+    // Titles like "5 วัน (Free Day) (TG)" or "10 วัน (TG)" or "11 วัน 8 คืน (QR)"
+    const durMatchFull = title.match(/(\d+)\s*วัน\s*(\d+)\s*คืน/);
+    const durMatchDaysOnly = title.match(/(\d+)\s*วัน/);
+    const durationDays = durMatchFull ? parseInt(durMatchFull[1]) 
+      : durMatchDaysOnly ? parseInt(durMatchDaysOnly[1]) : 0;
+    const durationNights = durMatchFull ? parseInt(durMatchFull[2])
       : (durationDays > 0 ? Math.max(0, durationDays - 2) : 0);
     const duration = durationDays > 0 ? `${durationDays} วัน ${durationNights} คืน` : '';
 
-    // ── Airline — parse "(TG)", "(QR)" etc from title ──
-    const airlineCodeMatch = title.match(/\(([A-Z]{2})\)/);
-    const airlineCode = airlineCodeMatch?.[1] || '';
+    // ── Airline — parse "(TG)", "(QR)", "(LH/OS)" etc from title ──
+    const airlineCodeMatch = title.match(/\(([A-Z]{2}(?:\/[A-Z]{2})*)\)/);
+    const airlineCode = airlineCodeMatch?.[1]?.split('/')[0] || '';
     const airline = AIRLINE_MAP[airlineCode] || airlineCode;
 
-    // ── Country — from breadcrumb /intertours/XXX/ ──
+    // ── Country — from breadcrumb links ──
+    // Breadcrumb order: หน้าแรก > ทัวร์ต่างประเทศ > ทัวร์สวิตเซอร์แลนด์ > [tour title]
+    // We want the one BEFORE the last (which is the country page)
     const breadcrumbLinks = $('a[href*="/intertours/"]')
-      .map((_, el) => $(el).text().trim())
+      .map((_, el) => ({
+        text: $(el).text().trim(),
+        href: $(el).attr('href') || '',
+      }))
       .get()
-      .filter(t => t.length > 1 && !/ต่างประเทศ|หน้าแรก|Home/i.test(t));
-    // Remove "ทัวร์" prefix for clean country name
-    const country = (breadcrumbLinks[0] || '').replace(/^ทัวร์/, '').trim();
+      .filter(b => b.text.length > 1 && !/ต่างประเทศ|หน้าแรก|Home/i.test(b.text));
+    // Get the LAST link (closest to the tour = country page)
+    const lastBreadcrumb = breadcrumbLinks[breadcrumbLinks.length - 1];
+    const country = lastBreadcrumb 
+      ? lastBreadcrumb.text.replace(/^ทัวร์/, '').trim() 
+      : '';
 
     // ── Price — look for "เริ่มเพียง XX,XXX" or large number patterns ──
     let priceFrom: number | undefined;
