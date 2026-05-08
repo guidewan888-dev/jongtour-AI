@@ -111,26 +111,29 @@ export class OneWorldTourScraper extends BaseScraper {
       : (durationDays > 0 ? Math.max(0, durationDays - 2) : 0);
     const duration = durationDays > 0 ? `${durationDays} วัน ${durationNights} คืน` : '';
 
-    // ── Airline — parse "(TG)", "(QR)", "(LH/OS)" etc from title ──
-    const airlineCodeMatch = title.match(/\(([A-Z]{2}(?:\/[A-Z]{2})*)\)/);
+    // ── Airline — parse "(TG)", "(QR)", "(LH/OS)" or bare "TG" from title ──
+    const airlineCodeMatch = title.match(/\(([A-Z]{2}(?:\/[A-Z]{2})*)\)/)
+      || title.match(/\b(TG|QR|EK|SQ|CX|TK|SV|OZ|BR|CI|MH|WY|AZ|LH|AF|BA|KL|NH|JL|KE|CZ|MU|ET|MS|AI|GA|VN|UL|FD|VZ|WE|PG|RJ|GF)\b/);
     const airlineCode = airlineCodeMatch?.[1]?.split('/')[0] || '';
     const airline = AIRLINE_MAP[airlineCode] || airlineCode;
 
-    // ── Country — from breadcrumb links ──
-    // Breadcrumb order: หน้าแรก > ทัวร์ต่างประเทศ > ทัวร์สวิตเซอร์แลนด์ > [tour title]
-    // We want the one BEFORE the last (which is the country page)
-    const breadcrumbLinks = $('a[href*="/intertours/"]')
-      .map((_, el) => ({
-        text: $(el).text().trim(),
-        href: $(el).attr('href') || '',
-      }))
-      .get()
-      .filter(b => b.text.length > 1 && !/ต่างประเทศ|หน้าแรก|Home/i.test(b.text));
-    // Get the LAST link (closest to the tour = country page)
-    const lastBreadcrumb = breadcrumbLinks[breadcrumbLinks.length - 1];
-    const country = lastBreadcrumb 
-      ? lastBreadcrumb.text.replace(/^ทัวร์/, '').trim() 
-      : '';
+    // ── Country — parse from title "ทัวร์XXX" or "ทัวร์พรีเมี่ยมXXX" ──
+    // Title patterns: "ทัวร์เกาหลี - โซล", "ทัวร์สวิตเซอร์แลนด์", "ทัวร์พรีเมี่ยมญี่ปุ่น"
+    const COUNTRY_NAMES = [
+      'ญี่ปุ่น', 'เกาหลี', 'จีน', 'ไต้หวัน', 'ฮ่องกง', 'สิงคโปร์', 'มาเลเซีย', 'อินโดนีเซีย',
+      'เวียดนาม', 'ลาว', 'พม่า', 'อินเดีย', 'ศรีลังกา', 'เนปาล', 'ปากีสถาน', 'ภูฏาน', 'มัลดีฟส์',
+      'สวิตเซอร์แลนด์', 'สวิส', 'ฝรั่งเศส', 'อิตาลี', 'เยอรมัน', 'เยอรมนี', 'สเปน', 'โปรตุเกส',
+      'อังกฤษ', 'สกอตแลนด์', 'ไอร์แลนด์', 'ไอซ์แลนด์', 'นอร์เวย์', 'ฟินแลนด์', 'สวีเดน', 'เดนมาร์ก',
+      'รัสเซีย', 'ตุรกี', 'กรีซ', 'โครเอเชีย', 'เช็ก', 'ฮังการี', 'ออสเตรีย', 'โปแลนด์',
+      'บัลแกเรีย', 'โรมาเนีย', 'สโลวาเกีย', 'เบลเยี่ยม', 'เนเธอร์แลนด์', 'ลักเซมเบิร์ก',
+      'สแกนดิเนเวีย', 'ไอบีเรีย', 'บอลติค', 'จอร์เจีย', 'อาร์เมเนีย', 'อาเซอร์ไบจาน',
+      'ออสเตรเลีย', 'นิวซีแลนด์', 'อเมริกา', 'แคนาดา', 'เปรู', 'บราซิล', 'อาร์เจนตินา', 'เม็กซิโก',
+      'อียิปต์', 'โมร็อกโก', 'แอฟริกาใต้', 'เคนย่า', 'เอธิโอเปีย', 'ดูนีเซีย',
+      'ดูไบ', 'จอร์แดน', 'อิสราเอล', 'การ์ต้า', 'อิหร่าน', 'คาซัคสถาน', 'อุซเบกิสถาน',
+      'มอลต้า', 'ไซปรัส', 'เซอร์เบีย', 'มอนเตเนโกร', 'แอลเบเนีย', 'เบลารุส',
+      'บาหลี', 'มาเก๊า', 'เซี่ยงไฮ้', 'ทิเบต', 'อลาสก้า',
+    ];
+    const country = COUNTRY_NAMES.find(c => title.includes(c)) || '';
 
     // ── Price — look for "เริ่มเพียง XX,XXX" or large number patterns ──
     let priceFrom: number | undefined;
