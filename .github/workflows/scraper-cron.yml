@@ -1,0 +1,37 @@
+name: Tour Scraper Cron
+on:
+  schedule:
+    # ทุกวัน 03:00 ไทย = 20:00 UTC วันก่อนหน้า
+    - cron: '0 20 * * *'
+  workflow_dispatch:  # สามารถกดรัน manual ได้
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: tour-scraper/package-lock.json
+
+      - name: Install dependencies
+        working-directory: tour-scraper
+        run: npm ci
+
+      - name: Install Playwright Chromium
+        working-directory: tour-scraper
+        run: npx playwright install --with-deps chromium
+
+      - name: Run scraper
+        working-directory: tour-scraper
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: npx tsx src/main.ts

@@ -1,0 +1,31 @@
+// ─── Site Configuration ─────────────────────
+import type { SiteConfig } from '../types.js';
+
+export const sites: SiteConfig[] = [
+  {
+    name: 'oneworldtour',
+    enabled: true,
+    type: 'wordpress',
+    baseUrl: 'https://www.oneworldtour.co.th',
+    sitemapUrls: [
+      'https://www.oneworldtour.co.th/sitemap.xml',
+      'https://www.oneworldtour.co.th/sitemap_index.xml',
+      'https://www.oneworldtour.co.th/wp-sitemap.xml',
+    ],
+    tourUrlPattern: /\/tour\/[a-z0-9]+\/?$/i,
+    requestDelayMs: 2000,
+    userAgent: 'JongtourBot/1.0 (+https://jongtour.com)',
+  },
+  {
+    name: 'itravels',
+    enabled: true,
+    type: 'nextjs_spa',
+    baseUrl: 'https://itravels.center',
+    sitemapUrls: ['https://itravels.center/sitemap.xml'],
+    tourUrlPattern: /\/(tour|package)\/[\w-]+\/?$/i,
+    requestDelayMs: 3000,
+    userAgent: 'JongtourBot/1.0 (+https://jongtour.com)',
+    usePlaywright: true,
+    waitSelector: 'main, [data-tour-id], .tour-detail',
+  },
+];
