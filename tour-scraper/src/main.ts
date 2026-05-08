@@ -3,6 +3,7 @@
 //   npm run dev                        # scrape all enabled sites
 //   npm run dev -- --site oneworldtour # scrape specific site
 
+import 'dotenv/config';
 import { sites } from './config/sites.js';
 import { OneWorldTourScraper } from './scrapers/oneworldtour.js';
 import { ITravelsScraper } from './scrapers/itravels.js';

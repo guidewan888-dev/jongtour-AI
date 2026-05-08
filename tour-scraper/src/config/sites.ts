@@ -12,7 +12,7 @@ export const sites: SiteConfig[] = [
       'https://www.oneworldtour.co.th/sitemap_index.xml',
       'https://www.oneworldtour.co.th/wp-sitemap.xml',
     ],
-    tourUrlPattern: /\/tour\/[a-z0-9]+\/?$/i,
+    tourUrlPattern: /\/(tour\/[a-z]{2,}[0-9]+|custom-landingpage\/[\w%-]+)\/?$/i,
     requestDelayMs: 2000,
     userAgent: 'JongtourBot/1.0 (+https://jongtour.com)',
   },
