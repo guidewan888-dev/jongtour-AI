@@ -1,1 +1,14 @@
-// Public auth pages (login, register) — standalone layout without header/footer\r\n// These pages have their own back-to-home links built in\r\n\r\nexport default function PublicLayout({\r\n  children,\r\n}: {\r\n  children: React.ReactNode;\r\n}) {\r\n  return (\r\n    <div className="flex flex-col min-h-screen bg-slate-50">\r\n      <main className="flex-1">{children}</main>\r\n    </div>\r\n  );\r\n}\r\n
+// Public auth pages (login, register) — standalone layout without header/footer
+// These pages have their own back-to-home links built in
+
+export default function PublicLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="flex flex-col min-h-screen bg-slate-50">
+      <main className="flex-1">{children}</main>
+    </div>
+  );
+}
