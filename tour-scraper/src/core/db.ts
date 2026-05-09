@@ -59,7 +59,9 @@ export async function upsertTour(
         description: tour.description,
         itinerary_html: tour.itineraryHtml,
         pdf_url: tour.pdfUrl,
-        cover_image_url: images[0]?.publicUrl ?? null,
+        cover_image_url: images.length > 0
+          ? [...images].sort((a, b) => (b.fileSize || 0) - (a.fileSize || 0))[0].publicUrl
+          : null,
         last_scraped_at: new Date().toISOString(),
         is_active: true,
         deposit: tour.deposit ?? null,
