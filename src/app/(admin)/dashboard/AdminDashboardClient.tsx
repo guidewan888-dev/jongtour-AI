@@ -340,8 +340,8 @@ function WorldConnectionWidget() {
         {/* Center: Schedule Info */}
         <div className="hidden lg:block bg-white/60 backdrop-blur-sm rounded-xl border border-orange-100 px-4 py-2.5 text-center">
           <p className="text-[10px] text-slate-400 font-medium uppercase tracking-wider mb-0.5">ซิ้งอัตโนมัติ</p>
-          <p className="text-sm font-bold text-orange-700">ทุก 6 ชม.</p>
-          <p className="text-[10px] text-slate-400">00:15, 06:15, 12:15, 18:15</p>
+          <p className="text-sm font-bold text-orange-700">วันละ 1 ครั้ง</p>
+          <p className="text-[10px] text-slate-400">ทุกวัน 06:15 น.</p>
         </div>
 
         {/* Right: Actions */}
