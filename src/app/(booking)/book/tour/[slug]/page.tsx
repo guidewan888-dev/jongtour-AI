@@ -160,7 +160,7 @@ export default function BookTourPage({ params }: { params: { slug: string } }) {
             </div>
 
             {/* Departure Selection */}
-            <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+            <div className="bg-white rounded-xl border border-slate-200">
               <div className="p-4 border-b border-slate-100 bg-slate-50">
                 <h2 className="font-bold text-slate-900 flex items-center gap-2">
                   📅 เลือกวันเดินทาง
@@ -168,7 +168,8 @@ export default function BookTourPage({ params }: { params: { slug: string } }) {
                 </h2>
               </div>
               {availableDepartures.length > 0 ? (
-                <div className="divide-y divide-slate-100">
+                <>
+                <div className="divide-y divide-slate-100 overflow-y-auto" style={{ maxHeight: '304px' }}>
                   {availableDepartures.map(dep => (
                     <label key={dep.id} className={`flex items-center justify-between p-4 cursor-pointer transition-colors hover:bg-primary-50/50 ${selectedDeparture === dep.id ? "bg-primary-50 border-l-4 border-primary-500" : ""}`}>
                       <div className="flex items-center gap-4">
@@ -189,6 +190,12 @@ export default function BookTourPage({ params }: { params: { slug: string } }) {
                     </label>
                   ))}
                 </div>
+                {availableDepartures.length > 4 && (
+                  <div className="text-center py-2 text-xs text-slate-400 bg-gradient-to-t from-white to-transparent border-t border-slate-100">
+                    ↕ เลื่อนเพื่อดูรอบเดินทางเพิ่มเติม ({availableDepartures.length} รอบ)
+                  </div>
+                )}
+                </>
               ) : (
                 <div className="p-12 text-center">
                   <div className="text-4xl mb-3">📅</div>

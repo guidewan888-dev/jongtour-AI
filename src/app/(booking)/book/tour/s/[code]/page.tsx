@@ -164,10 +164,7 @@ export default function ScraperBookTourPage({ params }: { params: { code: string
       adults,
       children,
       singleRooms,
-      addOns: [...selectedAddOns].map((id) => {
-        const addon = ADD_ONS.find((a) => a.id === id);
-        return { id, name: addon?.name || id, price: addon?.price || 0 };
-      }),
+      addOns: [...selectedAddOns],
       totalPrice,
       totalDeposit,
       travelers: [],
@@ -236,7 +233,7 @@ export default function ScraperBookTourPage({ params }: { params: { code: string
             </div>
 
             {/* Period Selection */}
-            <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+            <div className="bg-white rounded-xl border border-slate-200">
               <div className="p-4 border-b border-slate-100 bg-slate-50">
                 <h2 className="font-bold text-slate-900 flex items-center gap-2">
                   📅 เลือกวันเดินทาง
@@ -244,7 +241,8 @@ export default function ScraperBookTourPage({ params }: { params: { code: string
                 </h2>
               </div>
               {availablePeriods.length > 0 ? (
-                <div className="divide-y divide-slate-100">
+                <>
+                <div className="divide-y divide-slate-100 overflow-y-auto" style={{ maxHeight: '304px' }}>
                   {availablePeriods.map((p) => {
                     let dateLabel = p.rawText || "สอบถามวันเดินทาง";
                     if (p.startDate && p.endDate) {
@@ -283,6 +281,12 @@ export default function ScraperBookTourPage({ params }: { params: { code: string
                     );
                   })}
                 </div>
+                {availablePeriods.length > 4 && (
+                  <div className="text-center py-2 text-xs text-slate-400 bg-gradient-to-t from-white to-transparent border-t border-slate-100">
+                    ↕ เลื่อนเพื่อดูรอบเดินทางเพิ่มเติม ({availablePeriods.length} รอบ)
+                  </div>
+                )}
+                </>
               ) : (
                 <div className="p-12 text-center">
                   <div className="text-4xl mb-3">📅</div>
