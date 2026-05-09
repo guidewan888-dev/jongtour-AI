@@ -22,7 +22,7 @@ export async function POST() {
     }
 
     // Try to trigger GitHub Actions workflow if PAT is available
-    const token = process.env.GITHUB_PAT;
+    const token = process.env.GH_PAT || process.env.GITHUB_PAT;
     if (token) {
       try {
         const res = await fetch(
