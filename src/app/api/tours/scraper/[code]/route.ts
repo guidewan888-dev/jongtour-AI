@@ -30,6 +30,42 @@ export async function GET(
   const durationDays = durMatch ? parseInt(durMatch[1]) : 0;
   const durationNights = durMatch && durMatch[2] ? parseInt(durMatch[2]) : Math.max(0, durationDays - 1);
 
+  // ── Clean periods: filter out header/room-type garbage rows ──
+  const JUNK_PERIOD_PATTERNS = /^(วันที่เดินทาง|วันเดินทาง|ผู้ใหญ่|พักเดี่ยว|พักสาม|เด็ก|ทารก|\(พัก|มีเตียง|ไม่มีเตียง|Infant|Child|Twin|Single|Double|Triple)/i;
+  const HAS_DATE = /\d{1,2}\s*(ม\.?ค|ก\.?พ|มี\.?ค|เม\.?ย|พ\.?ค|มิ\.?ย|ก\.?ค|ส\.?ค|ก\.?ย|ต\.?ค|พ\.?ย|ธ\.?ค)/i;
+  const IS_PURE_NUMBER = /^\d[\d,]*$/;
+
+  const cleanPeriods = (periods || [])
+    .filter(p => {
+      // Must have structured dates OR raw text that contains a date
+      if (p.start_date && p.end_date) return true;
+      if (!p.raw_text) return false;
+      const raw = p.raw_text.trim();
+      // Skip junk header rows
+      if (JUNK_PERIOD_PATTERNS.test(raw)) return false;
+      // Skip pure numbers (bare prices showing as periods)
+      if (IS_PURE_NUMBER.test(raw.replace(/,/g, ''))) return false;
+      // Must contain a date pattern
+      return HAS_DATE.test(raw);
+    })
+    .map(p => ({
+      id: p.id,
+      startDate: p.start_date,
+      endDate: p.end_date,
+      price: p.price,
+      seatsLeft: p.seats_left,
+      status: p.status,
+      rawText: p.raw_text,
+    }));
+
+  // ── Clean highlights: filter out navigation/menu garbage ──
+  const JUNK_HIGHLIGHT_PATTERNS = /(โปรแกรมทัวร์|ออสเตรเลีย-นิวซีแลนด์|เรือสำราญ|ทัวร์โปรโมชั่น|โปรแกรม.*ทัวร์|^ทัวร์\w+$|One World|www\.|http|@|\.com|\.co\.th|โทร|สายด่วน|เมนู|หน้าหลัก|ติดต่อเรา|เกี่ยวกับเรา)/i;
+  const cleanHighlights = Array.isArray(data.highlights)
+    ? data.highlights.filter((h: string) =>
+        h && h.length > 2 && h.length < 100 && !JUNK_HIGHLIGHT_PATTERNS.test(h)
+      ).slice(0, 8)
+    : [];
+
   const tour = {
     id: data.id,
     code: data.tour_code || '',
@@ -46,17 +82,9 @@ export async function GET(
     pdfUrl: data.pdf_url || '',
     deposit: data.deposit || 0,
     hotelRating: data.hotel_rating || 0,
-    highlights: data.highlights || [],
+    highlights: cleanHighlights,
     lastScraped: data.last_scraped_at || '',
-    periods: (periods || []).map(p => ({
-      id: p.id,
-      startDate: p.start_date,
-      endDate: p.end_date,
-      price: p.price,
-      seatsLeft: p.seats_left,
-      status: p.status,
-      rawText: p.raw_text,
-    })),
+    periods: cleanPeriods,
   };
 
   return NextResponse.json({ tour });

@@ -153,14 +153,30 @@ export class OneWorldTourScraper extends BaseScraper {
     const starMatch = bodyText.match(/(\d)\s*ดาว/);
     const hotelRating = starMatch ? parseInt(starMatch[1]) : undefined;
 
-    // ── Highlights — bullet points with "–" or "—" separators ──
+    // ── Highlights — extract key attractions/cities from title & content ──
     const highlights: string[] = [];
-    $('li, .wpb_text_column p, .entry-content p').each((_, el) => {
-      const text = $(el).text().trim();
-      if (text.length > 30 && text.length < 500 && /[–—\-]/.test(text)) {
-        highlights.push(text);
-      }
-    });
+    // 1. Split title by common separators to get destination highlights
+    const titleParts = title.split(/[-–—,\\s]+/).filter(p => p.length > 2 && !/^(ทัวร์|พรีเมี่ยม|วัน|คืน|บิน|Free|Day|MAY|JAN|FEB|MAR|APR|JUN|JUL|AUG|SEP|OCT|NOV|DEC|\d+|[A-Z]{2,4}\d*)$/i.test(p));
+    if (titleParts.length > 1) {
+      titleParts.slice(0, 6).forEach(part => {
+        const cleaned = part.trim();
+        if (cleaned.length > 2 && cleaned.length < 50) highlights.push(cleaned);
+      });
+    }
+    // 2. Look for description/meta text as additional highlights
+    const metaDesc = $('meta[name="description"]').attr('content') || '';
+    if (metaDesc.length > 20 && metaDesc.length < 300) {
+      // Split meta description by common separators
+      metaDesc.split(/[,，|·•●]/g).forEach(part => {
+        const cleaned = part.trim();
+        if (cleaned.length > 3 && cleaned.length < 60
+          && !/(ทัวร์|ราคา|จอง|โทร|เดินทาง|www|http|@|รหัส|One World)/i.test(cleaned)
+          && highlights.length < 8
+          && !highlights.includes(cleaned)) {
+          highlights.push(cleaned);
+        }
+      });
+    }
 
     // ── Description from highlights or meta ──
     const description = highlights.slice(0, 3).join(' | ')
@@ -242,6 +258,11 @@ export class OneWorldTourScraper extends BaseScraper {
       const cells = $(row).find('td, span, div').map((_, c) => $(c).text().trim()).get();
       if (cells.length >= 2) {
         const joined = cells.join(' ');
+        // Skip header rows and room-type rows (ผู้ใหญ่, พักเดี่ยว, พักสาม, etc.)
+        if (/^(วันที่เดินทาง|ผู้ใหญ่|พักเดี่ยว|พักสาม|เด็ก|ทารก|\(พัก|มีเตียง|ไม่มีเตียง|วันเดินทาง)/i.test(joined)) return;
+        // Skip rows without any date-like content (just numbers or room types)
+        if (!/\d{1,2}\s*(ม\.?ค|ก\.?พ|มี\.?ค|เม\.?ย|พ\.?ค|มิ\.?ย|ก\.?ค|ส\.?ค|ก\.?ย|ต\.?ค|พ\.?ย|ธ\.?ค)/i.test(joined)) return;
+
         // Try to extract date range from joined text
         const dateRangeMatch = joined.match(
           /(\d{1,2}\s*(?:ม\.?ค\.?|ก\.?พ\.?|มี\.?ค\.?|เม\.?ย\.?|พ\.?ค\.?|มิ\.?ย\.?|ก\.?ค\.?|ส\.?ค\.?|ก\.?ย\.?|ต\.?ค\.?|พ\.?ย\.?|ธ\.?ค\.?)\.?\s*\d{2,4})\s*[-–~]\s*(\d{1,2}\s*(?:ม\.?ค\.?|ก\.?พ\.?|มี\.?ค\.?|เม\.?ย\.?|พ\.?ค\.?|มิ\.?ย\.?|ก\.?ค\.?|ส\.?ค\.?|ก\.?ย\.?|ต\.?ค\.?|พ\.?ย\.?|ธ\.?ค\.?)\.?\s*\d{2,4})/
