@@ -263,13 +263,79 @@ export class BestInternationalScraper extends BaseScraper {
       }
     });
 
-    // Periods
+    // Periods — parse from table rows or text patterns
     const periods: TourPeriod[] = [];
-    const dateMatches = bodyText.matchAll(
-      /(\d{1,2})\s*[-–]\s*(\d{1,2})\s*(ม\.?ค|ก\.?พ|มี\.?ค|เม\.?ย|พ\.?ค|มิ\.?ย|ก\.?ค|ส\.?ค|ก\.?ย|ต\.?ค|พ\.?ย|ธ\.?ค)\.?\s*(\d{2,4})/g
+    
+    // Thai month abbreviation mapping
+    const THAI_MONTHS: Record<string, string> = {
+      'ม.ค': '01', 'มค': '01', 'ม.ค.': '01',
+      'ก.พ': '02', 'กพ': '02', 'ก.พ.': '02',
+      'มี.ค': '03', 'มีค': '03', 'มี.ค.': '03',
+      'เม.ย': '04', 'เมย': '04', 'เม.ย.': '04',
+      'พ.ค': '05', 'พค': '05', 'พ.ค.': '05',
+      'มิ.ย': '06', 'มิย': '06', 'มิ.ย.': '06',
+      'ก.ค': '07', 'กค': '07', 'ก.ค.': '07',
+      'ส.ค': '08', 'สค': '08', 'ส.ค.': '08',
+      'ก.ย': '09', 'กย': '09', 'ก.ย.': '09',
+      'ต.ค': '10', 'ตค': '10', 'ต.ค.': '10',
+      'พ.ย': '11', 'พย': '11', 'พ.ย.': '11',
+      'ธ.ค': '12', 'ธค': '12', 'ธ.ค.': '12',
+    };
+
+    function parseThaiDate(dateStr: string): string {
+      // Pattern: "25 พ.ย. 69" or "6 ธ.ค. 2569" or "25 พ.ย. 2569"
+      const m = dateStr.match(/(\d{1,2})\s*(ม\.?ค\.?|ก\.?พ\.?|มี\.?ค\.?|เม\.?ย\.?|พ\.?ค\.?|มิ\.?ย\.?|ก\.?ค\.?|ส\.?ค\.?|ก\.?ย\.?|ต\.?ค\.?|พ\.?ย\.?|ธ\.?ค\.?)\.?\s*(\d{2,4})/);
+      if (!m) return '';
+      const day = m[1].padStart(2, '0');
+      const monthKey = m[2].replace(/\./g, '');
+      const month = THAI_MONTHS[monthKey] || THAI_MONTHS[m[2]] || THAI_MONTHS[m[2].replace(/\.$/, '')] || '01';
+      let year = parseInt(m[3]);
+      // Convert Buddhist Era to CE
+      if (year > 2400) year = year - 543;
+      else if (year < 100) year = year + 2000 - 543;
+      return `${year}-${month}-${day}`;
+    }
+
+    // Try parsing date ranges from body text  
+    const dateRangeMatches = bodyText.matchAll(
+      /(\d{1,2})\s*(ม\.?ค\.?|ก\.?พ\.?|มี\.?ค\.?|เม\.?ย\.?|พ\.?ค\.?|มิ\.?ย\.?|ก\.?ค\.?|ส\.?ค\.?|ก\.?ย\.?|ต\.?ค\.?|พ\.?ย\.?|ธ\.?ค\.?)\.?\s*(\d{2,4})\s*[-–~]\s*(\d{1,2})\s*(ม\.?ค\.?|ก\.?พ\.?|มี\.?ค\.?|เม\.?ย\.?|พ\.?ค\.?|มิ\.?ย\.?|ก\.?ค\.?|ส\.?ค\.?|ก\.?ย\.?|ต\.?ค\.?|พ\.?ย\.?|ธ\.?ค\.?)\.?\s*(\d{2,4})/g
     );
-    for (const m of dateMatches) {
-      periods.push({ rawText: m[0] });
+    for (const m of dateRangeMatches) {
+      const startStr = `${m[1]} ${m[2]} ${m[3]}`;
+      const endStr = `${m[4]} ${m[5]} ${m[6]}`;
+      const startDate = parseThaiDate(startStr);
+      const endDate = parseThaiDate(endStr);
+      
+      // Try to extract price near this date range
+      const datePos = m.index || 0;
+      const nearbyText = bodyText.slice(datePos, datePos + 200);
+      const priceMatch = nearbyText.match(/[\d,]{5,}/);
+      const price = priceMatch ? parseInt(priceMatch[0].replace(/,/g, ''), 10) : undefined;
+
+      if (startDate || endDate) {
+        periods.push({
+          startDate: startDate || undefined,
+          endDate: endDate || undefined,
+          price: price && price > 1000 ? price : undefined,
+          rawText: `${m[1]} ${m[2]} ${m[3]} - ${m[4]} ${m[5]} ${m[6]}`,
+        });
+      }
+    }
+
+    // Fallback: simpler date patterns "DD - DD เดือน ปี" (same month)
+    if (periods.length === 0) {
+      const simpleDateMatches = bodyText.matchAll(
+        /(\d{1,2})\s*[-–]\s*(\d{1,2})\s*(ม\.?ค\.?|ก\.?พ\.?|มี\.?ค\.?|เม\.?ย\.?|พ\.?ค\.?|มิ\.?ย\.?|ก\.?ค\.?|ส\.?ค\.?|ก\.?ย\.?|ต\.?ค\.?|พ\.?ย\.?|ธ\.?ค\.?)\.?\s*(\d{2,4})/g
+      );
+      for (const m of simpleDateMatches) {
+        const startDate = parseThaiDate(`${m[1]} ${m[3]} ${m[4]}`);
+        const endDate = parseThaiDate(`${m[2]} ${m[3]} ${m[4]}`);
+        periods.push({
+          startDate: startDate || undefined,
+          endDate: endDate || undefined,
+          rawText: `${m[1]}-${m[2]} ${m[3]} ${m[4]}`,
+        });
+      }
     }
 
     return {

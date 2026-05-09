@@ -166,8 +166,9 @@ export class GS25Scraper extends BaseScraper {
 
       const username = process.env.GS25_EMAIL || '';
       const password = process.env.GS25_PASSWORD || '';
-      if (!password) {
-        console.error('[gs25] ❌ GS25_PASSWORD not set!');
+      if (!username || !password) {
+        console.error('[gs25] ❌ GS25_EMAIL or GS25_PASSWORD not set — skipping GS25 scraper');
+        console.error('[gs25] ℹ️  Set these as environment variables or GitHub Actions secrets');
         return [];
       }
 

@@ -100,11 +100,30 @@ async function main(): Promise<void> {
     process.exit(1);
   }
 
+  const results: { site: string; ok: boolean; err?: string }[] = [];
   for (const site of targetSites) {
-    await runSite(site);
+    try {
+      await runSite(site);
+      results.push({ site: site.name, ok: true });
+    } catch (e) {
+      const errMsg = (e as Error).message;
+      console.error(`\n💥 [${site.name}] Uncaught error — skipping:`, errMsg);
+      results.push({ site: site.name, ok: false, err: errMsg });
+    }
   }
 
-  console.log(`\n✨ All done!`);
+  // Summary
+  console.log(`\n${'═'.repeat(50)}`);
+  console.log('📊 Scrape Summary:');
+  for (const r of results) {
+    console.log(`  ${r.ok ? '✅' : '❌'} ${r.site}${r.err ? ` — ${r.err}` : ''}`);
+  }
+  const failCount = results.filter(r => !r.ok).length;
+  if (failCount === results.length) {
+    console.error('\n❌ All sites failed!');
+    process.exit(1);
+  }
+  console.log(`\n✨ Done! ${results.length - failCount}/${results.length} sites succeeded.`);
 }
 
 main().catch((e) => {

@@ -221,37 +221,74 @@ export class OneWorldTourScraper extends BaseScraper {
   private parsePeriods($: cheerio.CheerioAPI, bodyText: string): TourPeriod[] {
     const periods: TourPeriod[] = [];
 
+    const THAI_MONTHS: Record<string, string> = {
+      'มค': '01', 'กพ': '02', 'มีค': '03', 'เมย': '04', 'พค': '05', 'มิย': '06',
+      'กค': '07', 'สค': '08', 'กย': '09', 'ตค': '10', 'พย': '11', 'ธค': '12',
+    };
+
+    function parseThaiDate(s: string): string {
+      const m = s.match(/(\d{1,2})\s*(ม\.?ค\.?|ก\.?พ\.?|มี\.?ค\.?|เม\.?ย\.?|พ\.?ค\.?|มิ\.?ย\.?|ก\.?ค\.?|ส\.?ค\.?|ก\.?ย\.?|ต\.?ค\.?|พ\.?ย\.?|ธ\.?ค\.?)\.?\s*(\d{2,4})/);
+      if (!m) return '';
+      const day = m[1].padStart(2, '0');
+      const mk = m[2].replace(/\./g, '');
+      const month = THAI_MONTHS[mk] || '01';
+      let yr = parseInt(m[3]);
+      if (yr > 2400) yr -= 543; else if (yr < 100) yr = yr + 2000 - 543;
+      return `${yr}-${month}-${day}`;
+    }
+
     // Look for date + price patterns in table rows
     $('table tr, .period-row, [class*=departure]').each((_, row) => {
       const cells = $(row).find('td, span, div').map((_, c) => $(c).text().trim()).get();
       if (cells.length >= 2) {
-        // Try to extract price from cells (look for numbers > 1000)
+        const joined = cells.join(' ');
+        // Try to extract date range from joined text
+        const dateRangeMatch = joined.match(
+          /(\d{1,2}\s*(?:ม\.?ค\.?|ก\.?พ\.?|มี\.?ค\.?|เม\.?ย\.?|พ\.?ค\.?|มิ\.?ย\.?|ก\.?ค\.?|ส\.?ค\.?|ก\.?ย\.?|ต\.?ค\.?|พ\.?ย\.?|ธ\.?ค\.?)\.?\s*\d{2,4})\s*[-–~]\s*(\d{1,2}\s*(?:ม\.?ค\.?|ก\.?พ\.?|มี\.?ค\.?|เม\.?ย\.?|พ\.?ค\.?|มิ\.?ย\.?|ก\.?ค\.?|ส\.?ค\.?|ก\.?ย\.?|ต\.?ค\.?|พ\.?ย\.?|ธ\.?ค\.?)\.?\s*\d{2,4})/
+        );
+        const startDate = dateRangeMatch ? parseThaiDate(dateRangeMatch[1]) : undefined;
+        const endDate = dateRangeMatch ? parseThaiDate(dateRangeMatch[2]) : undefined;
+
+        // Extract price (number > 1000)
         const priceCell = cells.find(c => {
           const num = parseInt(c.replace(/[,\s]/g, ''), 10);
           return num > 1000;
         });
         const price = priceCell ? parseInt(priceCell.replace(/[,\s]/g, ''), 10) : undefined;
 
-        // Try to extract seats from "Group Size" column
+        // Extract seats
         const seatsCell = cells.find(c => /^\d{1,3}$/.test(c.trim()));
         const seatsLeft = seatsCell ? parseInt(seatsCell) : undefined;
 
+        // Build clean rawText: just the date range
+        const cleanRaw = dateRangeMatch
+          ? `${dateRangeMatch[1]} - ${dateRangeMatch[2]}`
+          : cells[0]?.slice(0, 60) || '';
+
         periods.push({
-          rawText: cells.join(' | '),
+          startDate: startDate || undefined,
+          endDate: endDate || undefined,
+          rawText: cleanRaw,
           price,
           seatsLeft,
-          status: cells.find(c => /เปิด|ว่าง|open|available/i.test(c)) ? 'open' : 'open',
+          status: 'open',
         });
       }
     });
 
-    // Fallback: look for date patterns in body text
+    // Fallback: date patterns in body text
     if (periods.length === 0) {
-      const dateMatches = bodyText.matchAll(
-        /(\d{1,2})\s*[-–]\s*(\d{1,2})\s*(ม\.?ค|ก\.?พ|มี\.?ค|เม\.?ย|พ\.?ค|มิ\.?ย|ก\.?ค|ส\.?ค|ก\.?ย|ต\.?ค|พ\.?ย|ธ\.?ค)\.?\s*(\d{2,4})/g
+      const dateRangeMatches = bodyText.matchAll(
+        /(\d{1,2})\s*(ม\.?ค\.?|ก\.?พ\.?|มี\.?ค\.?|เม\.?ย\.?|พ\.?ค\.?|มิ\.?ย\.?|ก\.?ค\.?|ส\.?ค\.?|ก\.?ย\.?|ต\.?ค\.?|พ\.?ย\.?|ธ\.?ค\.?)\.?\s*(\d{2,4})\s*[-–~]\s*(\d{1,2})\s*(ม\.?ค\.?|ก\.?พ\.?|มี\.?ค\.?|เม\.?ย\.?|พ\.?ค\.?|มิ\.?ย\.?|ก\.?ค\.?|ส\.?ค\.?|ก\.?ย\.?|ต\.?ค\.?|พ\.?ย\.?|ธ\.?ค\.?)\.?\s*(\d{2,4})/g
       );
-      for (const m of dateMatches) {
-        periods.push({ rawText: m[0] });
+      for (const m of dateRangeMatches) {
+        const sd = parseThaiDate(`${m[1]} ${m[2]} ${m[3]}`);
+        const ed = parseThaiDate(`${m[4]} ${m[5]} ${m[6]}`);
+        periods.push({
+          startDate: sd || undefined,
+          endDate: ed || undefined,
+          rawText: `${m[1]} ${m[2]} ${m[3]} - ${m[4]} ${m[5]} ${m[6]}`,
+        });
       }
     }
 

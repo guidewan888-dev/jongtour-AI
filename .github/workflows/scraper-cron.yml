@@ -34,4 +34,6 @@ jobs:
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          GS25_EMAIL: ${{ secrets.GS25_EMAIL }}
+          GS25_PASSWORD: ${{ secrets.GS25_PASSWORD }}
         run: npx tsx src/main.ts

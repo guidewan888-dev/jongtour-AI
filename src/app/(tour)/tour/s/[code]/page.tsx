@@ -1,5 +1,6 @@
 'use client';
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
 const LINE_URL = 'https://line.me/R/ti/p/@jongtour';
@@ -282,9 +283,15 @@ export default function ScraperTourDetailPage({ params }: { params: { code: stri
                 </thead>
                 <tbody>
                   {tour.periods.map((p) => {
-                    const dateText = p.startDate && p.endDate
-                      ? `${new Date(p.startDate).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit' })} - ${new Date(p.endDate).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit' })}`
-                      : p.rawText || '-';
+                    let dateText = '-';
+                    if (p.startDate && p.endDate) {
+                      try {
+                        dateText = `${new Date(p.startDate).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit' })} - ${new Date(p.endDate).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit' })}`;
+                      } catch { dateText = p.rawText?.slice(0, 60) || '-'; }
+                    } else if (p.rawText) {
+                      // Truncate long raw text (pipe-separated data)
+                      dateText = p.rawText.length > 60 ? p.rawText.slice(0, 57) + '...' : p.rawText;
+                    }
                     const isFull = p.status === 'full' || (p.seatsLeft !== null && p.seatsLeft <= 0);
                     const isUrgent = p.seatsLeft !== null && p.seatsLeft > 0 && p.seatsLeft <= 5;
                     return (
@@ -313,9 +320,9 @@ export default function ScraperTourDetailPage({ params }: { params: { code: stri
                         </td>
                         <td className="py-2.5 text-right">
                           {!isFull && (
-                            <a href={LINE_URL} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-[10px] font-bold bg-emerald-500 text-white px-3 py-1 rounded-full hover:bg-emerald-600 transition-colors">
+                            <Link href={`/book/tour/s/${tour.code.toLowerCase()}?period=${p.id}`} className="inline-flex items-center gap-1 text-[10px] font-bold bg-primary-600 text-white px-3 py-1 rounded-full hover:bg-primary-700 transition-colors">
                               จอง
-                            </a>
+                            </Link>
                           )}
                         </td>
                       </tr>
@@ -333,14 +340,14 @@ export default function ScraperTourDetailPage({ params }: { params: { code: stri
         <div className="bg-gradient-to-r from-primary-50 via-orange-50 to-amber-50 rounded-xl border border-primary-200 p-5 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div>
             <h4 className="font-bold text-slate-800 text-sm mb-1">🎉 สนใจจองทัวร์นี้?</h4>
-            <p className="text-xs text-slate-500">แอดไลน์ @jongtour เพื่อสอบถามราคา เช็ควันว่าง และจองทัวร์</p>
+            <p className="text-xs text-slate-500">จองออนไลน์ได้เลย หรือแอดไลน์ @jongtour เพื่อสอบถามเพิ่มเติม</p>
           </div>
           <div className="flex gap-3">
-            <a href={LINE_URL} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 px-6 py-3 bg-emerald-500 text-white rounded-xl font-bold text-sm hover:bg-emerald-600 transition-colors shadow-lg whitespace-nowrap">
-              <img src="https://upload.wikimedia.org/wikipedia/commons/4/41/LINE_logo.svg" alt="LINE" className="w-5 h-5" /> จองทัวร์เลย
-            </a>
-            <a href="tel:0612345678" className="flex items-center gap-2 px-5 py-3 bg-white border-2 border-slate-200 text-slate-700 rounded-xl font-bold text-sm hover:bg-slate-50 transition-colors whitespace-nowrap">
-              📱 โทรจอง
+            <Link href={`/book/tour/s/${tour.code.toLowerCase()}`} className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-primary-600 to-orange-500 text-white rounded-xl font-bold text-sm hover:shadow-xl transition-all shadow-lg whitespace-nowrap">
+              จองเลย →
+            </Link>
+            <a href={LINE_URL} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 px-5 py-3 bg-emerald-500 text-white rounded-xl font-bold text-sm hover:bg-emerald-600 transition-colors whitespace-nowrap">
+              <img src="https://upload.wikimedia.org/wikipedia/commons/4/41/LINE_logo.svg" alt="LINE" className="w-5 h-5" /> สอบถาม
             </a>
           </div>
         </div>
@@ -404,9 +411,7 @@ export default function ScraperTourDetailPage({ params }: { params: { code: stri
         </div>
         <div className="flex gap-2">
           <a href={LINE_URL} target="_blank" rel="noopener noreferrer" className="px-3 py-2 rounded-lg bg-emerald-500 text-white font-bold text-sm shadow">💬</a>
-          {tour.pdfUrl && !tour.pdfUrl.includes('gs25travel.com') && (
-            <a href={tour.pdfUrl} target="_blank" rel="noopener noreferrer" className="px-3 py-2 rounded-lg bg-blue-500 text-white font-bold text-sm shadow">📄</a>
-          )}
+          <Link href={`/book/tour/s/${tour.code.toLowerCase()}`} className="px-5 py-2 rounded-lg bg-gradient-to-r from-primary-600 to-orange-500 text-white font-bold text-sm shadow-lg">จองเลย →</Link>
         </div>
       </div>
     </div>
