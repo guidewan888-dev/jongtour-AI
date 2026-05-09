@@ -39,6 +39,19 @@ export const adminMenu: MenuItem[] = [
     ]
   },
   {
+    label: 'Tour Scraper',
+    href: '/scraper',
+    icon: 'Bug',
+    permission: ['SUPER_ADMIN', 'ADMIN'],
+    enabled: true,
+    status: 'ACTIVE',
+    route_exists: true,
+    children: [
+      { label: 'Dashboard', href: '/scraper', enabled: true, status: 'ACTIVE', route_exists: true },
+      { label: 'Scrape History', href: '/scraper/runs', enabled: true, status: 'ACTIVE', route_exists: true },
+    ]
+  },
+  {
     label: 'Bookings',
     href: '/bookings',
     icon: 'ShoppingCart',
