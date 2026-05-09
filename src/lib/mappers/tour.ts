@@ -30,7 +30,7 @@ export interface StandardTour {
   pdfUrl: string;
   thumbnailUrl: string;
   highlights: string[];
-  wholesaler: string;           // canonical name e.g. "letsgo", "oneworldtour"
+  wholesaler: string;           // canonical name e.g. "letsgo", "worldconnection"
   // Navigation
   href: string;                 // internal link for the card
   sourceUrl: string;            // external original URL (scraper only)

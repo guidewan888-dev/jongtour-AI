@@ -3,14 +3,14 @@ import type { SiteConfig } from '../types.js';
 
 export const sites: SiteConfig[] = [
   {
-    name: 'oneworldtour',
+    name: 'worldconnection',
     enabled: true,
     type: 'wordpress',
-    baseUrl: 'https://www.oneworldtour.co.th',
+    baseUrl: 'https://worldconnection.co.th',
     sitemapUrls: [
-      'https://www.oneworldtour.co.th/sitemap.xml',
-      'https://www.oneworldtour.co.th/sitemap_index.xml',
-      'https://www.oneworldtour.co.th/wp-sitemap.xml',
+      'https://worldconnection.co.th/sitemap.xml',
+      'https://worldconnection.co.th/sitemap_index.xml',
+      'https://worldconnection.co.th/wp-sitemap.xml',
     ],
     tourUrlPattern: /\/(tour\/[a-z]{2,}[0-9]+|custom-landingpage\/[\w%-]+)\/?$/i,
     requestDelayMs: 2000,

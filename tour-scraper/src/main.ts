@@ -1,11 +1,11 @@
 // ─── Tour Scraper — Main Entry Point ────────
 // Usage:
 //   npm run dev                        # scrape all enabled sites
-//   npm run dev -- --site oneworldtour # scrape specific site
+//   npm run dev -- --site worldconnection # scrape specific site
 
 import 'dotenv/config';
 import { sites } from './config/sites.js';
-import { OneWorldTourScraper } from './scrapers/oneworldtour.js';
+import { WorldConnectionScraper } from './scrapers/worldconnection.js';
 import { ITravelsScraper } from './scrapers/itravels.js';
 import { BestInternationalScraper } from './scrapers/bestintl.js';
 import { GS25Scraper } from './scrapers/gs25.js';
@@ -16,7 +16,7 @@ import type { ScrapeStats } from './types.js';
 
 // ── Scraper Registry ──
 const scraperMap: Record<string, new (cfg: any) => BaseScraper> = {
-  oneworldtour: OneWorldTourScraper,
+  worldconnection: WorldConnectionScraper,
   itravels: ITravelsScraper,
   bestintl: BestInternationalScraper,
   gs25: GS25Scraper,

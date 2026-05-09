@@ -6,12 +6,12 @@ import Link from 'next/link';
 const LINE_URL = 'https://line.me/R/ti/p/@jongtour';
 
 const SUPPLIER_INFO: Record<string, { displayName: string; logo: string; accent: string; gradient: string; landingPath: string }> = {
-  oneworldtour: {
-    displayName: 'One World Tour',
-    logo: '/images/logos/oneworldtour.png',
+  worldconnection: {
+    displayName: 'World Connection',
+    logo: '/images/logos/worldconnection.png',
     accent: 'text-orange-600',
     gradient: 'from-amber-600 to-orange-500',
-    landingPath: '/wholesaler/oneworldtour',
+    landingPath: '/wholesaler/worldconnection',
   },
   itravels: {
     displayName: 'iTravels Center',
@@ -102,7 +102,7 @@ export default function ScraperTourDetailPage({ params }: { params: { code: stri
     </div>
   );
 
-  const supplier = SUPPLIER_INFO[tour.site] || SUPPLIER_INFO.oneworldtour;
+  const supplier = SUPPLIER_INFO[tour.site] || SUPPLIER_INFO.worldconnection;
 
   return (
     <div className="bg-slate-50 pb-28 md:pb-8">

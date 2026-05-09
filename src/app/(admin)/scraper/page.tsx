@@ -24,7 +24,7 @@ export default async function ScraperDashboard({
 
   // Stats per site
   const { count: totalCount } = await supabase.from("scraper_tours").select("id", { count: "exact", head: true });
-  const { count: owtCount } = await supabase.from("scraper_tours").select("id", { count: "exact", head: true }).eq("site", "oneworldtour");
+  const { count: owtCount } = await supabase.from("scraper_tours").select("id", { count: "exact", head: true }).eq("site", "worldconnection");
   const { count: itCount } = await supabase.from("scraper_tours").select("id", { count: "exact", head: true }).eq("site", "itravels");
   const { count: bestCount } = await supabase.from("scraper_tours").select("id", { count: "exact", head: true }).eq("site", "bestintl");
   const { count: gsCount } = await supabase.from("scraper_tours").select("id", { count: "exact", head: true }).eq("site", "gs25");
@@ -34,7 +34,7 @@ export default async function ScraperDashboard({
   const lastSync = lastRun?.[0];
 
   const SITE_COLORS: Record<string, string> = {
-    oneworldtour: "bg-orange-100 text-orange-700",
+    worldconnection: "bg-orange-100 text-orange-700",
     itravels: "bg-sky-100 text-sky-700",
     bestintl: "bg-red-100 text-red-700",
     gs25: "bg-emerald-100 text-emerald-700",
@@ -92,7 +92,7 @@ export default async function ScraperDashboard({
           <p className="text-2xl font-bold text-slate-800">{totalCount ?? 0}</p>
         </div>
         <div className="bg-white border border-slate-200 rounded-xl p-4">
-          <p className="text-sm text-orange-600 font-medium">OneWorldTour</p>
+          <p className="text-sm text-orange-600 font-medium">World Connection</p>
           <p className="text-2xl font-bold text-orange-600">{owtCount ?? 0}</p>
         </div>
         <div className="bg-white border border-slate-200 rounded-xl p-4">
@@ -126,8 +126,8 @@ export default async function ScraperDashboard({
           <Link href="/scraper" className={`px-3 py-1.5 text-sm rounded-lg ${!site ? "bg-slate-800 text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"}`}>
             ทั้งหมด
           </Link>
-          <Link href="/scraper?site=oneworldtour" className={`px-3 py-1.5 text-sm rounded-lg ${site === "oneworldtour" ? "bg-orange-600 text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"}`}>
-            OneWorldTour
+          <Link href="/scraper?site=worldconnection" className={`px-3 py-1.5 text-sm rounded-lg ${site === "worldconnection" ? "bg-orange-600 text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"}`}>
+            World Connection
           </Link>
           <Link href="/scraper?site=itravels" className={`px-3 py-1.5 text-sm rounded-lg ${site === "itravels" ? "bg-sky-600 text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"}`}>
             iTravels

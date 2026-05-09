@@ -47,9 +47,9 @@ const SUPPLIER_CONFIG: Record<string, {
     accentBorder: 'border-purple-200',
     tagline: 'สร้างสรรค์ทริปพิเศษ โปรแกรมเอ็กซ์คลูซีฟ',
   },
-  'oneworldtour': {
-    name: 'oneworldtour', displayName: 'One World Tour',
-    logo: '/images/logos/oneworldtour.png',
+  'worldconnection': {
+    name: 'worldconnection', displayName: 'World Connection',
+    logo: '/images/logos/worldconnection.png',
     gradient: 'from-amber-800 via-orange-700 to-red-600',
     heroBg: 'bg-amber-800', accent: 'text-orange-600', accentLight: 'bg-orange-50',
     accentBorder: 'border-orange-200',
@@ -110,7 +110,7 @@ export default function WholesalePage({ params }: { params: { code: string } }) 
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
   // Scraper-sourced sites use a different API
-  const isScraperSite = ['oneworldtour', 'itravels', 'bestinternational', 'gs25'].includes(params.code);
+  const isScraperSite = ['worldconnection', 'itravels', 'bestinternational', 'gs25'].includes(params.code);
 
   useEffect(() => {
     setLoading(true);

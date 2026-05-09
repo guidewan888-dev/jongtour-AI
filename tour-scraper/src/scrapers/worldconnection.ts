@@ -1,6 +1,6 @@
-// ─── OneWorldTour Scraper (WordPress) ───────
+// ─── World Connection Scraper (WordPress) ───────
 // Phase 1: Discover tour URLs by crawling landing pages
-// Phase 2: Scrape individual /tour/owttXXXXXX/ pages
+// Phase 2: Scrape individual /tour/wXXXXXXX/ pages
 
 import * as cheerio from 'cheerio';
 import { BaseScraper } from './base.js';
@@ -22,7 +22,7 @@ const AIRLINE_MAP: Record<string, string> = {
   'PG': 'Bangkok Airways', 'RJ': 'Royal Jordanian', 'GF': 'Gulf Air',
 };
 
-export class OneWorldTourScraper extends BaseScraper {
+export class WorldConnectionScraper extends BaseScraper {
 
   async discoverUrls(): Promise<string[]> {
     // 1. Get ALL URLs from sitemap (landing pages)
@@ -32,7 +32,7 @@ export class OneWorldTourScraper extends BaseScraper {
       landingPattern,
       this.cfg.userAgent,
     );
-    console.log(`[owt] Found ${landingUrls.length} landing pages to crawl for /tour/ links`);
+    console.log(`[wct] Found ${landingUrls.length} landing pages to crawl for /tour/ links`);
 
     // Also try to find direct /tour/ URLs in sitemap
     const directTourUrls = await discoverUrls(
@@ -40,7 +40,7 @@ export class OneWorldTourScraper extends BaseScraper {
       /\/tour\/[a-z]{2,}[0-9]+\/?$/i,
       this.cfg.userAgent,
     );
-    console.log(`[owt] Found ${directTourUrls.length} direct /tour/ URLs in sitemap`);
+    console.log(`[wct] Found ${directTourUrls.length} direct /tour/ URLs in sitemap`);
 
     // 2. Crawl a sample of landing pages to find /tour/ links
     const tourUrls = new Set<string>(directTourUrls);
@@ -63,20 +63,20 @@ export class OneWorldTourScraper extends BaseScraper {
           if (href && /\/tour\/[a-z]{2,}[0-9]+\/?$/i.test(href)) {
             try {
               const fullUrl = new URL(href, lpUrl);
-              if (fullUrl.hostname.includes('oneworldtour.co.th')) {
+              if (fullUrl.hostname.includes('worldconnection.co.th')) {
                 tourUrls.add(fullUrl.href.replace(/\/$/, '') + '/');
               }
             } catch {}
           }
         });
 
-        console.log(`[owt] Crawled ${i + 1}/${Math.min(landingUrls.length, maxLandingPages)} — ${tourUrls.size} unique tour URLs found`);
+        console.log(`[wct] Crawled ${i + 1}/${Math.min(landingUrls.length, maxLandingPages)} — ${tourUrls.size} unique tour URLs found`);
       } catch (e) {
-        console.error(`[owt] Skip ${lpUrl}: ${(e as Error).message}`);
+        console.error(`[wct] Skip ${lpUrl}: ${(e as Error).message}`);
       }
     }
 
-    console.log(`[owt] Total unique tour URLs discovered: ${tourUrls.size}`);
+    console.log(`[wct] Total unique tour URLs discovered: ${tourUrls.size}`);
     return [...tourUrls];
   }
 
@@ -98,7 +98,7 @@ export class OneWorldTourScraper extends BaseScraper {
 
     // ── Title (from page title or h1) ──
     const rawTitle = $('title').text().trim();
-    const title = rawTitle.replace(/\s*[-–|].*One\s*World.*$/i, '').trim()
+    const title = rawTitle.replace(/\s*[-–|].*(?:World\s*Connection|WEK|WCN).*$/i, '').trim()
       || $('h1').first().text().trim();
 
     // ── Duration — parse "X วัน" from title (most reliable) ──
@@ -169,8 +169,9 @@ export class OneWorldTourScraper extends BaseScraper {
       // Split meta description by common separators
       metaDesc.split(/[,，|·•●]/g).forEach(part => {
         const cleaned = part.trim();
+        const JUNK_HIGHLIGHT_PATTERNS = /(โปรแกรมทัวร์|ออสเตรเลีย-นิวซีแลนด์|เรือสำราญ|ทัวร์โปรโมชั่น|โปรแกรม.*ทัวร์|^ทัวร์\w+$|World Connection|www\.|http|@|\.com|\.co\.th|โทร|สายด่วน|เมนู|หน้าหลัก|ติดต่อเรา|เกี่ยวกับเรา)/i;
         if (cleaned.length > 3 && cleaned.length < 60
-          && !/(ทัวร์|ราคา|จอง|โทร|เดินทาง|www|http|@|รหัส|One World)/i.test(cleaned)
+          && !JUNK_HIGHLIGHT_PATTERNS.test(cleaned)
           && highlights.length < 8
           && !highlights.includes(cleaned)) {
           highlights.push(cleaned);

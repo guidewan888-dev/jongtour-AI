@@ -54,7 +54,7 @@ export default async function ScraperRunsPage() {
                     </td>
                     <td className="p-3">
                       <span className={`text-xs px-2 py-0.5 rounded font-medium ${
-                        r.site === "oneworldtour" ? "bg-blue-100 text-blue-700" : "bg-purple-100 text-purple-700"
+                        r.site === "worldconnection" ? "bg-blue-100 text-blue-700" : "bg-purple-100 text-purple-700"
                       }`}>
                         {r.site}
                       </span>

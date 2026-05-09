@@ -40,7 +40,7 @@ export default async function ScraperTourDetail({
           <div>
             <div className="flex items-center gap-2 mb-2">
               <span className={`text-xs px-2 py-0.5 rounded font-medium ${
-                tour.site === "oneworldtour" ? "bg-blue-100 text-blue-700" : "bg-purple-100 text-purple-700"
+                tour.site === "worldconnection" ? "bg-blue-100 text-blue-700" : "bg-purple-100 text-purple-700"
               }`}>
                 {tour.site}
               </span>
