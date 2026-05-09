@@ -44,11 +44,11 @@ const allWholesalePartners = [
   {
     name: "World Connection",
     code: "worldconnection",
-    logo: "/images/logos/world connections.jpg",
-    description: "เชื่อมต่อทุกเส้นทางทั่วโลก กับโปรแกรมทัวร์คุณภาพระดับสากล",
-    tourCount: 75,
-    rating: 4.7,
-    tags: ["ยุโรป", "อเมริกา", "ตะวันออกกลาง"],
+    logo: "/images/logos/worldconnection.png",
+    description: "โฮลเซลพรีเมี่ยม เชื่อมต่อทุกเส้นทางทั่วโลก ยุโรป เอเชีย และตะวันออกกลาง",
+    tourCount: 282,
+    rating: 4.8,
+    tags: ["ยุโรป", "เอเชีย", "ตะวันออกกลาง"],
   },
   {
     name: "Best International",

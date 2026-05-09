@@ -10,6 +10,10 @@ const wholesalePartners = [
   { name: "Go365", code: "go365", logo: "/images/logos/download.jfif", color: "#3b82f6" },
   { name: "Checkin Group", code: "checkin", logo: "/images/logos/CH7.jpg", color: "#ef4444" },
   { name: "Tour Factory", code: "tour-factory", logo: "/images/logos/Tour-Factory.jpg", color: "#8b5cf6" },
+  { name: "World Connection", code: "worldconnection", logo: "/images/logos/worldconnection.png", color: "#f97316" },
+  { name: "iTravels Center", code: "itravels", logo: "/images/logos/itravels.png", color: "#0ea5e9" },
+  { name: "Best International", code: "bestinternational", logo: "/images/logos/Bestinternational.png", color: "#dc2626" },
+  { name: "GS25 Travel", code: "gs25", logo: "/images/logos/GS Group.png", color: "#10b981" },
 ];
 
 const quickActions = [
@@ -309,7 +313,7 @@ export default function TourHomePage() {
       <section className="py-16 px-4 text-center bg-white">
         <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-slate-400 mb-2">OFFICIAL WHOLESALE PARTNERS</p>
         <h2 className="text-xl font-semibold text-slate-800 mb-8">รวมทัวร์จากโฮลเซลชั้นนำ</h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 max-w-[800px] mx-auto">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 max-w-[900px] mx-auto">
           {wholesalePartners.map((p, idx) => (
             <Link
               key={p.code}

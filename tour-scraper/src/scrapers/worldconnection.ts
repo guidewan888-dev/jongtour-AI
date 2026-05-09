@@ -4,7 +4,6 @@
 
 import * as cheerio from 'cheerio';
 import { BaseScraper } from './base.js';
-import { discoverUrls } from '../core/sitemap.js';
 import type { TourData, TourPeriod } from '../types.js';
 
 // ── Airline code mapping ──
@@ -25,56 +24,86 @@ const AIRLINE_MAP: Record<string, string> = {
 export class WorldConnectionScraper extends BaseScraper {
 
   async discoverUrls(): Promise<string[]> {
-    // 1. Get ALL URLs from sitemap (landing pages)
-    const landingPattern = /\/custom-landingpage\//i;
-    const landingUrls = await discoverUrls(
-      this.cfg.sitemapUrls,
-      landingPattern,
-      this.cfg.userAgent,
-    );
-    console.log(`[wct] Found ${landingUrls.length} landing pages to crawl for /tour/ links`);
+    const tourUrls = new Set<string>();
 
-    // Also try to find direct /tour/ URLs in sitemap
-    const directTourUrls = await discoverUrls(
-      this.cfg.sitemapUrls,
-      /\/tour\/[a-z]{2,}[0-9]+\/?$/i,
-      this.cfg.userAgent,
-    );
-    console.log(`[wct] Found ${directTourUrls.length} direct /tour/ URLs in sitemap`);
+    // Helper: extract tour URLs from a page's HTML
+    const extractTourUrls = (html: string, baseUrl: string) => {
+      const $ = cheerio.load(html);
+      $('a[href*="/tour/"]').each((_, el) => {
+        const href = $(el).attr('href');
+        if (href && /\/tour\/[a-z]{1,}[0-9]+[a-z]*\/?$/i.test(href)) {
+          try {
+            const fullUrl = new URL(href, baseUrl);
+            if (fullUrl.hostname.includes('worldconnection.co.th')) {
+              tourUrls.add(fullUrl.href.replace(/\/$/, '') + '/');
+            }
+          } catch {}
+        }
+      });
+    };
 
-    // 2. Crawl a sample of landing pages to find /tour/ links
-    const tourUrls = new Set<string>(directTourUrls);
-    const maxLandingPages = 200; // Crawl ALL landing pages
+    // ── Paginate through category archive pages ──
+    // /intertours/page/X/ has ~30 pages with 10 tours each = ~300 international tours
+    // /localtours/page/X/ has domestic tours
+    const categories = [
+      { base: 'https://worldconnection.co.th/intertours', label: 'Inter Tours' },
+      { base: 'https://worldconnection.co.th/localtours', label: 'Local Tours' },
+    ];
 
-    for (const [i, lpUrl] of landingUrls.slice(0, maxLandingPages).entries()) {
-      try {
-        await this.sleep(1000);
-        const res = await fetch(lpUrl, {
-          headers: { 'User-Agent': this.cfg.userAgent },
-          signal: AbortSignal.timeout(15_000),
-        });
-        if (!res.ok) continue;
-        const html = await res.text();
-        const $ = cheerio.load(html);
+    for (const cat of categories) {
+      const maxPages = 35;
+      let emptyPages = 0;
 
-        // Find links matching /tour/owttXXXXXX/
-        $('a[href*="/tour/"]').each((_, el) => {
-          const href = $(el).attr('href');
-          if (href && /\/tour\/[a-z]{2,}[0-9]+\/?$/i.test(href)) {
-            try {
-              const fullUrl = new URL(href, lpUrl);
-              if (fullUrl.hostname.includes('worldconnection.co.th')) {
-                tourUrls.add(fullUrl.href.replace(/\/$/, '') + '/');
-              }
-            } catch {}
+      console.log(`[wct] Crawling ${cat.label} (up to ${maxPages} pages)...`);
+
+      for (let page = 1; page <= maxPages; page++) {
+        try {
+          await this.sleep(1200);
+          const url = page === 1 ? `${cat.base}/` : `${cat.base}/page/${page}/`;
+
+          const res = await fetch(url, {
+            headers: { 'User-Agent': this.cfg.userAgent },
+            signal: AbortSignal.timeout(20_000),
+          });
+
+          if (!res.ok) {
+            console.log(`[wct] ${cat.label} p${page}: HTTP ${res.status} — stopping`);
+            break;
           }
-        });
 
-        console.log(`[wct] Crawled ${i + 1}/${Math.min(landingUrls.length, maxLandingPages)} — ${tourUrls.size} unique tour URLs found`);
-      } catch (e) {
-        console.error(`[wct] Skip ${lpUrl}: ${(e as Error).message}`);
+          const html = await res.text();
+          const beforeCount = tourUrls.size;
+          extractTourUrls(html, url);
+          const newCount = tourUrls.size - beforeCount;
+
+          console.log(`[wct] ${cat.label} p${page}/${maxPages}: +${newCount} new → ${tourUrls.size} total`);
+
+          if (newCount === 0) {
+            emptyPages++;
+            if (emptyPages >= 2) {
+              console.log(`[wct] ${cat.label}: 2 empty pages — done`);
+              break;
+            }
+          } else {
+            emptyPages = 0;
+          }
+        } catch (e) {
+          console.error(`[wct] ${cat.label} p${page}: ${(e as Error).message}`);
+        }
       }
     }
+
+    // ── Also crawl the homepage for any featured tours ──
+    try {
+      console.log(`[wct] Crawling homepage for featured tours...`);
+      const res = await fetch('https://worldconnection.co.th/', {
+        headers: { 'User-Agent': this.cfg.userAgent },
+        signal: AbortSignal.timeout(20_000),
+      });
+      if (res.ok) {
+        extractTourUrls(await res.text(), 'https://worldconnection.co.th/');
+      }
+    } catch {}
 
     console.log(`[wct] Total unique tour URLs discovered: ${tourUrls.size}`);
     return [...tourUrls];
