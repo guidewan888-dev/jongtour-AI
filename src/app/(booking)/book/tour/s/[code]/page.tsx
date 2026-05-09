@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Calendar, Users, MapPin, ChevronRight, Loader2, Minus, Plus } from "lucide-react";
+import { Calendar, Users, MapPin, ChevronRight, Loader2, Minus, Plus, Shield, Car } from "lucide-react";
 import { setBookingSession } from "@/lib/bookingSession";
 
 interface TourPeriod {
@@ -37,8 +37,17 @@ interface ScraperTour {
   periods: TourPeriod[];
 }
 
+interface AddOn {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  unit: string;
+  icon: React.ReactNode;
+}
+
 const LINE_URL = "https://line.me/R/ti/p/@jongtour";
-const price = (n: number) => (n > 0 ? `฿${n.toLocaleString()}` : "-");
+const fmt = (n: number) => (n > 0 ? `฿${n.toLocaleString()}` : "-");
 const fmtDate = (s: string) => {
   try {
     return new Date(s).toLocaleDateString("th-TH", { day: "numeric", month: "long", year: "numeric" });
@@ -46,6 +55,28 @@ const fmtDate = (s: string) => {
     return s;
   }
 };
+
+const ADD_ONS: AddOn[] = [
+  {
+    id: "insurance",
+    name: "ประกันภัยการเดินทาง",
+    description: "คุ้มครอง 2 ล้านบาท ทุกเหตุการณ์ไม่คาดคิด",
+    price: 800,
+    unit: "/ท่าน",
+    icon: <Shield className="w-5 h-5 text-emerald-500" />,
+  },
+  {
+    id: "airport_transfer",
+    name: "รถรับส่งสนามบิน",
+    description: "รับ-ส่งถึงหน้าบ้าน สะดวกสบาย",
+    price: 1500,
+    unit: "/เที่ยว",
+    icon: <Car className="w-5 h-5 text-blue-500" />,
+  },
+];
+
+// Default single room supplement if tour has deposit but no explicit single price
+const DEFAULT_SINGLE_SUPPLEMENT = 9500;
 
 export default function ScraperBookTourPage({ params }: { params: { code: string } }) {
   const router = useRouter();
@@ -56,6 +87,8 @@ export default function ScraperBookTourPage({ params }: { params: { code: string
   const [selectedPeriod, setSelectedPeriod] = useState<number | null>(null);
   const [adults, setAdults] = useState(1);
   const [children, setChildren] = useState(0);
+  const [singleRooms, setSingleRooms] = useState(0);
+  const [selectedAddOns, setSelectedAddOns] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     fetch(`/api/tours/scraper/${params.code}`)
@@ -63,7 +96,6 @@ export default function ScraperBookTourPage({ params }: { params: { code: string
       .then((data) => {
         if (data.tour) {
           setTour(data.tour);
-          // Auto-select period from URL param
           const periodParam = searchParams.get("period");
           if (periodParam) setSelectedPeriod(parseInt(periodParam));
         } else setError(data.error || "ไม่พบโปรแกรมทัวร์");
@@ -74,15 +106,40 @@ export default function ScraperBookTourPage({ params }: { params: { code: string
 
   const selPeriod = tour?.periods.find((p) => p.id === selectedPeriod);
   const unitPrice = selPeriod?.price || tour?.price || 0;
+  const singlePrice = DEFAULT_SINGLE_SUPPLEMENT;
+
+  const addOnsTotal = useMemo(() => {
+    let total = 0;
+    selectedAddOns.forEach((id) => {
+      const addon = ADD_ONS.find((a) => a.id === id);
+      if (addon) {
+        if (addon.id === "insurance") {
+          total += addon.price * (adults + children);
+        } else {
+          total += addon.price;
+        }
+      }
+    });
+    return total;
+  }, [selectedAddOns, adults, children]);
 
   const totalPrice = useMemo(() => {
-    return unitPrice * (adults + children);
-  }, [unitPrice, adults, children]);
+    return unitPrice * (adults + children) + singleRooms * singlePrice + addOnsTotal;
+  }, [unitPrice, adults, children, singleRooms, singlePrice, addOnsTotal]);
 
   const totalDeposit = useMemo(() => {
     if (!tour?.deposit) return 0;
     return tour.deposit * (adults + children);
   }, [tour?.deposit, adults, children]);
+
+  const toggleAddOn = (id: string) => {
+    setSelectedAddOns((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
 
   const handleProceed = () => {
     if (!tour) return;
@@ -101,13 +158,16 @@ export default function ScraperBookTourPage({ params }: { params: { code: string
       departureEndDate: selPeriod?.endDate || "",
       priceAdult: unitPrice,
       priceChild: unitPrice,
-      priceSingle: 0,
+      priceSingle: singlePrice,
       deposit: tour.deposit || 0,
       remainingSeats: selPeriod?.seatsLeft || 99,
       adults,
       children,
-      singleRooms: 0,
-      addOns: [],
+      singleRooms,
+      addOns: [...selectedAddOns].map((id) => {
+        const addon = ADD_ONS.find((a) => a.id === id);
+        return { id, name: addon?.name || id, price: addon?.price || 0 };
+      }),
       totalPrice,
       totalDeposit,
       travelers: [],
@@ -212,7 +272,7 @@ export default function ScraperBookTourPage({ params }: { params: { code: string
                         <div className="text-right shrink-0">
                           {p.price && p.price > 0 ? (
                             <>
-                              <div className="text-lg font-bold text-primary-600">{price(p.price)}</div>
+                              <div className="text-lg font-bold text-primary-600">{fmt(p.price)}</div>
                               <div className="text-[10px] text-slate-400">/ท่าน</div>
                             </>
                           ) : (
@@ -238,10 +298,11 @@ export default function ScraperBookTourPage({ params }: { params: { code: string
             {(selPeriod || unitPrice > 0) && (
               <div className="bg-white rounded-xl border border-slate-200 p-5 space-y-4">
                 <h2 className="font-bold text-slate-900 flex items-center gap-2">👥 จำนวนผู้เดินทาง</h2>
+                {/* Adults */}
                 <div className="flex items-center justify-between py-3 border-b border-slate-100">
                   <div>
                     <div className="font-semibold text-slate-800">ผู้ใหญ่</div>
-                    <div className="text-xs text-slate-400">{price(unitPrice)} / ท่าน</div>
+                    <div className="text-xs text-slate-400">{fmt(unitPrice)} / ท่าน</div>
                   </div>
                   <div className="flex items-center gap-3">
                     <button onClick={() => setAdults(Math.max(1, adults - 1))} className="w-8 h-8 rounded-full border border-slate-300 flex items-center justify-center hover:bg-slate-100 transition-colors disabled:opacity-30" disabled={adults <= 1}><Minus className="w-4 h-4" /></button>
@@ -249,10 +310,11 @@ export default function ScraperBookTourPage({ params }: { params: { code: string
                     <button onClick={() => setAdults(Math.min(maxPax, adults + 1))} className="w-8 h-8 rounded-full border border-primary-300 bg-primary-50 text-primary-600 flex items-center justify-center hover:bg-primary-100 transition-colors disabled:opacity-30" disabled={adults + children >= maxPax}><Plus className="w-4 h-4" /></button>
                   </div>
                 </div>
-                <div className="flex items-center justify-between py-3">
+                {/* Children */}
+                <div className="flex items-center justify-between py-3 border-b border-slate-100">
                   <div>
                     <div className="font-semibold text-slate-800">เด็ก <span className="text-xs text-slate-400 font-normal">(2-11 ปี)</span></div>
-                    <div className="text-xs text-slate-400">{price(unitPrice)} / ท่าน</div>
+                    <div className="text-xs text-slate-400">{fmt(unitPrice)} / ท่าน</div>
                   </div>
                   <div className="flex items-center gap-3">
                     <button onClick={() => setChildren(Math.max(0, children - 1))} className="w-8 h-8 rounded-full border border-slate-300 flex items-center justify-center hover:bg-slate-100 transition-colors disabled:opacity-30" disabled={children <= 0}><Minus className="w-4 h-4" /></button>
@@ -260,6 +322,47 @@ export default function ScraperBookTourPage({ params }: { params: { code: string
                     <button onClick={() => setChildren(Math.min(maxPax - adults, children + 1))} className="w-8 h-8 rounded-full border border-primary-300 bg-primary-50 text-primary-600 flex items-center justify-center hover:bg-primary-100 transition-colors disabled:opacity-30" disabled={adults + children >= maxPax}><Plus className="w-4 h-4" /></button>
                   </div>
                 </div>
+                {/* Single Room */}
+                <div className="flex items-center justify-between py-3">
+                  <div>
+                    <div className="font-semibold text-slate-800">ห้องพักเดี่ยว</div>
+                    <div className="text-xs text-slate-400">{fmt(singlePrice)} / ห้อง (เพิ่มเติม)</div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <button onClick={() => setSingleRooms(Math.max(0, singleRooms - 1))} className="w-8 h-8 rounded-full border border-slate-300 flex items-center justify-center hover:bg-slate-100 transition-colors disabled:opacity-30" disabled={singleRooms <= 0}><Minus className="w-4 h-4" /></button>
+                    <span className="font-bold text-lg w-8 text-center">{singleRooms}</span>
+                    <button onClick={() => setSingleRooms(Math.min(adults, singleRooms + 1))} className="w-8 h-8 rounded-full border border-primary-300 bg-primary-50 text-primary-600 flex items-center justify-center hover:bg-primary-100 transition-colors disabled:opacity-30" disabled={singleRooms >= adults}><Plus className="w-4 h-4" /></button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Add-ons */}
+            {(selPeriod || unitPrice > 0) && (
+              <div className="bg-white rounded-xl border border-slate-200 p-5 space-y-4">
+                <h2 className="font-bold text-slate-900 flex items-center gap-2">✨ บริการเสริมพิเศษ (Add-on)</h2>
+                {ADD_ONS.map((addon) => {
+                  const isSelected = selectedAddOns.has(addon.id);
+                  return (
+                    <label key={addon.id} className={`flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all ${isSelected ? "border-primary-300 bg-primary-50/50" : "border-slate-200 hover:border-slate-300"}`}>
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={() => toggleAddOn(addon.id)}
+                        className="w-4 h-4 text-primary-600 rounded focus:ring-primary-500"
+                      />
+                      <div className="flex-shrink-0">{addon.icon}</div>
+                      <div className="flex-1 min-w-0">
+                        <div className="font-semibold text-slate-800 text-sm">{addon.name}</div>
+                        <div className="text-xs text-slate-500">{addon.description}</div>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <div className="font-bold text-primary-600">+{fmt(addon.price)}</div>
+                        <div className="text-[10px] text-slate-400">{addon.unit}</div>
+                      </div>
+                    </label>
+                  );
+                })}
               </div>
             )}
           </div>
@@ -284,23 +387,46 @@ export default function ScraperBookTourPage({ params }: { params: { code: string
                     <hr className="border-slate-100" />
                     <div className="flex justify-between">
                       <span className="text-slate-500">ผู้ใหญ่ ×{adults}</span>
-                      <span className="font-medium">{price(unitPrice * adults)}</span>
+                      <span className="font-medium">{fmt(unitPrice * adults)}</span>
                     </div>
                     {children > 0 && (
                       <div className="flex justify-between">
                         <span className="text-slate-500">เด็ก ×{children}</span>
-                        <span className="font-medium">{price(unitPrice * children)}</span>
+                        <span className="font-medium">{fmt(unitPrice * children)}</span>
                       </div>
                     )}
+                    {singleRooms > 0 && (
+                      <div className="flex justify-between">
+                        <span className="text-slate-500">ห้องพักเดี่ยว ×{singleRooms}</span>
+                        <span className="font-medium">{fmt(singleRooms * singlePrice)}</span>
+                      </div>
+                    )}
+                    {[...selectedAddOns].map((id) => {
+                      const addon = ADD_ONS.find((a) => a.id === id);
+                      if (!addon) return null;
+                      const addonTotal = addon.id === "insurance" ? addon.price * (adults + children) : addon.price;
+                      return (
+                        <div key={id} className="flex justify-between">
+                          <span className="text-slate-500">{addon.name}</span>
+                          <span className="font-medium">{fmt(addonTotal)}</span>
+                        </div>
+                      );
+                    })}
                     <hr className="border-slate-100" />
                     <div className="flex justify-between text-base font-bold">
                       <span className="text-slate-800">ราคารวม</span>
-                      <span className="text-primary-600">{price(totalPrice)}</span>
+                      <span className="text-primary-600">{fmt(totalPrice)}</span>
                     </div>
                     {totalDeposit > 0 && (
                       <div className="flex justify-between bg-orange-50 rounded-lg px-3 py-2">
                         <span className="text-orange-700 font-medium text-xs">💰 ชำระมัดจำ</span>
-                        <span className="text-orange-700 font-bold">{price(totalDeposit)}</span>
+                        <span className="text-orange-700 font-bold">{fmt(totalDeposit)}</span>
+                      </div>
+                    )}
+                    {selPeriod?.seatsLeft && (
+                      <div className="flex justify-between text-xs">
+                        <span className="text-slate-400">ที่นั่งเหลือ</span>
+                        <span className="text-slate-500 font-medium">{selPeriod.seatsLeft} ที่</span>
                       </div>
                     )}
                   </div>

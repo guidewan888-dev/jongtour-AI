@@ -223,13 +223,11 @@ export default function ScraperTourDetailPage({ params }: { params: { code: stri
                   </a>
                 )}
                 <Link href={`/book/tour/s/${tour.code.toLowerCase()}`} className="px-5 py-3 rounded-xl bg-gradient-to-r from-primary-600 to-orange-500 text-white font-bold text-sm hover:shadow-xl transition-all shadow-lg flex items-center gap-2">
-                  ✨ สอบถาม / จองทัวร์
+                  จองเลย →
                 </Link>
-                {tour.sourceUrl && !tour.sourceUrl.includes('gs25travel.com') && (
-                  <a href={tour.sourceUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-slate-600 transition-colors">
-                    🔗 ดูที่เว็บต้นทาง
-                  </a>
-                )}
+                <a href={LINE_URL} target="_blank" rel="noopener noreferrer" className="px-5 py-3 rounded-xl bg-emerald-500 text-white font-bold text-sm hover:bg-emerald-600 transition-colors shadow-sm flex items-center gap-2">
+                  ❤️ สอบถามเพิ่มเติม
+                </a>
               </div>
             </div>
           </div>
