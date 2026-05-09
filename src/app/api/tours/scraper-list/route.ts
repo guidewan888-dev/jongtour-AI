@@ -29,8 +29,48 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
+  // For tours with no price, try to get cheapest price from periods
+  const toursWithNoPrice = (data || []).filter(t => !t.price_from || t.price_from <= 0);
+  const tourIds = toursWithNoPrice.map(t => t.id);
+
+  let periodPriceMap: Record<number, number> = {};
+  if (tourIds.length > 0) {
+    const { data: periods } = await supabase
+      .from('scraper_tour_periods')
+      .select('tour_id, price')
+      .in('tour_id', tourIds)
+      .gt('price', 0)
+      .order('price', { ascending: true });
+
+    if (periods) {
+      periods.forEach(p => {
+        if (!periodPriceMap[p.tour_id] || p.price < periodPriceMap[p.tour_id]) {
+          periodPriceMap[p.tour_id] = p.price;
+        }
+      });
+    }
+  }
+
   // Map through central mapper → consistent schema
   const tours = (data || []).map((t: any) => {
+    // Populate price from periods if main price is 0
+    if ((!t.price_from || t.price_from <= 0) && periodPriceMap[t.id]) {
+      t.price_from = periodPriceMap[t.id];
+    }
+
+    // Smart deposit calculation (same logic as detail API)
+    if (!t.deposit || t.deposit <= 0) {
+      const price = t.price_from || 0;
+      if (price > 0) {
+        if (price < 20000) t.deposit = 5000;
+        else if (price < 50000) t.deposit = 10000;
+        else if (price < 100000) t.deposit = 15000;
+        else t.deposit = 20000;
+      } else {
+        t.deposit = 10000; // industry default
+      }
+    }
+
     const standardTour = mapScraperTour(t as ScraperRawTour);
     return toCardProps(standardTour);
   });

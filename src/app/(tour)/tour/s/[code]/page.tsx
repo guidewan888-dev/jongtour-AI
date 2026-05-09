@@ -22,14 +22,14 @@ const SUPPLIER_INFO: Record<string, { displayName: string; logo: string; accent:
   },
   bestintl: {
     displayName: 'Best International',
-    logo: '/images/logos/bestintl.png',
+    logo: '/images/logos/Bestinternational.png',
     accent: 'text-red-600',
     gradient: 'from-red-600 to-rose-500',
-    landingPath: '/wholesaler/bestintl',
+    landingPath: '/wholesaler/bestinternational',
   },
   gs25: {
     displayName: 'GS25 Travel',
-    logo: '/images/logos/gs25.png',
+    logo: '/images/logos/GS Group.png',
     accent: 'text-emerald-600',
     gradient: 'from-emerald-600 to-green-500',
     landingPath: '/wholesaler/gs25',
@@ -71,6 +71,7 @@ export default function ScraperTourDetailPage({ params }: { params: { code: stri
   const [tour, setTour] = useState<ScraperTour | null>(null);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState('');
+  const [showAllPeriods, setShowAllPeriods] = useState(false);
 
   useEffect(() => {
     fetch(`/api/tours/scraper/${params.code}`)
@@ -264,61 +265,55 @@ export default function ScraperTourDetailPage({ params }: { params: { code: stri
       </div>
 
       {/* ─── TRAVEL PERIODS / DATES ─── */}
-      {tour.periods && tour.periods.length > 0 && (
+      {tour.periods && tour.periods.length > 0 && (() => {
+        const periods = showAllPeriods ? tour.periods : tour.periods.slice(0, 4);
+        return (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4">
-          <div className="bg-white rounded-xl border border-slate-200 p-5">
-            <h3 className="text-sm font-bold text-slate-900 mb-3 flex items-center gap-1.5">📅 วันเดินทาง & ที่นั่งว่าง</h3>
-            <div className="overflow-x-auto">
+          <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+            <h3 className="text-sm font-bold text-slate-900 px-5 pt-4 pb-2 flex items-center gap-1.5">📅 วันเดินทาง & ราคา</h3>
+            {/* Desktop Table */}
+            <div className="hidden md:block overflow-x-auto">
               <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-slate-100 text-left">
-                    <th className="pb-2 font-semibold text-slate-500 text-xs">วันเดินทาง</th>
-                    <th className="pb-2 font-semibold text-slate-500 text-xs text-center">ที่นั่ง</th>
-                    <th className="pb-2 font-semibold text-slate-500 text-xs text-right">ราคา</th>
-                    <th className="pb-2 font-semibold text-slate-500 text-xs text-center">สถานะ</th>
-                    <th className="pb-2 text-xs"></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {tour.periods.map((p) => {
+                <thead><tr className="bg-emerald-600 text-white text-xs">
+                  <th className="text-left px-4 py-2.5">เดินทาง</th>
+                  <th className="text-right px-3 py-2.5">ราคาผู้ใหญ่</th>
+                  <th className="text-right px-3 py-2.5">มัดจำ</th>
+                  <th className="text-center px-3 py-2.5">ที่นั่ง</th>
+                  <th className="text-center px-3 py-2.5">สถานะ</th>
+                  <th className="text-center px-3 py-2.5">จอง</th>
+                </tr></thead>
+                <tbody className="divide-y divide-slate-100">
+                  {periods.map((p) => {
                     let dateText = '-';
                     if (p.startDate && p.endDate) {
                       try {
                         dateText = `${new Date(p.startDate).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit' })} - ${new Date(p.endDate).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit' })}`;
                       } catch { dateText = p.rawText?.slice(0, 60) || '-'; }
                     } else if (p.rawText) {
-                      // Truncate long raw text (pipe-separated data)
                       dateText = p.rawText.length > 60 ? p.rawText.slice(0, 57) + '...' : p.rawText;
                     }
                     const isFull = p.status === 'full' || (p.seatsLeft !== null && p.seatsLeft <= 0);
-                    const isUrgent = p.seatsLeft !== null && p.seatsLeft > 0 && p.seatsLeft <= 5;
+                    const periodPrice = p.price && p.price > 0 ? p.price : tour.price;
                     return (
-                      <tr key={p.id} className="border-b border-slate-50 hover:bg-slate-50/50 transition-colors">
-                        <td className="py-2.5 text-slate-700 font-medium">{dateText}</td>
-                        <td className="py-2.5 text-center">
+                      <tr key={p.id} className="hover:bg-slate-50/50 transition-colors">
+                        <td className="px-4 py-3 font-medium text-slate-700 whitespace-nowrap">{dateText}</td>
+                        <td className="px-3 py-3 text-right font-bold text-slate-900">{periodPrice > 0 ? `฿${periodPrice.toLocaleString()}` : 'สอบถาม'}</td>
+                        <td className="px-3 py-3 text-right text-orange-600 font-bold">{tour.deposit > 0 ? `฿${tour.deposit.toLocaleString()}` : '-'}</td>
+                        <td className="px-3 py-3 text-center">
                           {p.seatsLeft !== null ? (
-                            <span className={`inline-flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded-full ${isFull ? 'bg-red-50 text-red-500' : isUrgent ? 'bg-orange-50 text-orange-600' : 'bg-green-50 text-green-600'}`}>
-                              {isFull ? 'เต็ม' : `${p.seatsLeft} ที่`}
+                            <span className={`inline-block min-w-[28px] py-0.5 rounded-full text-xs font-bold ${isFull ? 'bg-red-50 text-red-500' : p.seatsLeft <= 5 ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'}`}>
+                              {isFull ? 'เต็ม' : p.seatsLeft}
                             </span>
-                          ) : (
-                            <span className="text-xs text-slate-400">สอบถาม</span>
-                          )}
+                          ) : <span className="text-xs text-slate-400">สอบถาม</span>}
                         </td>
-                        <td className="py-2.5 text-right">
-                          {p.price && p.price > 0 ? (
-                            <span className="font-bold text-primary-600">฿{p.price.toLocaleString()}</span>
-                          ) : (
-                            <span className="text-xs text-slate-400">สอบถาม</span>
-                          )}
-                        </td>
-                        <td className="py-2.5 text-center">
+                        <td className="px-3 py-3 text-center">
                           <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${isFull ? 'bg-slate-100 text-slate-400' : 'bg-emerald-50 text-emerald-600'}`}>
                             {isFull ? 'เต็ม' : 'ว่าง'}
                           </span>
                         </td>
-                        <td className="py-2.5 text-right">
+                        <td className="px-3 py-3 text-center">
                           {!isFull && (
-                            <Link href={`/book/tour/s/${tour.code.toLowerCase()}?period=${p.id}`} className="inline-flex items-center gap-1 text-[10px] font-bold bg-primary-600 text-white px-3 py-1 rounded-full hover:bg-primary-700 transition-colors">
+                            <Link href={`/book/tour/s/${tour.code.toLowerCase()}?period=${p.id}`} className="text-xs bg-primary-600 text-white px-3 py-1 rounded-full font-bold hover:bg-primary-700">
                               จอง
                             </Link>
                           )}
@@ -329,9 +324,47 @@ export default function ScraperTourDetailPage({ params }: { params: { code: stri
                 </tbody>
               </table>
             </div>
+            {/* Mobile Cards */}
+            <div className="md:hidden px-4 pb-2 space-y-2">
+              {periods.map((p) => {
+                let dateText = '-';
+                if (p.startDate && p.endDate) {
+                  try {
+                    dateText = `${new Date(p.startDate).toLocaleDateString('th-TH', { day: 'numeric', month: 'short' })} - ${new Date(p.endDate).toLocaleDateString('th-TH', { day: 'numeric', month: 'short' })}`;
+                  } catch { dateText = p.rawText?.slice(0, 40) || '-'; }
+                } else if (p.rawText) {
+                  dateText = p.rawText.length > 40 ? p.rawText.slice(0, 37) + '...' : p.rawText;
+                }
+                const isFull = p.status === 'full' || (p.seatsLeft !== null && p.seatsLeft <= 0);
+                const periodPrice = p.price && p.price > 0 ? p.price : tour.price;
+                return (
+                  <div key={p.id} className="border border-slate-100 rounded-lg p-3">
+                    <div className="flex justify-between items-start mb-1.5">
+                      <span className="text-sm font-medium text-slate-700">{dateText}</span>
+                      {p.seatsLeft !== null && <span className="text-[10px] bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full font-bold">เหลือ {p.seatsLeft}</span>}
+                    </div>
+                    <div className="grid grid-cols-2 gap-1 text-xs text-slate-500">
+                      <span>ราคา: <b className="text-slate-800">{periodPrice > 0 ? `฿${periodPrice.toLocaleString()}` : 'สอบถาม'}</b></span>
+                      <span>มัดจำ: <b className="text-orange-600">{tour.deposit > 0 ? `฿${tour.deposit.toLocaleString()}` : '-'}</b></span>
+                    </div>
+                    {!isFull && (
+                      <Link href={`/book/tour/s/${tour.code.toLowerCase()}?period=${p.id}`} className="mt-2 block text-center text-xs bg-primary-600 text-white px-3 py-1.5 rounded-full font-bold hover:bg-primary-700">จอง</Link>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+            {tour.periods.length > 4 && (
+              <div className="px-5 pb-4">
+                <button onClick={() => setShowAllPeriods(!showAllPeriods)} className="text-xs text-primary-600 font-bold hover:underline">
+                  📅 {showAllPeriods ? '▲ ย่อ' : `ดูวันอื่นเพิ่มเติม (${tour.periods.length - 4} รอบ)`}
+                </button>
+              </div>
+            )}
           </div>
         </div>
-      )}
+        );
+      })()}
 
       {/* ─── BOOKING CTA (prominent) ─── */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4">
