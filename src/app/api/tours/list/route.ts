@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getTourList } from '@/services/tour.service';
 import { createClient } from '@/utils/supabase/server';
+import { mapWholesaleTour, mapScraperTour, toCardProps, type ScraperRawTour } from '@/lib/mappers/tour';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -8,6 +9,7 @@ export const revalidate = 0;
 /**
  * GET /api/tours/list?q=keyword&country=จีน&limit=50
  * Returns published tours from BOTH wholesale DB + scraper_tours.
+ * All data goes through the centralized Tour Mapper for consistent schema.
  */
 export async function GET(request: Request) {
   try {
@@ -16,11 +18,13 @@ export async function GET(request: Request) {
     const country = searchParams.get('country') || undefined;
     const limit = parseInt(searchParams.get('limit') || '1000', 10);
 
-    // 1. Existing wholesale tours
-    const wholesaleTours = await getTourList({ keyword, country, limit });
+    // 1. Existing wholesale tours → map through central mapper
+    const rawWholesale = await getTourList({ keyword, country, limit });
+    const wholesaleTours = rawWholesale.map(t => toCardProps(mapWholesaleTour(t)));
 
-    // 2. Scraper tours (OWT + iTravels)
-    const scraperTours = await getScraperTours({ keyword, country, limit: 500 });
+    // 2. Scraper tours → map through central mapper
+    const rawScraper = await getScraperTours({ keyword, country, limit: 500 });
+    const scraperTours = rawScraper.map(t => toCardProps(mapScraperTour(t)));
 
     // 3. Merge: wholesale first, then scraper
     const tours = [...wholesaleTours, ...scraperTours];
@@ -35,13 +39,13 @@ export async function GET(request: Request) {
 }
 
 /**
- * Fetch scraper tours from scraper_tours table, formatted like TourListItem
+ * Fetch raw scraper tours from scraper_tours table
  */
 async function getScraperTours(options: {
   keyword?: string;
   country?: string;
   limit?: number;
-}) {
+}): Promise<ScraperRawTour[]> {
   try {
     const supabase = createClient();
     let query = supabase
@@ -52,12 +56,9 @@ async function getScraperTours(options: {
       .order('last_scraped_at', { ascending: false })
       .limit(options.limit || 500);
 
-    // Filter by country (Thai name match)
     if (options.country) {
       query = query.ilike('country', `%${options.country}%`);
     }
-
-    // Filter by keyword in title
     if (options.keyword) {
       query = query.ilike('title', `%${options.keyword}%`);
     }
@@ -65,40 +66,7 @@ async function getScraperTours(options: {
     const { data, error } = await query;
     if (error || !data) return [];
 
-    return data.map(t => {
-      const durMatch = t.duration?.match(/(\d+)\s*วัน\s*(\d+)?/);
-      const durationDays = durMatch ? parseInt(durMatch[1]) : 0;
-      const durationNights = durMatch && durMatch[2] ? parseInt(durMatch[2]) : Math.max(0, durationDays - 1);
-
-      // Map site name to display name
-      const supplierName = t.site === 'oneworldtour' ? 'oneworldtour'
-        : t.site === 'itravels' ? 'itravels'
-        : t.site === 'bestintl' ? 'bestintl'
-        : t.site === 'gs25' ? 'gs25' : t.site || '';
-
-      return {
-        id: `scraper-${t.id}`,
-        slug: t.tour_code?.toLowerCase() || '',
-        code: t.tour_code || '',
-        title: t.title || '',
-        supplier: supplierName,
-        country: t.country || '',
-        city: '',
-        durationDays,
-        durationNights,
-        duration: t.duration || '',
-        nextDeparture: 'N/A',
-        price: t.price_from || 0,
-        availableSeats: 0,
-        imageUrl: t.cover_image_url || '',
-        airline: t.airline || '',
-        sourceUrl: t.source_url || '',
-        pdfUrl: t.pdf_url || '',
-        deposit: t.deposit || 0,
-        hotelRating: t.hotel_rating || 0,
-        highlights: t.highlights || [],
-      };
-    });
+    return data as ScraperRawTour[];
   } catch (e) {
     console.error('[Scraper tours fetch]', e);
     return [];

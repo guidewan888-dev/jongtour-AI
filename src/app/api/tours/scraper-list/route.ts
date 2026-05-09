@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/utils/supabase/server';
+import { mapScraperTour, toCardProps, type ScraperRawTour } from '@/lib/mappers/tour';
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -15,12 +16,11 @@ export async function GET(req: NextRequest) {
     .order('last_scraped_at', { ascending: false })
     .limit(limit);
 
-  // Filter by site
   if (site) {
     query = query.eq('site', site);
   }
 
-  // Exclude twitter garbage rows
+  // Exclude garbage rows
   query = query.not('source_url', 'like', '%twitter.com%');
 
   const { data, error } = await query;
@@ -29,35 +29,10 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  // Map to Tour-compatible format
-  const tours = (data || []).map((t) => {
-    // Parse duration "X วัน Y คืน" or "X Days" 
-    const durMatch = t.duration?.match(/(\d+)\s*วัน\s*(\d+)?/);
-    const durationDays = durMatch ? parseInt(durMatch[1]) : 0;
-    const durationNights = durMatch && durMatch[2] ? parseInt(durMatch[2]) : Math.max(0, durationDays - 1);
-
-    return {
-      id: `scraper-${t.id}`,
-      slug: t.tour_code?.toLowerCase() || '',
-      code: t.tour_code || '',
-      title: t.title || '',
-      supplier: t.site || '',
-      country: t.country || '',
-      city: '',
-      durationDays,
-      durationNights,
-      duration: t.duration || '',
-      nextDeparture: '',
-      price: t.price_from || 0,
-      availableSeats: 0,
-      imageUrl: t.cover_image_url || '',
-      airline: t.airline || '',
-      sourceUrl: t.source_url || '',
-      pdfUrl: t.pdf_url || '',
-      deposit: t.deposit || 0,
-      hotelRating: t.hotel_rating || 0,
-      highlights: t.highlights || [],
-    };
+  // Map through central mapper → consistent schema
+  const tours = (data || []).map((t: any) => {
+    const standardTour = mapScraperTour(t as ScraperRawTour);
+    return toCardProps(standardTour);
   });
 
   return NextResponse.json({ tours, total: tours.length });
