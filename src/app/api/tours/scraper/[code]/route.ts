@@ -66,6 +66,23 @@ export async function GET(
       ).slice(0, 8)
     : [];
 
+  // ── Smart default deposit: if scraper didn't find มัดจำ, calculate from price ──
+  let priceFrom = data.price_from || 0;
+  // If main price is 0, try cheapest period price
+  if (!priceFrom && cleanPeriods.length > 0) {
+    const periodPrices = cleanPeriods.map(p => p.price).filter((p): p is number => !!p && p > 0);
+    if (periodPrices.length > 0) priceFrom = Math.min(...periodPrices);
+  }
+  let deposit = data.deposit || 0;
+  if (!deposit && priceFrom > 0) {
+    if (priceFrom < 20000) deposit = 5000;
+    else if (priceFrom < 50000) deposit = 10000;
+    else if (priceFrom < 100000) deposit = 15000;
+    else deposit = 20000;
+  }
+  // Last resort: if still no deposit (no price data at all), use industry default
+  if (!deposit) deposit = 10000;
+
   const tour = {
     id: data.id,
     code: data.tour_code || '',
@@ -76,11 +93,11 @@ export async function GET(
     durationDays,
     durationNights,
     airline: data.airline || '',
-    price: data.price_from || 0,
+    price: priceFrom,
     imageUrl: data.cover_image_url || '',
     sourceUrl: data.source_url || '',
     pdfUrl: data.pdf_url || '',
-    deposit: data.deposit || 0,
+    deposit,
     hotelRating: data.hotel_rating || 0,
     highlights: cleanHighlights,
     lastScraped: data.last_scraped_at || '',
