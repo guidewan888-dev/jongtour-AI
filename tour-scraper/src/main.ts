@@ -47,28 +47,48 @@ async function runSite(siteCfg: (typeof sites)[number]): Promise<void> {
     }
 
     // 2. Scrape each tour
+    const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
     for (const [i, url] of urls.entries()) {
-      try {
-        const tour = await scraper.scrapeTour(url);
+      // Rate-limit: wait between requests to avoid being blocked
+      if (i > 0) await sleep(3000);
 
-        // 3. Download images
-        const images = [];
-        for (const imgUrl of tour.imageUrls) {
-          const meta = await downloadAndStore(imgUrl, siteCfg.userAgent);
-          if (meta) images.push(meta);
+      let attempts = 0;
+      const maxRetries = 3;
+      let success = false;
+
+      while (attempts < maxRetries && !success) {
+        try {
+          attempts++;
+          const tour = await scraper.scrapeTour(url);
+
+          // 3. Download images
+          const images = [];
+          for (const imgUrl of tour.imageUrls) {
+            const meta = await downloadAndStore(imgUrl, siteCfg.userAgent);
+            if (meta) images.push(meta);
+          }
+
+          // 4. Save to DB
+          await upsertTour(siteCfg.name, tour, images);
+
+          stats.urlsScraped++;
+          stats.imagesSaved += images.length;
+          console.log(
+            `✅ [${siteCfg.name}] ${i + 1}/${urls.length} — ${tour.tourCode || tour.title?.slice(0, 40)} (${images.length} imgs)`
+          );
+          success = true;
+        } catch (e) {
+          const msg = (e as Error).message;
+          if (attempts < maxRetries) {
+            const backoff = attempts * 5000; // 5s, 10s, 15s
+            console.warn(`⏳ [${siteCfg.name}] ${i + 1}/${urls.length} attempt ${attempts} failed: ${msg} — retry in ${backoff/1000}s`);
+            await sleep(backoff);
+          } else {
+            stats.urlsFailed++;
+            console.error(`❌ [${siteCfg.name}] ${i + 1}/${urls.length} — ${url}: ${msg}`);
+          }
         }
-
-        // 4. Save to DB
-        await upsertTour(siteCfg.name, tour, images);
-
-        stats.urlsScraped++;
-        stats.imagesSaved += images.length;
-        console.log(
-          `✅ [${siteCfg.name}] ${i + 1}/${urls.length} — ${tour.tourCode || tour.title?.slice(0, 40)} (${images.length} imgs)`
-        );
-      } catch (e) {
-        stats.urlsFailed++;
-        console.error(`❌ [${siteCfg.name}] ${i + 1}/${urls.length} — ${url}:`, (e as Error).message);
       }
     }
 
