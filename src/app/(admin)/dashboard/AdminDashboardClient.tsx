@@ -1,5 +1,5 @@
 'use client';
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 
 export default function AdminDashboardClient({ initialData }: { initialData: any }) {
   const data = initialData;
@@ -84,6 +84,9 @@ export default function AdminDashboardClient({ initialData }: { initialData: any
           <div className="text-3xl font-black text-slate-900">{data.kpi.syncErrors}</div>
         </a>
       </div>
+
+      {/* Section 2.5: World Connection Sync Widget */}
+      <WorldConnectionWidget />
 
       {/* Section 3: Grids Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -246,6 +249,141 @@ export default function AdminDashboardClient({ initialData }: { initialData: any
         </div>
 
       </div>
+    </div>
+  );
+}
+
+// ─── World Connection Sync Widget ────────────────────────────────────
+function WorldConnectionWidget() {
+  const [syncing, setSyncing] = useState(false);
+  const [result, setResult] = useState<string | null>(null);
+  const [stats, setStats] = useState<{ tours: number; lastSync: string | null; status: string } | null>(null);
+
+  useEffect(() => {
+    // Fetch WC stats on mount
+    fetch('/api/scraper/sync')
+      .then(r => r.json())
+      .then(d => {
+        if (d.ok && d.runs) {
+          const wcRun = d.runs.find((r: any) => r.site_name === 'worldconnection');
+          if (wcRun) {
+            setStats({
+              tours: wcRun.tours_scraped || 0,
+              lastSync: wcRun.started_at,
+              status: wcRun.status || 'unknown',
+            });
+          }
+        }
+      })
+      .catch(() => {});
+
+    // Also fetch tour count
+    fetch('/api/tours/scraper-list?site=worldconnection&limit=1')
+      .then(r => r.json())
+      .then(d => {
+        if (d.total !== undefined) {
+          setStats(prev => prev ? { ...prev, tours: d.total } : { tours: d.total, lastSync: null, status: 'unknown' });
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  const handleSync = async () => {
+    if (syncing) return;
+    setSyncing(true);
+    setResult(null);
+    try {
+      const res = await fetch('/api/scraper/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ site: 'worldconnection' }),
+      });
+      const data = await res.json();
+      setResult(data.ok ? `✅ ${data.message}` : `❌ ${data.error}`);
+    } catch {
+      setResult('❌ Network error');
+    } finally {
+      setSyncing(false);
+      setTimeout(() => setResult(null), 6000);
+    }
+  };
+
+  const formatTime = (iso: string | null) => {
+    if (!iso) return '-';
+    try { return new Date(iso).toLocaleString('th-TH', { timeZone: 'Asia/Bangkok' }); } catch { return iso; }
+  };
+
+  return (
+    <div className="bg-gradient-to-r from-orange-50 via-amber-50 to-yellow-50 rounded-2xl border border-orange-200 shadow-sm overflow-hidden">
+      <div className="px-6 py-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        {/* Left: Info */}
+        <div className="flex items-center gap-4">
+          <div className="w-14 h-14 bg-white rounded-xl border border-orange-200 flex items-center justify-center p-2 shadow-sm">
+            <img src="/images/logos/worldconnection.png" alt="World Connection" className="w-full h-full object-contain" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <h3 className="font-bold text-slate-900 text-base">World Connection</h3>
+              <span className="text-[10px] font-bold bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full">Auto-Sync</span>
+            </div>
+            <div className="flex items-center gap-4 text-xs text-slate-500">
+              <span className="flex items-center gap-1">
+                📊 <b className="text-slate-700">{stats?.tours ?? '...'}</b> โปรแกรมทัวร์
+              </span>
+              <span className="flex items-center gap-1">
+                🕐 Last sync: <b className="text-slate-700">{formatTime(stats?.lastSync ?? null)}</b>
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Center: Schedule Info */}
+        <div className="hidden lg:block bg-white/60 backdrop-blur-sm rounded-xl border border-orange-100 px-4 py-2.5 text-center">
+          <p className="text-[10px] text-slate-400 font-medium uppercase tracking-wider mb-0.5">ซิ้งอัตโนมัติ</p>
+          <p className="text-sm font-bold text-orange-700">ทุก 6 ชม.</p>
+          <p className="text-[10px] text-slate-400">00:15, 06:15, 12:15, 18:15</p>
+        </div>
+
+        {/* Right: Actions */}
+        <div className="flex items-center gap-3">
+          <a
+            href="/scraper?site=worldconnection"
+            className="px-4 py-2 text-sm font-medium text-orange-700 bg-white border border-orange-200 rounded-lg hover:bg-orange-50 transition-colors"
+          >
+            📋 ดูข้อมูลทัวร์
+          </a>
+          <button
+            onClick={handleSync}
+            disabled={syncing}
+            className={`px-5 py-2 text-sm font-bold rounded-lg transition-all shadow-sm flex items-center gap-2 ${
+              syncing
+                ? 'bg-slate-200 text-slate-500 cursor-not-allowed'
+                : 'bg-gradient-to-r from-orange-500 to-amber-500 text-white hover:shadow-lg hover:scale-[1.02]'
+            }`}
+          >
+            {syncing ? (
+              <>
+                <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                </svg>
+                Syncing...
+              </>
+            ) : (
+              <>🔄 Sync WC Now</>
+            )}
+          </button>
+        </div>
+      </div>
+
+      {/* Result toast */}
+      {result && (
+        <div className="px-6 pb-3">
+          <div className={`px-4 py-2 rounded-lg text-sm font-medium ${result.startsWith('✅') ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-red-50 text-red-700 border border-red-200'}`}>
+            {result}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

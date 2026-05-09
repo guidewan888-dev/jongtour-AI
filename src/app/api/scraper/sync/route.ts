@@ -1,17 +1,29 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
 
 /**
  * POST /api/scraper/sync
- * Records a manual sync request and optionally triggers GitHub Actions.
+ * Records a manual sync request and triggers GitHub Actions.
+ * 
+ * Body: { site?: string }
+ *   - If `site` is provided (e.g. "worldconnection"), triggers only that site's workflow.
+ *   - If omitted, triggers the full scraper cron (all sites).
  */
-export async function POST() {
+export async function POST(req: NextRequest) {
   try {
     const supabase = createClient();
 
-    // Record the sync request in scraper_runs table
+    let site: string | null = null;
+    try {
+      const body = await req.json();
+      site = body.site || null;
+    } catch {
+      // No body = sync all
+    }
+
+    // Record the sync request
     const { error: insertError } = await supabase.from("scraper_runs").insert({
-      site_name: "manual_trigger",
+      site_name: site || "manual_trigger",
       status: "pending",
       started_at: new Date().toISOString(),
       tours_scraped: 0,
@@ -21,12 +33,18 @@ export async function POST() {
       console.error("[sync] Insert error:", insertError.message);
     }
 
-    // Try to trigger GitHub Actions workflow if PAT is available
+    // Choose which workflow to trigger
+    const WORKFLOWS: Record<string, string> = {
+      worldconnection: "worldconnection-sync.yml",
+    };
+    const workflowFile = site ? (WORKFLOWS[site] || "scraper-cron.yml") : "scraper-cron.yml";
+
+    // Try to trigger GitHub Actions
     const token = process.env.GH_PAT || process.env.GITHUB_PAT;
     if (token) {
       try {
         const res = await fetch(
-          "https://api.github.com/repos/guidewan888-dev/jongtour-AI/actions/workflows/scraper-cron.yml/dispatches",
+          `https://api.github.com/repos/guidewan888-dev/jongtour-AI/actions/workflows/${workflowFile}/dispatches`,
           {
             method: "POST",
             headers: {
@@ -40,7 +58,9 @@ export async function POST() {
         if (res.status === 204) {
           return NextResponse.json({
             ok: true,
-            message: "Scraper workflow triggered on GitHub Actions!",
+            message: site
+              ? `Sync triggered for ${site}! (workflow: ${workflowFile})`
+              : "Full scraper workflow triggered!",
           });
         }
       } catch (e) {
@@ -48,10 +68,12 @@ export async function POST() {
       }
     }
 
-    // Fallback: return success — the daily cron will pick it up
+    // Fallback
     return NextResponse.json({
       ok: true,
-      message: "Sync request recorded. Scraper will run on next cron cycle (daily 12:15 TH). To trigger immediately, add GITHUB_PAT to env.",
+      message: site
+        ? `Sync request recorded for ${site}. Will run on next cron cycle or add GITHUB_PAT to trigger immediately.`
+        : "Sync request recorded. Scraper will run on next cron cycle (daily 12:15 TH).",
     });
   } catch (e: any) {
     return NextResponse.json(
@@ -72,7 +94,7 @@ export async function GET() {
       .from("scraper_runs")
       .select("*")
       .order("started_at", { ascending: false })
-      .limit(5);
+      .limit(10);
 
     return NextResponse.json({ ok: true, runs: data || [] });
   } catch (e: any) {
