@@ -136,25 +136,6 @@ export default function SearchClient({ initialTours }: { initialTours: TourResul
       .finally(() => setIsLoading(false));
   }, [initialTours]);
 
-  if (!mounted) {
-    // SSR placeholder — avoids hydration mismatch
-    return (
-      <div className="g-container py-8">
-        <h1 className="text-xl font-bold text-slate-900 mb-4">ค้นหาทัวร์</h1>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {[...Array(6)].map((_, i) => (
-            <div key={i} className="g-card p-5 animate-pulse">
-              <div className="h-40 bg-slate-200 rounded-lg mb-3" />
-              <div className="h-4 bg-slate-200 rounded w-3/4 mb-3" />
-              <div className="h-3 bg-slate-100 rounded w-1/2 mb-2" />
-              <div className="h-3 bg-slate-100 rounded w-1/3" />
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  }
-
   useEffect(() => {
     document.body.style.overflow = isMobileFilterOpen ? 'hidden' : 'auto';
     return () => { document.body.style.overflow = 'auto'; };
@@ -298,6 +279,25 @@ export default function SearchClient({ initialTours }: { initialTours: TourResul
     setSelectedBudget('');
     setSortBy('recommend');
   };
+
+  // Hydration guard — show skeleton until client mounts
+  if (!mounted) {
+    return (
+      <div className="g-container py-8">
+        <h1 className="text-xl font-bold text-slate-900 mb-4">ค้นหาทัวร์</h1>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {[...Array(6)].map((_, i) => (
+            <div key={i} className="g-card p-5 animate-pulse">
+              <div className="h-40 bg-slate-200 rounded-lg mb-3" />
+              <div className="h-4 bg-slate-200 rounded w-3/4 mb-3" />
+              <div className="h-3 bg-slate-100 rounded w-1/2 mb-2" />
+              <div className="h-3 bg-slate-100 rounded w-1/3" />
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   const budgetOptions: { label: string; value: BudgetRange }[] = [
     { label: 'ไม่เกิน ฿15,000', value: '0-15000' },
