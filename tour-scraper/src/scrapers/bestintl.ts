@@ -10,31 +10,45 @@ import type { TourData, TourPeriod, SiteConfig } from '../types.js';
 
 const COUNTRY_MAP: Record<string, string> = {
   'ญี่ปุ่น': 'ญี่ปุ่น', 'japan': 'ญี่ปุ่น', 'osaka': 'ญี่ปุ่น', 'tokyo': 'ญี่ปุ่น', 'hokkaido': 'ญี่ปุ่น',
-  'fukuoka': 'ญี่ปุ่น', 'nagoya': 'ญี่ปุ่น', 'narita': 'ญี่ปุ่น',
+  'fukuoka': 'ญี่ปุ่น', 'nagoya': 'ญี่ปุ่น', 'narita': 'ญี่ปุ่น', 'nrt': 'ญี่ปุ่น', 'kix': 'ญี่ปุ่น',
+  'cts': 'ญี่ปุ่น', 'fuk': 'ญี่ปุ่น', 'ngo': 'ญี่ปุ่น',
   'จีน': 'จีน', 'china': 'จีน', 'chongqing': 'จีน', 'xian': 'จีน', 'kunming': 'จีน', 'xinjiang': 'จีน',
-  'เกาหลี': 'เกาหลี', 'korea': 'เกาหลี',
-  'ไต้หวัน': 'ไต้หวัน', 'taiwan': 'ไต้หวัน',
-  'ฮ่องกง': 'ฮ่องกง', 'hong kong': 'ฮ่องกง', 'hongkong': 'ฮ่องกง',
-  'เวียดนาม': 'เวียดนาม', 'vietnam': 'เวียดนาม',
-  'พม่า': 'พม่า', 'myanmar': 'พม่า',
+  'เฉิงตู': 'จีน', 'เฉิงตู้': 'จีน', 'เฉินตู': 'จีน', 'ฉงชิ่ง': 'จีน', 'เซี่ยงไฮ้': 'จีน',
+  'ปักกิ่ง': 'จีน', 'คุนหมิง': 'จีน', 'กุ้ยหลิน': 'จีน', 'จางเจียเจี้ย': 'จีน', 'ต๋ากู': 'จีน',
+  'อู่หลง': 'จีน', 'tfu': 'จีน', 'pvg': 'จีน', 'ckg': 'จีน', 'can': 'จีน', 'xnn': 'จีน',
+  'dyg': 'จีน', 'xiy': 'จีน',
+  'เกาหลี': 'เกาหลี', 'korea': 'เกาหลี', 'icn': 'เกาหลี',
+  'ไต้หวัน': 'ไต้หวัน', 'taiwan': 'ไต้หวัน', 'tpe': 'ไต้หวัน',
+  'ฮ่องกง': 'ฮ่องกง', 'hong kong': 'ฮ่องกง', 'hongkong': 'ฮ่องกง', 'hkg': 'ฮ่องกง',
+  'เวียดนาม': 'เวียดนาม', 'vietnam': 'เวียดนาม', 'han': 'เวียดนาม', 'dad': 'เวียดนาม', 'sgn': 'เวียดนาม',
+  'พม่า': 'พม่า', 'myanmar': 'พม่า', 'rgn': 'พม่า',
   'ลาว': 'ลาว', 'laos': 'ลาว',
   'สิงคโปร์': 'สิงคโปร์', 'singapore': 'สิงคโปร์',
   'มาเก๊า': 'ฮ่องกง', 'macau': 'ฮ่องกง',
-  'ยุโรป': 'ยุโรป', 'europe': 'ยุโรป',
+  'ยุโรป': 'ยุโรป', 'europe': 'ยุโรป', 'fra': 'ยุโรป', 'eur': 'ยุโรป',
+  'อิตาลี': 'ยุโรป', 'ฝรั่งเศส': 'ยุโรป', 'สวิส': 'ยุโรป', 'สแกนดิเนเวีย': 'ยุโรป',
   'อเมริกา': 'อเมริกา', 'america': 'อเมริกา', 'usa': 'อเมริกา',
   'อียิปต์': 'อียิปต์', 'egypt': 'อียิปต์',
-  'ตุรกี': 'ตุรกี', 'turkey': 'ตุรกี',
-  'จอร์แดน': 'จอร์แดน', 'jordan': 'จอร์แดน',
-  'จอร์เจีย': 'จอร์เจีย', 'georgia': 'จอร์เจีย',
+  'ตุรกี': 'ตุรกี', 'turkey': 'ตุรกี', 'ist': 'ตุรกี',
+  'จอร์แดน': 'จอร์แดน', 'jordan': 'จอร์แดน', 'amm': 'จอร์แดน',
+  'จอร์เจีย': 'จอร์เจีย', 'georgia': 'จอร์เจีย', 'geo': 'จอร์เจีย',
   'อิหร่าน': 'อิหร่าน', 'iran': 'อิหร่าน',
-  'คาซัคสถาน': 'คาซัคสถาน', 'kazakhstan': 'คาซัคสถาน',
-  'อินเดีย': 'อินเดีย', 'india': 'อินเดีย',
+  'คาซัคสถาน': 'คาซัคสถาน', 'kazakhstan': 'คาซัคสถาน', 'ala': 'คาซัคสถาน',
+  'อินเดีย': 'อินเดีย', 'india': 'อินเดีย', 'แคชเมียร์': 'อินเดีย', 'kashmir': 'อินเดีย',
+  'บาหลี': 'อินโดนีเซีย', 'bali': 'อินโดนีเซีย', 'bal': 'อินโดนีเซีย',
+  'นิวซีแลนด์': 'นิวซีแลนด์', 'new zealand': 'นิวซีแลนด์', 'nzl': 'นิวซีแลนด์',
 };
 
 function detectCountry(title: string, url: string): string {
   const combined = (title + ' ' + url).toLowerCase();
   for (const [key, val] of Object.entries(COUNTRY_MAP)) {
     if (combined.includes(key.toLowerCase())) return val;
+  }
+  // Also check IATA codes in tour code (e.g. BT-TFU49 → TFU → จีน)
+  const codeMatch = url.match(/\/tour\/[A-Z]*-?([A-Z]{3})/i);
+  if (codeMatch) {
+    const iata = codeMatch[1].toLowerCase();
+    if (COUNTRY_MAP[iata]) return COUNTRY_MAP[iata];
   }
   return '';
 }
@@ -239,9 +253,10 @@ export class BestInternationalScraper extends BaseScraper {
     const depositMatch = bodyText.match(/มัดจำ\s*[^0-9]*([\d,]+)/);
     const deposit = depositMatch ? parseInt(depositMatch[1].replace(/,/g, ''), 10) : undefined;
 
-    // Hotel rating
+    // Hotel rating — also check "พักโรงแรม X ดาว" pattern
     let hotelRating: number | undefined;
-    const starMatch = bodyText.match(/(\d)\s*(?:ดาว|star|★)/i);
+    const starMatch = bodyText.match(/(\d)\s*(?:ดาว|star|★)/i)
+      || bodyText.match(/โรงแรม(?:หรู)?\s*(\d)\s*ดาว/i);
     if (starMatch) hotelRating = parseInt(starMatch[1]);
 
     // Highlights
