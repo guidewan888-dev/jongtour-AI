@@ -60,7 +60,19 @@ export async function upsertTour(
         itinerary_html: tour.itineraryHtml,
         pdf_url: tour.pdfUrl,
         cover_image_url: images.length > 0
-          ? [...images].sort((a, b) => (b.fileSize || 0) - (a.fileSize || 0))[0].publicUrl
+          ? (() => {
+              // Prefer CloudFront image whose URL contains the tour code (= actual flyer)
+              const codeMatch = images.find(i =>
+                /cloudfront/i.test(i.originalUrl) &&
+                i.originalUrl.toLowerCase().includes(tour.tourCode.toLowerCase()) &&
+                !/mobile\.png/i.test(i.originalUrl)
+              );
+              if (codeMatch) return codeMatch.publicUrl;
+              // Fallback: largest non-banner image
+              const nonBanner = images.filter(i => !/mobile\.png/i.test(i.originalUrl));
+              return (nonBanner.length > 0 ? nonBanner : images)
+                .sort((a, b) => (b.fileSize || 0) - (a.fileSize || 0))[0].publicUrl;
+            })()
           : null,
         last_scraped_at: new Date().toISOString(),
         is_active: true,

@@ -133,7 +133,7 @@ export class BestInternationalScraper extends BaseScraper {
     page.on('response', (response) => {
       const reqUrl = response.url();
       const ct = response.headers()['content-type'] || '';
-      if (ct.startsWith('image/') && reqUrl.startsWith('http') && !/(logo|icon|favicon|flag|social|badge|line\.|facebook|google|apple)/i.test(reqUrl)) {
+      if (ct.startsWith('image/') && reqUrl.startsWith('http') && !/(logo|icon|favicon|flag|social|badge|line\.|facebook|google|apple|mobile\.png)/i.test(reqUrl)) {
         networkImages.add(reqUrl);
       }
     });
@@ -155,7 +155,7 @@ export class BestInternationalScraper extends BaseScraper {
       // Standard img + Angular attributes
       $('img[src], img[ng-src], img[data-src], [style*="background-image"]').each((_, el) => {
         const src = $(el).attr('src') || $(el).attr('ng-src') || $(el).attr('data-src') || '';
-        if (src && src.startsWith('http') && !/logo|icon|avatar|flag|svg|data:|line|facebook|instagram|tiktok|youtube|google|apple/i.test(src)) {
+        if (src && src.startsWith('http') && !/logo|icon|avatar|flag|svg|data:|line|facebook|instagram|tiktok|youtube|google|apple|mobile\.png/i.test(src)) {
           htmlImages.add(src);
         }
         // Check background-image style
@@ -179,12 +179,20 @@ export class BestInternationalScraper extends BaseScraper {
 
       // Prioritize CloudFront CDN images (tour flyers), then network images, then HTML images
       const allImages = [...networkImages, ...htmlImages, ...data.imageUrls];
+      // Separate CloudFront tour images, excluding PDFs and the generic mobile.png banner
       const tourImages = allImages.filter(img =>
-        /cloudfront|amazonaws/i.test(img) && !/\.pdf/i.test(img)
+        /cloudfront|amazonaws/i.test(img) && !/\.pdf/i.test(img) && !/mobile\.png/i.test(img)
       );
+      // Sort: images whose URL contains the tour code should come FIRST (they are the flyer)
+      const tourCode = url.match(/\/tour\/([A-Z0-9_-]+)/i)?.[1] || '';
+      tourImages.sort((a, b) => {
+        const aHasCode = tourCode && a.toLowerCase().includes(tourCode.toLowerCase()) ? 1 : 0;
+        const bHasCode = tourCode && b.toLowerCase().includes(tourCode.toLowerCase()) ? 1 : 0;
+        return bHasCode - aHasCode;
+      });
       const otherImages = allImages.filter(img =>
         !tourImages.includes(img) &&
-        !/logo|icon|avatar|flag|svg|banner.*site|header/i.test(img) &&
+        !/logo|icon|avatar|flag|svg|banner.*site|header|mobile\.png/i.test(img) &&
         /\.(jpe?g|png|webp)/i.test(img)
       );
       data.imageUrls = [...new Set([...tourImages, ...otherImages])].slice(0, 5);
