@@ -61,17 +61,16 @@ export async function upsertTour(
         pdf_url: tour.pdfUrl,
         cover_image_url: images.length > 0
           ? (() => {
-              // Prefer CloudFront image whose URL contains the tour code (= actual flyer)
+              // 1. Prefer CloudFront image whose URL contains the tour code (= actual flyer for bestintl)
               const codeMatch = images.find(i =>
                 /cloudfront/i.test(i.originalUrl) &&
                 i.originalUrl.toLowerCase().includes(tour.tourCode.toLowerCase()) &&
                 !/mobile\.png/i.test(i.originalUrl)
               );
               if (codeMatch) return codeMatch.publicUrl;
-              // Fallback: largest non-banner image
-              const nonBanner = images.filter(i => !/mobile\.png/i.test(i.originalUrl));
-              return (nonBanner.length > 0 ? nonBanner : images)
-                .sort((a, b) => (b.fileSize || 0) - (a.fileSize || 0))[0].publicUrl;
+              // 2. Use first image — scrapers return the cover/hero image first
+              //    (fallback to largest was wrong: shared template images are often larger than covers)
+              return images[0].publicUrl;
             })()
           : null,
         last_scraped_at: new Date().toISOString(),

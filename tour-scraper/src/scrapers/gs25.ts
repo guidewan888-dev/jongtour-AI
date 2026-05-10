@@ -356,22 +356,59 @@ export class GS25Scraper extends BaseScraper {
       const detailHtml = await page.content();
       const $ = cheerio.load(detailHtml);
 
-      // ── Extract carousel images ──
+      // ── Extract images from multiple sources ──
       const imageUrls = new Set<string>();
-      // Carousel images
+
+      // 1. Carousel images (original selector)
       $('.carousel-inner .item img, .carousel img, #carousel-example-generic img').each((_, img) => {
         const src = $(img).attr('src');
-        if (src && src.startsWith('http') && !/logo|icon|avatar|spacer/i.test(src)) {
+        if (src && src.startsWith('http') && !/logo|icon|avatar|spacer|favicon/i.test(src)) {
           imageUrls.add(src);
         }
       });
-      // Also check for data-src or lazy-loaded
+
+      // 2. General content images (program flyers, banners)
+      if (imageUrls.size === 0) {
+        $('img[src]').each((_, img) => {
+          const src = $(img).attr('src');
+          if (src && src.startsWith('http')
+            && !/logo|icon|avatar|spacer|favicon|flag|payment|bank|qr/i.test(src)
+            && !/\.(svg|gif)$/i.test(src)) {
+            // Check image is likely a program image (decent size attribute or from known CDN)
+            const width = parseInt($(img).attr('width') || '0', 10);
+            const height = parseInt($(img).attr('height') || '0', 10);
+            // Accept if dimensions unknown (will be validated by downloader) or large enough
+            if ((width === 0 && height === 0) || (width >= 200 && height >= 150)) {
+              imageUrls.add(src);
+            }
+          }
+        });
+      }
+
+      // 3. data-src / lazy-loaded images
       $('img[data-src]').each((_, img) => {
         const src = $(img).attr('data-src');
-        if (src && src.startsWith('http') && !/logo|icon|avatar|spacer/i.test(src)) {
+        if (src && src.startsWith('http') && !/logo|icon|avatar|spacer|favicon/i.test(src)) {
           imageUrls.add(src);
         }
       });
+
+      // 4. Background images in style attributes
+      $('[style*="background-image"]').each((_, el) => {
+        const bgMatch = $(el).attr('style')?.match(/url\(['"]?([^'")]+)/);
+        if (bgMatch?.[1] && bgMatch[1].startsWith('http') && !/logo|icon/i.test(bgMatch[1])) {
+          imageUrls.add(bgMatch[1]);
+        }
+      });
+
+      // 5. og:image meta tag as last resort
+      if (imageUrls.size === 0) {
+        const ogImage = $('meta[property="og:image"]').attr('content');
+        if (ogImage && ogImage.startsWith('http')) {
+          imageUrls.add(ogImage);
+        }
+      }
+
       tourData.imageUrls = [...imageUrls].slice(0, 15);
 
       // ── Extract PDF URL ──
