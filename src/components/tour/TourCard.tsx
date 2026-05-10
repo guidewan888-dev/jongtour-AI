@@ -8,6 +8,7 @@ export interface TourCardProps {
   code: string;
   title: string;
   supplier: string;
+  supplierDisplayName?: string;
   country: string;
   city: string;
   durationDays: number;

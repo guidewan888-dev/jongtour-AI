@@ -2,6 +2,13 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/utils/supabase/server';
 import { mapScraperTour, toCardProps, type ScraperRawTour } from '@/lib/mappers/tour';
 
+// Normalize legacy site names in the DB to canonical names
+const SITE_ALIAS_MAP: Record<string, string> = {
+  oneworldtour: 'worldconnection',
+  'one-world-tour': 'worldconnection',
+  onetour: 'worldconnection',
+};
+
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const site = searchParams.get('site') || '';
@@ -69,6 +76,11 @@ export async function GET(req: NextRequest) {
       } else {
         t.deposit = 10000; // industry default
       }
+    }
+
+    // Normalize legacy site names (e.g. oneworldtour → worldconnection)
+    if (t.site && SITE_ALIAS_MAP[t.site]) {
+      t.site = SITE_ALIAS_MAP[t.site];
     }
 
     const standardTour = mapScraperTour(t as ScraperRawTour);

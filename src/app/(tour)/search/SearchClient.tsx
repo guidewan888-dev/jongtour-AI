@@ -17,7 +17,22 @@ interface TourResult {
   availableSeats: number;
   imageUrl: string;
   airline: string;
+  sourceUrl?: string;
 }
+
+// Friendly display names for wholesalers (fallback for initialTours from server)
+const SUPPLIER_DISPLAY: Record<string, string> = {
+  worldconnection: 'World Connection',
+  oneworldtour: 'World Connection',
+  letsgo: "Let's Go",
+  "let'sgo": "Let's Go",
+  bestintl: 'Best International',
+  bestinternational: 'Best International',
+  gs25: 'GS25 Travel',
+  itravels: 'iTravels',
+  checkingroup: 'Check-in Group',
+  tourfactory: 'Tour Factory',
+};
 
 type BudgetRange = '' | '0-15000' | '15000-25000' | '25000-40000' | '40000+';
 
@@ -91,6 +106,7 @@ export default function SearchClient({ initialTours }: { initialTours: TourResul
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [tours, setTours] = useState<TourResult[]>(initialTours);
+  const [mounted, setMounted] = useState(false);
 
   // Filter states — 5 levels
   const [searchQuery, setSearchQuery] = useState('');
@@ -100,6 +116,9 @@ export default function SearchClient({ initialTours }: { initialTours: TourResul
   const [selectedCities, setSelectedCities] = useState<Set<string>>(new Set());
   const [selectedBudget, setSelectedBudget] = useState<BudgetRange>('');
   const [sortBy, setSortBy] = useState('recommend');
+
+  // Avoid hydration mismatch — render full UI only on client
+  useEffect(() => { setMounted(true); }, []);
 
   useEffect(() => {
     fetch('/api/tours/list?limit=1000')
@@ -116,6 +135,25 @@ export default function SearchClient({ initialTours }: { initialTours: TourResul
       })
       .finally(() => setIsLoading(false));
   }, [initialTours]);
+
+  if (!mounted) {
+    // SSR placeholder — avoids hydration mismatch
+    return (
+      <div className="g-container py-8">
+        <h1 className="text-xl font-bold text-slate-900 mb-4">ค้นหาทัวร์</h1>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {[...Array(6)].map((_, i) => (
+            <div key={i} className="g-card p-5 animate-pulse">
+              <div className="h-40 bg-slate-200 rounded-lg mb-3" />
+              <div className="h-4 bg-slate-200 rounded w-3/4 mb-3" />
+              <div className="h-3 bg-slate-100 rounded w-1/2 mb-2" />
+              <div className="h-3 bg-slate-100 rounded w-1/3" />
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   useEffect(() => {
     document.body.style.overflow = isMobileFilterOpen ? 'hidden' : 'auto';
@@ -460,8 +498,13 @@ export default function SearchClient({ initialTours }: { initialTours: TourResul
             </div>
           ) : filteredTours.length > 0 ? (
             <div className={`grid gap-4 ${viewMode === 'grid' ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3' : 'grid-cols-1'}`}>
-              {filteredTours.map(tour => (
-                <Link key={tour.id} href={`/tour/${tour.slug}`} className="group block bg-white rounded-xl border border-slate-200 hover:border-orange-200 hover:shadow-lg transition-all overflow-hidden">
+              {filteredTours.map(tour => {
+                // Scraper tours (with sourceUrl) use /tour/s/CODE, wholesale uses /tour/SLUG
+                const isScraperTour = !!tour.sourceUrl;
+                const tourHref = isScraperTour ? `/tour/s/${tour.code.toLowerCase()}` : `/tour/${tour.slug}`;
+                const supplierLabel = tour.supplier;
+                return (
+                <Link key={tour.id} href={tourHref} className="group block bg-white rounded-xl border border-slate-200 hover:border-orange-200 hover:shadow-lg transition-all overflow-hidden">
                   {viewMode === 'grid' ? (
                     /* Grid View — Image Card */
                     <>
@@ -475,7 +518,7 @@ export default function SearchClient({ initialTours }: { initialTours: TourResul
                           <div className="absolute top-2 left-2 bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm">🔥 เหลือ {tour.availableSeats} ที่</div>
                         )}
                         <div className="absolute top-2 right-2 bg-black/60 text-white text-[10px] font-medium px-2 py-0.5 rounded-full backdrop-blur-sm">{tour.durationDays}วัน{tour.durationNights}คืน</div>
-                        <div className="absolute bottom-2 left-2 bg-white/90 text-[10px] font-semibold text-orange-700 px-2 py-0.5 rounded-full backdrop-blur-sm shadow-sm">{tour.supplier}</div>
+                        <div className="absolute bottom-2 left-2 bg-white/90 text-[10px] font-semibold text-orange-700 px-2 py-0.5 rounded-full backdrop-blur-sm shadow-sm">{supplierLabel}</div>
                       </div>
                       <div className="p-3">
                         <div className="flex items-center gap-1.5 mb-1.5 flex-wrap">
@@ -511,7 +554,7 @@ export default function SearchClient({ initialTours }: { initialTours: TourResul
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1 flex-wrap">
                           <span className="text-[10px] font-bold text-slate-400 bg-slate-50 px-1.5 py-0.5 rounded">{tour.code}</span>
-                          <span className="text-[10px] text-orange-600 font-semibold bg-orange-50 px-1.5 py-0.5 rounded">{tour.supplier}</span>
+                          <span className="text-[10px] text-orange-600 font-semibold bg-orange-50 px-1.5 py-0.5 rounded">{supplierLabel}</span>
                           {tour.airline && <span className="text-[10px] text-blue-500 font-medium">✈ {tour.airline}</span>}
                         </div>
                         <h3 className="text-sm font-bold text-slate-900 group-hover:text-orange-600 line-clamp-2 transition-colors">{tour.title}</h3>
@@ -534,7 +577,8 @@ export default function SearchClient({ initialTours }: { initialTours: TourResul
                     </div>
                   )}
                 </Link>
-              ))}
+                );
+              })}
             </div>
           ) : (
             <div className="g-card p-16 text-center">

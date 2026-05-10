@@ -3,6 +3,13 @@ import { getTourList } from '@/services/tour.service';
 import { createClient } from '@/utils/supabase/server';
 import { mapWholesaleTour, mapScraperTour, toCardProps, type ScraperRawTour } from '@/lib/mappers/tour';
 
+// Normalize legacy site names in the DB to canonical names
+const SITE_ALIAS_MAP: Record<string, string> = {
+  oneworldtour: 'worldconnection',
+  'one-world-tour': 'worldconnection',
+  onetour: 'worldconnection',
+};
+
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
@@ -66,7 +73,53 @@ async function getScraperTours(options: {
     const { data, error } = await query;
     if (error || !data) return [];
 
-    return data as ScraperRawTour[];
+    // ── Period price fallback for tours with price_from = 0 ──
+    const toursWithNoPrice = data.filter((t: any) => !t.price_from || t.price_from <= 0);
+    const tourIds = toursWithNoPrice.map((t: any) => t.id);
+    let periodPriceMap: Record<number, number> = {};
+    if (tourIds.length > 0) {
+      const { data: periods } = await supabase
+        .from('scraper_tour_periods')
+        .select('tour_id, price')
+        .in('tour_id', tourIds)
+        .gt('price', 0)
+        .order('price', { ascending: true });
+      if (periods) {
+        periods.forEach((p: any) => {
+          if (!periodPriceMap[p.tour_id] || p.price < periodPriceMap[p.tour_id]) {
+            periodPriceMap[p.tour_id] = p.price;
+          }
+        });
+      }
+    }
+
+    // ── Apply price fallback, smart deposit, and site name normalization ──
+    return data.map((t: any) => {
+      // Period price fallback
+      if ((!t.price_from || t.price_from <= 0) && periodPriceMap[t.id]) {
+        t.price_from = periodPriceMap[t.id];
+      }
+
+      // Smart deposit calculation (same logic as scraper-list & detail API)
+      if (!t.deposit || t.deposit <= 0) {
+        const price = t.price_from || 0;
+        if (price > 0) {
+          if (price < 20000) t.deposit = 5000;
+          else if (price < 50000) t.deposit = 10000;
+          else if (price < 100000) t.deposit = 15000;
+          else t.deposit = 20000;
+        } else {
+          t.deposit = 10000; // industry default
+        }
+      }
+
+      // Normalize legacy site names
+      if (t.site && SITE_ALIAS_MAP[t.site]) {
+        t.site = SITE_ALIAS_MAP[t.site];
+      }
+
+      return t as ScraperRawTour;
+    });
   } catch (e) {
     console.error('[Scraper tours fetch]', e);
     return [];

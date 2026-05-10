@@ -10,10 +10,19 @@ export const metadata = {
 
 type FormattedTour = {
   id: string; slug: string; code: string; title: string; supplier: string;
+  supplierDisplayName?: string;
   country: string; city: string; durationDays: number; durationNights: number;
   nextDeparture: string; price: number; availableSeats: number;
-  imageUrl: string; airline: string;
+  imageUrl: string; airline: string; sourceUrl?: string;
 };
+
+// Stable date formatter to avoid hydration mismatch between server/client
+function formatDateStable(date: Date): string {
+  const d = date.getDate();
+  const m = date.getMonth() + 1;
+  const y = date.getFullYear() + 543; // Buddhist year
+  return `${d}/${m}/${y}`;
+}
 
 /** Fallback: fetch tours via Supabase REST API when Prisma DB connection fails */
 async function fetchToursViaREST(keyword: string): Promise<FormattedTour[]> {
@@ -103,7 +112,7 @@ async function fetchToursViaREST(keyword: string): Promise<FormattedTour[]> {
         city: dest?.city || '',
         durationDays: t.durationDays || 0,
         durationNights: t.durationNights || 0,
-        nextDeparture: dep ? new Date(dep.startDate).toLocaleDateString('th-TH') : 'N/A',
+        nextDeparture: dep ? formatDateStable(new Date(dep.startDate)) : 'N/A',
         price: Number(price),
         availableSeats: dep?.remainingSeats || 0,
         imageUrl: '',
@@ -164,7 +173,7 @@ export default async function TourSearchPage({ searchParams }: { searchParams: {
         city: t.destinations[0]?.city || '',
         durationDays: t.durationDays,
         durationNights: t.durationNights,
-        nextDeparture: nextDep ? nextDep.startDate.toLocaleDateString('th-TH') : 'N/A',
+        nextDeparture: nextDep ? formatDateStable(nextDep.startDate) : 'N/A',
         price: Number(price),
         availableSeats: nextDep?.remainingSeats || 0,
         imageUrl: (t as any).images?.[0]?.imageUrl || '',

@@ -66,6 +66,26 @@ const COUNTRY_FLAGS: Record<string, string> = {
   'ฮังการี': 'hu', 'โปรตุเกส': 'pt', 'สแกนดิเนเวีย': 'eu',
 };
 
+const SITE_ALIAS_MAP: Record<string, string> = {
+  oneworldtour: 'worldconnection',
+  'one-world-tour': 'worldconnection',
+  onetour: 'worldconnection',
+};
+
+// Friendly display names for wholesalers — used in toCardProps
+const SUPPLIER_DISPLAY_NAMES: Record<string, string> = {
+  worldconnection: 'World Connection',
+  oneworldtour: 'World Connection',
+  letsgo: "Let's Go",
+  "let'sgo": "Let's Go",
+  bestintl: 'Best International',
+  bestinternational: 'Best International',
+  gs25: 'GS25 Travel',
+  itravels: 'iTravels',
+  checkingroup: 'Check-in Group',
+  tourfactory: 'Tour Factory',
+};
+
 // ─── PDF URL Validator ──────────────────────────────────────────────
 
 function sanitizePdfUrl(url: string | null | undefined): string {
@@ -214,7 +234,7 @@ export function mapScraperTour(raw: ScraperRawTour): StandardTour {
     pdfUrl: sanitizePdfUrl(raw.pdf_url),
     thumbnailUrl: raw.cover_image_url || '',
     highlights: Array.isArray(raw.highlights) ? raw.highlights : [],
-    wholesaler: raw.site || '',
+    wholesaler: SITE_ALIAS_MAP[raw.site] || raw.site || '',
     href: `/tour/s/${code.toLowerCase()}`,
     sourceUrl: raw.source_url || '',
     availableSeats: 0,
@@ -233,7 +253,8 @@ export function toCardProps(tour: StandardTour) {
     slug: tour.slug,
     code: tour.code,
     title: tour.title,
-    supplier: tour.wholesaler,
+    supplier: SUPPLIER_DISPLAY_NAMES[tour.wholesaler] || tour.wholesaler,
+    supplierSlug: tour.wholesaler,
     country: tour.country,
     city: tour.city,
     durationDays: tour.days,

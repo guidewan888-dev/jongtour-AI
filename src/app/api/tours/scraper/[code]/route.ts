@@ -1,6 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/utils/supabase/server';
 
+// Normalize legacy site names in the DB to canonical names
+const SITE_ALIAS_MAP: Record<string, string> = {
+  oneworldtour: 'worldconnection',
+  'one-world-tour': 'worldconnection',
+  onetour: 'worldconnection',
+};
+
 export async function GET(
   _req: NextRequest,
   { params }: { params: { code: string } }
@@ -87,7 +94,7 @@ export async function GET(
     id: data.id,
     code: data.tour_code || '',
     title: data.title || '',
-    site: data.site || '',
+    site: SITE_ALIAS_MAP[data.site] || data.site || '',
     country: data.country || '',
     duration: data.duration || '',
     durationDays,
