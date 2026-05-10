@@ -44,8 +44,10 @@ export default function TourCard({ tour }: { tour: TourCardProps }) {
         {hasImage ? (
           <img src={tour.imageUrl} alt={tour.title} className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500" loading="lazy" />
         ) : (
-          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary-100 to-orange-50">
-            <span className="text-4xl opacity-30">✈️</span>
+          <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-orange-50 via-primary-50 to-amber-50 p-4 text-center">
+            <span className="text-5xl mb-3">🌏</span>
+            <span className="text-sm font-bold text-slate-600 line-clamp-2">{tour.country || 'ทัวร์ต่างประเทศ'}</span>
+            <span className="text-[10px] text-slate-400 mt-1 font-mono">{tour.code}</span>
           </div>
         )}
         {(tour.durationDays > 0 || tour.duration) && (
@@ -68,7 +70,7 @@ export default function TourCard({ tour }: { tour: TourCardProps }) {
             {tour.flagCode && <img src={`https://flagcdn.com/w20/${tour.flagCode}.png`} width="14" height="10" alt="" className="rounded-sm" />}
             <span className="font-medium">{tour.country}</span>
             {tour.city && <><span className="opacity-50">•</span><span>{tour.city}</span></>}
-            {tour.nextDeparture !== 'N/A' && <><span className="opacity-50">•</span><span>📅 {tour.nextDeparture}</span></>}
+            {tour.nextDeparture && tour.nextDeparture !== 'N/A' && <><span className="opacity-50">•</span><span>📅 {tour.nextDeparture}</span></>}
           </div>
         </div>
       </div>

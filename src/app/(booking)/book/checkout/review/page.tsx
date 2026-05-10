@@ -64,9 +64,13 @@ export default function ReviewPage() {
             <div className="flex justify-between items-center">
               <span className="text-slate-500 flex items-center gap-1"><Calendar className="w-3.5 h-3.5" /> วันเดินทาง</span>
               <span className="font-medium">
-                {new Date(session.departureDate).toLocaleDateString("th-TH", { day: "numeric", month: "short", year: "numeric" })}
+                {session.departureDate && !isNaN(new Date(session.departureDate).getTime())
+                  ? new Date(session.departureDate).toLocaleDateString("th-TH", { day: "numeric", month: "short", year: "numeric" })
+                  : session.departureDate || 'สอบถาม'}
                 {" → "}
-                {new Date(session.departureEndDate).toLocaleDateString("th-TH", { day: "numeric", month: "short", year: "numeric" })}
+                {session.departureEndDate && !isNaN(new Date(session.departureEndDate).getTime())
+                  ? new Date(session.departureEndDate).toLocaleDateString("th-TH", { day: "numeric", month: "short", year: "numeric" })
+                  : session.departureEndDate || 'สอบถาม'}
               </span>
             </div>
             <div className="flex justify-between"><span className="text-slate-500">ระยะเวลา</span><span className="font-medium">{session.durationDays} วัน {session.durationNights} คืน</span></div>

@@ -15,7 +15,7 @@ const SUPPLIER_INFO: Record<string, { displayName: string; logo: string; accent:
   },
   itravels: {
     displayName: 'iTravels Center',
-    logo: '/images/logos/itravels.png',
+    logo: '/images/logos/itravel.jpg',
     accent: 'text-sky-600',
     gradient: 'from-sky-600 to-cyan-500',
     landingPath: '/wholesaler/itravels',

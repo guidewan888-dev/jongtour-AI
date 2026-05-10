@@ -57,7 +57,7 @@ const SUPPLIER_CONFIG: Record<string, {
   },
   'itravels': {
     name: 'itravels', displayName: 'iTravels Center',
-    logo: '/images/logos/itravels.png',
+    logo: '/images/logos/itravel.jpg',
     gradient: 'from-sky-800 via-sky-700 to-cyan-600',
     heroBg: 'bg-sky-800', accent: 'text-sky-600', accentLight: 'bg-sky-50',
     accentBorder: 'border-sky-200',

@@ -26,7 +26,7 @@ const allWholesalePartners = [
   {
     name: "Checkin Group",
     code: "checkin",
-    logo: "/images/logos/CH7.jpg",
+    logo: "/images/logos/checkingroup.jpg",
     description: "ผู้เชี่ยวชาญทัวร์เอเชียตะวันออก และเส้นทางยอดนิยมราคาคุ้มค่า",
     tourCount: 80,
     rating: 4.6,
@@ -62,7 +62,7 @@ const allWholesalePartners = [
   {
     name: "GS25",
     code: "gs25",
-    logo: "/images/logos/GS Group.png",
+    logo: "/images/logos/gs25.png",
     description: "ทัวร์คุณภาพราคามิตรภาพ เส้นทางยอดนิยมพร้อมดูแลทุกขั้นตอน",
     tourCount: 55,
     rating: 4.4,
@@ -71,7 +71,7 @@ const allWholesalePartners = [
   {
     name: "iTravels Center",
     code: "itravels",
-    logo: "/images/logos/itravels.png",
+    logo: "/images/logos/itravel.jpg",
     description: "ศูนย์รวมทัวร์ต่างประเทศ ครบทุกเส้นทาง ญี่ปุ่น จีน ยุโรป อเมริกา ราคาดีที่สุด",
     tourCount: 54,
     rating: 4.7,

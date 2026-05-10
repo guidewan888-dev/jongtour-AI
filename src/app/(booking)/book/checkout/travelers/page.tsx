@@ -90,7 +90,7 @@ export default function TravelersPage() {
                 <div>
                   <div className="text-xs text-slate-400 font-bold">{session.tourCode}</div>
                   <div className="text-sm font-bold text-slate-900 line-clamp-1">{session.tourName}</div>
-                  <div className="text-xs text-slate-500 mt-0.5">📅 {new Date(session.departureDate).toLocaleDateString("th-TH", { day: "numeric", month: "long", year: "numeric" })}</div>
+                  <div className="text-xs text-slate-500 mt-0.5">📅 {session.departureDate && !isNaN(new Date(session.departureDate).getTime()) ? new Date(session.departureDate).toLocaleDateString("th-TH", { day: "numeric", month: "long", year: "numeric" }) : session.departureDate || 'สอบถามวันเดินทาง'}</div>
                 </div>
                 <div className="text-right">
                   <div className="text-xs text-slate-400">ราคา/ท่าน</div>
@@ -194,7 +194,7 @@ export default function TravelersPage() {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-slate-500">วันเดินทาง</span>
-                  <span className="font-medium">{new Date(session.departureDate).toLocaleDateString("th-TH", { day: "numeric", month: "short", year: "numeric" })}</span>
+                  <span className="font-medium">{session.departureDate && !isNaN(new Date(session.departureDate).getTime()) ? new Date(session.departureDate).toLocaleDateString("th-TH", { day: "numeric", month: "short", year: "numeric" }) : session.departureDate || 'สอบถาม'}</span>
                 </div>
                 <hr className="border-slate-100" />
                 <div className="flex justify-between">

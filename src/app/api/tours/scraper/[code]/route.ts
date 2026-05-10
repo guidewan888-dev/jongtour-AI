@@ -39,7 +39,7 @@ export async function GET(
 
   // ── Clean periods: filter out header/room-type garbage rows ──
   const JUNK_PERIOD_PATTERNS = /^(วันที่เดินทาง|วันเดินทาง|ผู้ใหญ่|พักเดี่ยว|พักสาม|เด็ก|ทารก|\(พัก|มีเตียง|ไม่มีเตียง|Infant|Child|Twin|Single|Double|Triple)/i;
-  const HAS_DATE = /\d{1,2}\s*(ม\.?ค|ก\.?พ|มี\.?ค|เม\.?ย|พ\.?ค|มิ\.?ย|ก\.?ค|ส\.?ค|ก\.?ย|ต\.?ค|พ\.?ย|ธ\.?ค)/i;
+  const HAS_DATE = /(\d{1,2}\s*)?(ม\.?ค|ก\.?พ|มี\.?ค|เม\.?ย|พ\.?ค|มิ\.?ย|ก\.?ค|ส\.?ค|ก\.?ย|ต\.?ค|พ\.?ย|ธ\.?ค)/i;
   const IS_PURE_NUMBER = /^\d[\d,]*$/;
 
   const cleanPeriods = (periods || [])

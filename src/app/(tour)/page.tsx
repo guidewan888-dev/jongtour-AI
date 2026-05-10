@@ -8,12 +8,12 @@ import { Send, Paperclip, Sparkles, ChevronDown, Mic, MicOff } from "lucide-reac
 const wholesalePartners = [
   { name: "Let's Go", code: "letsgo", logo: "/images/logos/download.png", color: "#22c55e" },
   { name: "Go365", code: "go365", logo: "/images/logos/download.jfif", color: "#3b82f6" },
-  { name: "Checkin Group", code: "checkin", logo: "/images/logos/CH7.jpg", color: "#ef4444" },
+  { name: "Checkin Group", code: "checkin", logo: "/images/logos/checkingroup.jpg", color: "#ef4444" },
   { name: "Tour Factory", code: "tour-factory", logo: "/images/logos/Tour-Factory.jpg", color: "#8b5cf6" },
   { name: "World Connection", code: "worldconnection", logo: "/images/logos/worldconnection.png", color: "#f97316" },
-  { name: "iTravels Center", code: "itravels", logo: "/images/logos/itravels.png", color: "#0ea5e9" },
+  { name: "iTravels Center", code: "itravels", logo: "/images/logos/itravel.jpg", color: "#0ea5e9" },
   { name: "Best International", code: "bestinternational", logo: "/images/logos/Bestinternational.png", color: "#dc2626" },
-  { name: "GS25 Travel", code: "gs25", logo: "/images/logos/GS Group.png", color: "#10b981" },
+  { name: "GS25 Travel", code: "gs25", logo: "/images/logos/gs25.png", color: "#10b981" },
 ];
 
 const quickActions = [
