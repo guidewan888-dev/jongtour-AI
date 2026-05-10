@@ -13,17 +13,25 @@ const SITE_ALIAS_MAP: Record<string, string> = {
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
-/**
- * GET /api/tours/list?q=keyword&country=จีน&limit=50
- * Returns published tours from BOTH wholesale DB + scraper_tours.
- * All data goes through the centralized Tour Mapper for consistent schema.
- */
+// Simple in-memory cache to avoid repeated DB queries (60s TTL)
+const apiCache = new Map<string, { data: any; ts: number }>();
+const CACHE_TTL = 60_000; // 60 seconds
+
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const keyword = searchParams.get('q') || undefined;
     const country = searchParams.get('country') || undefined;
     const limit = parseInt(searchParams.get('limit') || '1000', 10);
+
+    // Check cache
+    const cacheKey = `${keyword || ''}|${country || ''}|${limit}`;
+    const cached = apiCache.get(cacheKey);
+    if (cached && Date.now() - cached.ts < CACHE_TTL) {
+      return NextResponse.json(cached.data, {
+        headers: { 'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300' },
+      });
+    }
 
     // 1. Existing wholesale tours → map through central mapper
     const rawWholesale = await getTourList({ keyword, country, limit });
@@ -35,8 +43,17 @@ export async function GET(request: Request) {
 
     // 3. Merge: wholesale first, then scraper
     const tours = [...wholesaleTours, ...scraperTours];
+    const result = { tours };
 
-    return NextResponse.json({ tours }, {
+    // Store in cache
+    apiCache.set(cacheKey, { data: result, ts: Date.now() });
+    // Evict old entries
+    if (apiCache.size > 100) {
+      const oldest = [...apiCache.entries()].sort((a, b) => a[1].ts - b[1].ts)[0];
+      apiCache.delete(oldest[0]);
+    }
+
+    return NextResponse.json(result, {
       headers: { 'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300' },
     });
   } catch (e: any) {

@@ -101,6 +101,10 @@ const SUPPLIERS = [
   { key: "checkingroup", name: "Checkin Group", color: 'bg-teal-600', logo: '/images/logos/Check in group.jpg', priority: 2 },
   { key: "tourfactory", name: "Tour Factory", color: 'bg-purple-600', logo: '/images/logos/Tour-Factory.jpg', priority: 3 },
   { key: "go365", name: "Go365", color: 'bg-green-500', logo: '/images/logos/download.jfif', priority: 4 },
+  { key: "worldconnection", name: "World Connection", color: 'bg-orange-600', logo: '/images/logos/worldconnection.png', priority: 5 },
+  { key: "itravels", name: "iTravels Center", color: 'bg-sky-600', logo: '/images/logos/itravels.png', priority: 6 },
+  { key: "bestintl", name: "Best International", color: 'bg-red-600', logo: '/images/logos/bestintl.png', priority: 7 },
+  { key: "gs25", name: "GS25 Travel", color: 'bg-emerald-600', logo: '/images/logos/gs25.png', priority: 8 },
 ];
 
 // Hero banners removed — clean gradient for all regions
@@ -114,27 +118,28 @@ export default function RegionPage({ params }: { params: { slug: string[] } }) {
   const [loading, setLoading] = useState(true);
   const [activeCountry, setActiveCountry] = useState<string | null>(null);
 
-  // Fetch tours — fetch by region name AND each country name
-  // Europe tours stored as country="EUROPE", Asia/ME stored per-country (JAPAN, TURKEY etc.)
+  // Fetch tours — optimized: single batch API call instead of per-country
   useEffect(() => {
     setLoading(true);
     setTours([]);
 
-    const promises: Promise<Tour[]>[] = [
-      // Fetch by region name (covers Europe-style storage)
-      fetch(`/api/tours/list?country=${encodeURIComponent(region.name)}&limit=500`)
-        .then(r => r.json()).then(d => (d.tours || []) as Tour[]).catch(() => [] as Tour[]),
-    ];
-    // Fetch by each country's primary search name (covers per-country storage)
-    region.countries.forEach(c => {
-      const primaryName = c.searchNames[0] || c.name;
-      if (primaryName !== region.name) {
-        promises.push(
-          fetch(`/api/tours/list?country=${encodeURIComponent(primaryName)}&limit=200`)
-            .then(r => r.json()).then(d => (d.tours || []) as Tour[]).catch(() => [] as Tour[])
-        );
-      }
-    });
+    // Build a single search query that covers the region
+    const allSearchNames = region.countries.flatMap(c => c.searchNames);
+    const uniqueNames = [...new Set([region.name, ...allSearchNames])];
+    
+    // Batch into max 3 API calls to avoid overloading
+    const batchSize = Math.ceil(uniqueNames.length / 3);
+    const batches: string[][] = [];
+    for (let i = 0; i < uniqueNames.length; i += batchSize) {
+      batches.push(uniqueNames.slice(i, i + batchSize));
+    }
+
+    const promises = batches.map(batch =>
+      Promise.all(batch.map(name =>
+        fetch(`/api/tours/list?country=${encodeURIComponent(name)}&limit=200`)
+          .then(r => r.json()).then(d => (d.tours || []) as Tour[]).catch(() => [] as Tour[])
+      )).then(results => results.flat())
+    );
 
     Promise.all(promises).then(results => {
       const allTours = results.flat();

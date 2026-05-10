@@ -1,8 +1,150 @@
 /**
  * Mega Menu Configuration
- * Organized by continent with flagcdn images (no emoji flags - broken on Windows)
- * All links: /country/[slug] for countries, /region/[slug] for continents
+ * Used by Header.tsx for desktop/mobile navigation
+ * Format: named property maps consumed by Header component
  */
+
+// ============================================================
+// HEADER NAV CONFIG — used by Header.tsx
+// ============================================================
+
+interface NavItem {
+  label: string;
+  href: string;
+  icon?: string;
+  isBold?: boolean;
+  isFooter?: boolean;
+}
+
+interface OverseasColumn {
+  title: string;
+  titleHref?: string;
+  colorClass: string;
+  sections: { items: NavItem[] }[];
+}
+
+export const megaMenuConfig = {
+  // ค้นหาทัวร์ dropdown
+  searchTours: [
+    { label: '🔍 ค้นหาทัวร์', href: '/search', icon: 'Compass' },
+    { label: '🤖 AI ค้นหาทัวร์', href: '/ai-search', icon: 'Star' },
+    { label: '📱 ทัวร์ทั้งหมด', href: '/search', icon: 'Smartphone' },
+  ] as NavItem[],
+
+  // ทัวร์ต่างประเทศ mega menu
+  overseasTours: [
+    {
+      title: '🌏 ทัวร์เอเชีย',
+      titleHref: '/region/asia',
+      colorClass: 'primary',
+      sections: [
+        {
+          items: [
+            { label: '🇯🇵 ทัวร์ญี่ปุ่น', href: '/country/japan', isBold: true },
+            { label: 'โตเกียว', href: '/country/japan' },
+            { label: 'โอซาก้า', href: '/country/japan' },
+            { label: 'ฮอกไกโด', href: '/country/japan' },
+            { label: '🇨🇳 ทัวร์จีน', href: '/country/china', isBold: true },
+            { label: 'เฉิงตู', href: '/country/china' },
+            { label: 'จางเจียเจี้ย', href: '/country/china' },
+            { label: 'คุนหมิง', href: '/country/china' },
+          ],
+        },
+        {
+          items: [
+            { label: '🇰🇷 ทัวร์เกาหลี', href: '/country/south-korea', isBold: true },
+            { label: '🇹🇼 ทัวร์ไต้หวัน', href: '/country/taiwan', isBold: true },
+            { label: '🇭🇰 ทัวร์ฮ่องกง', href: '/country/hongkong', isBold: true },
+            { label: '🇻🇳 ทัวร์เวียดนาม', href: '/country/vietnam', isBold: true },
+            { label: '🇸🇬 ทัวร์สิงคโปร์', href: '/country/singapore', isBold: true },
+            { label: '🇲🇲 ทัวร์พม่า', href: '/country/myanmar', isBold: true },
+            { label: '🇱🇦 ทัวร์ลาว', href: '/country/laos', isBold: true },
+            { label: '🇮🇳 ทัวร์อินเดีย', href: '/country/india', isBold: true },
+          ],
+        },
+      ],
+    },
+    {
+      title: '🏰 ทัวร์ยุโรป',
+      titleHref: '/region/europe',
+      colorClass: 'blue-600',
+      sections: [
+        {
+          items: [
+            { label: '🇬🇧 อังกฤษ', href: '/country/uk', isBold: true },
+            { label: '🇫🇷 ฝรั่งเศส', href: '/country/france', isBold: true },
+            { label: '🇮🇹 อิตาลี', href: '/country/italy', isBold: true },
+            { label: '🇨🇭 สวิตเซอร์แลนด์', href: '/country/switzerland', isBold: true },
+            { label: '🇩🇪 เยอรมนี', href: '/country/germany', isBold: true },
+            { label: '🇪🇸 สเปน', href: '/country/spain', isBold: true },
+            { label: '🇳🇱 เนเธอร์แลนด์', href: '/country/netherlands', isBold: true },
+            { label: '🇦🇹 ออสเตรีย', href: '/country/austria', isBold: true },
+          ],
+        },
+      ],
+    },
+    {
+      title: '🌍 ตะวันออกกลาง',
+      titleHref: '/region/middle-east',
+      colorClass: 'amber-600',
+      sections: [
+        {
+          items: [
+            { label: '🇹🇷 ตุรกี', href: '/country/turkey', isBold: true },
+            { label: '🇪🇬 อียิปต์', href: '/country/egypt', isBold: true },
+            { label: '🇦🇪 ดูไบ', href: '/country/dubai', isBold: true },
+            { label: '🇯🇴 จอร์แดน', href: '/country/jordan', isBold: true },
+            { label: '🇬🇪 จอร์เจีย', href: '/country/georgia', isBold: true },
+          ],
+        },
+      ],
+    },
+    {
+      title: '🌎 อเมริกา / โอเชียเนีย',
+      titleHref: '/region/americas',
+      colorClass: 'green-600',
+      sections: [
+        {
+          items: [
+            { label: '🇺🇸 อเมริกา', href: '/country/usa', isBold: true },
+            { label: '🇨🇦 แคนาดา', href: '/country/canada', isBold: true },
+            { label: '🇦🇺 ออสเตรเลีย', href: '/country/australia', isBold: true },
+            { label: '🇳🇿 นิวซีแลนด์', href: '/country/newzealand', isBold: true },
+          ],
+        },
+      ],
+    },
+  ] as OverseasColumn[],
+
+  // ทัวร์ตามโฮลเซล dropdown
+  wholesale: [
+    { label: "Let's Go Group", href: '/wholesaler/letsgo' },
+    { label: 'World Connection', href: '/wholesaler/worldconnection' },
+    { label: 'Best International', href: '/wholesaler/bestinternational' },
+    { label: 'GS25 Travel', href: '/wholesaler/gs25' },
+    { label: 'iTravel Center', href: '/wholesaler/itravels' },
+    { label: 'ดูทั้งหมด →', href: '/search', isFooter: true, isBold: true },
+  ] as NavItem[],
+
+  // กรุ๊ปส่วนตัว dropdown
+  privateGroup: [
+    { label: '✈️ ขอใบเสนอราคา', href: '/private-group', icon: 'FileText' },
+    { label: '👥 ทัวร์กรุ๊ปบริษัท', href: '/private-group', icon: 'Users' },
+    { label: '📍 ทริปตามใจ', href: '/private-group', icon: 'Map' },
+  ] as NavItem[],
+
+  // บทความ dropdown
+  blog: [
+    { label: '📝 บทความทั้งหมด', href: '/blog' },
+    { label: '🗺️ แนะนำที่เที่ยว', href: '/blog' },
+    { label: '💡 เคล็ดลับเดินทาง', href: '/blog' },
+    { label: '📋 วีซ่า', href: '/visa' },
+  ] as NavItem[],
+};
+
+// ============================================================
+// MEGA MENU DATA (legacy array format — for reference)
+// ============================================================
 
 export interface MegaMenuItem {
   label: string;
@@ -21,88 +163,8 @@ export interface MegaMenuGroup {
   trigger: string;
   columns: MegaMenuColumn[];
   footerLink?: { label: string; href: string };
-  wide?: boolean; // wider dropdown for many columns
+  wide?: boolean;
 }
-
-export const megaMenuConfig: MegaMenuGroup[] = [
-  {
-    trigger: "ทัวร์ต่างประเทศ",
-    wide: true,
-    columns: [
-      {
-        title: "ทัวร์จีน / ทัวร์ญี่ปุ่น",
-        titleHref: "/tours/asia",
-        items: [
-          { label: "ทัวร์จีน", href: "/tours/asia/china", flagCode: "cn" },
-          { label: "ทัวร์เฉิงตู", href: "/tours/asia/china/chengdu", emoji: "🏙️" },
-          { label: "ทัวร์จางเจียเจี้ย", href: "/tours/asia/china/zhangjiajie", emoji: "🏔️" },
-          { label: "ทัวร์คุนหมิง", href: "/tours/asia/china/kunming", emoji: "🌸" },
-          { label: "ทัวร์ปักกิ่ง", href: "/tours/asia/china/beijing", emoji: "🏯" },
-          { label: "ทัวร์เซี่ยงไฮ้", href: "/tours/asia/china/shanghai", emoji: "🌃" },
-          { label: "ทัวร์กวางเจา", href: "/tours/asia/china/guangzhou", emoji: "🏙️" },
-          { label: "ทัวร์ญี่ปุ่น", href: "/tours/asia/japan", flagCode: "jp" },
-          { label: "ทัวร์โตเกียว", href: "/tours/asia/japan/tokyo", emoji: "🗼" },
-          { label: "ทัวร์โอซาก้า", href: "/tours/asia/japan/osaka", emoji: "🏯" },
-          { label: "ทัวร์ฮอกไกโด", href: "/tours/asia/japan/hokkaido", emoji: "❄️" },
-          { label: "ทัวร์เกียวโต", href: "/tours/asia/japan/kyoto", emoji: "⛩️" },
-          { label: "ทัวร์ฟุกุโอกะ", href: "/tours/asia/japan/fukuoka", emoji: "🌊" },
-          { label: "ทัวร์ฮ่องกง", href: "/tours/asia/hongkong", flagCode: "hk" },
-          { label: "ทัวร์ไต้หวัน", href: "/tours/asia/taiwan", flagCode: "tw" },
-          { label: "ทัวร์มาเก๊า", href: "/tours/asia/macau", flagCode: "mo" },
-        ],
-      },
-      {
-        title: "ทัวร์เอเชีย",
-        titleHref: "/tours/asia",
-        items: [
-          { label: "ทัวร์เกาหลี", href: "/tours/asia/south-korea", flagCode: "kr" },
-          { label: "ทัวร์โซล", href: "/tours/asia/south-korea/seoul", emoji: "🏙️" },
-          { label: "ทัวร์ปูซาน", href: "/tours/asia/south-korea/busan", emoji: "🌊" },
-          { label: "ทัวร์เชจู", href: "/tours/asia/south-korea/jeju", emoji: "🏝️" },
-          { label: "ทัวร์เวียดนาม", href: "/tours/asia/vietnam", flagCode: "vn" },
-          { label: "ทัวร์ดานัง", href: "/tours/asia/vietnam/danang", emoji: "🏖️" },
-          { label: "ทัวร์ฮานอย", href: "/tours/asia/vietnam/hanoi", emoji: "🏙️" },
-          { label: "ทัวร์สิงคโปร์", href: "/tours/asia/singapore", flagCode: "sg" },
-          { label: "ทัวร์มาเลเซีย", href: "/tours/asia/malaysia", flagCode: "my" },
-          { label: "ทัวร์กัมพูชา", href: "/tours/asia/cambodia", flagCode: "kh" },
-          { label: "ทัวร์อินเดีย", href: "/tours/asia/india", flagCode: "in" },
-          { label: "ทัวร์พม่า", href: "/tours/asia/myanmar", flagCode: "mm" },
-          { label: "ทัวร์ลาว", href: "/tours/asia/laos", flagCode: "la" },
-          { label: "ทัวร์ฟิลิปปินส์", href: "/tours/asia/philippines", flagCode: "ph" },
-          { label: "ทัวร์ศรีลังกา", href: "/tours/asia/srilanka", flagCode: "lk" },
-        ],
-      },
-      {
-        title: "ทัวร์ยุโรป และทัวร์อื่นๆ",
-        titleHref: "/tours/europe",
-        items: [
-          { label: "ทัวร์อังกฤษ", href: "/tours/europe/uk", flagCode: "gb" },
-          { label: "ทัวร์ฝรั่งเศส", href: "/tours/europe/france", flagCode: "fr" },
-          { label: "ทัวร์อิตาลี", href: "/tours/europe/italy", flagCode: "it" },
-          { label: "ทัวร์สวิตเซอร์แลนด์", href: "/tours/europe/switzerland", flagCode: "ch" },
-          { label: "ทัวร์เยอรมนี", href: "/tours/europe/germany", flagCode: "de" },
-          { label: "ทัวร์สเปน", href: "/tours/europe/spain", flagCode: "es" },
-          { label: "ทัวร์ตุรกี", href: "/tours/middle-east/turkey", flagCode: "tr" },
-          { label: "ทัวร์อียิปต์", href: "/tours/middle-east/egypt", flagCode: "eg" },
-          { label: "ทัวร์ดูไบ", href: "/tours/middle-east/dubai", flagCode: "ae" },
-          { label: "ทัวร์รัสเซีย", href: "/tours/others/russia", flagCode: "ru" },
-          { label: "ทัวร์จอร์เจีย", href: "/tours/others/georgia", flagCode: "ge" },
-        ],
-      },
-      {
-        title: "อเมริกา / โอเชียเนีย",
-        titleHref: "/tours/americas",
-        items: [
-          { label: "ทัวร์อเมริกา", href: "/tours/americas/usa", flagCode: "us" },
-          { label: "ทัวร์แคนาดา", href: "/tours/americas/canada", flagCode: "ca" },
-          { label: "ทัวร์ออสเตรเลีย", href: "/tours/oceania/australia", flagCode: "au" },
-          { label: "ทัวร์นิวซีแลนด์", href: "/tours/oceania/newzealand", flagCode: "nz" },
-        ],
-      },
-    ],
-    footerLink: { label: "ดูทัวร์ทั้งหมด →", href: "/search" },
-  },
-];
 
 // ============================================================
 // PUBLIC HEADER NAV LINKS
