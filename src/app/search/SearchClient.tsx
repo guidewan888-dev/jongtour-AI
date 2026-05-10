@@ -101,12 +101,11 @@ function getContinent(country: string): string | null {
   return null;
 }
 
-export default function SearchClient({ initialTours }: { initialTours: TourResult[] }) {
+export default function SearchClient() {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [tours, setTours] = useState<TourResult[]>(initialTours);
-  const [mounted, setMounted] = useState(false);
+  const [tours, setTours] = useState<TourResult[]>([]);
 
   // Filter states — 5 levels
   const [searchQuery, setSearchQuery] = useState('');
@@ -117,8 +116,7 @@ export default function SearchClient({ initialTours }: { initialTours: TourResul
   const [selectedBudget, setSelectedBudget] = useState<BudgetRange>('');
   const [sortBy, setSortBy] = useState('recommend');
 
-  // Avoid hydration mismatch — render full UI only on client
-  useEffect(() => { setMounted(true); }, []);
+
 
   useEffect(() => {
     fetch('/api/tours/list?limit=1000')
@@ -126,15 +124,11 @@ export default function SearchClient({ initialTours }: { initialTours: TourResul
       .then(data => {
         if (data.tours && data.tours.length > 0) {
           setTours(data.tours);
-        } else if (initialTours.length > 0) {
-          setTours(initialTours);
         }
       })
-      .catch(() => {
-        if (initialTours.length > 0) setTours(initialTours);
-      })
+      .catch(() => { /* API failed, keep empty */ })
       .finally(() => setIsLoading(false));
-  }, [initialTours]);
+  }, []);
 
   useEffect(() => {
     document.body.style.overflow = isMobileFilterOpen ? 'hidden' : 'auto';
@@ -142,11 +136,16 @@ export default function SearchClient({ initialTours }: { initialTours: TourResul
   }, [isMobileFilterOpen]);
 
   // Derive available filters from data
+  const allContinentCountries = useMemo(() =>
+    Object.values(CONTINENT_MAP).flatMap(c => Object.values(c.countries))
+  , []);
+
   const { suppliers, continentCounts, countryCounts, cityCounts } = useMemo(() => {
     const sMap: Record<string, number> = {};
     const contMap: Record<string, number> = {};
     const cMap: Record<string, number> = {};
     const cityMap: Record<string, number> = {};
+    if (!Array.isArray(tours)) return { suppliers: [], continentCounts: contMap, countryCounts: cMap, cityCounts: cityMap };
     tours.forEach(t => {
       if (t.supplier) sMap[t.supplier] = (sMap[t.supplier] || 0) + 1;
       if (t.country) {
@@ -156,9 +155,8 @@ export default function SearchClient({ initialTours }: { initialTours: TourResul
       }
       if (t.city) cityMap[t.city] = (cityMap[t.city] || 0) + 1;
       // Also extract city keywords from title
-      const allCountries = Object.values(CONTINENT_MAP).flatMap(c => Object.values(c.countries));
-      allCountries.forEach(cc => {
-        cc.cities.forEach(city => {
+      allContinentCountries.forEach(cc => {
+        (cc.cities || []).forEach(city => {
           if (city && t.title && t.title.includes(city)) {
             cityMap[city] = (cityMap[city] || 0) + 1;
           }
@@ -171,7 +169,7 @@ export default function SearchClient({ initialTours }: { initialTours: TourResul
       countryCounts: cMap,
       cityCounts: cityMap,
     };
-  }, [tours]);
+  }, [tours, allContinentCountries]);
 
   // Filtered countries based on selected continents
   const visibleCountries = useMemo(() => {
@@ -204,7 +202,7 @@ export default function SearchClient({ initialTours }: { initialTours: TourResul
 
   // Apply filters + sort
   const filteredTours = useMemo(() => {
-    let result = tours;
+    let result = tours || [];
 
     // Search
     if (searchQuery.trim()) {
@@ -280,24 +278,7 @@ export default function SearchClient({ initialTours }: { initialTours: TourResul
     setSortBy('recommend');
   };
 
-  // Hydration guard — show skeleton until client mounts
-  if (!mounted) {
-    return (
-      <div className="g-container py-8">
-        <h1 className="text-xl font-bold text-slate-900 mb-4">ค้นหาทัวร์</h1>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {[...Array(6)].map((_, i) => (
-            <div key={i} className="g-card p-5 animate-pulse">
-              <div className="h-40 bg-slate-200 rounded-lg mb-3" />
-              <div className="h-4 bg-slate-200 rounded w-3/4 mb-3" />
-              <div className="h-3 bg-slate-100 rounded w-1/2 mb-2" />
-              <div className="h-3 bg-slate-100 rounded w-1/3" />
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  }
+
 
   const budgetOptions: { label: string; value: BudgetRange }[] = [
     { label: 'ไม่เกิน ฿15,000', value: '0-15000' },
@@ -384,6 +365,8 @@ export default function SearchClient({ initialTours }: { initialTours: TourResul
   );
 
   const activeFilterCount = selectedSuppliers.size + selectedContinents.size + selectedCountries.size + selectedCities.size + (searchQuery ? 1 : 0) + (selectedBudget ? 1 : 0);
+
+
 
   return (
     <>
