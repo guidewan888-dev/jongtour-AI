@@ -11,7 +11,7 @@ const wholesalePartners = [
   { name: "Checkin Group", code: "checkin", logo: "/images/logos/checkingroup.jpg", color: "#ef4444" },
   { name: "Tour Factory", code: "tour-factory", logo: "/images/logos/Tour-Factory.jpg", color: "#8b5cf6" },
   { name: "World Connection", code: "worldconnection", logo: "/images/logos/worldconnection.png", color: "#f97316" },
-  { name: "iTravels Center", code: "itravels", logo: "/images/logos/itravel.jpg", color: "#0ea5e9" },
+  { name: "iTravels Center", code: "itravels", logo: "/images/logos/itravels_small.jpg", color: "#0ea5e9" },
   { name: "Best International", code: "bestinternational", logo: "/images/logos/Bestinternational.png", color: "#dc2626" },
   { name: "GS25 Travel", code: "gs25", logo: "/images/logos/gs25.png", color: "#10b981" },
 ];

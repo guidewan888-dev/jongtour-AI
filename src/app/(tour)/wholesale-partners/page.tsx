@@ -71,7 +71,7 @@ const allWholesalePartners = [
   {
     name: "iTravels Center",
     code: "itravels",
-    logo: "/images/logos/itravel.jpg",
+    logo: "/images/logos/itravels_small.jpg",
     description: "ศูนย์รวมทัวร์ต่างประเทศ ครบทุกเส้นทาง ญี่ปุ่น จีน ยุโรป อเมริกา ราคาดีที่สุด",
     tourCount: 54,
     rating: 4.7,
