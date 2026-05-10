@@ -153,8 +153,8 @@ export class BestInternationalScraper extends BaseScraper {
     });
 
     try {
-      await page.goto(url, { waitUntil: 'networkidle', timeout: 60_000 });
-      await page.waitForTimeout(5000);
+      await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30_000 });
+      await page.waitForTimeout(8000);
 
       // Scroll down to trigger lazy-loaded images
       await page.evaluate(() => window.scrollBy(0, 2000));
@@ -162,6 +162,57 @@ export class BestInternationalScraper extends BaseScraper {
 
       const html = await page.content();
       const $ = cheerio.load(html);
+
+      // ── Extract structured data from rendered Angular DOM ──
+      const renderedData = await page.evaluate(() => {
+        const text = document.body.innerText || '';
+        const result: Record<string, any> = {};
+
+        // Price: look for ฿XX,XXX or ราคาเริ่มต้น patterns
+        const pricePatterns = [
+          /฿\s*([\d,]+)/,
+          /ราคา(?:เริ่มต้น)?\s*[:：]?\s*฿?\s*([\d,]+)/i,
+          /เริ่มต้น\s*[:：]?\s*฿?\s*([\d,]+)/i,
+          /([\d,]{5,})\s*(?:บาท|.-)/,
+        ];
+        for (const p of pricePatterns) {
+          const m = text.match(p);
+          if (m) {
+            const v = parseInt(m[1].replace(/,/g, ''), 10);
+            if (v > 1000 && v < 500000) { result.price = v; break; }
+          }
+        }
+
+        // Hotel rating: X ดาว or โรงแรม X ดาว
+        const hotelMatch = text.match(/(\d)\s*ดาว/i)
+          || text.match(/โรงแรม(?:หรู)?\s*(\d)\s*ดาว/i);
+        if (hotelMatch) result.hotelRating = parseInt(hotelMatch[1]);
+
+        // Deposit
+        const depMatch = text.match(/มัดจำ\s*[^0-9]*([\d,]+)/);
+        if (depMatch) result.deposit = parseInt(depMatch[1].replace(/,/g, ''), 10);
+
+        // Travel date range: "เดินทาง : มี.ค. 2569 - พ.ค. 2569" or similar
+        const travelMatch = text.match(/เดินทาง\s*[:：]?\s*([^\n]{5,60})/i);
+        if (travelMatch) result.travelRange = travelMatch[1].trim();
+
+        // Extract prices from all small text elements (Angular-rendered price tags)
+        const priceElements: number[] = [];
+        document.querySelectorAll('*').forEach(el => {
+          const t = (el as HTMLElement).textContent?.trim() || '';
+          if (/^[\d,]{4,7}$/.test(t) && (el as HTMLElement).children.length === 0) {
+            const v = parseInt(t.replace(/,/g, ''), 10);
+            if (v > 1000 && v < 500000) priceElements.push(v);
+          }
+        });
+        if (priceElements.length > 0 && !result.price) {
+          result.price = Math.min(...priceElements);
+        }
+
+        return result;
+      });
+
+      console.log(`[bestintl] Rendered data for ${url.split('/').pop()}:`, JSON.stringify(renderedData));
 
       // Extract images from HTML (img src, ng-src, data-src, background-image)
       const htmlImages = new Set<string>();
@@ -213,6 +264,24 @@ export class BestInternationalScraper extends BaseScraper {
 
       if (pdfUrl && !data.pdfUrl) {
         data.pdfUrl = pdfUrl;
+      }
+
+      // ── Merge rendered Angular data (overrides static HTML parse) ──
+      if (renderedData.price && (!data.priceFrom || data.priceFrom === 0)) {
+        data.priceFrom = renderedData.price;
+      }
+      if (renderedData.hotelRating && !data.hotelRating) {
+        data.hotelRating = renderedData.hotelRating;
+      }
+      if (renderedData.deposit && !data.deposit) {
+        data.deposit = renderedData.deposit;
+      }
+      // Create a period from travelRange if no periods were parsed
+      if (renderedData.travelRange && data.periods.length === 0) {
+        data.periods.push({
+          rawText: renderedData.travelRange,
+          price: renderedData.price || data.priceFrom || undefined,
+        });
       }
 
       return data;
