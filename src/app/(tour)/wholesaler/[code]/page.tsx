@@ -79,6 +79,14 @@ const SUPPLIER_CONFIG: Record<string, {
     accentBorder: 'border-emerald-200',
     tagline: 'ทัวร์คุณภาพราคามิตรภาพ เส้นทางยอดนิยมพร้อมดูแลทุกขั้นตอน',
   },
+  'go365': {
+    name: 'go365', displayName: 'Go365 Travel',
+    logo: '/images/logos/download.jfif',
+    gradient: 'from-green-800 via-green-700 to-emerald-600',
+    heroBg: 'bg-green-800', accent: 'text-green-600', accentLight: 'bg-green-50',
+    accentBorder: 'border-green-200',
+    tagline: 'โฮลเซลทัวร์ต่างประเทศคุณภาพ ครบทุกเส้นทาง เอเชีย ยุโรป',
+  },
 };
 
 const CONTINENT_MAP: Record<string, { name: string; countries: string[] }> = {

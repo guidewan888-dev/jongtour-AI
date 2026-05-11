@@ -34,6 +34,13 @@ const SUPPLIER_INFO: Record<string, { displayName: string; logo: string; accent:
     gradient: 'from-emerald-600 to-green-500',
     landingPath: '/wholesaler/gs25',
   },
+  go365: {
+    displayName: 'Go365 Travel',
+    logo: '/images/logos/download.jfif',
+    accent: 'text-green-600',
+    gradient: 'from-green-600 to-emerald-500',
+    landingPath: '/wholesaler/go365',
+  },
 };
 
 interface TourPeriod {
