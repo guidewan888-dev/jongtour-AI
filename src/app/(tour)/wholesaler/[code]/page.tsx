@@ -136,7 +136,7 @@ export default function WholesalePage({ params }: { params: { code: string } }) 
             setTours(d.tours as Tour[]);
           } else {
             const filtered = (d.tours as Tour[]).filter(t =>
-              t.supplier.toLowerCase().replace(/['\s]/g, '').includes(config.name.replace(/['\s]/g, ''))
+              t.supplier.toLowerCase().replace(/['\s\-]/g, '').includes(config.name.replace(/['\s\-]/g, ''))
             );
             setTours(filtered);
           }
