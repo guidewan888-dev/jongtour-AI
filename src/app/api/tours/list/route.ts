@@ -10,6 +10,38 @@ const SITE_ALIAS_MAP: Record<string, string> = {
   onetour: 'worldconnection',
 };
 
+const toIsoDate = (value: any): string | null => {
+  if (!value) return null;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  return date.toISOString().slice(0, 10);
+};
+
+const normalizeStatus = (status: any): 'AVAILABLE' | 'FULL' | 'CANCELLED' => {
+  const lower = String(status || '').toLowerCase();
+  if (!lower) return 'AVAILABLE';
+  if (lower.includes('cancel')) return 'CANCELLED';
+  if (lower.includes('close') || lower.includes('full') || lower.includes('เต็ม')) return 'FULL';
+  return 'AVAILABLE';
+};
+
+const isFuturePeriod = (period: any, today: string) => {
+  const startDate = toIsoDate(period.start_date);
+  return !startDate || startDate >= today;
+};
+
+const isPeriodBookable = (period: any) => {
+  const seatsLeft = period.seats_left === null || period.seats_left === undefined ? null : Number(period.seats_left);
+  const status = normalizeStatus(period.status);
+  return status === 'AVAILABLE' && (seatsLeft === null || seatsLeft > 0);
+};
+
+const getMinPositivePrice = (periods: any[]) =>
+  periods
+    .map((period: any) => Number(period.price || 0))
+    .filter((price: number) => price > 0)
+    .sort((a: number, b: number) => a - b)[0];
+
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
@@ -100,7 +132,6 @@ async function getScraperTours(options: {
         .from('scraper_tour_periods')
         .select('tour_id, start_date, price, seats_left, status')
         .in('tour_id', tourIds)
-        .gte('start_date', today)
         .order('start_date', { ascending: true }),
       supabase
         .from('scraper_tour_images')
@@ -137,30 +168,21 @@ async function getScraperTours(options: {
     // ── Apply price fallback, smart deposit, and site name normalization ──
     return data
       .map((t: any) => {
-      const futurePeriods = periodsByTour[t.id] || [];
-      const availablePeriods = futurePeriods.filter(isPeriodBookable);
-      if (availablePeriods.length === 0) return null;
+      const allPeriods = periodsByTour[t.id] || [];
+      const futurePeriods = allPeriods.filter((period: any) => isFuturePeriod(period, today));
+      if (futurePeriods.length === 0) return null;
 
-      const minFuturePrice = availablePeriods
-        .map((period: any) => Number(period.price || 0))
-        .filter((price: number) => price > 0)
-        .sort((a: number, b: number) => a - b)[0];
+      const availablePeriods = futurePeriods.filter(isPeriodBookable);
+      const minFuturePrice = getMinPositivePrice(availablePeriods) || getMinPositivePrice(futurePeriods);
 
       if ((!t.price_from || t.price_from <= 0) && minFuturePrice) {
         t.price_from = minFuturePrice;
       }
 
-      // Smart deposit calculation (same logic as scraper-list & detail API)
+      // Keep only verified deposit from source data.
+      // If missing, detail API will try PDF fallback + persist update.
       if (!t.deposit || t.deposit <= 0) {
-        const price = t.price_from || 0;
-        if (price > 0) {
-          if (price < 20000) t.deposit = 5000;
-          else if (price < 50000) t.deposit = 10000;
-          else if (price < 100000) t.deposit = 15000;
-          else t.deposit = 20000;
-        } else {
-          t.deposit = 10000; // industry default
-        }
+        t.deposit = 0;
       }
 
       // Normalize legacy site names

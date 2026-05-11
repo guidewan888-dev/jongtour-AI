@@ -11,12 +11,43 @@ const SITE_ALIAS_MAP: Record<string, string> = {
 const normalizeSite = (rawSite: string | null | undefined) =>
   SITE_ALIAS_MAP[rawSite || ''] || rawSite || '';
 
+const SITE_FILTER_ALIASES: Record<string, string[]> = {
+  worldconnection: ['worldconnection', 'oneworldtour', 'one-world-tour', 'onetour'],
+  itravels: ['itravels', 'itravel', 'i-travel'],
+  bestintl: ['bestintl', 'bestinternational', 'bestin'],
+};
+
+const toIsoDate = (value: any): string | null => {
+  if (!value) return null;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  return date.toISOString().slice(0, 10);
+};
+
+const normalizeStatus = (status: any): 'AVAILABLE' | 'FULL' | 'CANCELLED' => {
+  const lower = String(status || '').toLowerCase();
+  if (!lower) return 'AVAILABLE';
+  if (lower.includes('cancel')) return 'CANCELLED';
+  if (lower.includes('close') || lower.includes('full') || lower.includes('เต็ม')) return 'FULL';
+  return 'AVAILABLE';
+};
+
+const isFuturePeriod = (period: any, today: string) => {
+  const startDate = toIsoDate(period.start_date);
+  return !startDate || startDate >= today;
+};
+
 const isPeriodBookable = (period: any) => {
   const seatsLeft = period.seats_left === null || period.seats_left === undefined ? null : Number(period.seats_left);
-  const status = String(period.status || '').toLowerCase();
-  const notFull = status !== 'full' && status !== 'close' && status !== 'closed' && status !== 'cancelled';
-  return notFull && (seatsLeft === null || seatsLeft > 0);
+  const status = normalizeStatus(period.status);
+  return status === 'AVAILABLE' && (seatsLeft === null || seatsLeft > 0);
 };
+
+const getMinPositivePrice = (periods: any[]) =>
+  periods
+    .map((period: any) => Number(period.price || 0))
+    .filter((price: number) => price > 0)
+    .sort((a: number, b: number) => a - b)[0];
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -34,7 +65,12 @@ export async function GET(req: NextRequest) {
     .limit(limit);
 
   if (site) {
-    query = query.eq('site', site);
+    const aliases = SITE_FILTER_ALIASES[site] || [site];
+    if (aliases.length === 1) {
+      query = query.eq('site', aliases[0]);
+    } else {
+      query = query.in('site', aliases);
+    }
   }
 
   query = query.not('source_url', 'like', '%twitter.com%');
@@ -54,7 +90,6 @@ export async function GET(req: NextRequest) {
       .from('scraper_tour_periods')
       .select('tour_id, start_date, price, seats_left, status')
       .in('tour_id', tourIds)
-      .gte('start_date', today)
       .order('start_date', { ascending: true }),
     supabase
       .from('scraper_tour_images')
@@ -83,14 +118,12 @@ export async function GET(req: NextRequest) {
 
   const normalized = tours
     .map((tour: any) => {
-      const futurePeriods = periodsByTour[tour.id] || [];
-      const availablePeriods = futurePeriods.filter(isPeriodBookable);
-      if (availablePeriods.length === 0) return null;
+      const allPeriods = periodsByTour[tour.id] || [];
+      const futurePeriods = allPeriods.filter((period: any) => isFuturePeriod(period, today));
+      if (futurePeriods.length === 0) return null;
 
-      const minFuturePrice = availablePeriods
-        .map((period: any) => Number(period.price || 0))
-        .filter((price: number) => price > 0)
-        .sort((a: number, b: number) => a - b)[0];
+      const availablePeriods = futurePeriods.filter(isPeriodBookable);
+      const minFuturePrice = getMinPositivePrice(availablePeriods) || getMinPositivePrice(futurePeriods);
 
       const draft: any = { ...tour };
       draft.site = normalizeSite(draft.site);
@@ -100,15 +133,7 @@ export async function GET(req: NextRequest) {
       }
 
       if (!draft.deposit || draft.deposit <= 0) {
-        const price = Number(draft.price_from || 0);
-        if (price > 0) {
-          if (price < 20000) draft.deposit = 5000;
-          else if (price < 50000) draft.deposit = 10000;
-          else if (price < 100000) draft.deposit = 15000;
-          else draft.deposit = 20000;
-        } else {
-          draft.deposit = 10000;
-        }
+        draft.deposit = 0;
       }
 
       if (!draft.cover_image_url && fallbackImageMap[draft.id]) {
