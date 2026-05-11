@@ -90,6 +90,34 @@ async function getScraperTours(options: {
     const { data, error } = await query;
     if (error || !data) return [];
 
+    const normalizeSite = (rawSite: string | null | undefined) =>
+      SITE_ALIAS_MAP[rawSite || ''] || rawSite || '';
+
+    // GS25 image fallback (bulk): cover_image_url -> first public_url -> first original_url
+    const gs25MissingCoverIds = data
+      .filter((t: any) => !t.cover_image_url && normalizeSite(t.site).toLowerCase() === 'gs25')
+      .map((t: any) => t.id);
+
+    const fallbackImageMap: Record<number, string> = {};
+    if (gs25MissingCoverIds.length > 0) {
+      const { data: fallbackImages } = await supabase
+        .from('scraper_tour_images')
+        .select('tour_id, public_url, original_url, sort_order, id')
+        .in('tour_id', gs25MissingCoverIds)
+        .order('sort_order', { ascending: true })
+        .order('id', { ascending: true });
+
+      for (const img of fallbackImages || []) {
+        if (fallbackImageMap[img.tour_id]) continue;
+        const fallbackUrl = (typeof img.public_url === 'string' && img.public_url.trim().length > 0)
+          ? img.public_url.trim()
+          : (typeof img.original_url === 'string' && img.original_url.trim().length > 0)
+            ? img.original_url.trim()
+            : '';
+        if (fallbackUrl) fallbackImageMap[img.tour_id] = fallbackUrl;
+      }
+    }
+
     // ── Period price fallback for tours with price_from = 0 ──
     const toursWithNoPrice = data.filter((t: any) => !t.price_from || t.price_from <= 0);
     const tourIds = toursWithNoPrice.map((t: any) => t.id);
@@ -131,8 +159,11 @@ async function getScraperTours(options: {
       }
 
       // Normalize legacy site names
-      if (t.site && SITE_ALIAS_MAP[t.site]) {
-        t.site = SITE_ALIAS_MAP[t.site];
+      t.site = normalizeSite(t.site);
+
+      // GS25 image fallback from scraper_tour_images
+      if (!t.cover_image_url && t.site.toLowerCase() === 'gs25' && fallbackImageMap[t.id]) {
+        t.cover_image_url = fallbackImageMap[t.id];
       }
 
       return t as ScraperRawTour;

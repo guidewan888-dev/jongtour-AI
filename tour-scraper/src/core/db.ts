@@ -42,6 +42,25 @@ export async function upsertTour(
   images: ImageMeta[],
 ): Promise<number> {
   const supabase = getSupabase();
+  const gs25FallbackImageUrl =
+    site === 'gs25' && images.length === 0 && Array.isArray(tour.imageUrls)
+      ? (tour.imageUrls.find((url) => typeof url === 'string' && url.trim().length > 0)?.trim() || null)
+      : null;
+
+  const coverImageUrl = images.length > 0
+    ? (() => {
+        // 1. Prefer CloudFront image whose URL contains the tour code (= actual flyer for bestintl)
+        const codeMatch = images.find(i =>
+          /cloudfront/i.test(i.originalUrl) &&
+          i.originalUrl.toLowerCase().includes(tour.tourCode.toLowerCase()) &&
+          !/mobile\.png/i.test(i.originalUrl)
+        );
+        if (codeMatch) return codeMatch.publicUrl;
+        // 2. Use first image — scrapers return the cover/hero image first
+        //    (fallback to largest was wrong: shared template images are often larger than covers)
+        return images[0].publicUrl;
+      })()
+    : gs25FallbackImageUrl;
 
   // 1. Upsert tour record
   const { data: tourRow, error } = await supabase
@@ -59,20 +78,7 @@ export async function upsertTour(
         description: tour.description,
         itinerary_html: tour.itineraryHtml,
         pdf_url: tour.pdfUrl,
-        cover_image_url: images.length > 0
-          ? (() => {
-              // 1. Prefer CloudFront image whose URL contains the tour code (= actual flyer for bestintl)
-              const codeMatch = images.find(i =>
-                /cloudfront/i.test(i.originalUrl) &&
-                i.originalUrl.toLowerCase().includes(tour.tourCode.toLowerCase()) &&
-                !/mobile\.png/i.test(i.originalUrl)
-              );
-              if (codeMatch) return codeMatch.publicUrl;
-              // 2. Use first image — scrapers return the cover/hero image first
-              //    (fallback to largest was wrong: shared template images are often larger than covers)
-              return images[0].publicUrl;
-            })()
-          : null,
+        cover_image_url: coverImageUrl,
         last_scraped_at: new Date().toISOString(),
         is_active: true,
         deposit: tour.deposit ?? null,

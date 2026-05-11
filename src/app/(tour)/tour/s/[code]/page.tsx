@@ -225,7 +225,7 @@ export default function ScraperTourDetailPage({ params }: { params: { code: stri
 
               {/* Actions */}
               <div className="flex flex-wrap items-center gap-3 mt-auto">
-                {tour.pdfUrl && !tour.pdfUrl.includes('gs25travel.com') && (
+                {tour.pdfUrl && (
                   <a href={tour.pdfUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 px-5 py-3 bg-blue-50 border-2 border-blue-200 text-blue-700 rounded-xl font-bold text-sm hover:bg-blue-100 transition-colors shadow-sm">
                     📥 ดาวน์โหลดโปรแกรมทัวร์
                   </a>
@@ -390,7 +390,7 @@ export default function ScraperTourDetailPage({ params }: { params: { code: stri
           </div>
         </div>
       </div>
-      {tour.pdfUrl && !tour.pdfUrl.includes('gs25travel.com') && (
+      {tour.pdfUrl && (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4">
           <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-200 p-5 flex flex-col md:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-3">

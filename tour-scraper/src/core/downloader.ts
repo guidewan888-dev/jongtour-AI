@@ -11,8 +11,18 @@ export async function downloadAndStore(
   ua: string,
 ): Promise<ImageMeta | null> {
   try {
+    const isGs25Image = /https?:\/\/(?:www\.)?gs25travel\.com/i.test(imageUrl);
+    const headers: Record<string, string> = {
+      'User-Agent': ua,
+    };
+    if (isGs25Image) {
+      headers.Referer = 'https://gs25travel.com/';
+      headers.Origin = 'https://gs25travel.com';
+      headers.Accept = 'image/*,*/*;q=0.8';
+    }
+
     const res = await fetch(imageUrl, {
-      headers: { 'User-Agent': ua },
+      headers,
       signal: AbortSignal.timeout(30_000),
     });
 

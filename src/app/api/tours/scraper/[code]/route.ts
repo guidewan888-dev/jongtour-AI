@@ -32,6 +32,25 @@ export async function GET(
     .eq('tour_id', data.id)
     .order('start_date', { ascending: true });
 
+  const normalizedSite = SITE_ALIAS_MAP[data.site] || data.site || '';
+
+  // GS25 image fallback: cover_image_url -> first public_url -> first original_url
+  let imageUrl = data.cover_image_url || '';
+  if (!imageUrl && normalizedSite.toLowerCase() === 'gs25') {
+    const { data: fallbackImages } = await supabase
+      .from('scraper_tour_images')
+      .select('tour_id, public_url, original_url, sort_order, id')
+      .eq('tour_id', data.id)
+      .order('sort_order', { ascending: true })
+      .order('id', { ascending: true });
+
+    if (fallbackImages && fallbackImages.length > 0) {
+      const withPublicUrl = fallbackImages.find((img: any) => typeof img.public_url === 'string' && img.public_url.trim().length > 0);
+      const withOriginalUrl = fallbackImages.find((img: any) => typeof img.original_url === 'string' && img.original_url.trim().length > 0);
+      imageUrl = withPublicUrl?.public_url?.trim() || withOriginalUrl?.original_url?.trim() || '';
+    }
+  }
+
   // Parse duration
   const durMatch = data.duration?.match(/(\d+)\s*วัน\s*(\d+)?/);
   const durationDays = durMatch ? parseInt(durMatch[1]) : 0;
@@ -94,14 +113,14 @@ export async function GET(
     id: data.id,
     code: data.tour_code || '',
     title: data.title || '',
-    site: SITE_ALIAS_MAP[data.site] || data.site || '',
+    site: normalizedSite,
     country: data.country || '',
     duration: data.duration || '',
     durationDays,
     durationNights,
     airline: data.airline || '',
     price: priceFrom,
-    imageUrl: data.cover_image_url || '',
+    imageUrl,
     sourceUrl: data.source_url || '',
     pdfUrl: data.pdf_url || '',
     deposit,
