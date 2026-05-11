@@ -5,8 +5,8 @@ export const dynamic = 'force-dynamic';
 
 /**
  * GET /api/tours/flash-sale
- * Returns tours that are departing soon (within 30 days) or have discounted prices
- * from ALL wholesalers — both API and scraper sources.
+ * Returns ONLY fire-sale / discounted tours from all wholesalers (API + scraper),
+ * grouped by wholesaler.
  */
 export async function GET() {
   try {
@@ -15,69 +15,178 @@ export async function GET() {
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     );
 
-    const today = new Date().toISOString().split('T')[0];
-    const thirtyDaysLater = new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0];
+    const FIRE_SALE_DAYS = 21;
+    const LOOKAHEAD_DAYS = 60;
+    const DISCOUNT_RATIO = 0.88; // current/min price <= 88% of max in same tour
+    const MAX_PER_SUPPLIER = 12;
+    const now = new Date();
+    const fromDate = now.toISOString().split('T')[0];
+    const toDate = new Date(now.getTime() + LOOKAHEAD_DAYS * 86400000).toISOString().split('T')[0];
 
-    // ─── 1. API-based tours with near departures ───
-    // Get tours with departures in the next 30 days
-    const { data: departures } = await supabase
+    const toDayDiff = (dateStr?: string | null) => {
+      if (!dateStr) return null;
+      const diff = Math.ceil((new Date(dateStr).getTime() - now.getTime()) / 86400000);
+      return Math.max(0, diff);
+    };
+
+    // ─── 1) API wholesalers (tours + departures + prices) ───
+    const { data: apiDepartures } = await supabase
       .from('departures')
-      .select('tourId, departureDate, status, totalSeats, bookedSeats, adultPrice')
-      .gte('departureDate', today)
-      .lte('departureDate', thirtyDaysLater)
-      .neq('status', 'CANCELLED')
-      .order('departureDate', { ascending: true })
-      .limit(200);
+      .select('id, tourId, supplierId, startDate, remainingSeats, status')
+      .gte('startDate', fromDate)
+      .lte('startDate', toDate)
+      .gt('remainingSeats', 0)
+      .in('status', ['AVAILABLE', 'ON_REQUEST'])
+      .order('startDate', { ascending: true })
+      .limit(5000);
 
-    const tourIds = [...new Set((departures || []).map(d => d.tourId))];
+    const departureIds = [...new Set((apiDepartures || []).map((d: any) => d.id))];
+    const apiTourIds = [...new Set((apiDepartures || []).map((d: any) => d.tourId))];
 
-    let apiTours: any[] = [];
-    if (tourIds.length > 0) {
-      const { data: tours } = await supabase
-        .from('tours')
-        .select('id, tourCode, title, country, coverImage, supplierId, status')
-        .in('id', tourIds)
-        .eq('status', 'PUBLISHED')
-        .limit(100);
+    const [apiPricesRes, apiToursRes, apiImagesRes, apiDestinationsRes, suppliersRes] = await Promise.all([
+      departureIds.length > 0
+        ? supabase
+            .from('prices')
+            .select('departureId, paxType, sellingPrice')
+            .in('departureId', departureIds)
+            .eq('paxType', 'ADULT')
+        : Promise.resolve({ data: [] as any[] }),
+      apiTourIds.length > 0
+        ? supabase
+            .from('tours')
+            .select('id, tourCode, tourName, slug, status, supplierId')
+            .in('id', apiTourIds)
+            .eq('status', 'PUBLISHED')
+        : Promise.resolve({ data: [] as any[] }),
+      apiTourIds.length > 0
+        ? supabase
+            .from('tour_images')
+            .select('tourId, imageUrl, isCover')
+            .in('tourId', apiTourIds)
+        : Promise.resolve({ data: [] as any[] }),
+      apiTourIds.length > 0
+        ? supabase
+            .from('tour_destinations')
+            .select('tourId, country')
+            .in('tourId', apiTourIds)
+        : Promise.resolve({ data: [] as any[] }),
+      supabase.from('suppliers').select('id, displayName'),
+    ]);
 
-      // Get supplier names
-      const { data: suppliers } = await supabase
-        .from('suppliers')
-        .select('id, displayName');
-      const supplierMap: Record<string, string> = {};
-      (suppliers || []).forEach(s => { supplierMap[s.id] = s.displayName; });
+    const departurePriceMap: Record<string, number> = {};
+    (apiPricesRes.data || []).forEach((p: any) => {
+      const val = Number(p.sellingPrice || 0);
+      if (val <= 0) return;
+      if (!departurePriceMap[p.departureId] || val < departurePriceMap[p.departureId]) {
+        departurePriceMap[p.departureId] = val;
+      }
+    });
 
-      apiTours = (tours || []).map(t => {
-        const deps = (departures || []).filter(d => d.tourId === t.id);
-        const nextDep = deps[0];
-        const availableSeats = nextDep ? (nextDep.totalSeats - nextDep.bookedSeats) : 0;
-        return {
-          id: t.id,
-          code: t.tourCode,
-          title: t.title,
-          country: t.country,
-          image: t.coverImage,
-          supplier: supplierMap[t.supplierId] || t.supplierId,
-          type: 'api',
-          price: nextDep?.adultPrice || 0,
-          departureDate: nextDep?.departureDate || null,
-          availableSeats,
-          totalDepartures: deps.length,
-          link: `/tour/${t.tourCode?.toLowerCase()}`,
-        };
-      }).filter(t => t.availableSeats > 0 && t.price > 0);
-    }
+    const supplierNameMap: Record<string, string> = {};
+    (suppliersRes.data || []).forEach((s: any) => {
+      supplierNameMap[s.id] = s.displayName || s.id;
+    });
 
-    // ─── 2. Scraper-based tours departing soon ───
-    // Look for scraper tours that have departure dates within 30 days
+    const firstImageMap: Record<string, string> = {};
+    (apiImagesRes.data || []).forEach((img: any) => {
+      const url = (img.imageUrl || '').trim();
+      if (!url) return;
+      if (!firstImageMap[img.tourId] || img.isCover === true) {
+        firstImageMap[img.tourId] = url;
+      }
+    });
+
+    const countryMap: Record<string, string> = {};
+    (apiDestinationsRes.data || []).forEach((d: any) => {
+      if (!countryMap[d.tourId] && d.country) countryMap[d.tourId] = d.country;
+    });
+
+    const departuresByTour: Record<string, any[]> = {};
+    (apiDepartures || []).forEach((d: any) => {
+      const price = departurePriceMap[d.id] || 0;
+      if (price <= 0) return;
+      if (!departuresByTour[d.tourId]) departuresByTour[d.tourId] = [];
+      departuresByTour[d.tourId].push({ ...d, price });
+    });
+    Object.values(departuresByTour).forEach((arr: any[]) => arr.sort((a, b) => String(a.startDate).localeCompare(String(b.startDate))));
+
+    const apiTourRows = apiToursRes.data || [];
+    const apiFlash = apiTourRows.flatMap((tour: any) => {
+      const deps = departuresByTour[tour.id] || [];
+      if (deps.length === 0) return [];
+
+      const nearest = deps[0];
+      const daysLeft = toDayDiff(nearest.startDate);
+      const prices = deps.map((d: any) => Number(d.price || 0)).filter((p: number) => p > 0);
+      const minPrice = Math.min(...prices);
+      const maxPrice = Math.max(...prices);
+
+      const isFireSale = daysLeft !== null && daysLeft <= FIRE_SALE_DAYS;
+      const isDiscount = prices.length >= 2 && minPrice <= maxPrice * DISCOUNT_RATIO;
+      if (!isFireSale && !isDiscount) return [];
+
+      return [{
+        id: tour.id,
+        code: tour.tourCode,
+        title: tour.tourName,
+        country: countryMap[tour.id] || '',
+        image: firstImageMap[tour.id] || null,
+        supplier: supplierNameMap[tour.supplierId] || tour.supplierId,
+        type: 'api',
+        price: nearest.price,
+        departureDate: nearest.startDate || null,
+        availableSeats: Number(nearest.remainingSeats || 0),
+        totalDepartures: deps.length,
+        pdfUrl: undefined,
+        link: `/tour/${tour.slug || String(tour.tourCode || '').toLowerCase()}`,
+      }];
+    });
+
+    // ─── 2) Scraper wholesalers (scraper_tours + scraper_tour_periods) ───
     const { data: scraperTours } = await supabase
       .from('scraper_tours')
-      .select('id, site, tour_code, title, country, price_from, cover_image_url, departure_dates, pdf_url, is_active')
+      .select('id, site, tour_code, title, country, price_from, cover_image_url, pdf_url, is_active')
       .eq('is_active', true)
       .gt('price_from', 0)
-      .order('price_from', { ascending: true })
-      .limit(500);
+      .order('last_scraped_at', { ascending: false })
+      .limit(2000);
 
+    const scraperIds = [...new Set((scraperTours || []).map((t: any) => t.id))];
+    const { data: scraperPeriods } = scraperIds.length > 0
+      ? await supabase
+          .from('scraper_tour_periods')
+          .select('tour_id, start_date, price, seats_left, status')
+          .in('tour_id', scraperIds)
+          .gte('start_date', fromDate)
+          .lte('start_date', toDate)
+          .order('start_date', { ascending: true })
+      : { data: [] as any[] };
+
+    const { data: scraperFallbackImages } = await supabase
+      .from('scraper_tour_images')
+      .select('tour_id, public_url, original_url, sort_order, id')
+      .in('tour_id', scraperIds.length > 0 ? scraperIds : [-1 as any])
+      .order('sort_order', { ascending: true })
+      .order('id', { ascending: true });
+
+    const scraperImageMap: Record<number, string> = {};
+    (scraperFallbackImages || []).forEach((img: any) => {
+      if (scraperImageMap[img.tour_id]) return;
+      const candidate = (img.public_url || img.original_url || '').trim();
+      if (candidate) scraperImageMap[img.tour_id] = candidate;
+    });
+
+    const periodsByTour: Record<number, any[]> = {};
+    (scraperPeriods || []).forEach((p: any) => {
+      if (!periodsByTour[p.tour_id]) periodsByTour[p.tour_id] = [];
+      periodsByTour[p.tour_id].push(p);
+    });
+
+    const SITE_ALIAS_MAP: Record<string, string> = {
+      oneworldtour: 'worldconnection',
+      'one-world-tour': 'worldconnection',
+      onetour: 'worldconnection',
+    };
     const SITE_LABELS: Record<string, string> = {
       worldconnection: 'World Connection',
       itravels: 'iTravels Center',
@@ -86,65 +195,71 @@ export async function GET() {
       go365: 'Go365 Travel',
     };
 
-    const scraperFlash: any[] = [];
-    (scraperTours || []).forEach(t => {
-      // Parse departure_dates to find near departures
-      let nearestDate: string | null = null;
-      let departureDates: string[] = [];
-      
-      if (t.departure_dates) {
-        if (Array.isArray(t.departure_dates)) {
-          departureDates = t.departure_dates;
-        } else if (typeof t.departure_dates === 'string') {
-          departureDates = t.departure_dates.split(',').map((d: string) => d.trim());
-        }
-      }
+    const scraperFlash = (scraperTours || []).flatMap((tour: any) => {
+      const site = SITE_ALIAS_MAP[tour.site] || tour.site || '';
+      const periods = (periodsByTour[tour.id] || []).filter((p: any) => {
+        const seatsLeft = p.seats_left === null || p.seats_left === undefined ? null : Number(p.seats_left);
+        const notFull = String(p.status || '').toLowerCase() !== 'full';
+        return notFull && (seatsLeft === null || seatsLeft > 0);
+      });
 
-      // Find departures within 30 days
-      const nearDates = departureDates.filter(d => d >= today && d <= thirtyDaysLater);
-      if (nearDates.length > 0) {
-        nearestDate = nearDates[0];
-      }
+      if (periods.length === 0) return [];
 
-      // Include if: has near departure OR price is low (likely discounted)
-      if (nearestDate || departureDates.length === 0) {
-        scraperFlash.push({
-          id: t.id,
-          code: t.tour_code,
-          title: t.title,
-          country: t.country,
-          image: t.cover_image_url,
-          supplier: SITE_LABELS[t.site] || t.site,
-          type: 'scraper',
-          price: t.price_from,
-          departureDate: nearestDate,
-          availableSeats: null, // scrapers don't track seats
-          totalDepartures: departureDates.length,
-          pdfUrl: t.pdf_url,
-          link: `/tour/s/${(t.tour_code || '').toLowerCase()}`,
-        });
+      const nearest = periods[0];
+      const daysLeft = toDayDiff(nearest.start_date);
+      const periodPrices = periods.map((p: any) => Number(p.price || 0)).filter((p: number) => p > 0);
+      const minPrice = periodPrices.length > 0 ? Math.min(...periodPrices) : Number(tour.price_from || 0);
+      const maxPrice = periodPrices.length > 0 ? Math.max(...periodPrices) : Number(tour.price_from || 0);
+      const displayPrice = Number(nearest.price || minPrice || tour.price_from || 0);
+
+      if (displayPrice <= 0) return [];
+
+      const isFireSale = daysLeft !== null && daysLeft <= FIRE_SALE_DAYS;
+      const isDiscount = periodPrices.length >= 2 && minPrice <= maxPrice * DISCOUNT_RATIO;
+      if (!isFireSale && !isDiscount) return [];
+
+      const seats = nearest.seats_left === null || nearest.seats_left === undefined ? null : Number(nearest.seats_left);
+
+      return [{
+        id: `scraper-${tour.id}`,
+        code: tour.tour_code,
+        title: tour.title,
+        country: tour.country || '',
+        image: tour.cover_image_url || scraperImageMap[tour.id] || null,
+        supplier: SITE_LABELS[site] || site,
+        type: 'scraper',
+        price: displayPrice,
+        departureDate: nearest.start_date || null,
+        availableSeats: seats,
+        totalDepartures: periods.length,
+        pdfUrl: tour.pdf_url || undefined,
+        link: `/tour/s/${String(tour.tour_code || '').toLowerCase()}`,
+      }];
+    });
+
+    // ─── 3) Combine + group by supplier ───
+    const allDeals = [...apiFlash, ...scraperFlash]
+      .sort((a, b) => (a.departureDate || '9999-12-31').localeCompare(b.departureDate || '9999-12-31'));
+
+    const grouped: Record<string, any[]> = {};
+    allDeals.forEach((deal) => {
+      if (!grouped[deal.supplier]) grouped[deal.supplier] = [];
+      if (grouped[deal.supplier].length < MAX_PER_SUPPLIER) {
+        grouped[deal.supplier].push(deal);
       }
     });
 
-    // ─── 3. Combine and group by supplier ───
-    const allTours = [...apiTours, ...scraperFlash]
-      .sort((a, b) => (a.departureDate || '9999').localeCompare(b.departureDate || '9999'));
-
-    // Group by supplier
-    const grouped: Record<string, any[]> = {};
-    allTours.forEach(t => {
-      if (!grouped[t.supplier]) grouped[t.supplier] = [];
-      // Limit per supplier to keep response manageable
-      if (grouped[t.supplier].length < 8) {
-        grouped[t.supplier].push(t);
-      }
+    const suppliers = Object.keys(grouped).sort((a, b) => {
+      const ca = grouped[a]?.length || 0;
+      const cb = grouped[b]?.length || 0;
+      return cb - ca;
     });
 
     return NextResponse.json({
-      flashSale: allTours.slice(0, 60),
+      flashSale: allDeals,
       grouped,
-      suppliers: Object.keys(grouped),
-      total: allTours.length,
+      suppliers,
+      total: allDeals.length,
     });
   } catch (e: any) {
     console.error('[flash-sale API]', e.message);
