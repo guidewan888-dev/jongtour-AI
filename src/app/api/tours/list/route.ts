@@ -55,9 +55,10 @@ export async function GET(request: Request) {
     const keyword = searchParams.get('q') || undefined;
     const country = searchParams.get('country') || undefined;
     const limit = parseInt(searchParams.get('limit') || '1000', 10);
+    const safeLimit = Number.isFinite(limit) ? Math.max(1, Math.min(limit, 3000)) : 1000;
 
     // Check cache
-    const cacheKey = `${keyword || ''}|${country || ''}|${limit}`;
+    const cacheKey = `${keyword || ''}|${country || ''}|${safeLimit}`;
     const cached = apiCache.get(cacheKey);
     if (cached && Date.now() - cached.ts < CACHE_TTL) {
       return NextResponse.json(cached.data, {
@@ -66,11 +67,11 @@ export async function GET(request: Request) {
     }
 
     // 1. Existing wholesale tours → map through central mapper
-    const rawWholesale = await getTourList({ keyword, country, limit });
+    const rawWholesale = await getTourList({ keyword, country, limit: safeLimit });
     const wholesaleTours = rawWholesale.map(t => toCardProps(mapWholesaleTour(t)));
 
     // 2. Scraper tours → map through central mapper
-    const rawScraper = await getScraperTours({ keyword, country, limit: 500 });
+    const rawScraper = await getScraperTours({ keyword, country, limit: safeLimit });
     const scraperTours = rawScraper.map(t => toCardProps(mapScraperTour(t)));
 
     // 3. Merge: wholesale first, then scraper
