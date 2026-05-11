@@ -42,6 +42,15 @@ const getMinPositivePrice = (periods: any[]) =>
     .filter((price: number) => price > 0)
     .sort((a: number, b: number) => a - b)[0];
 
+const chunkArray = <T>(items: T[], chunkSize: number): T[][] => {
+  if (chunkSize <= 0) return [items];
+  const chunks: T[][] = [];
+  for (let index = 0; index < items.length; index += chunkSize) {
+    chunks.push(items.slice(index, index + chunkSize));
+  }
+  return chunks;
+};
+
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
@@ -128,28 +137,42 @@ async function getScraperTours(options: {
       SITE_ALIAS_MAP[rawSite || ''] || rawSite || '';
 
     const tourIds = data.map((tour: any) => tour.id);
-    const [periodsRes, imagesRes] = await Promise.all([
-      supabase
-        .from('scraper_tour_periods')
-        .select('tour_id, start_date, price, seats_left, status')
-        .in('tour_id', tourIds)
-        .order('start_date', { ascending: true }),
-      supabase
-        .from('scraper_tour_images')
-        .select('tour_id, public_url, original_url, sort_order, id')
-        .in('tour_id', tourIds)
-        .order('sort_order', { ascending: true })
-        .order('id', { ascending: true }),
-    ]);
+    if (tourIds.length === 0) return [];
+
+    const idChunks = chunkArray(tourIds, 200);
+    const periodRows: any[] = [];
+    const imageRows: any[] = [];
+
+    for (const idChunk of idChunks) {
+      const [periodsRes, imagesRes] = await Promise.all([
+        supabase
+          .from('scraper_tour_periods')
+          .select('tour_id, start_date, price, seats_left, status')
+          .in('tour_id', idChunk)
+          .order('start_date', { ascending: true }),
+        supabase
+          .from('scraper_tour_images')
+          .select('tour_id, public_url, original_url, sort_order, id')
+          .in('tour_id', idChunk)
+          .order('sort_order', { ascending: true })
+          .order('id', { ascending: true }),
+      ]);
+
+      if (periodsRes.error) throw periodsRes.error;
+      if (imagesRes.error) throw imagesRes.error;
+
+      periodRows.push(...(periodsRes.data || []));
+      imageRows.push(...(imagesRes.data || []));
+    }
 
     const periodsByTour: Record<number, any[]> = {};
-    (periodsRes.data || []).forEach((period: any) => {
+    periodRows.forEach((period: any) => {
       if (!periodsByTour[period.tour_id]) periodsByTour[period.tour_id] = [];
       periodsByTour[period.tour_id].push(period);
     });
 
     const fallbackImageMap: Record<number, string> = {};
-    (imagesRes.data || []).forEach((img: any) => {
+    imageRows.forEach((img: any) => {
       if (fallbackImageMap[img.tour_id]) return;
       const fallbackUrl = (typeof img.public_url === 'string' && img.public_url.trim().length > 0)
         ? img.public_url.trim()
