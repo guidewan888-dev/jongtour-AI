@@ -15,6 +15,7 @@ interface FlashTour {
   departureDate: string | null;
   availableSeats: number | null;
   totalDepartures: number;
+  dealType?: 'fire' | 'discount';
   pdfUrl?: string;
   link: string;
 }
@@ -49,6 +50,7 @@ export default function FlashSalePage() {
   const [loading, setLoading] = useState(true);
   const [aiQuery, setAiQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState('all');
+  const [activeDealType, setActiveDealType] = useState<'all' | 'fire' | 'discount'>('all');
 
   // Countdown timer
   const [timeLeft, setTimeLeft] = useState({ hours: 0, minutes: 0, seconds: 0 });
@@ -85,10 +87,37 @@ export default function FlashSalePage() {
       .finally(() => setLoading(false));
   }, []);
 
-  // Filter suppliers
-  const filteredSuppliers = activeFilter === 'all'
-    ? suppliers
-    : suppliers.filter(s => s === activeFilter);
+  const allTours = React.useMemo(() => Object.values(grouped).flat(), [grouped]);
+  const fireCount = React.useMemo(
+    () => allTours.filter((t) => (t.dealType || 'fire') === 'fire').length,
+    [allTours],
+  );
+  const discountCount = React.useMemo(
+    () => allTours.filter((t) => t.dealType === 'discount').length,
+    [allTours],
+  );
+
+  const groupedByDealType = React.useMemo(() => {
+    if (activeDealType === 'all') return grouped;
+    const next: Record<string, FlashTour[]> = {};
+    for (const supplier of suppliers) {
+      const tours = (grouped[supplier] || []).filter((t) =>
+        activeDealType === 'fire' ? (t.dealType || 'fire') === 'fire' : t.dealType === 'discount'
+      );
+      if (tours.length > 0) next[supplier] = tours;
+    }
+    return next;
+  }, [activeDealType, grouped, suppliers]);
+
+  const visibleTotal = React.useMemo(
+    () => Object.values(groupedByDealType).flat().length,
+    [groupedByDealType],
+  );
+
+  const filteredSuppliers = React.useMemo(() => {
+    const base = activeFilter === 'all' ? suppliers : suppliers.filter(s => s === activeFilter);
+    return base.filter((s) => (groupedByDealType[s]?.length || 0) > 0);
+  }, [activeFilter, suppliers, groupedByDealType]);
 
   return (
     <div className="bg-slate-50 selection:bg-red-200 selection:text-red-900 min-h-screen">
@@ -159,6 +188,34 @@ export default function FlashSalePage() {
         {/* 2. Supplier Filter */}
         <div className="bg-white border-b border-slate-200 sticky top-16 z-30 shadow-sm">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <div className="flex items-center gap-3 overflow-x-auto hide-scrollbar mb-3">
+              <span className="text-sm font-bold text-slate-800 shrink-0 mr-2">ประเภทดีล:</span>
+              <button
+                onClick={() => setActiveDealType('all')}
+                className={`px-4 py-2 rounded-full text-sm font-bold whitespace-nowrap transition-colors border ${
+                  activeDealType === 'all' ? 'bg-red-50 text-red-600 border-red-200' : 'bg-white text-slate-600 border-slate-200 hover:border-red-300 hover:text-red-500'
+                }`}
+              >
+                ทั้งหมด ({total})
+              </button>
+              <button
+                onClick={() => setActiveDealType('fire')}
+                className={`px-4 py-2 rounded-full text-sm font-bold whitespace-nowrap transition-colors border ${
+                  activeDealType === 'fire' ? 'bg-red-50 text-red-600 border-red-200' : 'bg-white text-slate-600 border-slate-200 hover:border-red-300 hover:text-red-500'
+                }`}
+              >
+                🔥 ไฟไหม้ ({fireCount})
+              </button>
+              <button
+                onClick={() => setActiveDealType('discount')}
+                className={`px-4 py-2 rounded-full text-sm font-bold whitespace-nowrap transition-colors border ${
+                  activeDealType === 'discount' ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-white text-slate-600 border-slate-200 hover:border-amber-300 hover:text-amber-600'
+                }`}
+              >
+                🏷️ ลดราคา ({discountCount})
+              </button>
+            </div>
+
             <div className="flex items-center gap-3 overflow-x-auto hide-scrollbar">
               <span className="text-sm font-bold text-slate-800 shrink-0 mr-2">ตัวกรอง:</span>
               <button
@@ -167,7 +224,7 @@ export default function FlashSalePage() {
                   activeFilter === 'all' ? 'bg-red-50 text-red-600 border-red-200' : 'bg-white text-slate-600 border-slate-200 hover:border-red-300 hover:text-red-500'
                 }`}
               >
-                ทั้งหมด ({total})
+                ทั้งหมด ({visibleTotal})
               </button>
               {suppliers.map(s => (
                 <button
@@ -177,7 +234,7 @@ export default function FlashSalePage() {
                     activeFilter === s ? 'bg-red-50 text-red-600 border-red-200' : 'bg-white text-slate-600 border-slate-200 hover:border-red-300 hover:text-red-500'
                   }`}
                 >
-                  {s} ({grouped[s]?.length || 0})
+                  {s} ({groupedByDealType[s]?.length || 0})
                 </button>
               ))}
             </div>
@@ -200,7 +257,7 @@ export default function FlashSalePage() {
           ) : (
             <section className="space-y-16">
               {filteredSuppliers.map(supplier => {
-                const tours = grouped[supplier] || [];
+                const tours = groupedByDealType[supplier] || [];
                 if (tours.length === 0) return null;
                 const styles = SUPPLIER_STYLES[supplier] || { gradient: 'from-slate-600 to-slate-700', ring: 'ring-slate-400' };
 
@@ -235,10 +292,14 @@ export default function FlashSalePage() {
                             className="bg-white rounded-2xl shadow-md border border-orange-200 overflow-hidden hover:shadow-xl hover:border-orange-400 transition-all group flex flex-col relative"
                           >
                             {/* Flash Sale Banner */}
-                            <div className="absolute top-0 inset-x-0 h-8 bg-gradient-to-r from-red-600 to-orange-500 z-20 flex items-center justify-center text-white text-xs font-bold tracking-widest shadow-sm">
-                              <Flame className="w-4 h-4 mr-1 animate-pulse" />
-                              {days !== null && days <= 7 ? `บินใน ${days} วัน!` : 'FLASH SALE'}
-                            </div>
+                              <div className="absolute top-0 inset-x-0 h-8 bg-gradient-to-r from-red-600 to-orange-500 z-20 flex items-center justify-center text-white text-xs font-bold tracking-widest shadow-sm">
+                                <Flame className="w-4 h-4 mr-1 animate-pulse" />
+                                {tour.dealType === 'discount'
+                                  ? 'DISCOUNT DEAL'
+                                  : days !== null && days <= 7
+                                    ? `บินใน ${days} วัน!`
+                                    : 'FLASH SALE'}
+                              </div>
 
                             {/* Image */}
                             <div className="relative bg-slate-200 overflow-hidden shrink-0 h-56 w-full pt-8">
@@ -293,7 +354,9 @@ export default function FlashSalePage() {
                                 <div className="flex justify-between items-end mb-4">
                                   <div className="text-xs text-slate-400">{tour.code}</div>
                                   <div className="text-right">
-                                    <div className="text-[10px] font-bold text-red-500 mb-0.5">🔥 ราคาไฟไหม้</div>
+                                    <div className="text-[10px] font-bold text-red-500 mb-0.5">
+                                      {tour.dealType === 'discount' ? '🏷️ ราคาลดพิเศษ' : '🔥 ราคาไฟไหม้'}
+                                    </div>
                                     <div className="text-2xl font-black text-red-600 tracking-tight leading-none">
                                       ฿{tour.price.toLocaleString()}
                                     </div>

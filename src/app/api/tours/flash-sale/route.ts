@@ -125,6 +125,7 @@ export async function GET() {
       const isFireSale = daysLeft !== null && daysLeft <= FIRE_SALE_DAYS;
       const isDiscount = prices.length >= 2 && minPrice <= maxPrice * DISCOUNT_RATIO;
       if (!isFireSale && !isDiscount) return [];
+      const dealType: 'fire' | 'discount' = isFireSale ? 'fire' : 'discount';
 
       return [{
         id: tour.id,
@@ -138,6 +139,7 @@ export async function GET() {
         departureDate: nearest.startDate || null,
         availableSeats: Number(nearest.remainingSeats || 0),
         totalDepartures: deps.length,
+        dealType,
         pdfUrl: undefined,
         link: `/tour/${tour.slug || String(tour.tourCode || '').toLowerCase()}`,
       }];
@@ -219,6 +221,7 @@ export async function GET() {
       const isFireSale = daysLeft !== null && daysLeft <= FIRE_SALE_DAYS;
       const isDiscount = periodPrices.length >= 2 && minPrice <= maxPrice * DISCOUNT_RATIO;
       if (!isFireSale && !isDiscount) return [];
+      const dealType: 'fire' | 'discount' = isFireSale ? 'fire' : 'discount';
 
       const seats = nearest.seats_left === null || nearest.seats_left === undefined ? null : Number(nearest.seats_left);
 
@@ -234,6 +237,7 @@ export async function GET() {
         departureDate: nearest.start_date || null,
         availableSeats: seats,
         totalDepartures: periods.length,
+        dealType,
         pdfUrl: tour.pdf_url || undefined,
         link: `/tour/s/${String(tour.tour_code || '').toLowerCase()}`,
       }];
@@ -257,14 +261,19 @@ export async function GET() {
       return cb - ca;
     });
 
+    const fireCount = allDeals.filter((deal: any) => deal.dealType === 'fire').length;
+    const discountCount = allDeals.filter((deal: any) => deal.dealType === 'discount').length;
+
     return NextResponse.json({
       flashSale: allDeals,
       grouped,
       suppliers,
       total: allDeals.length,
+      fireCount,
+      discountCount,
     });
   } catch (e: any) {
     console.error('[flash-sale API]', e.message);
-    return NextResponse.json({ error: e.message, flashSale: [], grouped: {}, suppliers: [], total: 0 }, { status: 500 });
+    return NextResponse.json({ error: e.message, flashSale: [], grouped: {}, suppliers: [], total: 0, fireCount: 0, discountCount: 0 }, { status: 500 });
   }
 }
