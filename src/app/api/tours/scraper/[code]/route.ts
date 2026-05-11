@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/utils/supabase/server';
+import { resolveAndPersistScraperDeposit } from '@/lib/depositResolver';
 
 const SITE_ALIAS_MAP: Record<string, string> = {
   oneworldtour: 'worldconnection',
@@ -15,11 +16,30 @@ const HAS_DATE = /(\d{1,2}\s*)?(ม\.?ค|ก\.?พ|มี\.?ค|เม\.?ย|�
 const IS_PURE_NUMBER = /^\d[\d,]*$/;
 const JUNK_HIGHLIGHT_PATTERNS = /(โปรแกรมทัวร์|ออสเตรเลีย-นิวซีแลนด์|เรือสำราญ|ทัวร์โปรโมชั่น|โปรแกรม.*ทัวร์|^ทัวร์\w+$|One World|www\.|http|@|\.com|\.co\.th|โทร|สายด่วน|เมนู|หน้าหลัก|ติดต่อเรา|เกี่ยวกับเรา)/i;
 
+const CURRENT_YEAR = new Date().getUTCFullYear();
+const MIN_REASONABLE_YEAR = CURRENT_YEAR - 2;
+const MAX_REASONABLE_YEAR = CURRENT_YEAR + 5;
+
 const toIsoDate = (value: any): string | null => {
   if (!value) return null;
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return null;
-  return date.toISOString().slice(0, 10);
+  const rawYear = date.getUTCFullYear();
+  const yearCandidates = Array.from(new Set([
+    rawYear,
+    rawYear - 543,
+    rawYear + 543,
+    rawYear + 500,
+    rawYear - 500,
+    rawYear - 3800,
+    rawYear - 4343,
+  ]));
+  const validYears = yearCandidates.filter((year) => year >= MIN_REASONABLE_YEAR && year <= MAX_REASONABLE_YEAR);
+  if (validYears.length === 0) return null;
+  const chosenYear = validYears.sort((a, b) => Math.abs(a - CURRENT_YEAR) - Math.abs(b - CURRENT_YEAR))[0];
+  const normalized = new Date(date);
+  normalized.setUTCFullYear(chosenYear);
+  return normalized.toISOString().slice(0, 10);
 };
 
 const asNumber = (value: any): number => {
@@ -152,13 +172,23 @@ export async function GET(
   }
 
   let deposit = asNumber(data.deposit);
-  if (!deposit && priceFrom > 0) {
-    if (priceFrom < 20000) deposit = 5000;
-    else if (priceFrom < 50000) deposit = 10000;
-    else if (priceFrom < 100000) deposit = 15000;
-    else deposit = 20000;
+  if (!deposit) {
+    const textContext = [
+      data.title || '',
+      ...(Array.isArray(data.highlights) ? data.highlights : []),
+      ...cleanPeriods.map((period: any) => period.rawText || ''),
+    ].join('\n');
+
+    deposit = await resolveAndPersistScraperDeposit({
+      supabase,
+      tourId: data.id,
+      site: normalizedSite,
+      pdfUrl: data.pdf_url || '',
+      currentDeposit: data.deposit,
+      priceFrom,
+      contextText: textContext,
+    });
   }
-  if (!deposit) deposit = 10000;
 
   const tour = {
     id: data.id,

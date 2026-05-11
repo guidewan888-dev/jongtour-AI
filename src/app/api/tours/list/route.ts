@@ -10,11 +10,30 @@ const SITE_ALIAS_MAP: Record<string, string> = {
   onetour: 'worldconnection',
 };
 
+const CURRENT_YEAR = new Date().getUTCFullYear();
+const MIN_REASONABLE_YEAR = CURRENT_YEAR - 2;
+const MAX_REASONABLE_YEAR = CURRENT_YEAR + 5;
+
 const toIsoDate = (value: any): string | null => {
   if (!value) return null;
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return null;
-  return date.toISOString().slice(0, 10);
+  const rawYear = date.getUTCFullYear();
+  const yearCandidates = Array.from(new Set([
+    rawYear,
+    rawYear - 543,
+    rawYear + 543,
+    rawYear + 500,
+    rawYear - 500,
+    rawYear - 3800,
+    rawYear - 4343,
+  ]));
+  const validYears = yearCandidates.filter((year) => year >= MIN_REASONABLE_YEAR && year <= MAX_REASONABLE_YEAR);
+  if (validYears.length === 0) return null;
+  const chosenYear = validYears.sort((a, b) => Math.abs(a - CURRENT_YEAR) - Math.abs(b - CURRENT_YEAR))[0];
+  const normalized = new Date(date);
+  normalized.setUTCFullYear(chosenYear);
+  return normalized.toISOString().slice(0, 10);
 };
 
 const normalizeStatus = (status: any): 'AVAILABLE' | 'FULL' | 'CANCELLED' => {
