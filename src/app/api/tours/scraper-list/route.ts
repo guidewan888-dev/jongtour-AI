@@ -13,8 +13,15 @@ const normalizeSite = (rawSite: string | null | undefined) =>
 
 const SITE_FILTER_ALIASES: Record<string, string[]> = {
   worldconnection: ['worldconnection', 'oneworldtour', 'one-world-tour', 'onetour'],
+  oneworldtour: ['worldconnection', 'oneworldtour', 'one-world-tour', 'onetour'],
+  'one-world-tour': ['worldconnection', 'oneworldtour', 'one-world-tour', 'onetour'],
+  onetour: ['worldconnection', 'oneworldtour', 'one-world-tour', 'onetour'],
   itravels: ['itravels', 'itravel', 'i-travel'],
+  itravel: ['itravels', 'itravel', 'i-travel'],
+  'i-travel': ['itravels', 'itravel', 'i-travel'],
   bestintl: ['bestintl', 'bestinternational', 'bestin'],
+  bestinternational: ['bestintl', 'bestinternational', 'bestin'],
+  bestin: ['bestintl', 'bestinternational', 'bestin'],
 };
 
 const CURRENT_YEAR = new Date().getUTCFullYear();
