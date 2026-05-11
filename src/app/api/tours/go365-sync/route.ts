@@ -108,8 +108,8 @@ function mapTourRow(tour: any, detail: any, periods: any[]) {
     .filter((l: string) => l.length > 5 && l.length < 500)
     .slice(0, 12);
 
-  // PDF
-  const pdfUrl = detail?.tour_file?.file_pdf || '';
+  // PDF — check detail first, then fallback to search data (tour_file available in both)
+  const pdfUrl = detail?.tour_file?.file_pdf || tour.tour_file?.file_pdf || '';
 
   return {
     site: 'go365',
