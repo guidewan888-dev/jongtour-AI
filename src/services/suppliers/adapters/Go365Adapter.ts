@@ -4,10 +4,14 @@ import { SupplierAdapter, RawTour, RawTourDetail, RawDeparture, TourPrices, Book
  * Go365 Adapter — uses KaiKong API (api.kaikongservice.com)
  * 
  * API Endpoints:
- *   GET /tours/search?start_page=0&limit_page=50  → tour list
- *   GET /tours/detail/:tour_id                     → tour detail
- *   GET /tours/period/:tour_id                     → departure periods
- *   GET /tours/country                             → country list
+ *   POST /tours/search (body: {start_page, limit_page})  → tour list (POST required!)
+ *   GET  /tours/detail/:tour_id                           → tour detail
+ *   GET  /tours/period/:tour_id                           → departure periods
+ *   GET  /tours/country                                   → country list
+ * 
+ * IMPORTANT: GET /tours/search ignores pagination, always returns first 20 results.
+ *            Must use POST with JSON body for pagination to work.
+ *            start_page is 1-based (page 0 duplicates page 1).
  * 
  * Auth: x-api-key header
  */
@@ -24,43 +28,32 @@ export class Go365Adapter implements SupplierAdapter {
     return key;
   }
 
+  /** GET request for detail/period endpoints */
   private async fetchApi(endpoint: string, retries = 3): Promise<any> {
     let attempt = 0;
     while (attempt <= retries) {
-      console.log(`[Go365Adapter] GET ${this.baseUrl}${endpoint} (Attempt ${attempt + 1})`);
       try {
         const response = await fetch(`${this.baseUrl}${endpoint}`, {
           method: 'GET',
-          headers: {
-            'x-api-key': this.apiKey,
-            'Content-Type': 'application/json',
-          },
+          headers: { 'x-api-key': this.apiKey },
           cache: 'no-store',
         });
 
         if (response.status === 429 && attempt < retries) {
           attempt++;
           const delay = Math.pow(2, attempt) * 1000;
-          console.warn(`[Go365Adapter] Rate limited (429). Retrying in ${delay}ms...`);
           await new Promise(resolve => setTimeout(resolve, delay));
           continue;
         }
 
-        if (!response.ok) {
-          throw new Error(`KaiKong API returned status: ${response.status}`);
-        }
-
+        if (!response.ok) throw new Error(`KaiKong API status: ${response.status}`);
         const data = await response.json();
-        if (data.status === false) {
-          throw new Error(`KaiKong API error: ${data.error || 'Unknown error'}`);
-        }
+        if (data.status === false) throw new Error(`KaiKong API: ${data.error || 'Unknown'}`);
         return data;
       } catch (error: any) {
         if (attempt < retries && error.message?.includes('fetch failed')) {
           attempt++;
-          const delay = Math.pow(2, attempt) * 1000;
-          console.warn(`[Go365Adapter] Network error. Retrying in ${delay}ms...`);
-          await new Promise(resolve => setTimeout(resolve, delay));
+          await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempt) * 1000));
           continue;
         }
         throw error;
@@ -68,50 +61,70 @@ export class Go365Adapter implements SupplierAdapter {
     }
   }
 
+  /** POST search — required for pagination to work */
+  private async searchApi(page: number, limit: number): Promise<any> {
+    const response = await fetch(`${this.baseUrl}/tours/search`, {
+      method: 'POST',
+      headers: {
+        'x-api-key': this.apiKey,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ start_page: page, limit_page: limit }),
+      cache: 'no-store',
+    });
+    if (!response.ok) throw new Error(`KaiKong search status: ${response.status}`);
+    const data = await response.json();
+    if (data.status === false) throw new Error(`KaiKong search: ${data.error || 'Unknown'}`);
+    return data;
+  }
+
   /**
-   * Fetch all tours via paginated /tours/search endpoint
-   * Returns RawTour[] with KaiKong tour data as payload
+   * Fetch all tours via paginated POST /tours/search
+   * Uses 1-based pagination with dedup to handle API wrapping
    */
   async getTours(): Promise<RawTour[]> {
     const PAGE_SIZE = 50;
-    let startPage = 0;
-    let allTours: RawTour[] = [];
-    let totalCount = 0;
+    const seenIds = new Set<string>();
+    const allTours: RawTour[] = [];
 
-    // First request to get total count
-    const firstPage = await this.fetchApi(`/tours/search?start_page=0&limit_page=${PAGE_SIZE}`);
-    totalCount = firstPage.count || 0;
-    const firstData = firstPage.data || [];
+    // First POST request to get total count + first page
+    const firstPage = await this.searchApi(1, PAGE_SIZE);
+    const totalCount = firstPage.count || 0;
+    const totalPages = Math.ceil(totalCount / PAGE_SIZE);
+    console.log(`[Go365Adapter] Total tours: ${totalCount}, Pages: ${totalPages}`);
 
-    console.log(`[Go365Adapter] Total tours available: ${totalCount}`);
+    // Add first page
+    for (const t of (firstPage.data || [])) {
+      const id = String(t.tour_id);
+      if (!seenIds.has(id)) {
+        seenIds.add(id);
+        allTours.push({ externalId: id, name: t.tour_name || '', payload: t });
+      }
+    }
 
-    allTours = firstData.map((t: any) => ({
-      externalId: String(t.tour_id),
-      name: t.tour_name || '',
-      payload: t,
-    }));
-
-    // Paginate through remaining pages
-    startPage = PAGE_SIZE;
-    while (startPage < totalCount) {
+    // Fetch remaining pages (1-based, start from 2)
+    for (let page = 2; page <= totalPages + 1; page++) {
       try {
-        const pageData = await this.fetchApi(`/tours/search?start_page=${startPage}&limit_page=${PAGE_SIZE}`);
-        const tours = (pageData.data || []).map((t: any) => ({
-          externalId: String(t.tour_id),
-          name: t.tour_name || '',
-          payload: t,
-        }));
-        allTours.push(...tours);
-        startPage += PAGE_SIZE;
-        // Rate limit protection
-        await new Promise(r => setTimeout(r, 300));
+        const pageData = await this.searchApi(page, PAGE_SIZE);
+        let newCount = 0;
+        for (const t of (pageData.data || [])) {
+          const id = String(t.tour_id);
+          if (!seenIds.has(id)) {
+            seenIds.add(id);
+            allTours.push({ externalId: id, name: t.tour_name || '', payload: t });
+            newCount++;
+          }
+        }
+        console.log(`[Go365Adapter] Page ${page}: ${newCount} new, total: ${allTours.length}`);
+        if (newCount === 0) break; // API wraps around
+        await new Promise(r => setTimeout(r, 200));
       } catch (error) {
-        console.error(`[Go365Adapter] Error fetching page ${startPage}:`, error);
+        console.error(`[Go365Adapter] Error page ${page}:`, error);
         break;
       }
     }
 
-    console.log(`[Go365Adapter] Fetched ${allTours.length} tours total`);
+    console.log(`[Go365Adapter] Fetched ${allTours.length} unique tours`);
     return allTours;
   }
 

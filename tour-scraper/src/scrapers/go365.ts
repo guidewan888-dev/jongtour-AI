@@ -3,9 +3,13 @@
 // Base URL: https://api.kaikongservice.com/api/v1
 // Auth: x-api-key header
 // Endpoints:
-//   GET /tours/search → paginated tour list
+//   POST /tours/search → paginated tour list (POST required for pagination!)
 //   GET /tours/detail/:id → tour detail
 //   GET /tours/period/:id → departure periods with prices
+//
+// IMPORTANT: GET /tours/search ignores pagination and always returns first 20.
+//            Must use POST with {start_page, limit_page} body.
+//            start_page is 1-based (page 0 duplicates page 1).
 
 import { BaseScraper } from './base.js';
 import type { TourData, TourPeriod } from '../types.js';
@@ -40,11 +44,12 @@ export class Go365Scraper extends BaseScraper {
     this.apiBase = process.env.GO365_API_BASE || 'https://api.kaikongservice.com/api/v1';
   }
 
+  /** GET request for detail/period endpoints */
   private async fetchApi(endpoint: string): Promise<any> {
     const url = `${this.apiBase}${endpoint}`;
-    console.log(`[go365] API: ${url}`);
+    console.log(`[go365] GET: ${url}`);
     const res = await fetch(url, {
-      headers: { 'x-api-key': this.apiKey, 'Content-Type': 'application/json' },
+      headers: { 'x-api-key': this.apiKey },
       signal: AbortSignal.timeout(30_000),
     });
     if (!res.ok) throw new Error(`Go365 API ${res.status}`);
@@ -53,32 +58,69 @@ export class Go365Scraper extends BaseScraper {
     return data;
   }
 
+  /** POST search — required for pagination to work */
+  private async searchTours(page: number, limit: number): Promise<any> {
+    const url = `${this.apiBase}/tours/search`;
+    console.log(`[go365] POST search page=${page} limit=${limit}`);
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'x-api-key': this.apiKey, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ start_page: page, limit_page: limit }),
+      signal: AbortSignal.timeout(30_000),
+    });
+    if (!res.ok) throw new Error(`Go365 search ${res.status}`);
+    const data = await res.json();
+    if (data.status === false) throw new Error(`Go365 search: ${data.error}`);
+    return data;
+  }
+
   /**
-   * Discover all available tour IDs via paginated search
+   * Discover all available tour IDs via paginated POST search
+   * Uses 1-based pagination with dedup to handle API wrapping
    */
   async discoverUrls(): Promise<string[]> {
     const PAGE_SIZE = 50;
+    const seenIds = new Set<string>();
     const tourIds: string[] = [];
     
-    // Get total count
-    const first = await this.fetchApi(`/tours/search?start_page=0&limit_page=1`);
+    // Get total count via first POST request
+    const first = await this.searchTours(1, PAGE_SIZE);
     const total = first.count || 0;
-    console.log(`[go365] Total tours: ${total}`);
+    const totalPages = Math.ceil(total / PAGE_SIZE);
+    console.log(`[go365] Total tours: ${total}, Pages: ${totalPages}`);
 
-    // Paginate
-    for (let page = 0; page < total; page += PAGE_SIZE) {
+    // Add first page results
+    for (const t of (first.data || [])) {
+      const id = String(t.tour_id);
+      if (!seenIds.has(id)) {
+        seenIds.add(id);
+        tourIds.push(id);
+      }
+    }
+
+    // Fetch remaining pages (1-based, start from 2)
+    for (let page = 2; page <= totalPages + 1; page++) {
       try {
-        await this.sleep(500);
-        const data = await this.fetchApi(`/tours/search?start_page=${page}&limit_page=${PAGE_SIZE}`);
-        (data.data || []).forEach((t: any) => {
-          tourIds.push(String(t.tour_id));
-        });
-        console.log(`[go365] Page ${page}/${total}: ${tourIds.length} tours`);
+        await this.sleep(300);
+        const data = await this.searchTours(page, PAGE_SIZE);
+        let newCount = 0;
+        for (const t of (data.data || [])) {
+          const id = String(t.tour_id);
+          if (!seenIds.has(id)) {
+            seenIds.add(id);
+            tourIds.push(id);
+            newCount++;
+          }
+        }
+        console.log(`[go365] Page ${page}: ${newCount} new, total: ${tourIds.length}`);
+        // Stop if no new tours (API wraps around)
+        if (newCount === 0) break;
       } catch (e) {
         console.error(`[go365] Error page ${page}:`, (e as Error).message);
       }
     }
 
+    console.log(`[go365] Discovered ${tourIds.length} unique tours`);
     return tourIds;
   }
 
