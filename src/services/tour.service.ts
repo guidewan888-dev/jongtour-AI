@@ -317,7 +317,8 @@ export async function getTourList(options?: {
   });
 
   // 6a. Build availability map from rawPayload periods
-  // Tours with NO available departures (all sold out / closed) are hidden
+  // Tours with NO available FUTURE departures (all sold out / closed) are hidden
+  const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
   const availabilityMap: Record<string, boolean> = {};
   (rawSources || []).forEach((rs: any) => {
     const payload = rs.rawPayload;
@@ -326,8 +327,12 @@ export async function getTourList(options?: {
     if (!Array.isArray(periods) || periods.length === 0) return;
     const matchingTour = tours.find(t => t.supplierId === rs.supplierId && String(t.externalTourId) === String(rs.externalTourId));
     if (!matchingTour) return;
-    // Check if any period has available seats
+    // Check if any FUTURE period has available seats
     const hasAvailable = periods.some((p: any) => {
+      // Skip past periods — they should not affect availability
+      const startDate = p.start || p.StartDate || p.departureDate || '';
+      if (startDate && startDate < today) return false;
+      
       const status = p.status || p.PeriodStatus || '';
       if (status === 'Close' || status === 'Closed') return false;
       const seats = p.Seat || p.seat || p.GroupSize || p.group || 0;
@@ -336,7 +341,15 @@ export async function getTourList(options?: {
       if (seats === 0) return true;
       return (seats - booked) > 0;
     });
-    availabilityMap[matchingTour.id] = hasAvailable;
+    // If no future periods exist at all, don't mark as unavailable
+    const hasFuturePeriods = periods.some((p: any) => {
+      const startDate = p.start || p.StartDate || p.departureDate || '';
+      return !startDate || startDate >= today;
+    });
+    if (hasFuturePeriods) {
+      availabilityMap[matchingTour.id] = hasAvailable;
+    }
+    // If all periods are in the past, don't set availability (keep tour visible)
   });
 
   // Filter: only show tours with available departures (or those without rawPayload data — keep visible)
