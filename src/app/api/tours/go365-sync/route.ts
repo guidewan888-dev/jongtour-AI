@@ -34,16 +34,13 @@ const COUNTRY_TH: Record<string, string> = {
 };
 
 /**
- * POST to KaiKong API — MUST use POST method for pagination to work
- * GET only returns 20 results and ignores pagination parameters
+ * POST to KaiKong API — MUST use POST method for pagination to work.
+ * GET /tours/search ignores pagination and always returns first 20 results.
  */
 async function searchTours(page: number, limit: number): Promise<any> {
   const res = await fetch(`${API_BASE}/tours/search`, {
     method: 'POST',
-    headers: {
-      'x-api-key': API_KEY,
-      'Content-Type': 'application/json',
-    },
+    headers: { 'x-api-key': API_KEY, 'Content-Type': 'application/json' },
     body: JSON.stringify({ start_page: page, limit_page: limit }),
     signal: AbortSignal.timeout(30_000),
   });
@@ -53,13 +50,11 @@ async function searchTours(page: number, limit: number): Promise<any> {
   return data;
 }
 
-/**
- * GET for detail/period endpoints (these work fine with GET)
- */
+/** GET for detail/period endpoints */
 async function fetchApi(endpoint: string): Promise<any> {
   const res = await fetch(`${API_BASE}${endpoint}`, {
     headers: { 'x-api-key': API_KEY },
-    signal: AbortSignal.timeout(15_000),
+    signal: AbortSignal.timeout(10_000),
   });
   if (!res.ok) throw new Error(`KaiKong API ${res.status}`);
   const data = await res.json();
@@ -67,40 +62,72 @@ async function fetchApi(endpoint: string): Promise<any> {
   return data;
 }
 
-/**
- * Fetch detail+period for a batch of tours in parallel
- */
-async function fetchBatchDetails(tourIds: number[]): Promise<Map<number, { detail: any; periods: any[] }>> {
-  const results = new Map<number, { detail: any; periods: any[] }>();
+function mapTourRow(tour: any, detail: any, periods: any[]) {
+  const tourCode = tour.tour_code || `GO365-${tour.tour_id}`;
   
-  const promises = tourIds.map(async (tourId) => {
-    let detail: any = {};
-    let periods: any[] = [];
-    try {
-      const detailRes = await fetchApi(`/tours/detail/${tourId}`);
-      detail = detailRes.data?.[0] || detailRes.data || {};
-    } catch {}
-    try {
-      const periodRes = await fetchApi(`/tours/period/${tourId}`);
-      periods = periodRes.data || [];
-    } catch {}
-    results.set(tourId, { detail, periods });
-  });
+  // Country
+  const countries = detail?.tour_country || tour.tour_country || [];
+  const countryEn = countries[0]?.country_name_en || '';
+  const countryTh = countries[0]?.country_name_th || COUNTRY_TH[countryEn] || countryEn;
 
-  await Promise.all(promises);
-  return results;
+  // Duration
+  const durMatch = (tour.tour_name || '').match(/(\d+)\s*D\s*(\d+)\s*N/i);
+  const days = durMatch ? parseInt(durMatch[1]) : 0;
+  const nights = durMatch ? parseInt(durMatch[2]) : 0;
+  const duration = days > 0 ? `${days} วัน ${nights} คืน` : '';
+
+  // Airline — from search data or detail
+  const airline = detail?.tour_flight?.[0]?.flight_airline_name ||
+                  tour.tour_airline?.airline_name || '';
+
+  // Price
+  const prices = periods.map((p: any) => p.period_price_start || p.period_price_min || 0).filter((p: number) => p > 0);
+  const priceFrom = prices.length > 0 ? Math.min(...prices) : (tour.tour_price_start || 0);
+
+  // Deposit
+  let deposit = 0;
+  if (priceFrom > 0) {
+    if (priceFrom < 20000) deposit = 5000;
+    else if (priceFrom < 50000) deposit = 10000;
+    else if (priceFrom < 100000) deposit = 15000;
+    else deposit = 20000;
+  }
+
+  // Images
+  const coverImage = detail?.tour_cover_image || tour.tour_cover_image || '';
+
+  // Highlights
+  const desc = detail?.tour_description || tour.tour_description || '';
+  const highlights = desc.split('\n').map((l: string) => l.trim()).filter((l: string) => l.length > 5).slice(0, 10);
+
+  // PDF
+  const pdfUrl = detail?.tour_file?.file_pdf || '';
+
+  return {
+    site: 'go365',
+    tour_code: tourCode,
+    title: tour.tour_name || '',
+    country: countryTh,
+    duration,
+    price_from: priceFrom,
+    airline,
+    cover_image_url: coverImage,
+    source_url: `https://www.go365travel.com/tour-detail/${tour.tour_id}/${encodeURIComponent(tourCode)}`,
+    pdf_url: pdfUrl,
+    is_active: true,
+    deposit,
+    highlights,
+    last_scraped_at: new Date().toISOString(),
+  };
 }
 
 /**
  * POST /api/tours/go365-sync
- * Fetch all tours from Go365 KaiKong API and sync to scraper_tours + scraper_tour_periods
  * 
- * Key findings from API testing:
- * - GET /tours/search ignores pagination → always returns first 20 results
- * - POST /tours/search works correctly with {start_page, limit_page}
- * - start_page is 1-based (page 0 = page 1, duplicated)
- * - Max 50 results per page
- * - Total 232 tours across 5 pages
+ * Strategy: 2-phase sync to fit within 300s Vercel timeout
+ * Phase 1: Fetch all tours from search API (fast, ~5s for 232 tours)
+ * Phase 2: Upsert to DB using search data (skip detail/period for speed)
+ * Phase 3: Fetch periods in parallel batches for recent tours
  */
 export async function POST() {
   if (!API_KEY) {
@@ -114,24 +141,21 @@ export async function POST() {
 
   let synced = 0;
   let failed = 0;
+  let periodsAdded = 0;
   const errors: string[] = [];
+  const startTime = Date.now();
 
   try {
-    // 1. Fetch all tours using POST with 1-based pagination
+    // ═══ Phase 1: Fetch ALL tours via paginated POST search ═══
     const PAGE_SIZE = 50;
-    const first = await searchTours(1, PAGE_SIZE);
-    const total = first.count || 0;
-    const totalPages = Math.ceil(total / PAGE_SIZE);
-    console.log(`[Go365 Sync] Total tours: ${total}, Pages: ${totalPages}`);
-
     const allTours: any[] = [];
     const seenIds = new Set<number>();
 
-    for (let page = 1; page <= totalPages + 1; page++) {
+    for (let page = 1; page <= 20; page++) { // Safety max 20 pages
       const res = await searchTours(page, PAGE_SIZE);
-      const tours = res.data || [];
+      if (page === 1) console.log(`[Go365 Sync] Total: ${res.count} tours`);
       
-      // Deduplicate — API may return overlapping data
+      const tours = res.data || [];
       let newCount = 0;
       for (const tour of tours) {
         if (!seenIds.has(tour.tour_id)) {
@@ -140,128 +164,93 @@ export async function POST() {
           newCount++;
         }
       }
-
-      console.log(`[Go365 Sync] Page ${page}: ${tours.length} items, ${newCount} new, cumulative: ${allTours.length}`);
-
-      // Stop if no new tours (API wraps around)
-      if (newCount === 0) break;
-      await new Promise(r => setTimeout(r, 100));
+      if (newCount === 0) break; // API wraps around — stop
+      await new Promise(r => setTimeout(r, 50));
     }
+    console.log(`[Go365 Sync] Fetched ${allTours.length} unique tours in ${Date.now() - startTime}ms`);
 
-    console.log(`[Go365 Sync] Fetched ${allTours.length} unique tours from API`);
+    // ═══ Phase 2: Bulk upsert tour rows from search data ═══
+    // Build tour rows from search data (no detail/period API calls needed)
+    const tourRows = allTours.map(tour => mapTourRow(tour, null, []));
 
-    // 2. Process tours in batches with parallel detail+period fetching
-    const BATCH_SIZE = 10; // Parallel detail+period per batch
-    
-    for (let i = 0; i < allTours.length; i += BATCH_SIZE) {
-      const batch = allTours.slice(i, i + BATCH_SIZE);
-      const tourIds = batch.map(t => t.tour_id);
+    // Upsert in chunks of 50
+    const CHUNK_SIZE = 50;
+    for (let i = 0; i < tourRows.length; i += CHUNK_SIZE) {
+      const chunk = tourRows.slice(i, i + CHUNK_SIZE);
+      const { error } = await supabase
+        .from('scraper_tours')
+        .upsert(chunk, { onConflict: 'site,tour_code' });
       
-      // Fetch detail+period for entire batch in parallel
-      const details = await fetchBatchDetails(tourIds);
-
-      for (const tour of batch) {
-        try {
-          const tourId = tour.tour_id;
-          const tourCode = tour.tour_code || `GO365-${tourId}`;
-          const { detail, periods } = details.get(tourId) || { detail: {}, periods: [] };
-
-          // Country
-          const countries = detail.tour_country || tour.tour_country || [];
-          const countryEn = countries[0]?.country_name_en || '';
-          const countryTh = countries[0]?.country_name_th || COUNTRY_TH[countryEn] || countryEn;
-
-          // Duration
-          const durMatch = (tour.tour_name || '').match(/(\d+)\s*D\s*(\d+)\s*N/i);
-          const days = durMatch ? parseInt(durMatch[1]) : 0;
-          const nights = durMatch ? parseInt(durMatch[2]) : 0;
-          const duration = days > 0 ? `${days} วัน ${nights} คืน` : '';
-
-          // Airline
-          const airline = detail.tour_flight?.[0]?.flight_airline_name ||
-                          tour.tour_airline?.airline_name || '';
-
-          // Price
-          const prices = periods.map((p: any) => p.period_price_start || p.period_price_min || 0).filter((p: number) => p > 0);
-          const priceFrom = prices.length > 0 ? Math.min(...prices) : (tour.tour_price_start || 0);
-
-          // Deposit
-          let deposit = 0;
-          if (priceFrom > 0) {
-            if (priceFrom < 20000) deposit = 5000;
-            else if (priceFrom < 50000) deposit = 10000;
-            else if (priceFrom < 100000) deposit = 15000;
-            else deposit = 20000;
-          }
-
-          // Images
-          const coverImage = detail.tour_cover_image || tour.tour_cover_image || '';
-
-          // Highlights
-          const desc = detail.tour_description || tour.tour_description || '';
-          const highlights = desc
-            .split('\n')
-            .map((l: string) => l.trim())
-            .filter((l: string) => l.length > 5)
-            .slice(0, 10);
-
-          // PDF
-          const pdfUrl = detail.tour_file?.file_pdf || '';
-
-          // Source URL
-          const sourceUrl = `https://www.go365travel.com/tour-detail/${tourId}/${encodeURIComponent(tourCode)}`;
-
-          // 3. Upsert scraper_tours
-          const { data: existing } = await supabase
-            .from('scraper_tours')
-            .select('id')
-            .eq('site', 'go365')
-            .eq('tour_code', tourCode)
-            .limit(1)
-            .single();
-
-          const tourRow = {
-            site: 'go365',
-            tour_code: tourCode,
-            title: tour.tour_name || '',
-            country: countryTh,
-            duration,
-            price_from: priceFrom,
-            airline,
-            cover_image_url: coverImage,
-            source_url: sourceUrl,
-            pdf_url: pdfUrl,
-            is_active: true,
-            deposit,
-            highlights,
-            last_scraped_at: new Date().toISOString(),
-          };
-
-          let tourDbId: number;
-          if (existing) {
-            await supabase
+      if (error) {
+        console.error(`[Go365 Sync] Upsert error chunk ${i}:`, error.message);
+        // Fallback: insert one by one
+        for (const row of chunk) {
+          try {
+            const { data: existing } = await supabase
               .from('scraper_tours')
-              .update(tourRow)
-              .eq('id', existing.id);
-            tourDbId = existing.id;
-          } else {
-            const { data: inserted } = await supabase
-              .from('scraper_tours')
-              .insert(tourRow)
               .select('id')
+              .eq('site', 'go365')
+              .eq('tour_code', row.tour_code)
               .single();
-            tourDbId = inserted?.id || 0;
+
+            if (existing) {
+              await supabase.from('scraper_tours').update(row).eq('id', existing.id);
+            } else {
+              await supabase.from('scraper_tours').insert(row);
+            }
+            synced++;
+          } catch (e: any) {
+            failed++;
+            errors.push(`${row.tour_code}: ${e.message}`);
           }
+        }
+      } else {
+        synced += chunk.length;
+      }
+    }
+    console.log(`[Go365 Sync] Phase 2 done: ${synced} tours upserted in ${Date.now() - startTime}ms`);
 
-          // 4. Upsert periods
-          if (tourDbId && periods.length > 0) {
-            await supabase
-              .from('scraper_tour_periods')
-              .delete()
-              .eq('tour_id', tourDbId);
+    // ═══ Phase 3: Fetch periods for tours (parallel batches) ═══
+    // Get DB IDs for all tours
+    const { data: dbTours } = await supabase
+      .from('scraper_tours')
+      .select('id, tour_code')
+      .eq('site', 'go365');
 
+    if (dbTours && dbTours.length > 0) {
+      const codeToId = new Map(dbTours.map(t => [t.tour_code, t.id]));
+      
+      // Map tour_code to tour_id for API calls  
+      const tourCodeToApiId = new Map(allTours.map(t => [t.tour_code || `GO365-${t.tour_id}`, t.tour_id]));
+
+      // Process periods in batches of 15 (parallel)
+      const PERIOD_BATCH = 15;
+      const timeLimit = 250_000; // Stop 50s before timeout
+
+      for (let i = 0; i < allTours.length; i += PERIOD_BATCH) {
+        if (Date.now() - startTime > timeLimit) {
+          console.log(`[Go365 Sync] Time limit reached, stopping period fetch at ${i}/${allTours.length}`);
+          break;
+        }
+
+        const batch = allTours.slice(i, i + PERIOD_BATCH);
+        
+        const periodPromises = batch.map(async (tour) => {
+          const tourCode = tour.tour_code || `GO365-${tour.tour_id}`;
+          const dbId = codeToId.get(tourCode);
+          if (!dbId) return;
+
+          try {
+            const periodRes = await fetchApi(`/tours/period/${tour.tour_id}`);
+            const periods = periodRes.data || [];
+            if (periods.length === 0) return;
+
+            // Delete old periods
+            await supabase.from('scraper_tour_periods').delete().eq('tour_id', dbId);
+
+            // Insert new periods
             const periodRows = periods.map((p: any) => ({
-              tour_id: tourDbId,
+              tour_id: dbId,
               start_date: p.period_date || null,
               end_date: p.period_back || null,
               price: p.period_price_start || p.period_price_min || 0,
@@ -270,34 +259,46 @@ export async function POST() {
               raw_text: `${p.period_date || ''} - ${p.period_back || ''} | ${p.period_price_start || 0}฿`,
             }));
 
-            await supabase
-              .from('scraper_tour_periods')
-              .insert(periodRows);
-          }
+            await supabase.from('scraper_tour_periods').insert(periodRows);
+            periodsAdded += periodRows.length;
 
-          synced++;
-          if (synced % 50 === 0) {
-            console.log(`[Go365 Sync] Progress: ${synced}/${allTours.length}`);
-          }
-        } catch (e: any) {
-          failed++;
-          errors.push(`Tour ${tour.tour_id}: ${e.message}`);
-        }
+            // Update tour price from periods
+            const prices = periods.map((p: any) => p.period_price_start || 0).filter((p: number) => p > 0);
+            if (prices.length > 0) {
+              const minPrice = Math.min(...prices);
+              let deposit = 0;
+              if (minPrice < 20000) deposit = 5000;
+              else if (minPrice < 50000) deposit = 10000;
+              else if (minPrice < 100000) deposit = 15000;
+              else deposit = 20000;
+              
+              await supabase.from('scraper_tours').update({ 
+                price_from: minPrice,
+                deposit 
+              }).eq('id', dbId);
+            }
+          } catch {}
+        });
+
+        await Promise.all(periodPromises);
       }
-
-      // Small delay between batches
-      await new Promise(r => setTimeout(r, 50));
     }
+
+    console.log(`[Go365 Sync] Phase 3 done: ${periodsAdded} periods in ${Date.now() - startTime}ms`);
   } catch (e: any) {
     return NextResponse.json({ error: e.message, synced, failed }, { status: 500 });
   }
 
-  console.log(`[Go365 Sync] Complete: ${synced} synced, ${failed} failed`);
+  const totalTime = Math.round((Date.now() - startTime) / 1000);
+  console.log(`[Go365 Sync] Complete: ${synced} tours, ${periodsAdded} periods, ${failed} failed, ${totalTime}s`);
+  
   return NextResponse.json({
     success: true,
-    message: `Go365 sync สำเร็จ! ${synced} โปรแกรม`,
+    message: `Go365 sync สำเร็จ! ${synced} โปรแกรม, ${periodsAdded} วันเดินทาง`,
     synced,
+    periodsAdded,
     failed,
+    timeSeconds: totalTime,
     errors: errors.slice(0, 10),
   });
 }
