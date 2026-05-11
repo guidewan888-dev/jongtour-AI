@@ -48,8 +48,16 @@ interface TourPeriod {
   startDate: string | null;
   endDate: string | null;
   price: number | null;
+  priceAdult: number | null;
+  priceChild: number | null;
+  priceSingle: number | null;
+  deposit: number;
   seatsLeft: number | null;
-  status: string;
+  totalSeats: number | null;
+  booked: number;
+  remainingSeats: number | null;
+  status: 'AVAILABLE' | 'FULL' | 'CANCELLED';
+  isBookable: boolean;
   rawText: string;
 }
 
@@ -72,6 +80,14 @@ interface ScraperTour {
   highlights: string[];
   lastScraped: string;
   periods: TourPeriod[];
+  deal?: {
+    type: 'fire' | 'discount' | null;
+    daysLeft: number | null;
+    currentPrice: number;
+    minPrice: number;
+    maxPrice: number;
+    discountPercent: number;
+  };
 }
 
 export default function ScraperTourDetailPage({ params }: { params: { code: string } }) {
@@ -206,6 +222,17 @@ export default function ScraperTourDetailPage({ params }: { params: { code: stri
                     </div>
                   )}
                 </div>
+                {tour.deal?.type && (
+                  <div className={`mt-3 inline-flex items-center gap-2 text-xs font-bold px-2.5 py-1 rounded-full ${
+                    tour.deal.type === 'discount'
+                      ? 'bg-amber-100 text-amber-700'
+                      : 'bg-red-100 text-red-700'
+                  }`}>
+                    <span>{tour.deal.type === 'discount' ? '🏷️ โปรลดราคา' : '🔥 ราคาไฟไหม้'}</span>
+                    {tour.deal.discountPercent > 0 && <span>ลดสูงสุด {tour.deal.discountPercent}%</span>}
+                    {tour.deal.daysLeft !== null && <span>เหลือ {tour.deal.daysLeft} วัน</span>}
+                  </div>
+                )}
               </div>
 
               {/* Highlights */}
@@ -284,10 +311,13 @@ export default function ScraperTourDetailPage({ params }: { params: { code: stri
                 <thead><tr className="bg-emerald-600 text-white text-xs">
                   <th className="text-left px-4 py-2.5">เดินทาง</th>
                   <th className="text-right px-3 py-2.5">ราคาผู้ใหญ่</th>
+                  <th className="text-right px-3 py-2.5">เด็ก</th>
+                  <th className="text-right px-3 py-2.5">พักเดี่ยว</th>
                   <th className="text-right px-3 py-2.5">มัดจำ</th>
                   <th className="text-center px-3 py-2.5">ที่นั่ง</th>
-                  <th className="text-center px-3 py-2.5">สถานะ</th>
                   <th className="text-center px-3 py-2.5">จอง</th>
+                  <th className="text-center px-3 py-2.5">รับได้</th>
+                  <th className="text-center px-3 py-2.5">สถานะ</th>
                 </tr></thead>
                 <tbody className="divide-y divide-slate-100">
                   {periods.map((p) => {
@@ -299,30 +329,41 @@ export default function ScraperTourDetailPage({ params }: { params: { code: stri
                     } else if (p.rawText) {
                       dateText = p.rawText.length > 60 ? p.rawText.slice(0, 57) + '...' : p.rawText;
                     }
-                    const isFull = p.status === 'full' || (p.seatsLeft !== null && p.seatsLeft <= 0);
-                    const periodPrice = p.price && p.price > 0 ? p.price : tour.price;
+                    const isFull = !p.isBookable || (p.remainingSeats !== null && p.remainingSeats <= 0);
+                    const periodPrice = p.priceAdult && p.priceAdult > 0 ? p.priceAdult : (p.price && p.price > 0 ? p.price : tour.price);
+                    const childPrice = p.priceChild && p.priceChild > 0 ? p.priceChild : periodPrice;
+                    const singlePrice = p.priceSingle && p.priceSingle > 0 ? p.priceSingle : 0;
+                    const depDeposit = p.deposit && p.deposit > 0 ? p.deposit : tour.deposit;
+                    const totalSeats = p.totalSeats !== null && p.totalSeats !== undefined ? p.totalSeats : '-';
+                    const booked = p.booked || '-';
+                    const receivable = p.remainingSeats !== null && p.remainingSeats !== undefined ? p.remainingSeats : '-';
                     return (
                       <tr key={p.id} className="hover:bg-slate-50/50 transition-colors">
                         <td className="px-4 py-3 font-medium text-slate-700 whitespace-nowrap">{dateText}</td>
                         <td className="px-3 py-3 text-right font-bold text-slate-900">{periodPrice > 0 ? `฿${periodPrice.toLocaleString()}` : 'สอบถาม'}</td>
-                        <td className="px-3 py-3 text-right text-orange-600 font-bold">{tour.deposit > 0 ? `฿${tour.deposit.toLocaleString()}` : '-'}</td>
+                        <td className="px-3 py-3 text-right text-slate-600">{childPrice > 0 ? `฿${childPrice.toLocaleString()}` : '-'}</td>
+                        <td className="px-3 py-3 text-right text-slate-600">{singlePrice > 0 ? `฿${singlePrice.toLocaleString()}` : '-'}</td>
+                        <td className="px-3 py-3 text-right text-orange-600 font-bold">{depDeposit > 0 ? `฿${depDeposit.toLocaleString()}` : '-'}</td>
+                        <td className="px-3 py-3 text-center">{totalSeats}</td>
+                        <td className="px-3 py-3 text-center">{booked}</td>
                         <td className="px-3 py-3 text-center">
-                          {p.seatsLeft !== null ? (
-                            <span className={`inline-block min-w-[28px] py-0.5 rounded-full text-xs font-bold ${isFull ? 'bg-red-50 text-red-500' : p.seatsLeft <= 5 ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'}`}>
-                              {isFull ? 'เต็ม' : p.seatsLeft}
+                          {p.remainingSeats !== null ? (
+                            <span className={`inline-block min-w-[28px] py-0.5 rounded-full text-xs font-bold ${isFull ? 'bg-red-50 text-red-500' : p.remainingSeats <= 5 ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'}`}>
+                              {isFull ? 'เต็ม' : p.remainingSeats}
                             </span>
                           ) : <span className="text-xs text-slate-400">สอบถาม</span>}
                         </td>
                         <td className="px-3 py-3 text-center">
-                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${isFull ? 'bg-slate-100 text-slate-400' : 'bg-emerald-50 text-emerald-600'}`}>
-                            {isFull ? 'เต็ม' : 'ว่าง'}
-                          </span>
-                        </td>
-                        <td className="px-3 py-3 text-center">
-                          {!isFull && (
+                          {!isFull ? (
                             <Link href={`/book/tour/s/${tour.code.toLowerCase()}?period=${p.id}`} className="text-xs bg-primary-600 text-white px-3 py-1 rounded-full font-bold hover:bg-primary-700">
                               จอง
                             </Link>
+                          ) : (
+                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                              p.status === 'CANCELLED' ? 'bg-slate-100 text-slate-500' : 'bg-red-50 text-red-500'
+                            }`}>
+                              {p.status === 'CANCELLED' ? 'ยกเลิก' : 'เต็ม'}
+                            </span>
                           )}
                         </td>
                       </tr>
@@ -342,17 +383,22 @@ export default function ScraperTourDetailPage({ params }: { params: { code: stri
                 } else if (p.rawText) {
                   dateText = p.rawText.length > 40 ? p.rawText.slice(0, 37) + '...' : p.rawText;
                 }
-                const isFull = p.status === 'full' || (p.seatsLeft !== null && p.seatsLeft <= 0);
-                const periodPrice = p.price && p.price > 0 ? p.price : tour.price;
+                const isFull = !p.isBookable || (p.remainingSeats !== null && p.remainingSeats <= 0);
+                const periodPrice = p.priceAdult && p.priceAdult > 0 ? p.priceAdult : (p.price && p.price > 0 ? p.price : tour.price);
+                const childPrice = p.priceChild && p.priceChild > 0 ? p.priceChild : periodPrice;
+                const singlePrice = p.priceSingle && p.priceSingle > 0 ? p.priceSingle : 0;
+                const depDeposit = p.deposit && p.deposit > 0 ? p.deposit : tour.deposit;
                 return (
                   <div key={p.id} className="border border-slate-100 rounded-lg p-3">
                     <div className="flex justify-between items-start mb-1.5">
                       <span className="text-sm font-medium text-slate-700">{dateText}</span>
-                      {p.seatsLeft !== null && <span className="text-[10px] bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full font-bold">เหลือ {p.seatsLeft}</span>}
+                      {p.remainingSeats !== null && <span className="text-[10px] bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full font-bold">เหลือ {p.remainingSeats}</span>}
                     </div>
                     <div className="grid grid-cols-2 gap-1 text-xs text-slate-500">
                       <span>ราคา: <b className="text-slate-800">{periodPrice > 0 ? `฿${periodPrice.toLocaleString()}` : 'สอบถาม'}</b></span>
-                      <span>มัดจำ: <b className="text-orange-600">{tour.deposit > 0 ? `฿${tour.deposit.toLocaleString()}` : '-'}</b></span>
+                      <span>เด็ก: <b>{childPrice > 0 ? `฿${childPrice.toLocaleString()}` : '-'}</b></span>
+                      <span>พักเดี่ยว: <b>{singlePrice > 0 ? `฿${singlePrice.toLocaleString()}` : '-'}</b></span>
+                      <span>มัดจำ: <b className="text-orange-600">{depDeposit > 0 ? `฿${depDeposit.toLocaleString()}` : '-'}</b></span>
                     </div>
                     {!isFull && (
                       <Link href={`/book/tour/s/${tour.code.toLowerCase()}?period=${p.id}`} className="mt-2 block text-center text-xs bg-primary-600 text-white px-3 py-1.5 rounded-full font-bold hover:bg-primary-700">จอง</Link>

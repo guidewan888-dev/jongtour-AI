@@ -1,11 +1,38 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/utils/supabase/server';
 
-// Normalize legacy site names in the DB to canonical names
 const SITE_ALIAS_MAP: Record<string, string> = {
   oneworldtour: 'worldconnection',
   'one-world-tour': 'worldconnection',
   onetour: 'worldconnection',
+};
+
+const FIRE_SALE_DAYS = 21;
+const DISCOUNT_RATIO = 0.88;
+
+const JUNK_PERIOD_PATTERNS = /^(วันที่เดินทาง|วันเดินทาง|ผู้ใหญ่|พักเดี่ยว|พักสาม|เด็ก|ทารก|\(พัก|มีเตียง|ไม่มีเตียง|Infant|Child|Twin|Single|Double|Triple)/i;
+const HAS_DATE = /(\d{1,2}\s*)?(ม\.?ค|ก\.?พ|มี\.?ค|เม\.?ย|พ\.?ค|มิ\.?ย|ก\.?ค|ส\.?ค|ก\.?ย|ต\.?ค|พ\.?ย|ธ\.?ค)/i;
+const IS_PURE_NUMBER = /^\d[\d,]*$/;
+const JUNK_HIGHLIGHT_PATTERNS = /(โปรแกรมทัวร์|ออสเตรเลีย-นิวซีแลนด์|เรือสำราญ|ทัวร์โปรโมชั่น|โปรแกรม.*ทัวร์|^ทัวร์\w+$|One World|www\.|http|@|\.com|\.co\.th|โทร|สายด่วน|เมนู|หน้าหลัก|ติดต่อเรา|เกี่ยวกับเรา)/i;
+
+const toIsoDate = (value: any): string | null => {
+  if (!value) return null;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  return date.toISOString().slice(0, 10);
+};
+
+const asNumber = (value: any): number => {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : 0;
+};
+
+const normalizeStatus = (status: any): 'AVAILABLE' | 'FULL' | 'CANCELLED' => {
+  const lower = String(status || '').toLowerCase();
+  if (!lower) return 'AVAILABLE';
+  if (lower.includes('cancel')) return 'CANCELLED';
+  if (lower.includes('close') || lower.includes('full') || lower.includes('เต็ม')) return 'FULL';
+  return 'AVAILABLE';
 };
 
 export async function GET(
@@ -25,21 +52,19 @@ export async function GET(
     return NextResponse.json({ error: 'ไม่พบทัวร์' }, { status: 404 });
   }
 
-  // Fetch periods (travel dates) for this tour
+  const normalizedSite = SITE_ALIAS_MAP[data.site] || data.site || '';
+
   const { data: periods } = await supabase
     .from('scraper_tour_periods')
     .select('*')
     .eq('tour_id', data.id)
     .order('start_date', { ascending: true });
 
-  const normalizedSite = SITE_ALIAS_MAP[data.site] || data.site || '';
-
-  // GS25 image fallback: cover_image_url -> first public_url -> first original_url
   let imageUrl = data.cover_image_url || '';
-  if (!imageUrl && normalizedSite.toLowerCase() === 'gs25') {
+  if (!imageUrl) {
     const { data: fallbackImages } = await supabase
       .from('scraper_tour_images')
-      .select('tour_id, public_url, original_url, sort_order, id')
+      .select('public_url, original_url, sort_order, id')
       .eq('tour_id', data.id)
       .order('sort_order', { ascending: true })
       .order('id', { ascending: true });
@@ -51,62 +76,88 @@ export async function GET(
     }
   }
 
-  // Parse duration
+  const today = new Date().toISOString().slice(0, 10);
+  const cleanPeriods = (periods || [])
+    .filter((p: any) => {
+      if (p.start_date && p.end_date) return true;
+      if (!p.raw_text) return false;
+      const raw = p.raw_text.trim();
+      if (JUNK_PERIOD_PATTERNS.test(raw)) return false;
+      if (IS_PURE_NUMBER.test(raw.replace(/,/g, ''))) return false;
+      return HAS_DATE.test(raw);
+    })
+    .map((p: any) => {
+      const startDate = toIsoDate(p.start_date);
+      const endDate = toIsoDate(p.end_date);
+      const adultPrice = asNumber(p.price || p.price_adult || p.priceAdult);
+      const childPrice = asNumber(p.price_child || p.priceChild || p.Price_Child) || adultPrice;
+      const singlePrice = asNumber(p.price_single || p.priceSingle || p.price_single_room_add || p.priceSingleRoomAdd || p.Price_Single_Bed);
+      const deposit = asNumber(p.deposit || p.Deposit || data.deposit);
+      const totalSeats = asNumber(p.total_seats || p.totalSeats || p.seat || p.Seat || p.group || p.GroupSize);
+      const booked = asNumber(p.booked || p.Book || p.join);
+      const seatsLeftRaw = p.seats_left === null || p.seats_left === undefined ? null : asNumber(p.seats_left);
+      const remainingSeats = seatsLeftRaw !== null ? seatsLeftRaw : (totalSeats > 0 ? Math.max(totalSeats - booked, 0) : null);
+      const status = normalizeStatus(p.status || p.PeriodStatus);
+      const isFuture = !startDate || startDate >= today;
+      const isBookable = status === 'AVAILABLE' && (remainingSeats === null || remainingSeats > 0);
+
+      return {
+        id: p.id,
+        startDate,
+        endDate,
+        price: adultPrice || null,
+        priceAdult: adultPrice || null,
+        priceChild: childPrice || null,
+        priceSingle: singlePrice || null,
+        deposit: deposit || 0,
+        seatsLeft: remainingSeats,
+        totalSeats: totalSeats || null,
+        booked: booked || 0,
+        remainingSeats,
+        status,
+        isFuture,
+        isBookable,
+        rawText: p.raw_text || '',
+      };
+    })
+    .filter((p: any) => p.isFuture)
+    .sort((a: any, b: any) => String(a.startDate || '9999-12-31').localeCompare(String(b.startDate || '9999-12-31')));
+
+  const availablePeriods = cleanPeriods.filter((p: any) => p.isBookable);
+  const pricedAvailable = availablePeriods.filter((p: any) => asNumber(p.priceAdult) > 0);
+  const nearest = pricedAvailable[0] || availablePeriods[0] || cleanPeriods[0] || null;
+  const periodPrices = pricedAvailable.map((p: any) => asNumber(p.priceAdult)).filter((n: number) => n > 0);
+  const minPrice = periodPrices.length > 0 ? Math.min(...periodPrices) : asNumber(data.price_from);
+  const maxPrice = periodPrices.length > 0 ? Math.max(...periodPrices) : asNumber(data.price_from);
+  const displayPrice = asNumber(nearest?.priceAdult || minPrice || data.price_from);
+  const daysLeft = nearest?.startDate ? Math.max(0, Math.ceil((new Date(nearest.startDate).getTime() - Date.now()) / 86400000)) : null;
+  const isFireSale = daysLeft !== null && daysLeft <= FIRE_SALE_DAYS;
+  const isDiscount = periodPrices.length >= 2 && minPrice > 0 && maxPrice > 0 && minPrice <= maxPrice * DISCOUNT_RATIO;
+  const dealType: 'fire' | 'discount' | null = isFireSale ? 'fire' : isDiscount ? 'discount' : null;
+  const discountPercent = maxPrice > 0 && minPrice > 0 ? Math.max(0, Math.round(((maxPrice - minPrice) / maxPrice) * 100)) : 0;
+
   const durMatch = data.duration?.match(/(\d+)\s*วัน\s*(\d+)?/);
   const durationDays = durMatch ? parseInt(durMatch[1]) : 0;
   const durationNights = durMatch && durMatch[2] ? parseInt(durMatch[2]) : Math.max(0, durationDays - 1);
 
-  // ── Clean periods: filter out header/room-type garbage rows ──
-  const JUNK_PERIOD_PATTERNS = /^(วันที่เดินทาง|วันเดินทาง|ผู้ใหญ่|พักเดี่ยว|พักสาม|เด็ก|ทารก|\(พัก|มีเตียง|ไม่มีเตียง|Infant|Child|Twin|Single|Double|Triple)/i;
-  const HAS_DATE = /(\d{1,2}\s*)?(ม\.?ค|ก\.?พ|มี\.?ค|เม\.?ย|พ\.?ค|มิ\.?ย|ก\.?ค|ส\.?ค|ก\.?ย|ต\.?ค|พ\.?ย|ธ\.?ค)/i;
-  const IS_PURE_NUMBER = /^\d[\d,]*$/;
-
-  const cleanPeriods = (periods || [])
-    .filter(p => {
-      // Must have structured dates OR raw text that contains a date
-      if (p.start_date && p.end_date) return true;
-      if (!p.raw_text) return false;
-      const raw = p.raw_text.trim();
-      // Skip junk header rows
-      if (JUNK_PERIOD_PATTERNS.test(raw)) return false;
-      // Skip pure numbers (bare prices showing as periods)
-      if (IS_PURE_NUMBER.test(raw.replace(/,/g, ''))) return false;
-      // Must contain a date pattern
-      return HAS_DATE.test(raw);
-    })
-    .map(p => ({
-      id: p.id,
-      startDate: p.start_date,
-      endDate: p.end_date,
-      price: p.price,
-      seatsLeft: p.seats_left,
-      status: p.status,
-      rawText: p.raw_text,
-    }));
-
-  // ── Clean highlights: filter out navigation/menu garbage ──
-  const JUNK_HIGHLIGHT_PATTERNS = /(โปรแกรมทัวร์|ออสเตรเลีย-นิวซีแลนด์|เรือสำราญ|ทัวร์โปรโมชั่น|โปรแกรม.*ทัวร์|^ทัวร์\w+$|One World|www\.|http|@|\.com|\.co\.th|โทร|สายด่วน|เมนู|หน้าหลัก|ติดต่อเรา|เกี่ยวกับเรา)/i;
   const cleanHighlights = Array.isArray(data.highlights)
     ? data.highlights.filter((h: string) =>
         h && h.length > 2 && h.length < 500 && !JUNK_HIGHLIGHT_PATTERNS.test(h)
       ).slice(0, 12)
     : [];
 
-  // ── Smart default deposit: if scraper didn't find มัดจำ, calculate from price ──
-  let priceFrom = data.price_from || 0;
-  // If main price is 0, try cheapest period price
-  if (!priceFrom && cleanPeriods.length > 0) {
-    const periodPrices = cleanPeriods.map(p => p.price).filter((p): p is number => !!p && p > 0);
-    if (periodPrices.length > 0) priceFrom = Math.min(...periodPrices);
+  let priceFrom = asNumber(data.price_from);
+  if (!priceFrom && minPrice > 0) {
+    priceFrom = minPrice;
   }
-  let deposit = data.deposit || 0;
+
+  let deposit = asNumber(data.deposit);
   if (!deposit && priceFrom > 0) {
     if (priceFrom < 20000) deposit = 5000;
     else if (priceFrom < 50000) deposit = 10000;
     else if (priceFrom < 100000) deposit = 15000;
     else deposit = 20000;
   }
-  // Last resort: if still no deposit (no price data at all), use industry default
   if (!deposit) deposit = 10000;
 
   const tour = {
@@ -128,6 +179,14 @@ export async function GET(
     highlights: cleanHighlights,
     lastScraped: data.last_scraped_at || '',
     periods: cleanPeriods,
+    deal: {
+      type: dealType,
+      daysLeft,
+      currentPrice: displayPrice,
+      minPrice,
+      maxPrice,
+      discountPercent,
+    },
   };
 
   return NextResponse.json({ tour });

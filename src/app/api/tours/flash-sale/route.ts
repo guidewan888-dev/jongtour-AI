@@ -3,6 +3,40 @@ import { createClient } from '@supabase/supabase-js';
 
 export const dynamic = 'force-dynamic';
 
+const SITE_ALIAS_MAP: Record<string, string> = {
+  oneworldtour: 'worldconnection',
+  'one-world-tour': 'worldconnection',
+  onetour: 'worldconnection',
+};
+
+const SITE_LABELS: Record<string, string> = {
+  worldconnection: 'World Connection',
+  itravels: 'iTravels Center',
+  bestintl: 'Best International',
+  gs25: 'GS25 Travel',
+  go365: 'Go365 Travel',
+};
+
+const isApiDepartureBookable = (departure: any) => {
+  const seats = Number(departure.remainingSeats || 0);
+  const status = String(departure.status || '').toUpperCase();
+  return seats > 0 && status !== 'CANCELLED';
+};
+
+const normalizeScraperStatus = (status: any): 'AVAILABLE' | 'FULL' | 'CANCELLED' => {
+  const lower = String(status || '').toLowerCase();
+  if (!lower) return 'AVAILABLE';
+  if (lower.includes('cancel')) return 'CANCELLED';
+  if (lower.includes('close') || lower.includes('full') || lower.includes('เต็ม')) return 'FULL';
+  return 'AVAILABLE';
+};
+
+const isScraperPeriodBookable = (period: any) => {
+  const seatsLeft = period.seats_left === null || period.seats_left === undefined ? null : Number(period.seats_left);
+  const status = normalizeScraperStatus(period.status);
+  return status === 'AVAILABLE' && (seatsLeft === null || seatsLeft > 0);
+};
+
 /**
  * GET /api/tours/flash-sale
  * Returns ONLY fire-sale / discounted tours from all wholesalers (API + scraper),
@@ -38,6 +72,7 @@ export async function GET() {
       .gte('startDate', fromDateTime)
       .lte('startDate', toDateTime)
       .gt('remainingSeats', 0)
+      .neq('status', 'CANCELLED')
       .order('startDate', { ascending: true })
       .limit(5000);
 
@@ -104,12 +139,15 @@ export async function GET() {
 
     const departuresByTour: Record<string, any[]> = {};
     (apiDepartures || []).forEach((d: any) => {
+      if (!isApiDepartureBookable(d)) return;
       const price = departurePriceMap[d.id] || 0;
       if (price <= 0) return;
       if (!departuresByTour[d.tourId]) departuresByTour[d.tourId] = [];
       departuresByTour[d.tourId].push({ ...d, price });
     });
-    Object.values(departuresByTour).forEach((arr: any[]) => arr.sort((a, b) => String(a.startDate).localeCompare(String(b.startDate))));
+    Object.values(departuresByTour).forEach((arr: any[]) => {
+      arr.sort((a, b) => new Date(String(a.startDate)).getTime() - new Date(String(b.startDate)).getTime());
+    });
 
     const apiTourRows = apiToursRes.data || [];
     const apiFlash = apiTourRows.flatMap((tour: any) => {
@@ -150,7 +188,6 @@ export async function GET() {
       .from('scraper_tours')
       .select('id, site, tour_code, title, country, price_from, cover_image_url, pdf_url, is_active')
       .eq('is_active', true)
-      .gt('price_from', 0)
       .order('last_scraped_at', { ascending: false })
       .limit(2000);
 
@@ -185,27 +222,11 @@ export async function GET() {
       periodsByTour[p.tour_id].push(p);
     });
 
-    const SITE_ALIAS_MAP: Record<string, string> = {
-      oneworldtour: 'worldconnection',
-      'one-world-tour': 'worldconnection',
-      onetour: 'worldconnection',
-    };
-    const SITE_LABELS: Record<string, string> = {
-      worldconnection: 'World Connection',
-      itravels: 'iTravels Center',
-      bestintl: 'Best International',
-      gs25: 'GS25 Travel',
-      go365: 'Go365 Travel',
-    };
-
     const scraperFlash = (scraperTours || []).flatMap((tour: any) => {
       const site = SITE_ALIAS_MAP[tour.site] || tour.site || '';
-      const periods = (periodsByTour[tour.id] || []).filter((p: any) => {
-        const seatsLeft = p.seats_left === null || p.seats_left === undefined ? null : Number(p.seats_left);
-        const status = String(p.status || '').toLowerCase();
-        const notFull = status !== 'full' && status !== 'close' && status !== 'closed';
-        return notFull && (seatsLeft === null || seatsLeft > 0);
-      });
+      const periods = (periodsByTour[tour.id] || [])
+        .filter((p: any) => isScraperPeriodBookable(p))
+        .sort((a: any, b: any) => String(a.start_date || '').localeCompare(String(b.start_date || '')));
 
       if (periods.length === 0) return [];
 

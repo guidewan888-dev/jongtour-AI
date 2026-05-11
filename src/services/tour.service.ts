@@ -159,9 +159,25 @@ export interface TourDetailData {
     priceAdult: number;
     priceChild: number;
     priceSingle: number;
+    priceInfant?: number;
+    priceJoinLand?: number;
+    deposit?: number;
+    totalSeats?: number;
+    booked?: number;
     status: string;
     remainingSeats: number;
+    bus?: string;
+    periodCode?: string;
+    flightInfo?: string;
   }[];
+  deal?: {
+    type: 'fire' | 'discount' | null;
+    daysLeft: number | null;
+    currentPrice: number;
+    minPrice: number;
+    maxPrice: number;
+    discountPercent: number;
+  };
 }
 
 // ─── Tour List ──────────────────────────────────────────────────────
@@ -354,8 +370,11 @@ export async function getTourList(options?: {
 
   // Filter: only show tours with available departures (or those without rawPayload data — keep visible)
   const availableTours = filteredTours.filter(t => {
-    if (availabilityMap[t.id] === undefined) return true; // no raw data → show anyway
-    return availabilityMap[t.id]; // has raw data → only if available
+    // Hide tours that have no upcoming departure at all
+    if (!depMap[t.id]) return false;
+    // If we have raw period availability info, enforce it
+    if (availabilityMap[t.id] === undefined) return true;
+    return availabilityMap[t.id];
   });
 
   // 6b. Format results with normalized countries
@@ -554,12 +573,40 @@ export async function getTourBySlug(slug: string): Promise<TourDetailData | null
     if (Array.isArray(payload.Flights) && payload.Flights.length > 0) rawFlights = payload.Flights;
   });
 
-  // Build period lookup by start date
-  const periodByDate: Record<string, any> = {};
-  rawPeriods.forEach(p => {
-    const key = p.PeriodStartDate || p.periodStartDate || '';
-    if (key) periodByDate[key] = p;
-  });
+  const toIsoDate = (value: any): string => {
+    if (!value) return '';
+    try {
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) return '';
+      return date.toISOString().slice(0, 10);
+    } catch {
+      return '';
+    }
+  };
+
+  const normalizePeriodStatus = (value: any) => {
+    const status = String(value || '').toLowerCase();
+    if (!status) return '';
+    if (status.includes('close') || status.includes('เต็ม') || status.includes('full')) return 'FULL';
+    if (status.includes('cancel')) return 'CANCELLED';
+    return 'AVAILABLE';
+  };
+
+  const periodCandidates = rawPeriods.map((p: any) => ({
+    raw: p,
+    startIso: toIsoDate(p.PeriodStartDate || p.periodStartDate || p.start || p.StartDate || p.departureDate || ''),
+    endIso: toIsoDate(p.PeriodEndDate || p.periodEndDate || p.end || p.EndDate || ''),
+  }));
+
+  const findMatchingRawPeriod = (startDate: string, endDate: string) => {
+    const startIso = toIsoDate(startDate);
+    const endIso = toIsoDate(endDate);
+    return periodCandidates.find((candidate) => {
+      if (!candidate.startIso) return false;
+      if (candidate.startIso === startIso) return true;
+      return !!candidate.endIso && candidate.endIso === endIso;
+    })?.raw;
+  };
 
   // 3. Get prices for departures
   const depIds = (departures || []).map(d => d.id);
@@ -580,67 +627,88 @@ export async function getTourBySlug(slug: string): Promise<TourDetailData | null
     mealsByDay[m.dayNumber].add(m.mealType);
   });
 
-  // 5. Calculate starting price (prefer rawPeriods)
+  // 5. Calculate starting price from real departure prices first
   let startingPrice = 0;
-  if (rawPeriods.length > 0) {
+  const allPrices = (prices || []).map(p => p.sellingPrice).filter(p => p > 0);
+  if (allPrices.length > 0) {
+    startingPrice = Math.min(...allPrices);
+  } else if (rawPeriods.length > 0) {
     const rawPrices = rawPeriods.map((p: any) => p.Price || p.price || 0).filter((p: number) => p > 0);
     startingPrice = rawPrices.length > 0 ? Math.min(...rawPrices) : 0;
-  }
-  if (!startingPrice) {
-    const allPrices = (prices || []).map(p => p.sellingPrice).filter(p => p > 0);
-    startingPrice = allPrices.length > 0 ? Math.min(...allPrices) : 0;
   }
 
   const dest = destinations?.[0];
   const defaultImg = 'https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?q=80&w=1200';
 
-  // Build enriched departures — universal mapping for all suppliers
-  // Let's Go: PeriodStartDate, Price, Price_Child, Price_Single_Bed, Deposit, Seat, Book
-  // Check In / Tour Factory: start, price, priceChild, priceSingleRoomAdd, deposit, seat, join
-  const enrichedDeps = rawPeriods.length > 0
-    ? rawPeriods.map((p: any) => {
-        const seats = p.Seat || p.seat || p.GroupSize || p.group || 0;
-        const booked = p.Book || p.join || 0;
-        const remaining = Math.max(seats - booked, 0);
-        const status = p.status || p.PeriodStatus || '';
-        const isClosed = status === 'Close' || status === 'Closed' || remaining <= 0;
-        return {
-          id: `raw_${p.PeriodID || p.periodId || p.id || Math.random()}`,
-          startDate: p.PeriodStartDate || p.start || '',
-          endDate: p.PeriodEndDate || p.end || '',
-          priceAdult: p.Price || p.price || 0,
-          priceChild: p.Price_Child || p.priceChild || 0,
-          priceSingle: p.Price_Single_Bed || p.priceSingleRoomAdd || p.priceForOne || 0,
-          priceInfant: p.Price_Infant || p.priceInfant || 0,
-          priceJoinLand: p.Price_JoinLand || 0,
-          deposit: p.Deposit || p.deposit || 0,
-          totalSeats: seats,
-          booked: booked,
-          remainingSeats: isClosed ? 0 : remaining,
-          status: isClosed ? 'FULL' : 'AVAILABLE',
-          bus: p.Bus || p.bus || '',
-          periodCode: p.PeriodCode || '',
-          flightInfo: p.flight || '',
-        };
-      })
-    : (departures || []).map(d => ({
-        id: d.id,
-        startDate: d.startDate,
-        endDate: d.endDate,
-        priceAdult: pricesByDep[d.id]?.ADULT || 0,
-        priceChild: pricesByDep[d.id]?.CHILD || 0,
-        priceSingle: pricesByDep[d.id]?.SINGLE_SUPP || 0,
-        priceInfant: 0,
-        priceJoinLand: 0,
-        deposit: 0,
-        totalSeats: 0,
-        booked: 0,
-        remainingSeats: d.remainingSeats || 0,
-        status: d.status || 'AVAILABLE',
-        bus: '',
-        periodCode: '',
-        flightInfo: '',
-      }));
+  // Build enriched departures from REAL DB departures/prices first (single source of truth for booking/payment),
+  // then merge richer period metadata from raw payload when available.
+  const enrichedDeps = (departures || []).map((d: any) => {
+    const raw = findMatchingRawPeriod(d.startDate, d.endDate) || {};
+    const seatRaw = Number(raw.Seat || raw.seat || raw.GroupSize || raw.group || 0);
+    const bookedRaw = Number(raw.Book || raw.join || 0);
+    const rawRemaining = seatRaw > 0 ? Math.max(seatRaw - bookedRaw, 0) : null;
+    const dbRemaining = Number(d.remainingSeats || 0);
+    const remainingSeats = Math.max(dbRemaining || rawRemaining || 0, 0);
+
+    const dbAdult = Number(pricesByDep[d.id]?.ADULT || 0);
+    const dbChild = Number(pricesByDep[d.id]?.CHILD || 0);
+    const dbSingle = Number(pricesByDep[d.id]?.SINGLE_SUPP || 0);
+
+    const rawAdult = Number(raw.Price || raw.price || 0);
+    const rawChild = Number(raw.Price_Child || raw.priceChild || 0);
+    const rawSingle = Number(raw.Price_Single_Bed || raw.priceSingleRoomAdd || raw.priceForOne || 0);
+    const rawInfant = Number(raw.Price_Infant || raw.priceInfant || 0);
+    const rawJoinLand = Number(raw.Price_JoinLand || 0);
+    const rawDeposit = Number(raw.Deposit || raw.deposit || 0);
+
+    const rawStatus = normalizePeriodStatus(raw.status || raw.PeriodStatus || '');
+    const dbStatus = String(d.status || '').toUpperCase();
+    const status = dbStatus || rawStatus || (remainingSeats > 0 ? 'AVAILABLE' : 'FULL');
+
+    return {
+      id: d.id,
+      startDate: d.startDate,
+      endDate: d.endDate,
+      priceAdult: dbAdult || rawAdult || 0,
+      priceChild: dbChild || rawChild || dbAdult || rawAdult || 0,
+      priceSingle: dbSingle || rawSingle || 0,
+      priceInfant: rawInfant || 0,
+      priceJoinLand: rawJoinLand || 0,
+      deposit: rawDeposit || 0,
+      totalSeats: seatRaw > 0 ? seatRaw : Math.max(remainingSeats, 0),
+      booked: seatRaw > 0 ? bookedRaw : 0,
+      remainingSeats,
+      status,
+      bus: raw.Bus || raw.bus || '',
+      periodCode: raw.PeriodCode || '',
+      flightInfo: raw.flight || '',
+    };
+  });
+
+  const activeDeps = enrichedDeps
+    .filter((d: any) => {
+      const departureTime = new Date(d.startDate).getTime();
+      if (!Number.isFinite(departureTime) || departureTime < Date.now()) return false;
+      return Number(d.remainingSeats || 0) > 0 && d.status !== 'CANCELLED';
+    })
+    .sort((a: any, b: any) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime());
+
+  const FIRE_SALE_DAYS = 21;
+  const DISCOUNT_RATIO = 0.88;
+  const pricedActiveDeps = activeDeps.filter((d: any) => Number(d.priceAdult || 0) > 0);
+  const nearestDep = pricedActiveDeps[0];
+  const priceSeries = pricedActiveDeps.map((d: any) => Number(d.priceAdult || 0)).filter((n: number) => n > 0);
+  const minDealPrice = priceSeries.length > 0 ? Math.min(...priceSeries) : 0;
+  const maxDealPrice = priceSeries.length > 0 ? Math.max(...priceSeries) : 0;
+  const dealDaysLeft = nearestDep
+    ? Math.max(0, Math.ceil((new Date(nearestDep.startDate).getTime() - Date.now()) / 86400000))
+    : null;
+  const isFire = dealDaysLeft !== null && dealDaysLeft <= FIRE_SALE_DAYS;
+  const isDiscount = priceSeries.length >= 2 && minDealPrice > 0 && maxDealPrice > 0 && minDealPrice <= maxDealPrice * DISCOUNT_RATIO;
+  const dealType: 'fire' | 'discount' | null = isFire ? 'fire' : isDiscount ? 'discount' : null;
+  const discountPercent = maxDealPrice > 0 && minDealPrice > 0
+    ? Math.max(0, Math.round(((maxDealPrice - minDealPrice) / maxDealPrice) * 100))
+    : 0;
 
   // Build flights info — Let's Go has Flights array, Check In/Tour Factory have flight string in periods
   const flightInfo = rawFlights.length > 0
@@ -699,7 +767,15 @@ export async function getTourBySlug(slug: string): Promise<TourDetailData | null
         dinner: mealsByDay[it.dayNumber]?.has('DINNER') || false,
       },
     })),
-    departures: enrichedDeps,
+    departures: activeDeps,
+    deal: {
+      type: dealType,
+      daysLeft: dealDaysLeft,
+      currentPrice: nearestDep ? Number(nearestDep.priceAdult || 0) : 0,
+      minPrice: minDealPrice,
+      maxPrice: maxDealPrice,
+      discountPercent,
+    },
   };
 }
 

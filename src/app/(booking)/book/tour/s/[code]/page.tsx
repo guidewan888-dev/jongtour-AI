@@ -196,7 +196,11 @@ export default function ScraperBookTourPage({ params }: { params: { code: string
       </div>
     );
 
-  const availablePeriods = tour.periods.filter((p) => p.status !== "full" && (p.seatsLeft === null || p.seatsLeft > 0));
+  const availablePeriods = tour.periods.filter((p) => {
+    const status = String(p.status || '').toUpperCase();
+    const isClosed = status === 'FULL' || status === 'CANCELLED' || status === 'CLOSE' || status === 'CLOSED';
+    return !isClosed && (p.seatsLeft === null || p.seatsLeft > 0);
+  });
   const maxPax = selPeriod?.seatsLeft || 20;
 
   return (

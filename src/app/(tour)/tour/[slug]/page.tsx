@@ -26,7 +26,7 @@ const AL: Record<string,string> = {
 
 interface Dep { id:string; startDate:string; endDate:string; priceAdult:number; priceChild:number; priceSingle:number; priceInfant:number; deposit:number; totalSeats:number; booked:number; remainingSeats:number; status:string; bus:string; }
 interface Flight { route:string; flightNo:string; departure:string; arrival:string; airline:string; }
-interface Tour { id:string; slug:string; code:string; title:string; supplier:{id:string;name:string}; country:string; city:string; duration:{days:number;nights:number}; images:string[]; price:{starting:number}; summary:string; highlights:string[]; pdfUrl?:string; flight?:{airline:string}; flights?:Flight[]; departures:Dep[]; included:string[]; excluded:string[]; }
+interface Tour { id:string; slug:string; code:string; title:string; supplier:{id:string;name:string}; country:string; city:string; duration:{days:number;nights:number}; images:string[]; price:{starting:number}; summary:string; highlights:string[]; pdfUrl?:string; flight?:{airline:string}; flights?:Flight[]; departures:Dep[]; included:string[]; excluded:string[]; deal?:{ type:'fire'|'discount'|null; daysLeft:number|null; currentPrice:number; minPrice:number; maxPrice:number; discountPercent:number; }; }
 interface RecTour { slug:string; title:string; code:string; imageUrl:string; price:number; days:number; nights:number; country:string; supplierName:string; }
 
 export default function TourDetailPage({ params }: { params: { slug: string } }) {
@@ -120,6 +120,17 @@ export default function TourDetailPage({ params }: { params: { slug: string } })
                 <span>🗓️ <b>{tour.duration.days} วัน {tour.duration.nights} คืน</b></span>
                 <span>👥 <b>เดินทางขั้นต่ำ 0 ท่าน</b></span>
               </div>
+              {tour.deal?.type && (
+                <div className={`inline-flex items-center gap-2 text-xs font-bold px-2.5 py-1 rounded-full mb-3 ${
+                  tour.deal.type === 'discount'
+                    ? 'bg-amber-100 text-amber-700'
+                    : 'bg-red-100 text-red-700'
+                }`}>
+                  <span>{tour.deal.type === 'discount' ? '🏷️ โปรลดราคา' : '🔥 ราคาไฟไหม้'}</span>
+                  {tour.deal.discountPercent > 0 && <span>ลดสูงสุด {tour.deal.discountPercent}%</span>}
+                  {tour.deal.daysLeft !== null && <span>เหลือ {tour.deal.daysLeft} วัน</span>}
+                </div>
+              )}
 
               {/* Airline */}
               {airName && <div className="flex items-center gap-3 p-2.5 bg-blue-50/80 rounded-lg border border-blue-100 mb-3">

@@ -72,6 +72,7 @@ async function getScraperTours(options: {
 }): Promise<ScraperRawTour[]> {
   try {
     const supabase = createClient();
+    const today = new Date().toISOString().slice(0, 10);
     let query = supabase
       .from('scraper_tours')
       .select('id, site, tour_code, title, country, duration, price_from, airline, cover_image_url, source_url, pdf_url, deposit, hotel_rating, highlights')
@@ -93,56 +94,60 @@ async function getScraperTours(options: {
     const normalizeSite = (rawSite: string | null | undefined) =>
       SITE_ALIAS_MAP[rawSite || ''] || rawSite || '';
 
-    // GS25 image fallback (bulk): cover_image_url -> first public_url -> first original_url
-    const gs25MissingCoverIds = data
-      .filter((t: any) => !t.cover_image_url && normalizeSite(t.site).toLowerCase() === 'gs25')
-      .map((t: any) => t.id);
-
-    const fallbackImageMap: Record<number, string> = {};
-    if (gs25MissingCoverIds.length > 0) {
-      const { data: fallbackImages } = await supabase
+    const tourIds = data.map((tour: any) => tour.id);
+    const [periodsRes, imagesRes] = await Promise.all([
+      supabase
+        .from('scraper_tour_periods')
+        .select('tour_id, start_date, price, seats_left, status')
+        .in('tour_id', tourIds)
+        .gte('start_date', today)
+        .order('start_date', { ascending: true }),
+      supabase
         .from('scraper_tour_images')
         .select('tour_id, public_url, original_url, sort_order, id')
-        .in('tour_id', gs25MissingCoverIds)
-        .order('sort_order', { ascending: true })
-        .order('id', { ascending: true });
-
-      for (const img of fallbackImages || []) {
-        if (fallbackImageMap[img.tour_id]) continue;
-        const fallbackUrl = (typeof img.public_url === 'string' && img.public_url.trim().length > 0)
-          ? img.public_url.trim()
-          : (typeof img.original_url === 'string' && img.original_url.trim().length > 0)
-            ? img.original_url.trim()
-            : '';
-        if (fallbackUrl) fallbackImageMap[img.tour_id] = fallbackUrl;
-      }
-    }
-
-    // ── Period price fallback for tours with price_from = 0 ──
-    const toursWithNoPrice = data.filter((t: any) => !t.price_from || t.price_from <= 0);
-    const tourIds = toursWithNoPrice.map((t: any) => t.id);
-    let periodPriceMap: Record<number, number> = {};
-    if (tourIds.length > 0) {
-      const { data: periods } = await supabase
-        .from('scraper_tour_periods')
-        .select('tour_id, price')
         .in('tour_id', tourIds)
-        .gt('price', 0)
-        .order('price', { ascending: true });
-      if (periods) {
-        periods.forEach((p: any) => {
-          if (!periodPriceMap[p.tour_id] || p.price < periodPriceMap[p.tour_id]) {
-            periodPriceMap[p.tour_id] = p.price;
-          }
-        });
-      }
-    }
+        .order('sort_order', { ascending: true })
+        .order('id', { ascending: true }),
+    ]);
+
+    const periodsByTour: Record<number, any[]> = {};
+    (periodsRes.data || []).forEach((period: any) => {
+      if (!periodsByTour[period.tour_id]) periodsByTour[period.tour_id] = [];
+      periodsByTour[period.tour_id].push(period);
+    });
+
+    const fallbackImageMap: Record<number, string> = {};
+    (imagesRes.data || []).forEach((img: any) => {
+      if (fallbackImageMap[img.tour_id]) return;
+      const fallbackUrl = (typeof img.public_url === 'string' && img.public_url.trim().length > 0)
+        ? img.public_url.trim()
+        : (typeof img.original_url === 'string' && img.original_url.trim().length > 0)
+          ? img.original_url.trim()
+          : '';
+      if (fallbackUrl) fallbackImageMap[img.tour_id] = fallbackUrl;
+    });
+
+    const isPeriodBookable = (period: any) => {
+      const seatsLeft = period.seats_left === null || period.seats_left === undefined ? null : Number(period.seats_left);
+      const status = String(period.status || '').toLowerCase();
+      const notFull = status !== 'full' && status !== 'close' && status !== 'closed' && status !== 'cancelled';
+      return notFull && (seatsLeft === null || seatsLeft > 0);
+    };
 
     // ── Apply price fallback, smart deposit, and site name normalization ──
-    return data.map((t: any) => {
-      // Period price fallback
-      if ((!t.price_from || t.price_from <= 0) && periodPriceMap[t.id]) {
-        t.price_from = periodPriceMap[t.id];
+    return data
+      .map((t: any) => {
+      const futurePeriods = periodsByTour[t.id] || [];
+      const availablePeriods = futurePeriods.filter(isPeriodBookable);
+      if (availablePeriods.length === 0) return null;
+
+      const minFuturePrice = availablePeriods
+        .map((period: any) => Number(period.price || 0))
+        .filter((price: number) => price > 0)
+        .sort((a: number, b: number) => a - b)[0];
+
+      if ((!t.price_from || t.price_from <= 0) && minFuturePrice) {
+        t.price_from = minFuturePrice;
       }
 
       // Smart deposit calculation (same logic as scraper-list & detail API)
@@ -161,13 +166,14 @@ async function getScraperTours(options: {
       // Normalize legacy site names
       t.site = normalizeSite(t.site);
 
-      // GS25 image fallback from scraper_tour_images
-      if (!t.cover_image_url && t.site.toLowerCase() === 'gs25' && fallbackImageMap[t.id]) {
+      // Image fallback from scraper_tour_images
+      if (!t.cover_image_url && fallbackImageMap[t.id]) {
         t.cover_image_url = fallbackImageMap[t.id];
       }
 
       return t as ScraperRawTour;
-    });
+    })
+    .filter(Boolean) as ScraperRawTour[];
   } catch (e) {
     console.error('[Scraper tours fetch]', e);
     return [];
