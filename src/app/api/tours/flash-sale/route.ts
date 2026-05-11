@@ -16,12 +16,14 @@ export async function GET() {
     );
 
     const FIRE_SALE_DAYS = 21;
-    const LOOKAHEAD_DAYS = 60;
+    const LOOKAHEAD_DAYS = 365;
     const DISCOUNT_RATIO = 0.88; // current/min price <= 88% of max in same tour
     const MAX_PER_SUPPLIER = 12;
     const now = new Date();
-    const fromDate = now.toISOString().split('T')[0];
-    const toDate = new Date(now.getTime() + LOOKAHEAD_DAYS * 86400000).toISOString().split('T')[0];
+    const fromDateTime = now.toISOString();
+    const toDateTime = new Date(now.getTime() + LOOKAHEAD_DAYS * 86400000).toISOString();
+    const fromDate = fromDateTime.split('T')[0];
+    const toDate = toDateTime.split('T')[0];
 
     const toDayDiff = (dateStr?: string | null) => {
       if (!dateStr) return null;
@@ -33,10 +35,9 @@ export async function GET() {
     const { data: apiDepartures } = await supabase
       .from('departures')
       .select('id, tourId, supplierId, startDate, remainingSeats, status')
-      .gte('startDate', fromDate)
-      .lte('startDate', toDate)
+      .gte('startDate', fromDateTime)
+      .lte('startDate', toDateTime)
       .gt('remainingSeats', 0)
-      .in('status', ['AVAILABLE', 'ON_REQUEST'])
       .order('startDate', { ascending: true })
       .limit(5000);
 
@@ -199,7 +200,8 @@ export async function GET() {
       const site = SITE_ALIAS_MAP[tour.site] || tour.site || '';
       const periods = (periodsByTour[tour.id] || []).filter((p: any) => {
         const seatsLeft = p.seats_left === null || p.seats_left === undefined ? null : Number(p.seats_left);
-        const notFull = String(p.status || '').toLowerCase() !== 'full';
+        const status = String(p.status || '').toLowerCase();
+        const notFull = status !== 'full' && status !== 'close' && status !== 'closed';
         return notFull && (seatsLeft === null || seatsLeft > 0);
       });
 
