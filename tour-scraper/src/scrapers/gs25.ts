@@ -441,6 +441,43 @@ export class GS25Scraper extends BaseScraper {
       }
       tourData.pdfUrl = pdfUrl;
 
+      // ── Extract Highlights from carousel/banner text and page content ──
+      const highlights: string[] = [];
+
+      // 1. Extract from carousel text (banners often have "• location1 • location2 • location3")
+      const carouselText = $('.carousel-inner, .carousel, #carousel-example-generic').text();
+      if (carouselText) {
+        // Look for bullet-separated highlights like "MARINA CAFE • ECLIPSE SQUARE • เมืองโบราณฮอยอัน"
+        const bulletItems = carouselText.match(/[^•\n\r]+/g);
+        if (bulletItems) {
+          for (const item of bulletItems) {
+            const cleaned = item.trim();
+            if (cleaned.length > 3 && cleaned.length < 100
+              && !/ราคา|เริ่มต้น|พีเรียด|\d{4,}|^\d+[DN]|วัน\s*คืน|salestarting|จอง|โทร|line|facebook|www\./i.test(cleaned)
+              && !/^\d+$/.test(cleaned)) {
+              if (!highlights.includes(cleaned)) highlights.push(cleaned);
+            }
+          }
+        }
+      }
+
+      // 2. Extract from program name/title
+      if (highlights.length < 3) {
+        const nameParts = prog.programName.split(/[+\-–•|]+/)
+          .map(s => s.trim())
+          .filter(s => s.length > 3 && s.length < 80 && !/^[A-Z]{2,5}\d|^\d+[DN]|\b(วัน|คืน)\b/i.test(s));
+        for (const part of nameParts) {
+          if (!highlights.includes(part)) highlights.push(part);
+        }
+      }
+
+      // 3. Extract hotel rating from page text
+      const bodyText = $('body').text();
+      const hotelMatch = bodyText.match(/(\d)\s*(?:ดาว|star|★)/i);
+      if (hotelMatch) tourData.hotelRating = parseInt(hotelMatch[1]);
+
+      tourData.highlights = highlights.slice(0, 8);
+
       // ── Parse additional periods from detail page table ──
       const detailPeriods = this.parsePeriodsFromHtml(detailHtml);
       if (detailPeriods.length > 0) {
@@ -460,6 +497,19 @@ export class GS25Scraper extends BaseScraper {
       console.warn(`[gs25]   ⚠️ Detail error for ${code}: ${(e as Error).message}`);
     } finally {
       await page.close();
+    }
+
+    // Ensure PDF URL is always set (fallback from programName)
+    if (!tourData.pdfUrl) {
+      tourData.pdfUrl = `https://gs25travel.com/documents/pdfview/${encodeURIComponent(prog.countrySlug)}/${encodeURIComponent(prog.programName)}`;
+    }
+
+    // Ensure highlights from title if none were extracted from detail page
+    if (tourData.highlights.length === 0) {
+      const nameParts = prog.programName.split(/[+\-–•|]+/)
+        .map(s => s.trim())
+        .filter(s => s.length > 3 && s.length < 80 && !/^[A-Z]{2,5}\d|^\d+[DN]|\b(วัน|คืน)\b/i.test(s));
+      tourData.highlights = nameParts.slice(0, 6);
     }
 
     return tourData;

@@ -53,6 +53,54 @@ function detectCountry(title: string, url: string): string {
   return '';
 }
 
+/** Parse a highlight description paragraph into individual highlight items */
+function parseHighlightText(text: string): string[] {
+  if (!text || text.length < 5) return [];
+  // Remove emoji characters for cleaner items
+  const cleaned = text.replace(/[\u{1F600}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F1E0}-\u{1F1FF}]/gu, '').trim();
+  
+  // Split by common Thai separators: bullet, comma, •, |, newline
+  const parts = cleaned.split(/[•\|\/\n\r]+/)
+    .map(s => s.trim())
+    .filter(s => s.length > 3 && s.length < 200);
+  
+  if (parts.length >= 2) return parts.slice(0, 8);
+  
+  // If single long text, try to extract key attraction names (Thai proper nouns with spaces)
+  // Look for patterns like "ตึกแลนด์มาร์ก ไทเป 101", "หมู่บ้านโบราณจิ่วเฟิ่น", etc.
+  const attractions = cleaned.match(/(?:ที่\s+)?[ก-๙A-Z][ก-๙a-zA-Z\s]{3,30}/g);
+  if (attractions && attractions.length >= 2) {
+    return attractions
+      .map(s => s.trim())
+      .filter(s => s.length > 4 && !/^(?:ที่|และ|กับ|แต่|หรือ|เพราะ|จาก|ใน|ของ)$/i.test(s))
+      .slice(0, 6);
+  }
+  
+  // Return the whole text as a single highlight if it's reasonable length
+  if (cleaned.length > 10 && cleaned.length < 500) return [cleaned];
+  return [];
+}
+
+/** Extract highlights from tour title by parsing destination/attraction keywords */
+function extractHighlightsFromTitle(title: string): string[] {
+  if (!title || title.length < 5) return [];
+  const highlights: string[] = [];
+  
+  // Split title by common separators
+  const parts = title.split(/[+\-–,•\|\/]+/)
+    .map(s => s.trim())
+    .filter(s => s.length > 3 && s.length < 100);
+  
+  for (const part of parts) {
+    // Skip parts that are just codes, dates, airlines
+    if (/^[A-Z]{2,5}\d|^\d+[DN]|\b(วัน|คืน)\b|^(JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC)/i.test(part)) continue;
+    highlights.push(part);
+  }
+  
+  return highlights.slice(0, 6);
+}
+
+
 export class BestInternationalScraper extends BaseScraper {
   private browser: Browser | null = null;
 
@@ -196,6 +244,22 @@ export class BestInternationalScraper extends BaseScraper {
         const travelMatch = text.match(/เดินทาง\s*[:：]?\s*([^\n]{5,60})/i);
         if (travelMatch) result.travelRange = travelMatch[1].trim();
 
+        // Highlights: extract text after "ไฮไลท์ :" label in the grid layout
+        const highlightLabel = Array.from(document.querySelectorAll('div')).find(
+          el => el.textContent?.trim() === 'ไฮไลท์ :' || el.textContent?.trim() === 'ไฮไลท์:'
+        );
+        if (highlightLabel) {
+          const sibling = highlightLabel.nextElementSibling;
+          if (sibling) {
+            result.highlightText = (sibling as HTMLElement).innerText?.trim() || '';
+          }
+        }
+        // Fallback: regex on body text
+        if (!result.highlightText) {
+          const hlMatch = text.match(/ไฮไลท์\s*[:：]\s*([^\n]{10,500})/);
+          if (hlMatch) result.highlightText = hlMatch[1].trim();
+        }
+
         // Extract prices from all small text elements (Angular-rendered price tags)
         const priceElements: number[] = [];
         document.querySelectorAll('*').forEach(el => {
@@ -276,6 +340,10 @@ export class BestInternationalScraper extends BaseScraper {
       if (renderedData.deposit && !data.deposit) {
         data.deposit = renderedData.deposit;
       }
+      // Highlights from rendered DOM (overrides static parse)
+      if (renderedData.highlightText && renderedData.highlightText.length > 5) {
+        data.highlights = parseHighlightText(renderedData.highlightText);
+      }
       // Create a period from travelRange if no periods were parsed
       if (renderedData.travelRange && data.periods.length === 0) {
         data.periods.push({
@@ -328,14 +396,27 @@ export class BestInternationalScraper extends BaseScraper {
       || bodyText.match(/โรงแรม(?:หรู)?\s*(\d)\s*ดาว/i);
     if (starMatch) hotelRating = parseInt(starMatch[1]);
 
-    // Highlights
-    const highlights: string[] = [];
-    $('h3, h4, strong').each((_, el) => {
-      const text = $(el).text().trim();
-      if (/วันที่\s*\d|Day\s*\d/i.test(text) && text.length > 10 && text.length < 300) {
-        highlights.push(text);
+    // Highlights — extract from "ไฮไลท์ :" grid label or body text
+    let highlights: string[] = [];
+    // Try to find "ไฮไลท์" label in grid layout
+    $('div').each((_, el) => {
+      const labelText = $(el).text().trim();
+      if (labelText === 'ไฮไลท์ :' || labelText === 'ไฮไลท์:') {
+        const sibling = $(el).next();
+        if (sibling.length) {
+          highlights = parseHighlightText(sibling.text().trim());
+        }
       }
     });
+    // Fallback: regex on body text
+    if (highlights.length === 0) {
+      const hlMatch = bodyText.match(/ไฮไลท์\s*[:：]\s*([^\n]{10,500})/);
+      if (hlMatch) highlights = parseHighlightText(hlMatch[1].trim());
+    }
+    // Fallback: extract key destinations/attractions from title
+    if (highlights.length === 0) {
+      highlights = extractHighlightsFromTitle(title);
+    }
 
     // Images from HTML
     const htmlImageUrls: string[] = [];

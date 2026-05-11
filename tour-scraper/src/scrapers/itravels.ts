@@ -167,15 +167,36 @@ export class ITravelsScraper extends BaseScraper {
     // ── Description ──
     const description = $('meta[name="description"]').attr('content') || '';
 
-    // ── Highlights — from itinerary section ──
+    // ── Highlights — extract from title, description, and page content ──
     const highlights: string[] = [];
-    // Look for day-by-day itinerary headers
-    $('h3, h4, strong').each((_, el) => {
-      const text = $(el).text().trim();
-      if (/วันที่\s*\d|Day\s*\d/i.test(text) && text.length > 10 && text.length < 300) {
-        highlights.push(text);
+    
+    // 1. Try to extract from title (e.g. "ชิคไต้หวัน แช่บ่อน้ำร้อน TAIWAN ไทเป ไทจง หนานโถว ล่องเรือทะเลสาบสุริยันจันทรา...")
+    const titleParts = title.split(/[+\-–•|\/,]+/)
+      .map(s => s.trim())
+      .filter(s => s.length > 3 && s.length < 100 && !/^[A-Z]{2,5}\d|^\d+[DN]|\b(วัน|คืน)\b/i.test(s));
+    highlights.push(...titleParts);
+    
+    // 2. Try to find key attractions from body text
+    if (highlights.length < 3) {
+      // Look for bullet points or list items
+      $('li, .highlight, .feature').each((_, el) => {
+        const text = $(el).text().trim();
+        if (text.length > 5 && text.length < 150 && !/login|register|ราคา|เงื่อนไข|หมายเหตุ/i.test(text)) {
+          if (!highlights.includes(text)) highlights.push(text);
+        }
+      });
+    }
+    
+    // 3. Fallback: extract from meta description
+    if (highlights.length < 2 && description.length > 10) {
+      const descParts = description.split(/[,•|\/]+/)
+        .map(s => s.trim())
+        .filter(s => s.length > 5 && s.length < 120);
+      for (const part of descParts) {
+        if (!highlights.includes(part)) highlights.push(part);
       }
-    });
+    }
+
 
     // ── Images — both <img> and background-image ──
     const imageUrls = new Set<string>();
