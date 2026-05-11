@@ -11,6 +11,7 @@
 //            Must use POST with {start_page, limit_page} body.
 //            start_page is 1-based (page 0 duplicates page 1).
 
+import { chromium, type Browser } from 'playwright';
 import { BaseScraper } from './base.js';
 import type { TourData, TourPeriod } from '../types.js';
 
@@ -37,6 +38,7 @@ const COUNTRY_TH: Record<string, string> = {
 export class Go365Scraper extends BaseScraper {
   private apiKey: string;
   private apiBase: string;
+  private browser?: Browser;
 
   constructor(cfg: any) {
     super(cfg);
@@ -125,6 +127,56 @@ export class Go365Scraper extends BaseScraper {
   }
 
   /**
+   * Extract PDF URL from Go365 website using Playwright (SPA requires JS execution)
+   * Go365 hosts PDFs on files.file4load.com and loadfileall.com
+   */
+  private async scrapePdfFromWebsite(tourId: string, tourCode: string): Promise<string> {
+    try {
+      if (!this.browser) {
+        this.browser = await chromium.launch({ headless: true });
+      }
+      const ctx = await this.browser.newContext({
+        userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      });
+      const page = await ctx.newPage();
+      
+      const webUrl = `https://www.go365travel.com/tour-detail/${tourId}/${encodeURIComponent(tourCode)}`;
+      await page.goto(webUrl, { waitUntil: 'networkidle', timeout: 20_000 });
+      await page.waitForTimeout(3000); // Wait for SPA to render
+
+      // Extract PDF link from rendered DOM
+      const pdfUrl = await page.evaluate(() => {
+        const links = [...document.querySelectorAll('a')];
+        // Priority 1: file4load.com direct download
+        const file4load = links.find(a => a.href.includes('file4load.com'));
+        if (file4load) return file4load.href;
+        // Priority 2: loadfileall.com share link
+        const loadfile = links.find(a => a.href.includes('loadfileall.com'));
+        if (loadfile) return loadfile.href;
+        // Priority 3: any .pdf link
+        const pdfLink = links.find(a => /\.pdf$/i.test(a.href));
+        if (pdfLink) return pdfLink.href;
+        return '';
+      });
+
+      await ctx.close();
+      
+      if (pdfUrl) {
+        console.log(`[go365] ✅ Found PDF from website: ${pdfUrl.substring(0, 80)}`);
+      }
+      return pdfUrl;
+    } catch (e) {
+      console.warn(`[go365] Could not scrape website for PDF: ${(e as Error).message}`);
+      return '';
+    }
+  }
+
+  async cleanup(): Promise<void> {
+    await this.browser?.close();
+    this.browser = undefined;
+  }
+
+  /**
    * Fetch full tour data from API (detail + period)
    * The "url" parameter is actually the tour_id
    */
@@ -185,8 +237,14 @@ export class Go365Scraper extends BaseScraper {
     if (detail.tour_cover_image) imageUrls.push(detail.tour_cover_image);
     if (detail.tour_file?.file_banner) imageUrls.push(detail.tour_file.file_banner);
 
-    // PDF
-    const pdfUrl = detail.tour_file?.file_pdf || '';
+    // PDF — try API first, then scrape website with Playwright for PDF link
+    let pdfUrl = detail.tour_file?.file_pdf || detail.tour_file?.file_word || '';
+    
+    // Fallback: use Playwright to scrape the Go365 SPA for PDF download link
+    // Go365 is an Angular SPA — PDF links (file4load.com / loadfileall.com) only appear after JS execution
+    if (!pdfUrl) {
+      pdfUrl = await this.scrapePdfFromWebsite(tourId, tourCode);
+    }
 
     // Source URL (Go365 website)
     const sourceUrl = `https://www.go365travel.com/tour-detail/${tourId}/${encodeURIComponent(tourCode)}`;

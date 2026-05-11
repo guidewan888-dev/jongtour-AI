@@ -216,8 +216,8 @@ export class WorldConnectionScraper extends BaseScraper {
     const itineraryEl = $('article, .entry-content, .tour-content, .wpb_wrapper').first();
     const itineraryHtml = itineraryEl.html()?.slice(0, 50_000) ?? '';
 
-    // ── PDF link (weon.website pattern) ──
-    const pdfUrl = $('a[href*="pdf.weon.website"], a[href$=".pdf"]').first().attr('href') || '';
+    // ── PDF link (weon.website pattern — cdn.weon.website or pdf.weon.website) ──
+    const pdfUrl = $('a[href*="cdn.weon.website"], a[href*="pdf.weon.website"], a[href*="weon.website"][href$=".pdf"], a[href$=".pdf"]').first().attr('href') || '';
 
     // ── Deposit — look for "มัดจำ XX,XXX" ──
     const depositMatch = bodyText.match(/มัดจำ\s*[^\d]*([\d,]+)/);
