@@ -3,6 +3,10 @@ import React, { useState, useEffect } from 'react';
 
 export default function AdminDashboardClient({ initialData }: { initialData: any }) {
   const data = initialData;
+  const recentBookings = Array.isArray(data?.recentBookings) ? data.recentBookings : [];
+  const aiAlerts = Array.isArray(data?.aiAlerts) ? data.aiAlerts : [];
+  const tasksToday = Array.isArray(data?.tasksToday) ? data.tasksToday : [];
+  const syncStatus = Array.isArray(data?.syncStatus) ? data.syncStatus : [];
 
   if (!data) {
     return (
@@ -112,7 +116,7 @@ export default function AdminDashboardClient({ initialData }: { initialData: any
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {data.recentBookings.map((b: any) => (
+                  {recentBookings.map((b: any) => (
                     <tr key={b.id} className="hover:bg-slate-50 transition-colors">
                       <td className="px-6 py-3">
                         <a href={`/bookings/${b.id}`} className="font-bold text-slate-900 hover:text-blue-600">{b.id}</a>
@@ -124,7 +128,7 @@ export default function AdminDashboardClient({ initialData }: { initialData: any
                         <div className="text-[10px] text-slate-500">{b.pax} Pax</div>
                       </td>
                       <td className="px-6 py-3 text-right font-black text-slate-900">
-                        {b.total.toLocaleString()}
+                        {Number(b?.total ?? 0).toLocaleString('th-TH')}
                       </td>
                       <td className="px-6 py-3 text-center">
                         <span className={`text-[10px] font-bold px-2 py-1 rounded-md ${
@@ -132,12 +136,12 @@ export default function AdminDashboardClient({ initialData }: { initialData: any
                           b.status === 'PAYMENT_PENDING' ? 'bg-orange-100 text-orange-700' :
                           'bg-emerald-100 text-emerald-700'
                         }`}>
-                          {b.status.replace('_', ' ')}
+                          {String(b?.status ?? 'UNKNOWN').replaceAll('_', ' ')}
                         </span>
                       </td>
                     </tr>
                   ))}
-                  {data.recentBookings.length === 0 && (
+                  {recentBookings.length === 0 && (
                     <tr>
                       <td colSpan={5} className="px-6 py-8 text-center text-slate-400 text-sm">ยังไม่มีรายการจองในระบบ</td>
                     </tr>
@@ -156,16 +160,16 @@ export default function AdminDashboardClient({ initialData }: { initialData: any
               </h3>
             </div>
             <div className="p-4 space-y-3">
-              {data.aiAlerts.length === 0 && (
+              {aiAlerts.length === 0 && (
                 <div className="text-center py-6 text-slate-400 text-sm">✅ ไม่มีการแจ้งเตือนจาก AI</div>
               )}
-              {data.aiAlerts.map((alertItem: any) => (
+              {aiAlerts.map((alertItem: any) => (
                 <div key={alertItem.id} className="p-4 rounded-xl border border-red-100 bg-red-50/30 flex items-start gap-3">
                   <div className="mt-0.5 text-red-500">
                     <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                   </div>
                   <div className="flex-1">
-                    <div className="font-bold text-slate-900 text-sm mb-1">{alertItem.type.replace('_', ' ')}</div>
+                    <div className="font-bold text-slate-900 text-sm mb-1">{String(alertItem?.type ?? 'ALERT').replaceAll('_', ' ')}</div>
                     <div className="text-xs text-slate-600 leading-relaxed">{alertItem.message}</div>
                   </div>
                   <a 
@@ -188,10 +192,10 @@ export default function AdminDashboardClient({ initialData }: { initialData: any
           <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
             <h3 className="font-bold text-slate-900 mb-4">Admin Tasks</h3>
             <div className="space-y-3">
-              {data.tasksToday.length === 0 && (
+              {tasksToday.length === 0 && (
                 <div className="text-center py-4 text-slate-400 text-sm">ยังไม่มีงานวันนี้</div>
               )}
-              {data.tasksToday.map((task: any) => (
+              {tasksToday.map((task: any) => (
                 <div key={task.id} className="flex items-start gap-3 p-3 rounded-xl border border-slate-100 hover:bg-slate-50 transition-colors cursor-pointer group">
                   <div className={`w-5 h-5 mt-0.5 rounded border flex items-center justify-center ${task.status === 'COMPLETED' ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-slate-300'}`}>
                     {task.status === 'COMPLETED' && <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
@@ -216,10 +220,10 @@ export default function AdminDashboardClient({ initialData }: { initialData: any
               <a href="/wholesale/sync-logs" className="text-xs font-bold text-orange-600 hover:text-orange-700">View Logs</a>
             </div>
             <div className="divide-y divide-slate-100">
-              {data.syncStatus.length === 0 && (
+              {syncStatus.length === 0 && (
                 <div className="p-4 text-center text-slate-400 text-sm">ยังไม่มีข้อมูล Sync</div>
               )}
-              {data.syncStatus.map((sync: any, idx: number) => (
+              {syncStatus.map((sync: any, idx: number) => (
                 <div key={idx} className="p-4">
                   <div className="flex justify-between items-center mb-1">
                     <a href={`/wholesale/suppliers`} className="font-bold text-sm text-slate-800 hover:text-blue-600">{sync.supplier}</a>
