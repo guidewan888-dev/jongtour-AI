@@ -51,7 +51,7 @@ export default async function SupplierDetailPage({ params }: { params: { id: str
           <h2 className="font-bold text-slate-800 mb-3">🏷️ Aliases</h2>
           <div className="flex flex-wrap gap-2">
             {supplier.aliases.map((a) => (
-              <span key={a.id} className="px-3 py-1 bg-slate-100 rounded-full text-sm font-mono">{a.alias}</span>
+              <span key={a.id} className="px-3 py-1 bg-slate-100 rounded-full text-sm font-mono">{a.aliasName}</span>
             ))}
           </div>
         </div>
@@ -63,7 +63,7 @@ export default async function SupplierDetailPage({ params }: { params: { id: str
         {supplier.apiCredentials ? (
           <div className="flex items-center gap-3">
             <span className="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full text-sm font-bold">✅ กำหนดแล้ว</span>
-            <span className="text-sm text-slate-500">Base URL: {supplier.apiCredentials.baseUrl || 'ไม่ระบุ'}</span>
+            <span className="text-sm text-slate-500">Base URL: {supplier.apiCredentials.apiBaseUrl || 'ไม่ระบุ'}</span>
           </div>
         ) : (
           <p className="text-sm text-slate-500">❌ ยังไม่ได้กำหนด API Credentials</p>

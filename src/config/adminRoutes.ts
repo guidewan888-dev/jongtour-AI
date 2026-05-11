@@ -82,11 +82,16 @@ export const adminMenuGroups: RouteGroup[] = [
   {
     title: "Wholesale & Scraper",
     items: [
-      { name: "Sync Center", href: "/wholesale/sync", icon: Globe2 },
-      { name: "Scraper Tours", href: "/scraper", icon: Search },
+      { name: "Overview", href: "/wholesale/dashboard", icon: Globe2 },
       { name: "Supplier Master", href: "/wholesale/suppliers", icon: Briefcase },
+      { name: "Manual Sync", href: "/wholesale/sync", icon: Activity },
       { name: "Sync Logs", href: "/wholesale/sync-logs", icon: Activity },
+      { name: "Diagnostics", href: "/wholesale/diagnostics", icon: AlertCircle },
+      { name: "Error Logs", href: "/wholesale/error-logs", icon: AlertCircle },
       { name: "Human Review", href: "/wholesale/human-review", icon: Users },
+      { name: "Scraper Dashboard", href: "/scraper", icon: Search },
+      { name: "Scrape History", href: "/scraper/runs", icon: CalendarDays },
+      { name: "Credentials", href: "/wholesale/credentials", icon: ShieldCheck },
     ]
   },
   {

@@ -22,18 +22,23 @@ export const adminMenu: MenuItem[] = [
   },
   {
     label: 'Wholesale & Scraper',
-    href: '/wholesale/sync',
+    href: '/wholesale/dashboard',
     icon: 'RefreshCw',
     permission: ['SUPER_ADMIN', 'ADMIN'],
     enabled: true,
     status: 'ACTIVE',
     route_exists: true,
     children: [
-      { label: 'Sync Center', href: '/wholesale/sync', enabled: true, status: 'ACTIVE', route_exists: true },
-      { label: 'Scraper Tours', href: '/scraper', enabled: true, status: 'ACTIVE', route_exists: true },
+      { label: 'Overview', href: '/wholesale/dashboard', enabled: true, status: 'ACTIVE', route_exists: true },
       { label: 'Suppliers', href: '/wholesale/suppliers', enabled: true, status: 'ACTIVE', route_exists: true },
+      { label: 'Manual Sync', href: '/wholesale/sync', enabled: true, status: 'ACTIVE', route_exists: true },
       { label: 'Sync Logs', href: '/wholesale/sync-logs', enabled: true, status: 'ACTIVE', route_exists: true },
+      { label: 'Diagnostics', href: '/wholesale/diagnostics', enabled: true, status: 'ACTIVE', route_exists: true },
+      { label: 'Error Logs', href: '/wholesale/error-logs', enabled: true, status: 'ACTIVE', route_exists: true },
       { label: 'Human Review', href: '/wholesale/human-review', enabled: true, status: 'ACTIVE', route_exists: true },
+      { label: 'Scraper Dashboard', href: '/scraper', enabled: true, status: 'ACTIVE', route_exists: true },
+      { label: 'Scrape History', href: '/scraper/runs', enabled: true, status: 'ACTIVE', route_exists: true },
+      { label: 'Credentials', href: '/wholesale/credentials', enabled: true, status: 'ACTIVE', route_exists: true },
     ]
   },
   {

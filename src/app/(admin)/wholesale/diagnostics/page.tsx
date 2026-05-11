@@ -1,14 +1,9 @@
 export const dynamic = 'force-dynamic';
 import { prisma } from '@/lib/prisma';
+import { getUnifiedErrorLogs } from '@/lib/wholesale-sync';
 
 export default async function DiagnosticsPage() {
-  const [failedSyncs, brokenLinks, supplierHealth] = await Promise.all([
-    prisma.supplierSyncLog.findMany({
-      where: { status: 'FAILED' },
-      orderBy: { startedAt: 'desc' },
-      take: 20,
-      include: { supplier: { select: { displayName: true } } },
-    }),
+  const [brokenLinks, supplierHealth, unifiedErrors] = await Promise.all([
     prisma.tour.findMany({
       where: { linkHealthStatus: { in: ['BROKEN', 'MISSING'] } },
       select: { id: true, tourCode: true, tourName: true, linkHealthStatus: true, wholesaleTourUrl: true },
@@ -21,6 +16,7 @@ export default async function DiagnosticsPage() {
         syncLogs: { orderBy: { startedAt: 'desc' }, take: 1, select: { status: true, startedAt: true } },
       },
     }),
+    getUnifiedErrorLogs(50),
   ]);
 
   return (
@@ -33,7 +29,7 @@ export default async function DiagnosticsPage() {
       <div className="grid grid-cols-3 gap-4">
         <div className="bg-red-50 text-red-700 rounded-2xl p-5">
           <p className="text-xs font-bold opacity-70">Failed Syncs</p>
-          <p className="text-3xl font-black mt-1">{failedSyncs.length}</p>
+          <p className="text-3xl font-black mt-1">{unifiedErrors.length}</p>
         </div>
         <div className="bg-amber-50 text-amber-700 rounded-2xl p-5">
           <p className="text-xs font-bold opacity-70">Broken Links</p>
@@ -97,19 +93,19 @@ export default async function DiagnosticsPage() {
       )}
 
       {/* Failed Syncs */}
-      {failedSyncs.length > 0 && (
+      {unifiedErrors.length > 0 && (
         <div className="bg-white rounded-2xl border border-red-200 overflow-hidden">
           <div className="px-6 py-4 border-b border-red-200 bg-red-50">
-            <h2 className="font-bold text-red-800">❌ Failed Syncs ({failedSyncs.length})</h2>
+            <h2 className="font-bold text-red-800">❌ Failed Syncs ({unifiedErrors.length})</h2>
           </div>
           <div className="divide-y divide-slate-100">
-            {failedSyncs.map((log) => (
+            {unifiedErrors.map((log) => (
               <div key={log.id} className="px-6 py-3">
                 <div className="flex items-center justify-between">
-                  <span className="font-medium text-slate-800">{log.supplier?.displayName} — {log.syncType}</span>
-                  <span className="text-xs text-slate-400">{new Date(log.startedAt).toLocaleString('th-TH')}</span>
+                  <span className="font-medium text-slate-800">{log.supplier} — {log.source}</span>
+                  <span className="text-xs text-slate-400">{new Date(log.createdAt).toLocaleString('th-TH')}</span>
                 </div>
-                {log.errorMessage && <p className="text-xs text-red-600 mt-1 truncate">{log.errorMessage}</p>}
+                {log.message && <p className="text-xs text-red-600 mt-1 truncate">{log.message}</p>}
               </div>
             ))}
           </div>

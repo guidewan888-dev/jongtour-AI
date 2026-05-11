@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { getWholesaleStatusData } from '@/lib/wholesale-sync';
 
 export const dynamic = 'force-dynamic';
 
@@ -9,23 +9,20 @@ export const dynamic = 'force-dynamic';
  */
 export async function GET() {
   try {
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
-
-    const { data: logs, error } = await supabase
-      .from('ApiSyncLog')
-      .select('id, "supplierId", type, status, "recordsAdded", "recordsUpdated", "errorMessage", "createdAt"')
-      .order('createdAt', { ascending: false })
-      .limit(200);
-
-    if (error) {
-      console.error('[sync-logs API]', error.message);
-      return NextResponse.json({ logs: [], error: error.message }, { status: 500 });
-    }
-
-    return NextResponse.json({ logs: logs || [] });
+    const { recentLogs } = await getWholesaleStatusData();
+    const logs = recentLogs.slice(0, 200).map((log) => ({
+      id: log.id,
+      supplierId: log.supplierId,
+      supplierName: log.supplier,
+      type: log.type === 'api' ? 'FULL_SYNC' : 'SCRAPER_SYNC',
+      status: log.status,
+      recordsAdded: Number(log.records || 0),
+      recordsUpdated: Number(log.recordsUpdated || 0),
+      errorMessage: log.error || null,
+      createdAt: log.time,
+      source: log.type,
+    }));
+    return NextResponse.json({ logs });
   } catch (e: any) {
     return NextResponse.json({ logs: [], error: e.message }, { status: 500 });
   }

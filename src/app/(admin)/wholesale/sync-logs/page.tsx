@@ -5,6 +5,8 @@ import { RefreshCw, CheckCircle, XCircle, Clock, Search } from "lucide-react";
 interface SyncLog {
   id: string;
   supplierId: string;
+  supplierName?: string;
+  source?: 'api' | 'scraper';
   type: string;
   status: string;
   recordsAdded: number;
@@ -33,9 +35,13 @@ export default function SyncLogsPage() {
 
   useEffect(() => { fetchLogs(); }, []);
 
-  const filtered = logs.filter(l =>
-    l.supplierId.toLowerCase().includes(search.toLowerCase())
-  );
+  const filtered = logs.filter((log) => {
+    const keyword = search.toLowerCase();
+    return (
+      String(log.supplierId || '').toLowerCase().includes(keyword) ||
+      String(log.supplierName || '').toLowerCase().includes(keyword)
+    );
+  });
 
   const supplierLabel = (id: string) => {
     const map: Record<string, string> = {
@@ -83,11 +89,11 @@ export default function SyncLogsPage() {
           <div className="text-xs text-slate-500">Total Logs</div>
         </div>
         <div className="bg-white rounded-xl border border-slate-200 p-4 text-center">
-          <div className="text-2xl font-black text-emerald-600">{logs.filter(l => l.status === 'SUCCESS').length}</div>
+          <div className="text-2xl font-black text-emerald-600">{logs.filter(l => String(l.status).toUpperCase() === 'SUCCESS').length}</div>
           <div className="text-xs text-slate-500">Success</div>
         </div>
         <div className="bg-white rounded-xl border border-slate-200 p-4 text-center">
-          <div className="text-2xl font-black text-red-600">{logs.filter(l => l.status === 'FAILED' || l.status === 'ERROR').length}</div>
+          <div className="text-2xl font-black text-red-600">{logs.filter(l => ['FAILED', 'ERROR'].includes(String(l.status).toUpperCase())).length}</div>
           <div className="text-xs text-slate-500">Failed</div>
         </div>
         <div className="bg-white rounded-xl border border-slate-200 p-4 text-center">
@@ -130,7 +136,7 @@ export default function SyncLogsPage() {
                 return (
                   <tr key={l.id} className="hover:bg-slate-50 transition-colors">
                     <td className="px-4 py-3 font-medium flex items-center gap-2">
-                      <RefreshCw className="w-4 h-4 text-slate-400" /> {supplierLabel(l.supplierId)}
+                      <RefreshCw className="w-4 h-4 text-slate-400" /> {l.supplierName || supplierLabel(l.supplierId)}
                     </td>
                     <td className="px-4 py-3 text-center font-bold">{l.recordsAdded || 0}</td>
                     <td className="px-4 py-3 text-center">
@@ -138,7 +144,9 @@ export default function SyncLogsPage() {
                         {badge.icon}{badge.label}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-center text-xs text-slate-400">{l.type}</td>
+                    <td className="px-4 py-3 text-center text-xs text-slate-400">
+                      {l.source === 'scraper' ? 'SCRAPER_SYNC' : l.type}
+                    </td>
                     <td className="px-4 py-3 text-right text-xs text-red-500 max-w-[200px] truncate">{l.errorMessage || '-'}</td>
                     <td className="px-4 py-3 text-right text-slate-400 text-xs">{timeAgo(l.createdAt)}</td>
                   </tr>

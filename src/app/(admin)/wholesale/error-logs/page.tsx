@@ -1,37 +1,85 @@
-import React from "react";
-import { AlertTriangle, XCircle, Search, ExternalLink } from "lucide-react";
+export const dynamic = 'force-dynamic';
+import { AlertTriangle, XCircle } from 'lucide-react';
+import { getUnifiedErrorLogs } from '@/lib/wholesale-sync';
 
-const errors = [
-  { id: 1, supplier: "ZEGO", error: "API Timeout: Connection refused after 30s", severity: "critical", time: "2026-05-04 14:30", tour: "N/A" },
-  { id: 2, supplier: "PANORAMA", error: "Invalid departure date format: '2026/13/45'", severity: "warning", time: "2026-05-05 14:32", tour: "EU-EAST-8D6N" },
-  { id: 3, supplier: "LETGO", error: "Duplicate tour_code detected: JP-OSA-5D3N-V2", severity: "info", time: "2026-05-05 14:31", tour: "JP-OSA-5D3N" },
-];
+const SEVERITY_STYLE = {
+  critical: {
+    card: 'border-red-200',
+    chip: 'bg-red-100 text-red-700',
+    stat: 'bg-red-50 border-red-100 text-red-700',
+  },
+  warning: {
+    card: 'border-amber-200',
+    chip: 'bg-amber-100 text-amber-700',
+    stat: 'bg-amber-50 border-amber-100 text-amber-700',
+  },
+  info: {
+    card: 'border-blue-200',
+    chip: 'bg-blue-100 text-blue-700',
+    stat: 'bg-blue-50 border-blue-100 text-blue-700',
+  },
+} as const;
 
-export default function ErrorLogsPage() {
+export default async function ErrorLogsPage() {
+  const logs = await getUnifiedErrorLogs(200);
+  const criticalCount = logs.filter((log) => log.severity === 'critical').length;
+  const warningCount = logs.filter((log) => log.severity === 'warning').length;
+  const infoCount = logs.filter((log) => log.severity === 'info').length;
+
   return (
     <div className="space-y-6">
-      <div><h1 className="text-2xl font-bold text-slate-900">Error Logs</h1><p className="text-slate-500 text-sm mt-1">ข้อผิดพลาดจากการซิงค์ Wholesale</p></div>
+      <div>
+        <h1 className="text-2xl font-bold text-slate-900">Error Logs</h1>
+        <p className="text-slate-500 text-sm mt-1">ข้อผิดพลาดจริงจาก API Sync, Supplier Sync และ Scraper</p>
+      </div>
 
-      <div className="grid grid-cols-3 gap-4">
-        <div className="bg-red-50 p-4 rounded-2xl border border-red-100"><div className="text-sm text-red-600 font-medium">Critical</div><div className="text-2xl font-bold text-red-700">1</div></div>
-        <div className="bg-amber-50 p-4 rounded-2xl border border-amber-100"><div className="text-sm text-amber-600 font-medium">Warning</div><div className="text-2xl font-bold text-amber-700">1</div></div>
-        <div className="bg-blue-50 p-4 rounded-2xl border border-blue-100"><div className="text-sm text-blue-600 font-medium">Info</div><div className="text-2xl font-bold text-blue-700">1</div></div>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className={`p-4 rounded-2xl border ${SEVERITY_STYLE.critical.stat}`}>
+          <div className="text-sm font-medium">Critical</div>
+          <div className="text-2xl font-bold">{criticalCount}</div>
+        </div>
+        <div className={`p-4 rounded-2xl border ${SEVERITY_STYLE.warning.stat}`}>
+          <div className="text-sm font-medium">Warning</div>
+          <div className="text-2xl font-bold">{warningCount}</div>
+        </div>
+        <div className={`p-4 rounded-2xl border ${SEVERITY_STYLE.info.stat}`}>
+          <div className="text-sm font-medium">Info</div>
+          <div className="text-2xl font-bold">{infoCount}</div>
+        </div>
       </div>
 
       <div className="space-y-3">
-        {errors.map((e) => (
-          <div key={e.id} className={`bg-white p-4 rounded-2xl border ${e.severity === "critical" ? "border-red-200" : e.severity === "warning" ? "border-amber-200" : "border-slate-200"} flex items-start gap-3`}>
-            {e.severity === "critical" ? <XCircle className="w-5 h-5 text-red-500 mt-0.5 shrink-0" /> : <AlertTriangle className={`w-5 h-5 ${e.severity === "warning" ? "text-amber-500" : "text-blue-500"} mt-0.5 shrink-0`} />}
-            <div className="flex-1">
-              <div className="flex items-center gap-2 mb-1">
-                <span className="font-bold text-sm text-slate-900">{e.supplier}</span>
-                <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${e.severity === "critical" ? "bg-red-100 text-red-700" : e.severity === "warning" ? "bg-amber-100 text-amber-700" : "bg-blue-100 text-blue-700"}`}>{e.severity}</span>
-              </div>
-              <p className="text-sm text-slate-600 font-mono">{e.error}</p>
-              <p className="text-xs text-slate-400 mt-1">Tour: {e.tour} • {e.time}</p>
-            </div>
+        {logs.length === 0 ? (
+          <div className="bg-white p-8 rounded-2xl border border-slate-200 text-center text-slate-500">
+            ยังไม่พบ error logs
           </div>
-        ))}
+        ) : (
+          logs.map((log) => {
+            const style = SEVERITY_STYLE[log.severity];
+            const timestamp = new Date(log.createdAt).toLocaleString('th-TH');
+            return (
+              <div key={log.id} className={`bg-white p-4 rounded-2xl border ${style.card} flex items-start gap-3`}>
+                {log.severity === 'critical' ? (
+                  <XCircle className="w-5 h-5 text-red-500 mt-0.5 shrink-0" />
+                ) : (
+                  <AlertTriangle className={`w-5 h-5 mt-0.5 shrink-0 ${log.severity === 'warning' ? 'text-amber-500' : 'text-blue-500'}`} />
+                )}
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="font-bold text-sm text-slate-900">{log.supplier}</span>
+                    <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${style.chip}`}>{log.severity}</span>
+                    <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-600">{log.source}</span>
+                  </div>
+                  <p className="text-sm text-slate-700 font-mono break-words">{log.message}</p>
+                  <p className="text-xs text-slate-400 mt-1">
+                    {log.tourCode ? `Tour: ${log.tourCode} • ` : ''}
+                    {timestamp}
+                  </p>
+                </div>
+              </div>
+            );
+          })
+        )}
       </div>
     </div>
   );

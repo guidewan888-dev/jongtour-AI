@@ -236,7 +236,7 @@ export default function UnifiedSyncDashboard() {
           </div>
           <div className="bg-gradient-to-br from-violet-500 to-violet-600 rounded-2xl p-4 text-white">
             <p className="text-xs font-medium text-white/70 mb-1">API Suppliers</p>
-            <p className="text-3xl font-black">{apiWholesalers.reduce((s, w) => s + w.tourCount, 0)}</p>
+            <p className="text-3xl font-black">{summary.apiSuppliers}</p>
             <p className="text-xs text-white/40 mt-1">{summary.apiSuppliers} ราย</p>
           </div>
           <div className="bg-gradient-to-br from-amber-500 to-orange-500 rounded-2xl p-4 text-white">

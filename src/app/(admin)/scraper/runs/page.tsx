@@ -43,6 +43,8 @@ export default async function ScraperRunsPage() {
             </thead>
             <tbody>
               {runs?.map((r) => {
+                const runSite = r.site_name || r.site || 'unknown';
+                const status = String(r.status || '').toLowerCase();
                 const duration = r.finished_at && r.started_at
                   ? Math.round((new Date(r.finished_at).getTime() - new Date(r.started_at).getTime()) / 1000)
                   : null;
@@ -54,19 +56,19 @@ export default async function ScraperRunsPage() {
                     </td>
                     <td className="p-3">
                       <span className={`text-xs px-2 py-0.5 rounded font-medium ${
-                        r.site === "worldconnection" ? "bg-blue-100 text-blue-700" : "bg-purple-100 text-purple-700"
+                        runSite === "worldconnection" ? "bg-blue-100 text-blue-700" : "bg-purple-100 text-purple-700"
                       }`}>
-                        {r.site}
+                        {runSite}
                       </span>
                     </td>
                     <td className="p-3">
                       <span className={`text-xs px-2 py-0.5 rounded font-medium ${
-                        r.status === "success" ? "bg-green-100 text-green-700" :
-                        r.status === "failed" ? "bg-red-100 text-red-700" :
+                        status === "success" || status === "done" ? "bg-green-100 text-green-700" :
+                        status === "failed" || status === "error" ? "bg-red-100 text-red-700" :
                         "bg-amber-100 text-amber-700"
                       }`}>
-                        {r.status === "success" ? "✅ สำเร็จ" :
-                         r.status === "failed" ? "❌ ล้มเหลว" : "⏳ กำลังรัน"}
+                        {status === "success" || status === "done" ? "✅ สำเร็จ" :
+                         status === "failed" || status === "error" ? "❌ ล้มเหลว" : "⏳ กำลังรัน"}
                       </span>
                     </td>
                     <td className="p-3 text-center font-medium">{r.urls_found ?? 0}</td>
