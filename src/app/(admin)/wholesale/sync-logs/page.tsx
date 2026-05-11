@@ -42,6 +42,7 @@ export default function SyncLogsPage() {
       'SUP_LETGO': "Let's Go",
       'SUP_TOURFACTORY': 'Tour Factory',
       'SUP_CHECKIN': 'Check In Group',
+      'SUP_GO365': 'Go365',
     };
     return map[id] || id;
   };

@@ -9,6 +9,7 @@ import { WorldConnectionScraper } from './scrapers/worldconnection.js';
 import { ITravelsScraper } from './scrapers/itravels.js';
 import { BestInternationalScraper } from './scrapers/bestintl.js';
 import { GS25Scraper } from './scrapers/gs25.js';
+import { Go365Scraper } from './scrapers/go365.js';
 import { downloadAndStore } from './core/downloader.js';
 import { upsertTour, startRun, finishRun } from './core/db.js';
 import type { BaseScraper } from './scrapers/base.js';
@@ -20,6 +21,7 @@ const scraperMap: Record<string, new (cfg: any) => BaseScraper> = {
   itravels: ITravelsScraper,
   bestintl: BestInternationalScraper,
   gs25: GS25Scraper,
+  go365: Go365Scraper,
 };
 
 async function runSite(siteCfg: (typeof sites)[number]): Promise<void> {

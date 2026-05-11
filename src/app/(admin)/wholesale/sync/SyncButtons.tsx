@@ -5,34 +5,41 @@ const SUPPLIERS = [
   { id: 'SUP_LETGO', name: "Let's Go" },
   { id: 'SUP_CHECKIN', name: 'Checkin Group' },
   { id: 'SUP_TOURFACTORY', name: 'Tour Factory' },
+  { id: 'SUP_GO365', name: 'Go365', isScraper: true },
 ];
 
 export default function SyncButtons() {
   const [syncing, setSyncing] = useState<Record<string, boolean>>({});
   const [results, setResults] = useState<Record<string, { ok: boolean; msg: string }>>({});
 
-  const handleSync = async (supplierId: string) => {
+  const handleSync = async (supplierId: string, isScraper = false) => {
     setSyncing(prev => ({ ...prev, [supplierId]: true }));
     setResults(prev => ({ ...prev, [supplierId]: { ok: true, msg: '⏳ กำลัง Sync...' } }));
     try {
-      const res = await fetch('/api/admin/sync', {
+      // Go365 uses dedicated scraper sync endpoint
+      const url = isScraper ? '/api/tours/go365-sync' : '/api/admin/sync';
+      const body = isScraper ? {} : { supplierId };
+      
+      const res = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ supplierId }),
+        body: JSON.stringify(body),
       });
       const data = await res.json();
       if (res.ok) {
+        const count = data.synced || data.recordCount || 0;
+        const duration = data.duration || 0;
         setResults(prev => ({
           ...prev,
           [supplierId]: {
             ok: true,
-            msg: `✅ สำเร็จ! ${data.recordCount || 0} โปรแกรม (${data.duration || 0}s)`,
+            msg: `✅ สำเร็จ! ${count} โปรแกรม${duration ? ` (${duration}s)` : ''}`,
           },
         }));
       } else {
         setResults(prev => ({
           ...prev,
-          [supplierId]: { ok: false, msg: `❌ ${data.message || 'Error'}` },
+          [supplierId]: { ok: false, msg: `❌ ${data.message || data.error || 'Error'}` },
         }));
       }
     } catch (err: any) {
@@ -47,14 +54,14 @@ export default function SyncButtons() {
 
   const handleSyncAll = async () => {
     for (const s of SUPPLIERS) {
-      await handleSync(s.id);
+      await handleSync(s.id, (s as any).isScraper);
     }
     // Hard reload to update server-rendered stats
     window.location.reload();
   };
 
-  const handleSyncOne = async (supplierId: string) => {
-    await handleSync(supplierId);
+  const handleSyncOne = async (supplierId: string, isScraper = false) => {
+    await handleSync(supplierId, isScraper);
     window.location.reload();
   };
 
@@ -86,7 +93,7 @@ export default function SyncButtons() {
                 <p className="text-xs text-slate-400 font-mono">{s.id}</p>
               </div>
               <button
-                onClick={() => handleSyncOne(s.id)}
+                onClick={() => handleSyncOne(s.id, (s as any).isScraper)}
                 disabled={syncing[s.id]}
                 className="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs px-4 py-2 rounded-lg disabled:opacity-50 transition-colors"
               >

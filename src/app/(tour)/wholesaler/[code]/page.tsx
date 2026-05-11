@@ -110,7 +110,7 @@ export default function WholesalePage({ params }: { params: { code: string } }) 
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
   // Scraper-sourced sites use a different API
-  const isScraperSite = ['worldconnection', 'itravels', 'bestinternational', 'gs25'].includes(params.code);
+  const isScraperSite = ['worldconnection', 'itravels', 'bestinternational', 'gs25', 'go365'].includes(params.code);
 
   useEffect(() => {
     setLoading(true);

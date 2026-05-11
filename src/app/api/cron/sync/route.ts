@@ -3,6 +3,7 @@ import { SyncManager, AdapterFactory } from '@/services/suppliers/core/SyncManag
 import { LetgoAdapter } from '@/services/suppliers/adapters/LetgoAdapter';
 import { TourFactoryAdapter } from '@/services/suppliers/adapters/TourFactoryAdapter';
 import { CheckinAdapter } from '@/services/suppliers/adapters/CheckinAdapter';
+import { Go365Adapter } from '@/services/suppliers/adapters/Go365Adapter';
 
 export const dynamic = 'force-dynamic';
 
@@ -10,6 +11,7 @@ export const dynamic = 'force-dynamic';
 AdapterFactory.register(new LetgoAdapter());
 AdapterFactory.register(new TourFactoryAdapter());
 AdapterFactory.register(new CheckinAdapter());
+AdapterFactory.register(new Go365Adapter());
 
 export async function GET(request: Request) {
   // Check authorization for Vercel Cron

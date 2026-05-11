@@ -52,5 +52,15 @@ export const sites: SiteConfig[] = [
     usePlaywright: true,
     waitSelector: 'table',
   },
+  {
+    name: 'go365',
+    enabled: true,
+    type: 'wordpress',         // Not actually WordPress — using API, but type field is required
+    baseUrl: 'https://api.kaikongservice.com/api/v1',
+    sitemapUrls: [],           // API-based, no sitemap needed
+    tourUrlPattern: /./,       // Not used — API returns tour IDs
+    requestDelayMs: 300,       // Faster since it's API, not HTML
+    userAgent: 'JongtourBot/1.0 (+https://jongtour.com)',
+  },
 ];
 
