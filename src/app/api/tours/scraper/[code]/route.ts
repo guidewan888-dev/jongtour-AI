@@ -69,8 +69,8 @@ export async function GET(
   const JUNK_HIGHLIGHT_PATTERNS = /(โปรแกรมทัวร์|ออสเตรเลีย-นิวซีแลนด์|เรือสำราญ|ทัวร์โปรโมชั่น|โปรแกรม.*ทัวร์|^ทัวร์\w+$|One World|www\.|http|@|\.com|\.co\.th|โทร|สายด่วน|เมนู|หน้าหลัก|ติดต่อเรา|เกี่ยวกับเรา)/i;
   const cleanHighlights = Array.isArray(data.highlights)
     ? data.highlights.filter((h: string) =>
-        h && h.length > 2 && h.length < 100 && !JUNK_HIGHLIGHT_PATTERNS.test(h)
-      ).slice(0, 8)
+        h && h.length > 2 && h.length < 500 && !JUNK_HIGHLIGHT_PATTERNS.test(h)
+      ).slice(0, 12)
     : [];
 
   // ── Smart default deposit: if scraper didn't find มัดจำ, calculate from price ──

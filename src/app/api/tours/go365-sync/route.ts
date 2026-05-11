@@ -70,10 +70,13 @@ function mapTourRow(tour: any, detail: any, periods: any[]) {
   const countryEn = countries[0]?.country_name_en || '';
   const countryTh = countries[0]?.country_name_th || COUNTRY_TH[countryEn] || countryEn;
 
-  // Duration
-  const durMatch = (tour.tour_name || '').match(/(\d+)\s*D\s*(\d+)\s*N/i);
-  const days = durMatch ? parseInt(durMatch[1]) : 0;
-  const nights = durMatch ? parseInt(durMatch[2]) : 0;
+  // Duration — match both English "8D 5N" and Thai "8 วัน 5 คืน"
+  const title = tour.tour_name || '';
+  let days = 0, nights = 0;
+  const durEn = title.match(/(\d+)\s*D\s*(\d+)\s*N/i);
+  const durTh = title.match(/(\d+)\s*วัน\s*(\d+)\s*คืน/);
+  if (durEn) { days = parseInt(durEn[1]); nights = parseInt(durEn[2]); }
+  else if (durTh) { days = parseInt(durTh[1]); nights = parseInt(durTh[2]); }
   const duration = days > 0 ? `${days} วัน ${nights} คืน` : '';
 
   // Airline — from search data or detail
@@ -96,9 +99,14 @@ function mapTourRow(tour: any, detail: any, periods: any[]) {
   // Images
   const coverImage = detail?.tour_cover_image || tour.tour_cover_image || '';
 
-  // Highlights
+  // Highlights — Go365 descriptions use " – " as separator between itinerary items
   const desc = detail?.tour_description || tour.tour_description || '';
-  const highlights = desc.split('\n').map((l: string) => l.trim()).filter((l: string) => l.length > 5).slice(0, 10);
+  const rawItems = desc.includes(' – ') || desc.includes(' - ')
+    ? desc.split(/\s[–-]\s/).map((l: string) => l.trim())
+    : desc.split('\n').map((l: string) => l.trim());
+  const highlights = rawItems
+    .filter((l: string) => l.length > 5 && l.length < 500)
+    .slice(0, 12);
 
   // PDF
   const pdfUrl = detail?.tour_file?.file_pdf || '';

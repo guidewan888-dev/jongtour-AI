@@ -158,10 +158,11 @@ export class Go365Scraper extends BaseScraper {
     const cities = detail.tour_city || [];
     const cityName = cities.map((c: any) => c.city_name_th || c.city_name_en || '').join(', ');
 
-    // Duration from tour_name: "7D 4N", "5D4N"
-    const durMatch = title.match(/(\d+)\s*D\s*(\d+)\s*N/i);
-    const durationDays = durMatch ? parseInt(durMatch[1]) : 0;
-    const durationNights = durMatch ? parseInt(durMatch[2]) : 0;
+    // Duration from tour_name: "7D 4N", "5D4N", "8 วัน 5 คืน"
+    const durEn = title.match(/(\d+)\s*D\s*(\d+)\s*N/i);
+    const durTh = title.match(/(\d+)\s*วัน\s*(\d+)\s*คืน/);
+    const durationDays = durEn ? parseInt(durEn[1]) : (durTh ? parseInt(durTh[1]) : 0);
+    const durationNights = durEn ? parseInt(durEn[2]) : (durTh ? parseInt(durTh[2]) : 0);
     const duration = durationDays > 0 ? `${durationDays} วัน ${durationNights} คืน` : '';
 
     // Airline from detail
