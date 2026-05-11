@@ -453,8 +453,9 @@ export class GS25Scraper extends BaseScraper {
           for (const item of bulletItems) {
             const cleaned = item.trim();
             if (cleaned.length > 3 && cleaned.length < 100
-              && !/ราคา|เริ่มต้น|พีเรียด|\d{4,}|^\d+[DN]|วัน\s*คืน|salestarting|จอง|โทร|line|facebook|www\./i.test(cleaned)
-              && !/^\d+$/.test(cleaned)) {
+              && !/ราคา|เริ่มต้น|พีเรียด|\d{4,}|^\d+[DN]|วัน\s*คืน|salestarting|จอง|โทร|line|facebook|www\.|Previous|Next|^\d+\/\d+|Slide|filter|Filter|PRINT|LOGIN|LOGOUT|REGISTER|HOME|CONTACT|ABOUT/i.test(cleaned)
+              && !/^\d+$/.test(cleaned)
+              && cleaned.length > 5) {
               if (!highlights.includes(cleaned)) highlights.push(cleaned);
             }
           }
