@@ -13,16 +13,7 @@ interface Tour {
   duration?: string; deposit?: number; hotelRating?: number; highlights?: string[];
 }
 
-const SUPPLIERS = [
-  { key: "let'sgo", name: "Let's Go", color: 'bg-green-600', logo: '/images/logos/download.png', priority: 1 },
-  { key: "checkingroup", name: "Checkin Group", color: 'bg-teal-600', logo: '/images/logos/checkingroup.jpg', priority: 2 },
-  { key: "tourfactory", name: "Tour Factory", color: 'bg-purple-600', logo: '/images/logos/Tour-Factory.jpg', priority: 3 },
-  { key: "go365", name: "Go365", color: 'bg-green-500', logo: '/images/logos/download.jfif', priority: 4 },
-  { key: "worldconnection", name: "World Connection", color: 'bg-orange-600', logo: '/images/logos/worldconnection.png', priority: 5 },
-  { key: "itravels", name: "iTravels Center", color: 'bg-sky-600', logo: '/images/logos/itravels_small.jpg', priority: 6 },
-  { key: "bestintl", name: "Best International", color: 'bg-red-600', logo: '/images/logos/bestintl.png', priority: 7 },
-  { key: "gs25", name: "GS25 Travel", color: 'bg-emerald-600', logo: '/images/logos/gs25.png', priority: 8 },
-];
+import { SUPPLIERS, getSupplierInfo } from '@/config/suppliers';
 
 // ── Helper: find continent for a country ────────────────────────────
 function findContinentForCountry(countrySlug: string): string | null {
@@ -156,13 +147,13 @@ export default function ToursPage({ params }: { params: { slug: string[] } }) {
       groups[key].push(t);
     });
     return Object.entries(groups).sort((a, b) => {
-      const infoA = SUPPLIERS.find(s => a[0].includes(s.key));
-      const infoB = SUPPLIERS.find(s => b[0].includes(s.key));
+      const infoA = getSupplierInfo(a[0]);
+      const infoB = getSupplierInfo(b[0]);
       return (infoA?.priority || 99) - (infoB?.priority || 99);
     });
   }, [tours]);
 
-  const getSupplierInfo = (key: string) => SUPPLIERS.find(s => key.includes(s.key)) || { name: key, color: 'bg-slate-500', logo: '', priority: 99 };
+
 
   // If redirecting to tour detail, show nothing
   if (tourSlug) return null;

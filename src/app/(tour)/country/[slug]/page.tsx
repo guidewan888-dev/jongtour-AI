@@ -44,12 +44,8 @@ const COUNTRY_MAP: Record<string, { name: string; flagCode: string }> = {
   'macau': { name: 'มาเก๊า', flagCode: 'mo' },
 };
 
-const SUPPLIER_PRIORITY = [
-  { key: "let'sgo", name: "Let's Go", color: 'bg-green-600', logo: '/images/logos/download.png', priority: 1 },
-  { key: "checkingroup", name: "Checkin Group", color: 'bg-teal-600', logo: '/images/logos/Check in group.jpg', priority: 2 },
-  { key: "tourfactory", name: "Tour Factory", color: 'bg-purple-600', logo: '/images/logos/Tour-Factory.jpg', priority: 3 },
-  { key: "go365", name: "Go365", color: 'bg-green-500', logo: '/images/logos/download.jfif', priority: 4 },
-];
+import { SUPPLIERS, getSupplierInfo } from '@/config/suppliers';
+const SUPPLIER_PRIORITY = SUPPLIERS; // alias for backward compat
 
 export default function CountryPage({ params }: { params: { slug: string } }) {
   const [tours, setTours] = useState<Tour[]>([]);
@@ -93,15 +89,13 @@ export default function CountryPage({ params }: { params: { slug: string } }) {
       groups[key].push(t);
     });
     return Object.entries(groups).sort((a, b) => {
-      const infoA = SUPPLIER_PRIORITY.find(s => a[0].includes(s.key));
-      const infoB = SUPPLIER_PRIORITY.find(s => b[0].includes(s.key));
+      const infoA = getSupplierInfo(a[0]);
+      const infoB = getSupplierInfo(b[0]);
       return (infoA?.priority || 99) - (infoB?.priority || 99);
     });
   }, [displayedTours]);
 
-  const getSupplierInfo = (key: string) => {
-    return SUPPLIER_PRIORITY.find(s => key.includes(s.key)) || { name: key, color: 'bg-slate-500', logo: '', priority: 99 };
-  };
+
 
   return (
     <div className="bg-slate-50 min-h-screen">

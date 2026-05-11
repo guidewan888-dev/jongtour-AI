@@ -17,7 +17,7 @@ const SUPPLIER_CONFIG: Record<string, {
 }> = {
   'letsgo': {
     name: "let'sgo", displayName: "Let's Go Group",
-    logo: '/images/wholesale/letsgo.png',
+    logo: '/images/logos/download.png',
     gradient: 'from-green-800 via-green-700 to-emerald-600',
     heroBg: 'bg-green-800', accent: 'text-green-600', accentLight: 'bg-green-50',
     accentBorder: 'border-green-200',
@@ -25,7 +25,7 @@ const SUPPLIER_CONFIG: Record<string, {
   },
   'go365': {
     name: 'go365', displayName: 'Go365',
-    logo: '/images/wholesale/go365.png',
+    logo: '/images/logos/download.jfif',
     gradient: 'from-blue-800 via-blue-700 to-indigo-600',
     heroBg: 'bg-blue-800', accent: 'text-blue-600', accentLight: 'bg-blue-50',
     accentBorder: 'border-blue-200',
@@ -33,7 +33,7 @@ const SUPPLIER_CONFIG: Record<string, {
   },
   'checkin': {
     name: 'checkingroup', displayName: 'Checkin Group',
-    logo: '/images/wholesale/checkin.png',
+    logo: '/images/logos/checkingroup.jpg',
     gradient: 'from-emerald-700 via-emerald-600 to-teal-500',
     heroBg: 'bg-emerald-700', accent: 'text-emerald-600', accentLight: 'bg-emerald-50',
     accentBorder: 'border-emerald-200',
@@ -41,7 +41,7 @@ const SUPPLIER_CONFIG: Record<string, {
   },
   'tour-factory': {
     name: 'tourfactory', displayName: 'Tour Factory',
-    logo: '/images/wholesale/tourfactory.png',
+    logo: '/images/logos/Tour-Factory.jpg',
     gradient: 'from-purple-800 via-purple-700 to-violet-600',
     heroBg: 'bg-purple-800', accent: 'text-purple-600', accentLight: 'bg-purple-50',
     accentBorder: 'border-purple-200',
@@ -65,7 +65,7 @@ const SUPPLIER_CONFIG: Record<string, {
   },
   'bestinternational': {
     name: 'bestintl', displayName: 'Best International',
-    logo: '/images/logos/Bestinternational.png',
+    logo: '/images/logos/bestintl.png',
     gradient: 'from-red-800 via-red-700 to-rose-600',
     heroBg: 'bg-red-800', accent: 'text-red-600', accentLight: 'bg-red-50',
     accentBorder: 'border-red-200',
@@ -73,7 +73,7 @@ const SUPPLIER_CONFIG: Record<string, {
   },
   'gs25': {
     name: 'gs25', displayName: 'GS25 Travel',
-    logo: '/images/logos/GS Group.png',
+    logo: '/images/logos/gs25.png',
     gradient: 'from-emerald-800 via-emerald-700 to-green-600',
     heroBg: 'bg-emerald-800', accent: 'text-emerald-600', accentLight: 'bg-emerald-50',
     accentBorder: 'border-emerald-200',
