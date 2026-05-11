@@ -80,11 +80,12 @@ export const adminMenuGroups: RouteGroup[] = [
     ]
   },
   {
-    title: "Wholesale / Supplier Center",
+    title: "Wholesale & Scraper",
     items: [
-      { name: "Dashboard", href: "/wholesale", icon: LayoutDashboard },
+      { name: "Sync Center", href: "/wholesale/sync", icon: Globe2 },
+      { name: "Scraper Tours", href: "/scraper", icon: Search },
       { name: "Supplier Master", href: "/wholesale/suppliers", icon: Briefcase },
-      { name: "Data Sync", href: "/wholesale/sync", icon: Globe2 },
+      { name: "Sync Logs", href: "/wholesale/sync-logs", icon: Activity },
       { name: "Human Review", href: "/wholesale/human-review", icon: Users },
     ]
   },
@@ -132,14 +133,14 @@ export const filterAdminMenusByRole = (role: string): RouteGroup[] => {
       if (group.title === 'Notifications & Security') filteredItems = [];
     } 
     else if (role === 'FINANCE') {
-      if (group.title === 'Wholesale / Supplier Center') filteredItems = [];
+      if (group.title === 'Wholesale & Scraper') filteredItems = [];
       if (group.title === 'System') filteredItems = [];
       if (group.title === 'AI & Content') filteredItems = [];
       if (group.title === 'Talent Center') filteredItems = [];
       if (group.title === 'Notifications & Security') filteredItems = [];
     }
     else if (role === 'CONTENT_MANAGER') {
-      if (group.title === 'Wholesale / Supplier Center') filteredItems = [];
+      if (group.title === 'Wholesale & Scraper') filteredItems = [];
       if (group.title === 'Finance & CRM') filteredItems = [];
       if (group.title === 'System') filteredItems = [];
       if (group.title === 'Affiliate Center') filteredItems = [];
@@ -148,7 +149,7 @@ export const filterAdminMenusByRole = (role: string): RouteGroup[] => {
       if (group.title === 'Notifications & Security') filteredItems = [];
     }
     else if (role === 'SALE_MANAGER') {
-      if (group.title === 'Wholesale / Supplier Center') filteredItems = [];
+      if (group.title === 'Wholesale & Scraper') filteredItems = [];
       if (group.title === 'System') filteredItems = [];
       if (group.title === 'Finance & CRM') filteredItems = filteredItems.filter(i => i.name === 'Customers');
       if (group.title === 'Notifications & Security') filteredItems = [];
