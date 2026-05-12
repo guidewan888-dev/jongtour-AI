@@ -37,7 +37,7 @@ export default async function SupportTicketDetailPage({ params }: { params: { ti
         <div>
           <Link href="/account/support" className="text-indigo-600 hover:text-indigo-700 text-sm font-bold flex items-center gap-1 mb-2 transition-colors">
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" /></svg>
-            เธเธฅเธฑเธเธซเธเนเธฒเธฃเธงเธก Ticket
+            กลับหน้ารวม Ticket
           </Link>
           <div className="flex flex-wrap items-center gap-3">
             <h1 className="text-2xl md:text-3xl font-black text-slate-800">TK: {ticket.ticketNo}</h1>
@@ -51,7 +51,7 @@ export default async function SupportTicketDetailPage({ params }: { params: { ti
             </span>
           </div>
           <p className="text-slate-500 text-sm font-bold mt-2">
-            เธซเธกเธงเธ”เธซเธกเธนเน: {ticket.topic.toUpperCase()} {ticket.bookingRef ? `| เธญเนเธฒเธเธญเธดเธ: ${ticket.bookingRef}` : ''}
+            หมวดหมู่: {ticket.topic.toUpperCase()} {ticket.bookingRef ? `| อ้างอิง: ${ticket.bookingRef}` : ''}
           </p>
         </div>
       </div>
@@ -68,8 +68,8 @@ export default async function SupportTicketDetailPage({ params }: { params: { ti
                   : 'bg-white border border-slate-200 text-slate-800 rounded-tl-sm'
               }`}>
                 <div className={`text-[10px] font-bold uppercase tracking-wider mb-2 flex items-center gap-2 ${isCustomer ? 'text-indigo-200' : 'text-slate-400'}`}>
-                   {isCustomer ? 'เธเธธเธ“ (Customer)' : `เน€เธเนเธฒเธซเธเนเธฒเธ—เธตเน (Staff) ${ticket.staff ? `- ${ticket.staff.email}` : ''}`}
-                   <span className="opacity-50">โ€ข</span>
+                   {isCustomer ? 'คุณ (Customer)' : `เจ้าหน้าที่ (Staff) ${ticket.staff ? `- ${ticket.staff.email}` : ''}`}
+                   <span className="opacity-50">•</span>
                    {new Date(msg.createdAt).toLocaleString('th-TH', { hour: '2-digit', minute: '2-digit' })}
                 </div>
                 <p className={`text-sm whitespace-pre-wrap leading-relaxed font-medium ${isCustomer ? 'text-white' : 'text-slate-700'}`}>

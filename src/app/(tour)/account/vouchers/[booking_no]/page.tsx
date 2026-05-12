@@ -39,9 +39,9 @@ export default async function VoucherDetailPage({ params }: { params: { booking_
     return (
       <div className="space-y-6 animate-fade-in-up max-w-3xl">
         <div className="bg-white border border-slate-200 rounded-3xl p-12 text-center shadow-sm">
-          <h3 className="text-xl font-black text-slate-800 mb-2">เธขเธฑเธเนเธกเนเธกเธต Voucher เธชเธณเธซเธฃเธฑเธเธเธฒเธฃเธเธญเธเธเธตเน</h3>
-          <p className="text-slate-500 font-medium mb-6">Voucher เธเธฐเธเธฃเนเธญเธกเนเธเนเธเธฒเธเน€เธกเธทเนเธญเธเธฒเธฃเธเธณเธฃเธฐเน€เธเธดเธเน€เธชเธฃเนเธเธชเธกเธเธนเธฃเธ“เน</p>
-          <Link href={`/account/bookings/${booking.bookingRef}`} className="bg-orange-500 text-white px-6 py-2 rounded-xl text-sm font-bold">เธเธฅเธฑเธเนเธเธซเธเนเธฒเธเธฒเธฃเธเธญเธ</Link>
+          <h3 className="text-xl font-black text-slate-800 mb-2">ยังไม่มี Voucher สำหรับการจองนี้</h3>
+          <p className="text-slate-500 font-medium mb-6">Voucher จะพร้อมใช้งานเมื่อการชำระเงินเสร็จสมบูรณ์</p>
+          <Link href={`/account/bookings/${booking.bookingRef}`} className="bg-orange-500 text-white px-6 py-2 rounded-xl text-sm font-bold">กลับหน้าการจอง</Link>
         </div>
       </div>
     )
@@ -54,11 +54,11 @@ export default async function VoucherDetailPage({ params }: { params: { booking_
         <div>
           <Link href="/account/vouchers" className="text-emerald-600 hover:text-emerald-700 text-sm font-bold flex items-center gap-1 mb-2 transition-colors">
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" /></svg>
-            เธเธฅเธฑเธเนเธเธซเธเนเธฒเธฃเธงเธก Voucher
+            กลับหน้ารวม Voucher
           </Link>
           <div className="flex flex-wrap items-center gap-3">
             <h1 className="text-3xl font-black text-slate-800">E-Voucher</h1>
-            <span className="bg-emerald-100 text-emerald-700 px-3 py-1.5 rounded-lg text-xs font-black tracking-wider uppercase border border-emerald-200">เธเธฃเนเธญเธกเนเธเนเธเธฒเธ (Active)</span>
+            <span className="bg-emerald-100 text-emerald-700 px-3 py-1.5 rounded-lg text-xs font-black tracking-wider uppercase border border-emerald-200">พร้อมใช้งาน (Active)</span>
           </div>
         </div>
       </div>
@@ -71,23 +71,23 @@ export default async function VoucherDetailPage({ params }: { params: { booking_
             <div className="w-16 h-16 bg-white text-emerald-500 rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm">
               <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
             </div>
-            <h3 className="font-black text-emerald-900 mb-6">เธ”เธฒเธงเธเนเนเธซเธฅเธ”เธซเธฃเธทเธญเธชเนเธเธญเธตเน€เธกเธฅ</h3>
+            <h3 className="font-black text-emerald-900 mb-6">ดาวน์โหลดหรือส่งอีเมล</h3>
             
             <div className="space-y-3">
               {voucher.pdfUrl ? (
                  <a href={voucher.pdfUrl} target="_blank" rel="noreferrer" className="w-full flex items-center justify-center bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-3 rounded-xl text-sm font-bold transition-colors shadow-sm gap-2">
                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
-                   เธ”เธฒเธงเธเนเนเธซเธฅเธ” PDF
+                   ดาวน์โหลด PDF
                  </a>
               ) : (
                  <button disabled className="w-full flex items-center justify-center bg-slate-200 text-slate-500 px-4 py-3 rounded-xl text-sm font-bold cursor-not-allowed gap-2">
                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
-                   เธเธณเธฅเธฑเธเน€เธ•เธฃเธตเธขเธกเนเธเธฅเน PDF...
+                   กำลังเตรียมไฟล์ PDF...
                  </button>
               )}
               <button className="w-full flex items-center justify-center bg-white text-emerald-700 border border-emerald-200 px-4 py-3 rounded-xl text-sm font-bold hover:bg-emerald-100 transition-colors gap-2 shadow-sm">
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
-                เธชเนเธเน€เธเนเธฒ Email เธเธญเธเธเธฑเธ
+                ส่งเข้า Email ของฉัน
               </button>
             </div>
           </div>
@@ -95,12 +95,12 @@ export default async function VoucherDetailPage({ params }: { params: { booking_
           <div className="bg-amber-50 rounded-3xl border border-amber-100 shadow-sm p-6">
             <h3 className="font-black text-amber-900 mb-3 flex items-center gap-2">
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-              เธเนเธญเธเธงเธฃเธฃเธฐเธงเธฑเธ (Important Note)
+              ข้อควรระวัง (Important Note)
             </h3>
             <ul className="list-disc pl-5 text-xs text-amber-800 space-y-2 font-medium">
-              <li>เธเธฃเธธเธ“เธฒเธเธณ Voucher เธเธตเนเนเธเนเธชเธ”เธเธ•เนเธญเน€เธเนเธฒเธซเธเนเธฒเธ—เธตเนเนเธเธงเธฑเธเน€เธ”เธดเธเธ—เธฒเธ (เธชเธฒเธกเธฒเธฃเธ–เน€เธเธดเธ”เธเธฒเธเธซเธเนเธฒเธเธญเธกเธทเธญเธ–เธทเธญเนเธ”เน)</li>
-              <li>เธเธฃเธธเธ“เธฒเธเธเธเธฒเธชเธเธญเธฃเนเธ•เธ•เธฑเธงเธเธฃเธดเธเธ—เธตเนเธกเธตเธญเธฒเธขเธธเน€เธซเธฅเธทเธญเนเธกเนเธเนเธญเธขเธเธงเนเธฒ 6 เน€เธ”เธทเธญเธเนเธเธงเธฑเธเน€เธ”เธดเธเธ—เธฒเธ</li>
-              <li>เธซเธฒเธเธกเธตเธเนเธญเธชเธเธชเธฑเธข เธซเธฃเธทเธญเธเธเธเนเธญเธกเธนเธฅเธเธดเธ”เธเธฅเธฒเธ” เธเธฃเธธเธ“เธฒเธ•เธดเธ”เธ•เนเธญเนเธญเธ”เธกเธดเธเธเนเธญเธเธงเธฑเธเน€เธ”เธดเธเธ—เธฒเธเธญเธขเนเธฒเธเธเนเธญเธข 3 เธงเธฑเธเธ—เธณเธเธฒเธฃ</li>
+              <li>กรุณานำ Voucher นี้ไปแสดงต่อเจ้าหน้าที่ในวันเดินทาง (สามารถเปิดจากมือถือได้)</li>
+              <li>กรุณาพกพาสปอร์ตตัวจริงที่มีอายุเหลือไม่น้อยกว่า 6 เดือนในวันเดินทาง</li>
+              <li>หากมีข้อสงสัยหรือพบข้อมูลผิดพลาด กรุณาติดต่อแอดมินก่อนวันเดินทางอย่างน้อย 3 วันทำการ</li>
             </ul>
           </div>
         </div>
@@ -130,30 +130,30 @@ export default async function VoucherDetailPage({ params }: { params: { booking_
                {/* Content */}
                <div className="space-y-6">
                  <div>
-                    <p className="text-[10px] font-black text-emerald-600 uppercase tracking-wider mb-1">เธฃเธฒเธขเธฅเธฐเน€เธญเธตเธขเธ”เธ—เธฑเธงเธฃเน (Tour Details)</p>
+                    <p className="text-[10px] font-black text-emerald-600 uppercase tracking-wider mb-1">รายละเอียดทัวร์ (Tour Details)</p>
                     <h3 className="text-xl font-black text-slate-800 mb-2">{booking.tour.tourName}</h3>
                     <div className="grid grid-cols-2 gap-4 mt-4 bg-slate-50 p-4 rounded-xl border border-slate-100">
                       <div>
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider">เธงเธฑเธเน€เธ”เธดเธเธ—เธฒเธ (Date)</p>
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider">วันเดินทาง (Date)</p>
                         <p className="text-sm font-bold text-slate-800">{new Date(booking.departure.startDate).toLocaleDateString('th-TH')} - {new Date(booking.departure.endDate).toLocaleDateString('th-TH')}</p>
                       </div>
                       <div>
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider">เธฃเธซเธฑเธชเธ—เธฑเธงเธฃเน (Code)</p>
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider">รหัสทัวร์ (Code)</p>
                         <p className="text-sm font-bold text-slate-800">{booking.tour.tourCode}</p>
                       </div>
                       <div>
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider">เธญเนเธฒเธเธญเธดเธเธเธฒเธฃเธเธญเธ (Booking Ref)</p>
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider">อ้างอิงการจอง (Booking Ref)</p>
                         <p className="text-sm font-bold text-slate-800">{booking.bookingRef}</p>
                       </div>
                       <div>
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider">เธเธนเนเน€เธ”เธดเธเธ—เธฒเธ (Pax)</p>
-                        <p className="text-sm font-bold text-slate-800">{booking.travelers.length} เธ—เนเธฒเธ</p>
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider">ผู้เดินทาง (Pax)</p>
+                        <p className="text-sm font-bold text-slate-800">{booking.travelers.length} ท่าน</p>
                       </div>
                     </div>
                  </div>
 
                  <div className="pt-4 border-t border-slate-100">
-                    <p className="text-[10px] font-black text-emerald-600 uppercase tracking-wider mb-3">เธฃเธฒเธขเธเธทเนเธญเธเธนเนเน€เธ”เธดเธเธ—เธฒเธ (Passenger Manifest)</p>
+                    <p className="text-[10px] font-black text-emerald-600 uppercase tracking-wider mb-3">รายชื่อผู้เดินทาง (Passenger Manifest)</p>
                     <ul className="space-y-2">
                       {booking.travelers.map((t, idx) => (
                         <li key={t.id} className="flex items-center gap-3 text-sm font-bold text-slate-700">

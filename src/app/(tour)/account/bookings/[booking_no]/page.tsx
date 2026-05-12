@@ -74,7 +74,7 @@ export default async function BookingDetailPage({ params }: { params: { booking_
         <div>
           <Link href="/account/bookings" className="text-orange-500 hover:text-orange-600 text-sm font-bold flex items-center gap-1 mb-2 transition-colors">
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" /></svg>
-            เธเธฅเธฑเธเนเธเธซเธเนเธฒเธเธฃเธฐเธงเธฑเธ•เธดเธเธฒเธฃเธเธญเธ
+            กลับหน้าประวัติการจอง
           </Link>
           <div className="flex flex-wrap items-center gap-3">
             <h1 className="text-3xl font-black text-slate-800">Booking {booking.bookingRef}</h1>
@@ -84,11 +84,11 @@ export default async function BookingDetailPage({ params }: { params: { booking_
         <div className="flex gap-2 w-full md:w-auto">
           {paymentStatus !== 'PAID' && booking.status !== 'cancelled' && (
             <Link href="/account/payments" className="bg-orange-500 hover:bg-orange-600 text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-sm transition-colors text-center flex-1 md:flex-none">
-              เธเธณเธฃเธฐเน€เธเธดเธเธ—เธฑเธเธ—เธต
+              ชำระเงินทันที
             </Link>
           )}
           <Link href={`/account/support?ref=${booking.bookingRef}`} className="bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 px-5 py-2.5 rounded-xl text-sm font-bold shadow-sm transition-colors text-center flex-1 md:flex-none">
-            เธ•เธดเธ”เธ•เนเธญเนเธญเธ”เธกเธดเธ
+            ติดต่อแอดมิน
           </Link>
         </div>
       </div>
@@ -109,18 +109,18 @@ export default async function BookingDetailPage({ params }: { params: { booking_
                 <h2 className="text-xl font-black text-slate-800 leading-tight mb-4">{booking.tour.tourName}</h2>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1">เธงเธฑเธเน€เธ”เธดเธเธ—เธฒเธ (Departure)</p>
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1">วันเดินทาง (Departure)</p>
                     <p className="text-sm font-bold text-slate-800">
                       {new Date(booking.departure.startDate).toLocaleDateString('th-TH')} - {new Date(booking.departure.endDate).toLocaleDateString('th-TH')}
                     </p>
                   </div>
                   <div>
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1">เธฃเธฐเธขเธฐเน€เธงเธฅเธฒ (Duration)</p>
-                    <p className="text-sm font-bold text-slate-800">{booking.tour.durationDays} เธงเธฑเธ {booking.tour.durationNights} เธเธทเธ</p>
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1">ระยะเวลา (Duration)</p>
+                    <p className="text-sm font-bold text-slate-800">{booking.tour.durationDays} วัน {booking.tour.durationNights} คืน</p>
                   </div>
                   {booking.supplierContactName && (
                     <div className="col-span-2">
-                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1">เธเธนเนเธเธฑเธ”เธ—เธฑเธงเธฃเน (Operator)</p>
+                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1">ผู้จัดทัวร์ (Operator)</p>
                       <p className="text-sm font-bold text-slate-800">{booking.supplier.displayName}</p>
                     </div>
                   )}
@@ -132,8 +132,8 @@ export default async function BookingDetailPage({ params }: { params: { booking_
           {/* 3. Traveler List */}
           <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
             <div className="p-5 border-b border-slate-100 bg-slate-50 flex items-center justify-between">
-              <h3 className="font-black text-slate-800">เธฃเธฒเธขเธเธทเนเธญเธเธนเนเน€เธ”เธดเธเธ—เธฒเธ (Travelers)</h3>
-              <span className="text-xs font-bold text-slate-500">{booking.travelers.length} เธ—เนเธฒเธ</span>
+              <h3 className="font-black text-slate-800">รายชื่อผู้เดินทาง (Travelers)</h3>
+              <span className="text-xs font-bold text-slate-500">{booking.travelers.length} ท่าน</span>
             </div>
             <div className="divide-y divide-slate-100">
               {booking.travelers.map((t, idx) => (
@@ -149,28 +149,28 @@ export default async function BookingDetailPage({ params }: { params: { booking_
                   </div>
                   <div className="flex gap-2">
                     {t.passportNo ? (
-                       <span className="text-xs font-bold bg-emerald-50 text-emerald-600 px-3 py-1 rounded-md border border-emerald-100">Passport โ”</span>
+                       <span className="text-xs font-bold bg-emerald-50 text-emerald-600 px-3 py-1 rounded-md border border-emerald-100">Passport พร้อม</span>
                     ) : (
-                       <span className="text-xs font-bold bg-amber-50 text-amber-600 px-3 py-1 rounded-md border border-amber-100">เธฃเธญเธซเธเนเธฒเธเธฒเธชเธเธญเธฃเนเธ•</span>
+                       <span className="text-xs font-bold bg-amber-50 text-amber-600 px-3 py-1 rounded-md border border-amber-100">รอหน้าพาสปอร์ต</span>
                     )}
                   </div>
                 </div>
               ))}
               {booking.travelers.length === 0 && (
-                <div className="p-8 text-center text-slate-500 text-sm font-medium">เนเธกเนเธกเธตเธเนเธญเธกเธนเธฅเธเธนเนเน€เธ”เธดเธเธ—เธฒเธ เนเธเธฃเธ”เธ•เธดเธ”เธ•เนเธญเนเธญเธ”เธกเธดเธ</div>
+                <div className="p-8 text-center text-slate-500 text-sm font-medium">ไม่มีข้อมูลผู้เดินทาง โปรดติดต่อแอดมิน</div>
               )}
             </div>
           </div>
 
           {/* 8. Cancellation Policy */}
           <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden p-6">
-            <h3 className="font-black text-slate-800 mb-2">เธเนเธขเธเธฒเธขเธเธฒเธฃเธขเธเน€เธฅเธดเธ (Cancellation Policy)</h3>
+            <h3 className="font-black text-slate-800 mb-2">นโยบายการยกเลิก (Cancellation Policy)</h3>
             <p className="text-sm text-slate-500 font-medium mb-4">
-              เธซเธฒเธเธ•เนเธญเธเธเธฒเธฃเธขเธเน€เธฅเธดเธเธเธฒเธฃเน€เธ”เธดเธเธ—เธฒเธ เธเธฃเธธเธ“เธฒเนเธเนเธเธฅเนเธงเธเธซเธเนเธฒเธญเธขเนเธฒเธเธเนเธญเธข 30 เธงเธฑเธเธเนเธญเธเน€เธ”เธดเธเธ—เธฒเธ เน€เธเธทเนเธญเธฃเธฑเธเน€เธเธดเธเธเธทเธเธ•เธฒเธกเน€เธเธทเนเธญเธเนเธเธเธฃเธดเธฉเธฑเธ— เธซเธฒเธเธขเธเน€เธฅเธดเธเธเธฃเธฐเธเธฑเนเธเธเธดเธ”เธญเธฒเธเธกเธตเธเนเธฒเธเธฃเธฃเธกเน€เธเธตเธขเธกเธ•เธฒเธกเธ—เธตเนเธฃเธฐเธเธธเนเธเน€เธญเธเธชเธฒเธฃ
+              หากต้องการยกเลิกการเดินทาง กรุณาแจ้งล่วงหน้าอย่างน้อย 30 วันก่อนเดินทาง เพื่อรับเงินคืนตามเงื่อนไขบริษัท หากยกเลิกกระชั้นชิดอาจมีค่าธรรมเนียมตามที่ระบุในเอกสาร
             </p>
             {booking.status !== 'cancelled' && booking.status !== 'completed' && (
                <Link href={`/account/support?ref=${booking.bookingRef}&topic=cancel`} className="text-sm font-bold text-red-600 hover:text-red-700 hover:underline">
-                 เธชเนเธเธเธณเธเธญเธขเธเน€เธฅเธดเธเธเธฒเธฃเน€เธ”เธดเธเธ—เธฒเธ (Request Cancellation)
+                 ส่งคำขอยกเลิกการเดินทาง (Request Cancellation)
                </Link>
             )}
           </div>
@@ -184,30 +184,30 @@ export default async function BookingDetailPage({ params }: { params: { booking_
           <div className="bg-slate-800 rounded-3xl shadow-sm overflow-hidden text-white relative">
             <div className="absolute top-0 right-0 w-32 h-32 bg-orange-500 rounded-full blur-3xl opacity-20 -mr-10 -mt-10"></div>
             <div className="p-6 relative z-10">
-              <h3 className="font-black text-lg mb-6">เธชเธฃเธธเธเธเนเธฒเนเธเนเธเนเธฒเธข</h3>
+              <h3 className="font-black text-lg mb-6">สรุปค่าใช้จ่าย</h3>
               
               <div className="space-y-3 mb-6 text-sm">
                 <div className="flex justify-between items-center text-slate-300">
-                  <span>เธขเธญเธ”เธชเธธเธ—เธเธด (Total)</span>
-                  <span className="font-bold text-white">เธฟ{booking.totalPrice.toLocaleString()}</span>
+                  <span>ยอดสุทธิ (Total)</span>
+                  <span className="font-bold text-white">฿{booking.totalPrice.toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between items-center text-emerald-400">
-                  <span>เธเธณเธฃเธฐเนเธฅเนเธง (Paid)</span>
-                  <span className="font-bold">เธฟ{paidAmount.toLocaleString()}</span>
+                  <span>ชำระแล้ว (Paid)</span>
+                  <span className="font-bold">฿{paidAmount.toLocaleString()}</span>
                 </div>
                 <div className="pt-3 mt-3 border-t border-slate-700 flex justify-between items-center">
-                  <span className="font-black">เธเนเธฒเธเธเธณเธฃเธฐ (Outstanding)</span>
-                  <span className="font-black text-xl text-orange-400">เธฟ{outstandingAmount.toLocaleString()}</span>
+                  <span className="font-black">ค้างชำระ (Outstanding)</span>
+                  <span className="font-black text-xl text-orange-400">฿{outstandingAmount.toLocaleString()}</span>
                 </div>
               </div>
 
               {outstandingAmount > 0 && booking.status !== 'cancelled' ? (
                 <Link href="/account/payments" className="w-full bg-orange-500 hover:bg-orange-600 text-white px-4 py-3 rounded-xl text-sm font-bold transition-colors text-center block shadow-sm">
-                  เธเธณเธฃเธฐเธขเธญเธ”เธเธเน€เธซเธฅเธทเธญ
+                  ชำระยอดคงเหลือ
                 </Link>
               ) : (
                 <div className="w-full bg-emerald-500/20 text-emerald-400 px-4 py-3 rounded-xl text-sm font-bold text-center border border-emerald-500/30">
-                  เธเธณเธฃเธฐเน€เธเธดเธเธเธฃเธเธ–เนเธงเธ
+                  ชำระเงินครบถ้วน
                 </div>
               )}
             </div>
@@ -216,23 +216,23 @@ export default async function BookingDetailPage({ params }: { params: { booking_
           {/* 5. Documents (Voucher / Invoice) */}
           <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
             <div className="p-5 border-b border-slate-100">
-              <h3 className="font-black text-slate-800">เน€เธญเธเธชเธฒเธฃเธเธฒเธฃเธเธญเธ</h3>
+              <h3 className="font-black text-slate-800">เอกสารการจอง</h3>
             </div>
             <div className="p-5 space-y-3">
               {hasActiveVoucher ? (
                 <Link href={`/account/vouchers/${booking.bookingRef}`} className="w-full bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 px-4 py-2.5 rounded-xl text-sm font-bold transition-colors flex items-center justify-center gap-2">
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
-                  เธ”เธฒเธงเธเนเนเธซเธฅเธ” E-Voucher
+                  ดาวน์โหลด E-Voucher
                 </Link>
               ) : (
                 <div className="w-full bg-slate-50 text-slate-400 px-4 py-2.5 rounded-xl text-sm font-bold flex items-center justify-center gap-2 border border-slate-100">
-                  Voucher เธขเธฑเธเนเธกเนเธเธฃเนเธญเธก
+                  Voucher ยังไม่พร้อม
                 </div>
               )}
               
               <Link href={`/account/invoices`} className="w-full bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 px-4 py-2.5 rounded-xl text-sm font-bold transition-colors flex items-center justify-center gap-2">
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-                เนเธเน€เธชเธฃเนเธเธฃเธฑเธเน€เธเธดเธ (Invoice)
+                ใบเสร็จรับเงิน (Invoice)
               </Link>
             </div>
           </div>
@@ -240,14 +240,14 @@ export default async function BookingDetailPage({ params }: { params: { booking_
           {/* 7. Support / Communication */}
           <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
             <div className="p-5 border-b border-slate-100">
-              <h3 className="font-black text-slate-800">เธ•เนเธญเธเธเธฒเธฃเธเธงเธฒเธกเธเนเธงเธขเน€เธซเธฅเธทเธญ?</h3>
+              <h3 className="font-black text-slate-800">ต้องการความช่วยเหลือ?</h3>
             </div>
             <div className="p-5 space-y-3">
               <Link href={`/account/ai-chats?ref=${booking.bookingRef}`} className="w-full bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 px-4 py-2.5 rounded-xl text-sm font-bold transition-colors flex items-center justify-center gap-2">
-                เธ–เธฒเธก AI Planner
+                ถาม AI Planner
               </Link>
               <Link href={`/account/support?ref=${booking.bookingRef}`} className="w-full bg-slate-50 hover:bg-slate-100 text-slate-700 px-4 py-2.5 rounded-xl text-sm font-bold transition-colors flex items-center justify-center gap-2 border border-slate-200">
-                เน€เธเธดเธ” Ticket เนเธเนเธเธเธฑเธเธซเธฒ
+                เปิด Ticket แจ้งปัญหา
               </Link>
             </div>
           </div>
