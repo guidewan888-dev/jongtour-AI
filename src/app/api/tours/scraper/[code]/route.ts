@@ -79,6 +79,7 @@ const resolveScraperDepositSafe = async (params: {
   currentDeposit?: number | null;
   priceFrom?: number | null;
   contextText?: string;
+  forceRefresh?: boolean;
 }): Promise<number> => {
   try {
     const moduleRef: any = await import('@/lib/depositResolver');
@@ -214,14 +215,15 @@ export async function GET(
     }
 
     let deposit = asNumber(data.deposit);
-    if (!deposit) {
+    const shouldForceDepositRefresh = normalizedSite === 'go365';
+    if (!deposit || shouldForceDepositRefresh) {
       const textContext = [
         data.title || '',
         ...(Array.isArray(data.highlights) ? data.highlights : []),
         ...cleanPeriods.map((period: any) => period.rawText || ''),
       ].join('\n');
 
-      deposit = await resolveScraperDepositSafe({
+      const resolvedDeposit = await resolveScraperDepositSafe({
         supabase,
         tourId: data.id,
         site: normalizedSite,
@@ -229,7 +231,12 @@ export async function GET(
         currentDeposit: data.deposit,
         priceFrom,
         contextText: textContext,
+        forceRefresh: shouldForceDepositRefresh,
       });
+
+      if (resolvedDeposit > 0 && (shouldForceDepositRefresh || !deposit)) {
+        deposit = resolvedDeposit;
+      }
     }
 
     const tour = {

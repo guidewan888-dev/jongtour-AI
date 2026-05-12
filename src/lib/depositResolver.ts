@@ -1,4 +1,4 @@
-import { PDFParse } from 'pdf-parse';
+﻿import { PDFParse } from 'pdf-parse';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 const PDF_TIMEOUT_MS = 20_000;
@@ -26,8 +26,8 @@ export function extractDepositFromText(rawText: string, priceFrom = 0): number |
   const text = rawText.replace(/\u00A0/g, ' ').replace(/[ \t]+/g, ' ');
 
   const amountPatterns = [
-    /(?:มัดจำ|ค่ามัดจำ|ชำระมัดจำ|deposit(?:\s*amount)?)\s*(?:ต่อท่าน|ท่านละ|คนละ|ละ|เริ่มต้น)?\s*[:\-–—]?\s*(?:฿|บาท)?\s*([\d,]{3,7})/gi,
-    /([\d,]{3,7})\s*(?:บาท|฿)\s*(?:ต่อท่าน|ท่านละ|คนละ|ละ)?\s*(?:มัดจำ|deposit)/gi,
+    /(?:มัดจำ|ค่ามัดจำ|ชำระมัดจำ|deposit(?:\s*amount)?|down\s*payment)\s*(?:ต่อท่าน|ท่านละ|คนละ|ละ|เริ่มต้น)?\s*[:\-–—]?\s*(?:฿|บาท)?\s*([\d,]{3,7})/gi,
+    /([\d,]{3,7})\s*(?:บาท|฿)\s*(?:ต่อท่าน|ท่านละ|คนละ|ละ)?\s*(?:มัดจำ|deposit|down\s*payment)/gi,
   ];
 
   const candidates: number[] = [];
@@ -43,7 +43,7 @@ export function extractDepositFromText(rawText: string, priceFrom = 0): number |
     return Math.min(...candidates);
   }
 
-  const percentMatch = text.match(/(?:มัดจำ|deposit)[^%\n]{0,30}?(\d{1,2})\s*%/i);
+  const percentMatch = text.match(/(?:มัดจำ|deposit|down\s*payment)[^%\n]{0,40}?(\d{1,2})\s*%/i);
   if (percentMatch && priceFrom > 0) {
     const percent = Number(percentMatch[1]);
     if (percent > 0 && percent <= 100) {
@@ -131,22 +131,24 @@ interface ResolveScraperDepositParams {
   currentDeposit?: number | null;
   priceFrom?: number | null;
   contextText?: string;
+  forceRefresh?: boolean;
 }
 
 export async function resolveAndPersistScraperDeposit(params: ResolveScraperDepositParams): Promise<number> {
   const current = sanitizeDeposit(Number(params.currentDeposit || 0));
-  if (current) return current;
+  if (current && !params.forceRefresh) return current;
 
   const fromContext = extractDepositFromText(params.contextText || '', Number(params.priceFrom || 0));
   const resolved = fromContext || await extractDepositFromPdfUrl(params.pdfUrl, Number(params.priceFrom || 0), params.site);
   const finalDeposit = sanitizeDeposit(resolved);
-  if (!finalDeposit) return 0;
+  if (!finalDeposit) return current || 0;
 
-  await params.supabase
-    .from('scraper_tours')
-    .update({ deposit: finalDeposit })
-    .eq('id', params.tourId)
-    .or('deposit.is.null,deposit.eq.0');
+  if (current !== finalDeposit) {
+    await params.supabase
+      .from('scraper_tours')
+      .update({ deposit: finalDeposit })
+      .eq('id', params.tourId);
+  }
 
   return finalDeposit;
 }

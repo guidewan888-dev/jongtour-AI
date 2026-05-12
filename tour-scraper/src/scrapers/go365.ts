@@ -35,6 +35,36 @@ const COUNTRY_TH: Record<string, string> = {
   'Thailand': 'ไทย',
 };
 
+function extractDepositFromText(text: string, priceFrom = 0): number | undefined {
+  const clean = String(text || '');
+  if (!clean) return undefined;
+
+  const amountPatterns = [
+    /(?:?????|????????|?????????|deposit(?:\s*amount)?|down\s*payment)\s*(?:???????|??????|????|??|????????)?\s*[:\-??]?\s*(?:?|???)?\s*([\d,]{3,7})/i,
+    /([\d,]{3,7})\s*(?:???|?)\s*(?:???????|??????|????|??)?\s*(?:?????|deposit|down\s*payment)/i,
+  ];
+
+  for (const pattern of amountPatterns) {
+    const match = clean.match(pattern);
+    if (!match?.[1]) continue;
+    const parsed = Number(match[1].replace(/[^\d]/g, ''));
+    if (Number.isFinite(parsed) && parsed >= 500 && parsed <= 300000) {
+      return Math.round(parsed);
+    }
+  }
+
+  const percentMatch = clean.match(/(?:?????|deposit|down\s*payment)[^%\n]{0,40}?(\d{1,2})\s*%/i);
+  if (percentMatch && priceFrom > 0) {
+    const percent = Number(percentMatch[1]);
+    if (Number.isFinite(percent) && percent > 0 && percent <= 100) {
+      const fromPercent = Math.round((priceFrom * percent) / 100);
+      if (fromPercent >= 500 && fromPercent <= 300000) return fromPercent;
+    }
+  }
+
+  return undefined;
+}
+
 export class Go365Scraper extends BaseScraper {
   private apiKey: string;
   private apiBase: string;
@@ -248,12 +278,11 @@ export class Go365Scraper extends BaseScraper {
 
     // Source URL (Go365 website)
     const sourceUrl = `https://www.go365travel.com/tour-detail/${tourId}/${encodeURIComponent(tourCode)}`;
-
-    // Deposit — calculate from first period price
+    // Deposit ? prefer explicit value from text, fallback to heuristic by price bucket
     const prices = periodData.map((p: any) => p.period_price_start || p.period_price_min || 0).filter((p: number) => p > 0);
     const minPrice = prices.length > 0 ? Math.min(...prices) : 0;
-    let deposit: number | undefined;
-    if (minPrice > 0) {
+    let deposit: number | undefined = extractDepositFromText(description, minPrice);
+    if (!deposit && minPrice > 0) {
       if (minPrice < 20000) deposit = 5000;
       else if (minPrice < 50000) deposit = 10000;
       else if (minPrice < 100000) deposit = 15000;

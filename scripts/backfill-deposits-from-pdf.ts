@@ -1,27 +1,37 @@
-import 'dotenv/config';
+﻿import 'dotenv/config';
 import { getSupabaseAdmin } from '../src/lib/supabaseAdmin';
 import { resolveAndPersistScraperDeposit } from '../src/lib/depositResolver';
 
 async function run() {
   const supabase = getSupabaseAdmin();
   const limit = Number(process.env.BACKFILL_LIMIT || 300);
+  const force = String(process.env.BACKFILL_FORCE || '').toLowerCase() === 'true';
+  const siteFilter = String(process.env.BACKFILL_SITE || '').trim().toLowerCase();
 
-  const { data: tours, error } = await supabase
+  let query = supabase
     .from('scraper_tours')
     .select('id, site, tour_code, title, description, highlights, price_from, pdf_url, deposit')
     .eq('is_active', true)
-    .or('deposit.is.null,deposit.eq.0')
     .not('pdf_url', 'is', null)
     .neq('pdf_url', '')
-    .order('last_scraped_at', { ascending: false })
-    .limit(limit);
+    .order('last_scraped_at', { ascending: false });
+
+  if (siteFilter) {
+    query = query.eq('site', siteFilter);
+  }
+
+  if (!force) {
+    query = query.or('deposit.is.null,deposit.eq.0');
+  }
+
+  const { data: tours, error } = await query.limit(limit);
 
   if (error) {
     throw new Error(`[backfill-deposit] query failed: ${error.message}`);
   }
 
   const rows = tours || [];
-  console.log(`[backfill-deposit] found ${rows.length} tours`);
+  console.log(`[backfill-deposit] found ${rows.length} tours | force=${force} | site=${siteFilter || 'all'}`);
   if (rows.length === 0) return;
 
   let updated = 0;
@@ -36,6 +46,7 @@ async function run() {
         ...(Array.isArray(tour.highlights) ? tour.highlights : []),
       ].join('\n');
 
+      const before = Number(tour.deposit || 0);
       const deposit = await resolveAndPersistScraperDeposit({
         supabase,
         tourId: tour.id,
@@ -44,18 +55,22 @@ async function run() {
         currentDeposit: tour.deposit,
         priceFrom: Number(tour.price_from || 0),
         contextText,
+        forceRefresh: force,
       });
 
-      if (deposit > 0) {
+      if (deposit > 0 && deposit !== before) {
         updated += 1;
-        console.log(`✅ ${tour.site}/${tour.tour_code} -> ${deposit.toLocaleString()}`);
+        console.log(`UPDATED ${tour.site}/${tour.tour_code} -> ${deposit.toLocaleString()}`);
+      } else if (deposit > 0) {
+        skipped += 1;
+        console.log(`UNCHANGED ${tour.site}/${tour.tour_code} -> ${deposit.toLocaleString()}`);
       } else {
         skipped += 1;
-        console.log(`⚠️ ${tour.site}/${tour.tour_code} -> not found`);
+        console.log(`NOT_FOUND ${tour.site}/${tour.tour_code}`);
       }
     } catch (e: any) {
       failed += 1;
-      console.error(`❌ ${tour.site}/${tour.tour_code}: ${e.message}`);
+      console.error(`FAILED ${tour.site}/${tour.tour_code}: ${e.message}`);
     }
   }
 

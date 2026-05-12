@@ -106,6 +106,15 @@ function getCountrySearchTerms(thaiName: string): string[] {
   return [...new Set(terms)];
 }
 
+function chunkArray<T>(items: T[], chunkSize: number): T[][] {
+  if (chunkSize <= 0) return [items];
+  const chunks: T[][] = [];
+  for (let i = 0; i < items.length; i += chunkSize) {
+    chunks.push(items.slice(i, i + chunkSize));
+  }
+  return chunks;
+}
+
 // ─── Types ──────────────────────────────────────────────────────────
 
 export interface TourListItem {
@@ -284,14 +293,30 @@ export async function getTourList(options?: {
     filteredTours = tours.filter(t => matchingTourIds.has(t.id));
   }
 
-  // 4. Get nearest departures
+  // 4. Get nearest departures (paginate to avoid Supabase default 1000-row truncation)
   const now = new Date().toISOString();
-  const { data: departures } = await sb
-    .from('departures')
-    .select('id, "tourId", "startDate", "remainingSeats"')
-    .in('tourId', tourIds)
-    .gte('startDate', now)
-    .order('startDate', { ascending: true });
+  const departures: any[] = [];
+  const departureTourIdChunks = chunkArray(tourIds, 60);
+
+  for (const tourIdChunk of departureTourIdChunks) {
+    let from = 0;
+    while (true) {
+      const { data: page, error: depError } = await sb
+        .from('departures')
+        .select('id, "tourId", "startDate", "remainingSeats"')
+        .in('tourId', tourIdChunk)
+        .gte('startDate', now)
+        .order('startDate', { ascending: true })
+        .range(from, from + 999);
+
+      if (depError) throw depError;
+      if (!page || page.length === 0) break;
+
+      departures.push(...page);
+      if (page.length < 1000) break;
+      from += 1000;
+    }
+  }
 
   const depMap: Record<string, any> = {};
   (departures || []).forEach(d => {
@@ -300,9 +325,17 @@ export async function getTourList(options?: {
 
   // 5. Get prices for nearest departures
   const depIds = Object.values(depMap).map((d: any) => d.id);
-  const { data: prices } = depIds.length > 0
-    ? await sb.from('prices').select('"departureId", "sellingPrice"').in('departureId', depIds)
-    : { data: [] };
+  const prices: any[] = [];
+  const depIdChunks = chunkArray(depIds, 250);
+  for (const depIdChunk of depIdChunks) {
+    if (depIdChunk.length === 0) continue;
+    const { data: chunkPrices, error: priceError } = await sb
+      .from('prices')
+      .select('"departureId", "sellingPrice"')
+      .in('departureId', depIdChunk);
+    if (priceError) throw priceError;
+    prices.push(...(chunkPrices || []));
+  }
 
   const priceMap: Record<string, number> = {};
   (prices || []).forEach(p => {
