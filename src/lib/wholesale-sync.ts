@@ -32,13 +32,16 @@ const SCRAPER_SITES: ScraperSite[] = [
 ];
 
 type ScraperRunRow = {
-  id: string;
+  id: string | number;
   site_name?: string | null;
   site?: string | null;
   status?: string | null;
   tours_scraped?: number | null;
+  urls_scraped?: number | null;
   error_message?: string | null;
+  error_log?: string | null;
   started_at?: string | null;
+  finished_at?: string | null;
 };
 
 function normalizeKey(value: string): string {
@@ -63,13 +66,27 @@ function mapToAdapterId(...values: Array<string | null | undefined>): string | n
 function mapScraperStatus(status?: string | null): string {
   const s = String(status || '').toLowerCase();
   if (s === 'done' || s === 'success') return 'SUCCESS';
+  if (s === 'partial' || s === 'warning') return 'SUCCESS';
   if (s === 'running' || s === 'pending') return 'RUNNING';
   if (s === 'error' || s === 'failed') return 'FAILED';
   return 'UNKNOWN';
 }
 
 function getRunSiteKey(run: ScraperRunRow): string {
-  return String(run.site_name || run.site || '').toLowerCase();
+  const raw = String(run.site_name || run.site || '').toLowerCase();
+  const normalized = normalizeKey(raw);
+  const alias: Record<string, string> = {
+    worldconnection: 'worldconnection',
+    oneworldtour: 'worldconnection',
+    itravel: 'itravels',
+    itravels: 'itravels',
+    bestin: 'bestintl',
+    bestinternational: 'bestintl',
+    bestintl: 'bestintl',
+    gs25: 'gs25',
+    go365: 'go365',
+  };
+  return alias[normalized] || raw;
 }
 
 export async function resolveSupplierForSync(supplierInput: string) {
@@ -108,11 +125,15 @@ export async function resolveSupplierForSync(supplierInput: string) {
 
 async function getScraperRuns(limit = 200): Promise<ScraperRunRow[]> {
   const supabase = getSupabaseAdmin();
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from('scraper_runs')
-    .select('id, site_name, site, status, tours_scraped, error_message, started_at')
+    .select('*')
     .order('started_at', { ascending: false })
     .limit(limit);
+  if (error) {
+    console.error('[wholesale-sync] scraper_runs query failed:', error.message);
+    return [];
+  }
   return (data || []) as ScraperRunRow[];
 }
 
@@ -212,10 +233,10 @@ export async function getWholesaleStatusData() {
       tourCount: stats.activeCount,
       pdfCount: stats.pdfCount,
       pdfCoverage: coverage,
-      lastSync: lastRun?.started_at || null,
+      lastSync: lastRun?.finished_at || lastRun?.started_at || null,
       lastSyncStatus: mapScraperStatus(lastRun?.status),
-      lastSyncRecords: Number(lastRun?.tours_scraped || 0),
-      lastSyncError: lastRun?.error_message || null,
+      lastSyncRecords: Number(lastRun?.urls_scraped ?? lastRun?.tours_scraped ?? 0),
+      lastSyncError: lastRun?.error_log || lastRun?.error_message || null,
       syncEndpoint: site.syncEndpoint,
       syncBody: site.syncBody,
       supplierId: site.slug,
@@ -250,10 +271,10 @@ export async function getWholesaleStatusData() {
       supplier: siteMeta?.name || siteKey || 'scraper',
       type: 'scraper',
       status: mapScraperStatus(run.status),
-      records: Number(run.tours_scraped || 0),
+      records: Number(run.urls_scraped ?? run.tours_scraped ?? 0),
       recordsUpdated: 0,
-      error: run.error_message || null,
-      time: run.started_at || null,
+      error: run.error_log || run.error_message || null,
+      time: run.finished_at || run.started_at || null,
     };
   });
 
@@ -328,8 +349,8 @@ export async function getUnifiedErrorLogs(limit = 200) {
           source: 'scraper_sync' as const,
           supplier: siteMeta?.name || siteKey || 'scraper',
           severity: 'info' as const,
-          message: run.error_message || 'Scraper run failed',
-          createdAt: run.started_at || new Date().toISOString(),
+          message: run.error_log || run.error_message || 'Scraper run failed',
+          createdAt: run.finished_at || run.started_at || new Date().toISOString(),
           tourCode: null as string | null,
         };
       }),

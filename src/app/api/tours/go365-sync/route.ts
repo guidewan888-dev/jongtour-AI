@@ -150,8 +150,30 @@ export async function POST() {
   let synced = 0;
   let failed = 0;
   let periodsAdded = 0;
+  let fetchedTours = 0;
   const errors: string[] = [];
   const startTime = Date.now();
+  let runId: number | null = null;
+
+  const { data: runInsert, error: runInsertError } = await supabase
+    .from('scraper_runs')
+    .insert({
+      site: 'go365',
+      status: 'running',
+      started_at: new Date().toISOString(),
+      urls_found: 0,
+      urls_scraped: 0,
+      urls_failed: 0,
+      images_saved: 0,
+    })
+    .select('id')
+    .single();
+
+  if (!runInsertError && runInsert?.id) {
+    runId = Number(runInsert.id);
+  } else if (runInsertError) {
+    console.error('[Go365 Sync] Unable to create scraper run:', runInsertError.message);
+  }
 
   try {
     // ═══ Phase 1: Fetch ALL tours via paginated POST search ═══
@@ -175,6 +197,7 @@ export async function POST() {
       if (newCount === 0) break; // API wraps around — stop
       await new Promise(r => setTimeout(r, 50));
     }
+    fetchedTours = allTours.length;
     console.log(`[Go365 Sync] Fetched ${allTours.length} unique tours in ${Date.now() - startTime}ms`);
 
     // ═══ Phase 2: Bulk upsert tour rows from search data ═══
@@ -294,11 +317,38 @@ export async function POST() {
 
     console.log(`[Go365 Sync] Phase 3 done: ${periodsAdded} periods in ${Date.now() - startTime}ms`);
   } catch (e: any) {
+    if (runId) {
+      await supabase
+        .from('scraper_runs')
+        .update({
+          status: 'failed',
+          finished_at: new Date().toISOString(),
+          urls_found: fetchedTours,
+          urls_scraped: synced,
+          urls_failed: failed,
+          error_log: e?.message || 'Go365 sync failed',
+        })
+        .eq('id', runId);
+    }
     return NextResponse.json({ error: e.message, synced, failed }, { status: 500 });
   }
 
   const totalTime = Math.round((Date.now() - startTime) / 1000);
   console.log(`[Go365 Sync] Complete: ${synced} tours, ${periodsAdded} periods, ${failed} failed, ${totalTime}s`);
+
+  if (runId) {
+    await supabase
+      .from('scraper_runs')
+      .update({
+        status: failed > 0 ? 'partial' : 'success',
+        finished_at: new Date().toISOString(),
+        urls_found: fetchedTours,
+        urls_scraped: synced,
+        urls_failed: failed,
+        error_log: errors.length > 0 ? errors.slice(0, 10).join(' | ') : null,
+      })
+      .eq('id', runId);
+  }
   
   return NextResponse.json({
     success: true,

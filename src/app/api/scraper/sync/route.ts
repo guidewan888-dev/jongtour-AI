@@ -23,10 +23,13 @@ export async function POST(req: NextRequest) {
 
     // Record the sync request
     const { error: insertError } = await supabase.from("scraper_runs").insert({
-      site_name: site || "manual_trigger",
+      site: site || "manual_trigger",
       status: "pending",
       started_at: new Date().toISOString(),
-      tours_scraped: 0,
+      urls_scraped: 0,
+      urls_found: 0,
+      urls_failed: 0,
+      images_saved: 0,
     });
 
     if (insertError) {
