@@ -72,7 +72,7 @@ export const REGION_META: Record<RegionKey, RegionMeta> = {
 
 const COUNTRY_CATALOG: CountryMeta[] = [
   { slug: 'japan', name: 'ญี่ปุ่น', flagCode: 'jp', regionKey: 'asia', aliases: ['ญี่ปุ่น', 'japan', 'jp'] },
-  { slug: 'china', name: 'จีน', flagCode: 'cn', regionKey: 'asia', aliases: ['จีน', 'china', 'cn'] },
+  { slug: 'china', name: 'จีน', flagCode: 'cn', regionKey: 'asia', aliases: ['จีน', 'china', 'cn', 'เซี่ยงไฮ้', 'ทิเบต'] },
   { slug: 'south-korea', name: 'เกาหลีใต้', flagCode: 'kr', regionKey: 'asia', aliases: ['เกาหลี', 'เกาหลีใต้', 'south korea', 'korea', 'kr'] },
   { slug: 'taiwan', name: 'ไต้หวัน', flagCode: 'tw', regionKey: 'asia', aliases: ['ไต้หวัน', 'taiwan', 'tw'] },
   { slug: 'vietnam', name: 'เวียดนาม', flagCode: 'vn', regionKey: 'asia', aliases: ['เวียดนาม', 'vietnam', 'vn'] },
@@ -85,6 +85,13 @@ const COUNTRY_CATALOG: CountryMeta[] = [
   { slug: 'laos', name: 'ลาว', flagCode: 'la', regionKey: 'asia', aliases: ['ลาว', 'laos', 'la'] },
   { slug: 'philippines', name: 'ฟิลิปปินส์', flagCode: 'ph', regionKey: 'asia', aliases: ['ฟิลิปปินส์', 'philippines', 'ph'] },
   { slug: 'macau', name: 'มาเก๊า', flagCode: 'mo', regionKey: 'asia', aliases: ['มาเก๊า', 'macau', 'mo'] },
+  { slug: 'indonesia', name: 'อินโดนีเซีย', flagCode: 'id', regionKey: 'asia', aliases: ['อินโดนีเซีย', 'indonesia', 'id'] },
+  { slug: 'bhutan', name: 'ภูฏาน', flagCode: 'bt', regionKey: 'asia', aliases: ['ภูฏาน', 'ภูฎาน', 'bhutan', 'bt'] },
+  { slug: 'srilanka', name: 'ศรีลังกา', flagCode: 'lk', regionKey: 'asia', aliases: ['ศรีลังกา', 'sri lanka', 'srilanka', 'lk'] },
+  { slug: 'mongolia', name: 'มองโกเลีย', flagCode: 'mn', regionKey: 'asia', aliases: ['มองโกเลีย', 'mongolia', 'mn'] },
+  { slug: 'nepal', name: 'เนปาล', flagCode: 'np', regionKey: 'asia', aliases: ['เนปาล', 'nepal', 'np'] },
+  { slug: 'maldives', name: 'มัลดีฟส์', flagCode: 'mv', regionKey: 'asia', aliases: ['มัลดีฟส์', 'maldives', 'mv'] },
+  { slug: 'kazakhstan', name: 'คาซัคสถาน', flagCode: 'kz', regionKey: 'asia', aliases: ['คาซัคสถาน', 'kazakhstan', 'kz'] },
 
   { slug: 'uk', name: 'อังกฤษ', flagCode: 'gb', regionKey: 'europe', aliases: ['อังกฤษ', 'uk', 'united kingdom', 'england', 'great britain', 'gb'] },
   { slug: 'france', name: 'ฝรั่งเศส', flagCode: 'fr', regionKey: 'europe', aliases: ['ฝรั่งเศส', 'france', 'fr'] },
@@ -92,7 +99,7 @@ const COUNTRY_CATALOG: CountryMeta[] = [
   { slug: 'switzerland', name: 'สวิตเซอร์แลนด์', flagCode: 'ch', regionKey: 'europe', aliases: ['สวิตเซอร์แลนด์', 'switzerland', 'ch'] },
   { slug: 'germany', name: 'เยอรมนี', flagCode: 'de', regionKey: 'europe', aliases: ['เยอรมนี', 'เยอรมัน', 'germany', 'de'] },
   { slug: 'spain', name: 'สเปน', flagCode: 'es', regionKey: 'europe', aliases: ['สเปน', 'spain', 'es'] },
-  { slug: 'netherlands', name: 'เนเธอร์แลนด์', flagCode: 'nl', regionKey: 'europe', aliases: ['เนเธอร์แลนด์', 'netherlands', 'holland', 'nl'] },
+  { slug: 'netherlands', name: 'เนเธอร์แลนด์', flagCode: 'nl', regionKey: 'europe', aliases: ['เนเธอร์แลนด์', 'holland', 'netherlands', 'nl'] },
   { slug: 'austria', name: 'ออสเตรีย', flagCode: 'at', regionKey: 'europe', aliases: ['ออสเตรีย', 'austria', 'at'] },
   { slug: 'scandinavia', name: 'สแกนดิเนเวีย', flagCode: 'se', regionKey: 'europe', aliases: ['สแกนดิเนเวีย', 'scandinavia'] },
   { slug: 'baltic', name: 'บอลติก', flagCode: 'lv', regionKey: 'europe', aliases: ['บอลติก', 'baltic'] },
@@ -106,26 +113,32 @@ const COUNTRY_CATALOG: CountryMeta[] = [
   { slug: 'portugal', name: 'โปรตุเกส', flagCode: 'pt', regionKey: 'europe', aliases: ['โปรตุเกส', 'portugal', 'pt'] },
   { slug: 'georgia', name: 'จอร์เจีย', flagCode: 'ge', regionKey: 'europe', aliases: ['จอร์เจีย', 'georgia', 'ge'] },
   { slug: 'russia', name: 'รัสเซีย', flagCode: 'ru', regionKey: 'europe', aliases: ['รัสเซีย', 'russia', 'ru'] },
+  { slug: 'iceland', name: 'ไอซ์แลนด์', flagCode: 'is', regionKey: 'europe', aliases: ['ไอซ์แลนด์', 'iceland', 'is'] },
+  { slug: 'greece', name: 'กรีซ', flagCode: 'gr', regionKey: 'europe', aliases: ['กรีซ', 'greece', 'gr'] },
+  { slug: 'croatia', name: 'โครเอเชีย', flagCode: 'hr', regionKey: 'europe', aliases: ['โครเอเชีย', 'croatia', 'hr'] },
+  { slug: 'bulgaria', name: 'บัลแกเรีย', flagCode: 'bg', regionKey: 'europe', aliases: ['บัลแกเรีย', 'bulgaria', 'bg'] },
+  { slug: 'malta', name: 'มอลต้า', flagCode: 'mt', regionKey: 'europe', aliases: ['มอลต้า', 'malta', 'mt'] },
+  { slug: 'ireland', name: 'ไอร์แลนด์', flagCode: 'ie', regionKey: 'europe', aliases: ['ไอร์แลนด์', 'ireland', 'ie'] },
+  { slug: 'poland', name: 'โปแลนด์', flagCode: 'pl', regionKey: 'europe', aliases: ['โปแลนด์', 'poland', 'pl'] },
   { slug: 'europe-multi', name: 'ยุโรป', flagCode: 'eu', regionKey: 'europe', aliases: ['ยุโรป', 'europe', 'eu'] },
 
-  { slug: 'turkey', name: 'ตุรกี', flagCode: 'tr', regionKey: 'middle-east', aliases: ['ตุรกี', 'turkey', 'turkiye', 'tr'] },
+  { slug: 'turkey', name: 'ตุรกี', flagCode: 'tr', regionKey: 'middle-east', aliases: ['ตุรกี', 'ตุรเคีย', 'turkey', 'turkiye', 'tr'] },
   { slug: 'egypt', name: 'อียิปต์', flagCode: 'eg', regionKey: 'middle-east', aliases: ['อียิปต์', 'egypt', 'eg'] },
   { slug: 'jordan', name: 'จอร์แดน', flagCode: 'jo', regionKey: 'middle-east', aliases: ['จอร์แดน', 'jordan', 'jo'] },
-  { slug: 'dubai', name: 'ดูไบ', flagCode: 'ae', regionKey: 'middle-east', aliases: ['ดูไบ', 'dubai', 'uae', 'united arab emirates', 'สหรัฐอาหรับเอมิเรตส์', 'ae'] },
+  { slug: 'dubai', name: 'ดูไบ', flagCode: 'ae', regionKey: 'middle-east', aliases: ['ดูไบ', 'uae', 'dubai', 'united arab emirates', 'สหรัฐอาหรับเอมิเรตส์', 'ae'] },
 
-  { slug: 'usa', name: 'อเมริกา', flagCode: 'us', regionKey: 'americas', aliases: ['อเมริกา', 'usa', 'united states', 'us', 'america'] },
+  { slug: 'usa', name: 'อเมริกา', flagCode: 'us', regionKey: 'americas', aliases: ['อเมริกา', 'usa', 'united states', 'us', 'america', 'อลาสก้า', 'alaska'] },
   { slug: 'canada', name: 'แคนาดา', flagCode: 'ca', regionKey: 'americas', aliases: ['แคนาดา', 'canada', 'ca'] },
+  { slug: 'argentina', name: 'อาร์เจนตินา', flagCode: 'ar', regionKey: 'americas', aliases: ['อาร์เจนตินา', 'argentina', 'ar'] },
+  { slug: 'peru', name: 'เปรู', flagCode: 'pe', regionKey: 'americas', aliases: ['เปรู', 'peru', 'pe'] },
+  { slug: 'mexico', name: 'เม็กซิโก', flagCode: 'mx', regionKey: 'americas', aliases: ['เม็กซิโก', 'mexico', 'mx'] },
+  { slug: 'brazil', name: 'บราซิล', flagCode: 'br', regionKey: 'americas', aliases: ['บราซิล', 'brazil', 'br'] },
 
   { slug: 'australia', name: 'ออสเตรเลีย', flagCode: 'au', regionKey: 'oceania', aliases: ['ออสเตรเลีย', 'australia', 'au'] },
   { slug: 'newzealand', name: 'นิวซีแลนด์', flagCode: 'nz', regionKey: 'oceania', aliases: ['นิวซีแลนด์', 'new zealand', 'newzealand', 'nz'] },
 
-  { slug: 'bhutan', name: 'ภูฏาน', flagCode: 'bt', regionKey: 'others', aliases: ['ภูฏาน', 'ภูฎาน', 'bhutan', 'bt'] },
-  { slug: 'srilanka', name: 'ศรีลังกา', flagCode: 'lk', regionKey: 'others', aliases: ['ศรีลังกา', 'sri lanka', 'srilanka', 'lk'] },
-  { slug: 'mongolia', name: 'มองโกเลีย', flagCode: 'mn', regionKey: 'others', aliases: ['มองโกเลีย', 'mongolia', 'mn'] },
-  { slug: 'nepal', name: 'เนปาล', flagCode: 'np', regionKey: 'others', aliases: ['เนปาล', 'nepal', 'np'] },
-  { slug: 'maldives', name: 'มัลดีฟส์', flagCode: 'mv', regionKey: 'others', aliases: ['มัลดีฟส์', 'maldives', 'mv'] },
   { slug: 'south-africa', name: 'แอฟริกาใต้', flagCode: 'za', regionKey: 'others', aliases: ['แอฟริกาใต้', 'south africa', 'za'] },
-  { slug: 'kazakhstan', name: 'คาซัคสถาน', flagCode: 'kz', regionKey: 'others', aliases: ['คาซัคสถาน', 'kazakhstan', 'kz'] },
+  { slug: 'kenya', name: 'เคนย่า', flagCode: 'ke', regionKey: 'others', aliases: ['เคนย่า', 'kenya', 'ke'] },
 ];
 
 const normalizeText = (value: string) =>
@@ -133,7 +146,7 @@ const normalizeText = (value: string) =>
     .trim()
     .toLowerCase()
     .replace(/[()\[\]{}]/g, ' ')
-    .replace(/[\/_,;]+/g, ' ')
+    .replace(/[\/_,.;|]+/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
 
@@ -211,6 +224,7 @@ export function getRegionData(regionKeyInput: string): RegionData {
     flagCode: country.flagCode,
     searchNames: [country.name, ...country.aliases],
   }));
+
   return {
     name: region.name,
     nameEn: region.nameEn,
