@@ -506,7 +506,7 @@ export class GS25Scraper extends BaseScraper {
     }
 
     // Ensure highlights from title if none were extracted from detail page
-    if (tourData.highlights.length === 0) {
+    if ((tourData.highlights?.length ?? 0) === 0) {
       const nameParts = prog.programName.split(/[+\-–•|]+/)
         .map(s => s.trim())
         .filter(s => s.length > 3 && s.length < 80 && !/^[A-Z]{2,5}\d|^\d+[DN]|\b(วัน|คืน)\b/i.test(s));

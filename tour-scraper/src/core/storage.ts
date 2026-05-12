@@ -2,10 +2,11 @@
 // Uploads images to Supabase Storage with dedup via SHA256 hash filenames
 
 import { createClient } from '@supabase/supabase-js';
+import type { SupabaseClient } from '@supabase/supabase-js';
 
 const BUCKET = 'tour-images';
 
-let _supabase: ReturnType<typeof createClient> | null = null;
+let _supabase: SupabaseClient<any> | null = null;
 
 export function getSupabase() {
   if (!_supabase) {
@@ -14,7 +15,7 @@ export function getSupabase() {
     if (!url || !key) {
       throw new Error('Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY');
     }
-    _supabase = createClient(url, key);
+    _supabase = createClient<any>(url, key);
   }
   return _supabase;
 }
