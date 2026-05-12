@@ -66,6 +66,32 @@ function extractDepositFromText(text: string, priceFrom = 0): number | undefined
   return undefined;
 }
 
+function extractDepositFromApiPayload(detail: any, periods: any[]): number | undefined {
+  const candidates: number[] = [];
+  const pushCandidate = (value: any) => {
+    const numeric = Number(String(value).replace(/[^\d.]/g, ''));
+    if (!Number.isFinite(numeric)) return;
+    const rounded = Math.round(numeric);
+    if (rounded < 500 || rounded > 300000) return;
+    candidates.push(rounded);
+  };
+
+  const scanObject = (obj: any) => {
+    if (!obj || typeof obj !== 'object') return;
+    for (const [key, value] of Object.entries(obj)) {
+      if (!/deposit|booking.?fee|down.?payment/i.test(String(key))) continue;
+      if (typeof value === 'number' || typeof value === 'string') {
+        pushCandidate(value);
+      }
+    }
+  };
+
+  scanObject(detail);
+  if (Array.isArray(periods)) periods.forEach((period) => scanObject(period));
+  if (candidates.length === 0) return undefined;
+  return Math.min(...candidates);
+}
+
 export class Go365Scraper extends BaseScraper {
   private apiKey: string;
   private apiBase: string;
@@ -282,12 +308,9 @@ export class Go365Scraper extends BaseScraper {
     // Deposit ? prefer explicit value from text, fallback to heuristic by price bucket
     const prices = periodData.map((p: any) => p.period_price_start || p.period_price_min || 0).filter((p: number) => p > 0);
     const minPrice = prices.length > 0 ? Math.min(...prices) : 0;
-    let deposit: number | undefined = extractDepositFromText(description, minPrice);
-    if (!deposit && minPrice > 0) {
-      if (minPrice < 20000) deposit = 5000;
-      else if (minPrice < 50000) deposit = 10000;
-      else if (minPrice < 100000) deposit = 15000;
-      else deposit = 20000;
+    let deposit: number | undefined = extractDepositFromApiPayload(detail, periodData);
+    if (!deposit) {
+      deposit = extractDepositFromText(description, minPrice);
     }
 
     // Periods

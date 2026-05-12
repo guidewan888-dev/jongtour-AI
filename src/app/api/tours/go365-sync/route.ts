@@ -93,6 +93,35 @@ function extractDepositFromText(text: string, priceFrom = 0): number {
   return 0;
 }
 
+function extractDepositFromApiPayload(detail: any, periods: any[]): number {
+  const candidates: number[] = [];
+  const pushCandidate = (value: any) => {
+    const numeric = Number(String(value).replace(/[^\d.]/g, ''));
+    if (!Number.isFinite(numeric)) return;
+    const rounded = Math.round(numeric);
+    if (rounded < 500 || rounded > 300000) return;
+    candidates.push(rounded);
+  };
+
+  const scanObject = (obj: any) => {
+    if (!obj || typeof obj !== 'object') return;
+    for (const [key, value] of Object.entries(obj)) {
+      if (!/deposit|booking.?fee|down.?payment/i.test(String(key))) continue;
+      if (typeof value === 'number' || typeof value === 'string') {
+        pushCandidate(value);
+      }
+    }
+  };
+
+  scanObject(detail);
+  if (Array.isArray(periods)) {
+    periods.forEach((period) => scanObject(period));
+  }
+
+  if (candidates.length === 0) return 0;
+  return Math.min(...candidates);
+}
+
 function mapTourRow(tour: any, detail: any, periods: any[]) {
   const tourCode = tour.tour_code || `GO365-${tour.tour_id}`;
   
@@ -118,14 +147,11 @@ function mapTourRow(tour: any, detail: any, periods: any[]) {
   const prices = periods.map((p: any) => p.period_price_start || p.period_price_min || 0).filter((p: number) => p > 0);
   const priceFrom = prices.length > 0 ? Math.min(...prices) : (tour.tour_price_start || 0);
 
-  // Deposit (prefer extracted value, fallback to heuristic bucket)
+  // Deposit (real source only: API payload or explicit text)
   const descText = detail?.tour_description || tour.tour_description || '';
-  let deposit = extractDepositFromText(descText, priceFrom);
-  if (!deposit && priceFrom > 0) {
-    if (priceFrom < 20000) deposit = 5000;
-    else if (priceFrom < 50000) deposit = 10000;
-    else if (priceFrom < 100000) deposit = 15000;
-    else deposit = 20000;
+  let deposit = extractDepositFromApiPayload(detail, periods);
+  if (!deposit) {
+    deposit = extractDepositFromText(descText, priceFrom);
   }
 
   // Images
@@ -155,7 +181,7 @@ function mapTourRow(tour: any, detail: any, periods: any[]) {
     source_url: `https://www.go365travel.com/tour-detail/${tour.tour_id}/${encodeURIComponent(tourCode)}`,
     pdf_url: pdfUrl,
     is_active: true,
-    deposit,
+    deposit: deposit || null,
     highlights,
     last_scraped_at: new Date().toISOString(),
   };
@@ -282,9 +308,6 @@ export async function POST() {
 
     if (dbTours && dbTours.length > 0) {
       const codeToId = new Map(dbTours.map(t => [t.tour_code, t.id]));
-      
-      // Map tour_code to tour_id for API calls  
-      const tourCodeToApiId = new Map(allTours.map(t => [t.tour_code || `GO365-${t.tour_id}`, t.tour_id]));
 
       // Process periods in batches of 15 (parallel)
       const PERIOD_BATCH = 15;
@@ -329,20 +352,24 @@ export async function POST() {
             const prices = periods.map((p: any) => p.period_price_start || 0).filter((p: number) => p > 0);
             if (prices.length > 0) {
               const minPrice = Math.min(...prices);
-              let deposit = extractDepositFromText(String(tour.tour_description || ''), minPrice);
+              let deposit = extractDepositFromApiPayload(null, periods);
               if (!deposit) {
-                if (minPrice < 20000) deposit = 5000;
-                else if (minPrice < 50000) deposit = 10000;
-                else if (minPrice < 100000) deposit = 15000;
-                else deposit = 20000;
+                deposit = extractDepositFromText(String(tour.tour_description || ''), minPrice);
               }
-              
-              await supabase.from('scraper_tours').update({ 
+
+              const updatePayload: Record<string, any> = {
                 price_from: minPrice,
-                deposit 
-              }).eq('id', dbId);
+              };
+              if (deposit > 0) {
+                updatePayload.deposit = deposit;
+              }
+
+              await supabase.from('scraper_tours').update(updatePayload).eq('id', dbId);
             }
-          } catch {}
+          } catch (e: any) {
+            failed++;
+            errors.push(`${tourCode}: ${e?.message || 'Period sync failed'}`);
+          }
         });
 
         await Promise.all(periodPromises);
