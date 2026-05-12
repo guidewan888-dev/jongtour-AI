@@ -206,26 +206,38 @@ export async function middleware(req: NextRequest) {
     url.pathname = `/pub-auth${url.pathname}`;
     return NextResponse.rewrite(url);
   }
-  // ─── Legacy Route Redirects (/region/* → /tours/*, /country/* → /tours/*/*)
-  const COUNTRY_TO_CONTINENT: Record<string, string> = {
-    japan:'asia',china:'asia','south-korea':'asia',taiwan:'asia',vietnam:'asia',
-    hongkong:'asia',singapore:'asia',malaysia:'asia',india:'asia',cambodia:'asia',
-    myanmar:'asia',laos:'asia',philippines:'asia',srilanka:'asia',macau:'asia',
-    uk:'europe',france:'europe',italy:'europe',switzerland:'europe',spain:'europe',
-    turkey:'europe',russia:'europe',georgia:'europe',egypt:'europe',dubai:'europe',
-    usa:'americas',canada:'americas',australia:'oceania',newzealand:'oceania',
+  // ─── Legacy slug aliases: keep canonical /region/* and /country/* routes ───
+  const REGION_ALIAS_MAP: Record<string, string> = {
+    america: 'americas',
+    middleeast: 'middle-east',
+    middleeastafrica: 'middle-east',
+    'middle-east-africa': 'middle-east',
+    africa: 'others',
   };
-  const REGION_MAP: Record<string, string> = { asia:'asia', europe:'europe', americas:'americas', oceania:'oceania', africa:'europe' };
+  const COUNTRY_ALIAS_MAP: Record<string, string> = {
+    korea: 'south-korea',
+    us: 'usa',
+    unitedstates: 'usa',
+    england: 'uk',
+    britain: 'uk',
+    uae: 'dubai',
+    turkey: 'turkey',
+    turkiye: 'turkey',
+  };
 
   if (url.pathname.startsWith('/region/')) {
     const regionSlug = url.pathname.split('/')[2];
-    const mapped = REGION_MAP[regionSlug] || regionSlug;
-    return NextResponse.redirect(new URL(`/tours/${mapped}`, req.url), 301);
+    const mapped = REGION_ALIAS_MAP[regionSlug];
+    if (mapped && mapped !== regionSlug) {
+      return NextResponse.redirect(new URL(`/region/${mapped}`, req.url), 301);
+    }
   }
   if (url.pathname.startsWith('/country/')) {
     const countrySlug = url.pathname.split('/')[2];
-    const continent = COUNTRY_TO_CONTINENT[countrySlug] || 'asia';
-    return NextResponse.redirect(new URL(`/tours/${continent}/${countrySlug}`, req.url), 301);
+    const mapped = COUNTRY_ALIAS_MAP[countrySlug];
+    if (mapped && mapped !== countrySlug) {
+      return NextResponse.redirect(new URL(`/country/${mapped}`, req.url), 301);
+    }
   }
   // Legacy /wholesale/<partner-code> → /wholesaler/<partner-code> redirect
   // Only redirect public partner pages, NOT admin sub-paths
