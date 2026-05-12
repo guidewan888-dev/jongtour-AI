@@ -10,7 +10,7 @@ async function run() {
 
   let query = supabase
     .from('scraper_tours')
-    .select('id, site, tour_code, title, description, highlights, price_from, pdf_url, deposit')
+    .select('id, site, tour_code, title, description, highlights, source_url, price_from, pdf_url, deposit')
     .eq('is_active', true)
     .not('pdf_url', 'is', null)
     .neq('pdf_url', '')
@@ -56,6 +56,7 @@ async function run() {
         priceFrom: Number(tour.price_from || 0),
         contextText,
         forceRefresh: force,
+        sourceUrl: tour.source_url || '',
       });
 
       if (deposit > 0 && deposit !== before) {

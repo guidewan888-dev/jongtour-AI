@@ -8,6 +8,7 @@
  */
 
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
+import { resolveCountryMeta } from '@/lib/geo';
 
 // ─── Country Normalizer ─────────────────────────────────────────────
 // Maps all raw DB country values → standardized Thai names for frontend display
@@ -104,6 +105,28 @@ function getCountrySearchTerms(thaiName: string): string[] {
   }
   // Add prefix patterns for composite countries (e.g., จีน matches จีน-เฉิงตู)
   return [...new Set(terms)];
+}
+
+type RegionKey = 'asia' | 'europe' | 'middle-east' | 'americas' | 'oceania' | 'others';
+
+const REGION_FILTER_ALIASES: Record<RegionKey, string[]> = {
+  asia: ['asia', 'เอเชีย', 'เอเชียตะวันออก', 'asian'],
+  europe: ['europe', 'ยุโรป', 'eu'],
+  'middle-east': ['middle east', 'middle-east', 'ตะวันออกกลาง', 'middleeast'],
+  americas: ['america', 'americas', 'อเมริกา'],
+  oceania: ['oceania', 'โอเชียเนีย', 'australia-newzealand', 'australia'],
+  others: ['others', 'อื่น', 'อื่นๆ', 'other'],
+};
+
+function resolveRegionFilter(raw?: string): RegionKey | null {
+  const needle = String(raw || '').trim().toLowerCase();
+  if (!needle) return null;
+  for (const [regionKey, aliases] of Object.entries(REGION_FILTER_ALIASES) as Array<[RegionKey, string[]]>) {
+    if (aliases.some(alias => alias === needle)) {
+      return regionKey;
+    }
+  }
+  return null;
 }
 
 function chunkArray<T>(items: T[], chunkSize: number): T[][] {
@@ -275,21 +298,25 @@ export async function getTourList(options?: {
   // Filter by country using normalized matching
   let filteredTours = tours;
   if (country) {
+    const regionFilter = resolveRegionFilter(country);
     const normalizedSearch = normalizeCountry(country);
     const searchTerms = getCountrySearchTerms(normalizedSearch);
-    
-    const matchingTourIds = new Set(
-      (destinations || [])
-        .filter(d => {
-          const rawCountry = (d.country || '').trim();
-          const normalizedRaw = normalizeCountry(rawCountry);
-          // Match by normalized name OR by search terms OR prefix match
-          return normalizedRaw === normalizedSearch
-            || searchTerms.some(term => rawCountry.toUpperCase() === term.toUpperCase())
-            || rawCountry.startsWith(normalizedSearch);
-        })
-        .map(d => d.tourId)
-    );
+
+    const matchingTourIds = new Set((destinations || [])
+      .filter(d => {
+        const rawCountry = (d.country || '').trim();
+        if (!rawCountry) return false;
+
+        if (regionFilter) {
+          return resolveCountryMeta(rawCountry).regionKey === regionFilter;
+        }
+
+        const normalizedRaw = normalizeCountry(rawCountry);
+        return normalizedRaw === normalizedSearch
+          || searchTerms.some(term => rawCountry.toUpperCase() === term.toUpperCase())
+          || rawCountry.startsWith(normalizedSearch);
+      })
+      .map(d => d.tourId));
     filteredTours = tours.filter(t => matchingTourIds.has(t.id));
   }
 

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getTourList } from '@/services/tour.service';
 import { createClient } from '@/utils/supabase/server';
 import { mapWholesaleTour, mapScraperTour, toCardProps, type ScraperRawTour } from '@/lib/mappers/tour';
+import { resolveCountryMeta } from '@/lib/geo';
 
 // Normalize legacy site names in the DB to canonical names
 const SITE_ALIAS_MAP: Record<string, string> = {
@@ -60,6 +61,26 @@ const getMinPositivePrice = (periods: any[]) =>
     .map((period: any) => Number(period.price || 0))
     .filter((price: number) => price > 0)
     .sort((a: number, b: number) => a - b)[0];
+
+type RegionKey = 'asia' | 'europe' | 'middle-east' | 'americas' | 'oceania' | 'others';
+
+const REGION_FILTER_ALIASES: Record<RegionKey, string[]> = {
+  asia: ['asia', 'เอเชีย', 'เอเชียตะวันออก', 'asian'],
+  europe: ['europe', 'ยุโรป', 'eu'],
+  'middle-east': ['middle east', 'middle-east', 'ตะวันออกกลาง', 'middleeast'],
+  americas: ['america', 'americas', 'อเมริกา'],
+  oceania: ['oceania', 'โอเชียเนีย', 'australia-newzealand', 'australia'],
+  others: ['others', 'อื่น', 'อื่นๆ', 'other'],
+};
+
+const resolveRegionFilter = (raw?: string): RegionKey | null => {
+  const needle = String(raw || '').trim().toLowerCase();
+  if (!needle) return null;
+  for (const [regionKey, aliases] of Object.entries(REGION_FILTER_ALIASES) as Array<[RegionKey, string[]]>) {
+    if (aliases.some(alias => alias === needle)) return regionKey;
+  }
+  return null;
+};
 
 const chunkArray = <T>(items: T[], chunkSize: number): T[][] => {
   if (chunkSize <= 0) return [items];
@@ -142,9 +163,6 @@ async function getScraperTours(options: {
       .order('last_scraped_at', { ascending: false })
       .limit(options.limit || 500);
 
-    if (options.country) {
-      query = query.ilike('country', `%${options.country}%`);
-    }
     if (options.keyword) {
       query = query.ilike('title', `%${options.keyword}%`);
     }
@@ -209,6 +227,9 @@ async function getScraperTours(options: {
     };
 
     // ── Apply price fallback, smart deposit, and site name normalization ──
+    const requestedRegion = resolveRegionFilter(options.country);
+    const requestedCountryMeta = options.country ? resolveCountryMeta(options.country) : null;
+
     return data
       .map((t: any) => {
       const allPeriods = periodsByTour[t.id] || [];
@@ -238,7 +259,18 @@ async function getScraperTours(options: {
 
       return t as ScraperRawTour;
     })
-    .filter(Boolean) as ScraperRawTour[];
+    .filter(Boolean)
+    .filter((tour: any) => {
+      if (!options.country) return true;
+      const tourMeta = resolveCountryMeta(String(tour.country || ''), String(tour.title || ''));
+      if (requestedRegion) {
+        return tourMeta.regionKey === requestedRegion;
+      }
+      if (requestedCountryMeta) {
+        return tourMeta.slug === requestedCountryMeta.slug;
+      }
+      return String(tour.country || '').toLowerCase().includes(String(options.country).toLowerCase());
+    }) as ScraperRawTour[];
   } catch (e) {
     console.error('[Scraper tours fetch]', e);
     return [];

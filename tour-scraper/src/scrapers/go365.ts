@@ -40,8 +40,9 @@ function extractDepositFromText(text: string, priceFrom = 0): number | undefined
   if (!clean) return undefined;
 
   const amountPatterns = [
-    /(?:?????|????????|?????????|deposit(?:\s*amount)?|down\s*payment)\s*(?:???????|??????|????|??|????????)?\s*[:\-??]?\s*(?:?|???)?\s*([\d,]{3,7})/i,
-    /([\d,]{3,7})\s*(?:???|?)\s*(?:???????|??????|????|??)?\s*(?:?????|deposit|down\s*payment)/i,
+    /(?:ชำระ|วาง|จอง|สำรอง)?\s*(?:ค่ามัดจำ|ชำระมัดจำ|มัดจำ|deposit(?:\s*amount)?|down\s*payment)\s*(?:ต่อท่าน|ท่านละ|คนละ|ละ|per\s*person|person)?\s*[:\-–—]?\s*(?:฿|บาท|thb)?\s*([\d,]{3,7})/i,
+    /([\d,]{3,7})\s*(?:บาท|฿|thb)\s*(?:ต่อท่าน|ท่านละ|คนละ|ละ|per\s*person|person)?\s*(?:มัดจำ|deposit|down\s*payment)/i,
+    /(?:มัดจำ|deposit|down\s*payment)[^\d\n]{0,20}([\d,]{3,7})/i,
   ];
 
   for (const pattern of amountPatterns) {
@@ -53,7 +54,7 @@ function extractDepositFromText(text: string, priceFrom = 0): number | undefined
     }
   }
 
-  const percentMatch = clean.match(/(?:?????|deposit|down\s*payment)[^%\n]{0,40}?(\d{1,2})\s*%/i);
+  const percentMatch = clean.match(/(?:มัดจำ|deposit|down\s*payment)[^%\n]{0,40}?(\d{1,2})\s*%/i);
   if (percentMatch && priceFrom > 0) {
     const percent = Number(percentMatch[1]);
     if (Number.isFinite(percent) && percent > 0 && percent <= 100) {

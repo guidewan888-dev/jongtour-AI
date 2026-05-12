@@ -80,6 +80,7 @@ const resolveScraperDepositSafe = async (params: {
   priceFrom?: number | null;
   contextText?: string;
   forceRefresh?: boolean;
+  sourceUrl?: string;
 }): Promise<number> => {
   try {
     const moduleRef: any = await import('@/lib/depositResolver');
@@ -215,10 +216,11 @@ export async function GET(
     }
 
     let deposit = asNumber(data.deposit);
-    const shouldForceDepositRefresh = normalizedSite === 'go365';
+    const shouldForceDepositRefresh = normalizedSite === 'go365' || normalizedSite === 'bestintl';
     if (!deposit || shouldForceDepositRefresh) {
       const textContext = [
         data.title || '',
+        data.description || '',
         ...(Array.isArray(data.highlights) ? data.highlights : []),
         ...cleanPeriods.map((period: any) => period.rawText || ''),
       ].join('\n');
@@ -232,6 +234,7 @@ export async function GET(
         priceFrom,
         contextText: textContext,
         forceRefresh: shouldForceDepositRefresh,
+        sourceUrl: data.source_url || '',
       });
 
       if (resolvedDeposit > 0 && (shouldForceDepositRefresh || !deposit)) {

@@ -62,6 +62,37 @@ async function fetchApi(endpoint: string): Promise<any> {
   return data;
 }
 
+function extractDepositFromText(text: string, priceFrom = 0): number {
+  const clean = String(text || '');
+  if (!clean) return 0;
+
+  const amountPatterns = [
+    /(?:ชำระ|วาง|จอง|สำรอง)?\s*(?:ค่ามัดจำ|ชำระมัดจำ|มัดจำ|deposit(?:\s*amount)?|down\s*payment)\s*(?:ต่อท่าน|ท่านละ|คนละ|ละ|per\s*person|person)?\s*[:\-–—]?\s*(?:฿|บาท|thb)?\s*([\d,]{3,7})/i,
+    /([\d,]{3,7})\s*(?:บาท|฿|thb)\s*(?:ต่อท่าน|ท่านละ|คนละ|ละ|per\s*person|person)?\s*(?:มัดจำ|deposit|down\s*payment)/i,
+    /(?:มัดจำ|deposit|down\s*payment)[^\d\n]{0,20}([\d,]{3,7})/i,
+  ];
+
+  for (const pattern of amountPatterns) {
+    const match = clean.match(pattern);
+    if (!match?.[1]) continue;
+    const parsed = Number(match[1].replace(/[^\d]/g, ''));
+    if (Number.isFinite(parsed) && parsed >= 500 && parsed <= 300000) {
+      return Math.round(parsed);
+    }
+  }
+
+  const percentMatch = clean.match(/(?:มัดจำ|deposit|down\s*payment)[^%\n]{0,40}?(\d{1,2})\s*%/i);
+  if (percentMatch && priceFrom > 0) {
+    const percent = Number(percentMatch[1]);
+    if (Number.isFinite(percent) && percent > 0 && percent <= 100) {
+      const fromPercent = Math.round((priceFrom * percent) / 100);
+      if (fromPercent >= 500 && fromPercent <= 300000) return fromPercent;
+    }
+  }
+
+  return 0;
+}
+
 function mapTourRow(tour: any, detail: any, periods: any[]) {
   const tourCode = tour.tour_code || `GO365-${tour.tour_id}`;
   
@@ -87,9 +118,10 @@ function mapTourRow(tour: any, detail: any, periods: any[]) {
   const prices = periods.map((p: any) => p.period_price_start || p.period_price_min || 0).filter((p: number) => p > 0);
   const priceFrom = prices.length > 0 ? Math.min(...prices) : (tour.tour_price_start || 0);
 
-  // Deposit
-  let deposit = 0;
-  if (priceFrom > 0) {
+  // Deposit (prefer extracted value, fallback to heuristic bucket)
+  const descText = detail?.tour_description || tour.tour_description || '';
+  let deposit = extractDepositFromText(descText, priceFrom);
+  if (!deposit && priceFrom > 0) {
     if (priceFrom < 20000) deposit = 5000;
     else if (priceFrom < 50000) deposit = 10000;
     else if (priceFrom < 100000) deposit = 15000;
@@ -297,11 +329,13 @@ export async function POST() {
             const prices = periods.map((p: any) => p.period_price_start || 0).filter((p: number) => p > 0);
             if (prices.length > 0) {
               const minPrice = Math.min(...prices);
-              let deposit = 0;
-              if (minPrice < 20000) deposit = 5000;
-              else if (minPrice < 50000) deposit = 10000;
-              else if (minPrice < 100000) deposit = 15000;
-              else deposit = 20000;
+              let deposit = extractDepositFromText(String(tour.tour_description || ''), minPrice);
+              if (!deposit) {
+                if (minPrice < 20000) deposit = 5000;
+                else if (minPrice < 50000) deposit = 10000;
+                else if (minPrice < 100000) deposit = 15000;
+                else deposit = 20000;
+              }
               
               await supabase.from('scraper_tours').update({ 
                 price_from: minPrice,
