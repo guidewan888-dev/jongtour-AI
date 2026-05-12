@@ -1,6 +1,7 @@
 'use client';
 import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
+import { REGION_META, resolveCountryMeta } from '@/lib/geo';
 
 interface TourResult {
   id: string;
@@ -95,10 +96,7 @@ const CONTINENT_MAP: Record<string, { name: string; countries: Record<string, { 
 };
 
 function getContinent(country: string): string | null {
-  for (const [key, cont] of Object.entries(CONTINENT_MAP)) {
-    if (cont.countries[country]) return key;
-  }
-  return null;
+  return resolveCountryMeta(country).regionKey || null;
 }
 
 export default function SearchClient() {
@@ -174,12 +172,9 @@ export default function SearchClient() {
   // Filtered countries based on selected continents
   const visibleCountries = useMemo(() => {
     if (selectedContinents.size === 0) return Object.entries(countryCounts).sort((a, b) => b[1] - a[1]);
-    const allowed = new Set<string>();
-    selectedContinents.forEach(cont => {
-      const c = CONTINENT_MAP[cont];
-      if (c) Object.keys(c.countries).forEach(k => allowed.add(k));
-    });
-    return Object.entries(countryCounts).filter(([k]) => allowed.has(k)).sort((a, b) => b[1] - a[1]);
+    return Object.entries(countryCounts)
+      .filter(([country]) => selectedContinents.has(resolveCountryMeta(country).regionKey))
+      .sort((a, b) => b[1] - a[1]);
   }, [countryCounts, selectedContinents]);
 
   // Filtered cities based on selected countries — include ALL city data from tours too
@@ -317,7 +312,8 @@ export default function SearchClient() {
           {Object.entries(CONTINENT_MAP).map(([key, cont]) => {
             const count = continentCounts[key] || 0;
             if (count === 0) return null;
-            return <CheckboxItem key={key} checked={selectedContinents.has(key)} onChange={() => { toggleFilter(selectedContinents, key, setSelectedContinents); setSelectedCountries(new Set()); setSelectedCities(new Set()); }} label={cont.name} count={count} />;
+            const regionLabel = REGION_META[key as keyof typeof REGION_META]?.name || cont.name;
+            return <CheckboxItem key={key} checked={selectedContinents.has(key)} onChange={() => { toggleFilter(selectedContinents, key, setSelectedContinents); setSelectedCountries(new Set()); setSelectedCities(new Set()); }} label={regionLabel} count={count} />;
           })}
         </div>
       </div>

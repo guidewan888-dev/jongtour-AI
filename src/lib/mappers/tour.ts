@@ -13,6 +13,8 @@
 
 // ─── Standard Tour Schema ───────────────────────────────────────────
 
+import { resolveCountryMeta } from '@/lib/geo';
+
 export interface StandardTour {
   id: string;
   code: string;
@@ -161,6 +163,7 @@ export interface WholesaleRawTour {
 }
 
 export function mapWholesaleTour(raw: WholesaleRawTour): StandardTour {
+  const geo = resolveCountryMeta(raw.country, raw.title);
   const dur = raw.durationDays > 0
     ? { days: raw.durationDays, nights: raw.durationNights, display: `${raw.durationDays} วัน ${raw.durationNights} คืน` }
     : { days: 0, nights: 0, display: '' };
@@ -170,7 +173,7 @@ export function mapWholesaleTour(raw: WholesaleRawTour): StandardTour {
     code: raw.code || '',
     slug: raw.slug || '',
     title: cleanTitle(raw.title, raw.code),
-    country: raw.country || '',
+    country: geo.name || raw.country || '',
     city: raw.city || '',
     days: dur.days,
     nights: dur.nights,
@@ -188,7 +191,7 @@ export function mapWholesaleTour(raw: WholesaleRawTour): StandardTour {
     availableSeats: raw.availableSeats || 0,
     deposit: 0,
     hotelRating: 0,
-    flagCode: COUNTRY_FLAGS[raw.country] || '',
+    flagCode: geo.flagCode || COUNTRY_FLAGS[raw.country] || '',
     nextDeparture: raw.nextDeparture || 'N/A',
   };
 }
@@ -214,6 +217,7 @@ export interface ScraperRawTour {
 }
 
 export function mapScraperTour(raw: ScraperRawTour): StandardTour {
+  const geo = resolveCountryMeta(raw.country, raw.title);
   const dur = parseDuration(raw.duration);
   const code = raw.tour_code || '';
 
@@ -222,7 +226,7 @@ export function mapScraperTour(raw: ScraperRawTour): StandardTour {
     code,
     slug: code.toLowerCase(),
     title: cleanTitle(raw.title, code),
-    country: raw.country || '',
+    country: geo.name || raw.country || '',
     city: '',
     days: dur.days,
     nights: dur.nights,
@@ -240,7 +244,7 @@ export function mapScraperTour(raw: ScraperRawTour): StandardTour {
     availableSeats: 0,
     deposit: typeof raw.deposit === 'number' ? raw.deposit : 0,
     hotelRating: typeof raw.hotel_rating === 'number' ? raw.hotel_rating : 0,
-    flagCode: COUNTRY_FLAGS[raw.country] || '',
+    flagCode: geo.flagCode || COUNTRY_FLAGS[raw.country] || '',
     nextDeparture: '',
   };
 }

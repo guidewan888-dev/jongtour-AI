@@ -162,7 +162,7 @@ export default function MegaMenu() {
                 <h3 className="font-bold text-slate-800 text-lg flex items-center gap-2">
                   <span>🗽</span> <span className="leading-tight">อเมริกา /<br/>ออสเตรเลีย</span>
                 </h3>
-                <a href="/region/america" className="text-xs text-emerald-600 font-semibold hover:underline text-center">ดู<br/>ทั้งหมด</a>
+                <a href="/region/americas" className="text-xs text-emerald-600 font-semibold hover:underline text-center">ดู<br/>ทั้งหมด</a>
               </div>
               <ul className="space-y-3">
                 {[

@@ -1,7 +1,9 @@
-'use client';
+﻿'use client';
 import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import TourCard from '@/components/tour/TourCard';
+import { getSupplierInfo } from '@/config/suppliers';
+import { getCountryBySlug, resolveCountryMeta } from '@/lib/geo';
 
 interface Tour {
   id: string; slug: string; code: string; title: string; supplier: string;
@@ -10,48 +12,13 @@ interface Tour {
   airline?: string;
 }
 
-const COUNTRY_MAP: Record<string, { name: string; flagCode: string }> = {
-  'japan': { name: 'ญี่ปุ่น', flagCode: 'jp' },
-  'south-korea': { name: 'เกาหลีใต้', flagCode: 'kr' },
-  'korea': { name: 'เกาหลีใต้', flagCode: 'kr' },
-  'china': { name: 'จีน', flagCode: 'cn' },
-  'taiwan': { name: 'ไต้หวัน', flagCode: 'tw' },
-  'vietnam': { name: 'เวียดนาม', flagCode: 'vn' },
-  'hongkong': { name: 'ฮ่องกง', flagCode: 'hk' },
-  'europe': { name: 'ยุโรป', flagCode: 'eu' },
-  'india': { name: 'อินเดีย', flagCode: 'in' },
-  'turkey': { name: 'ตุรกี', flagCode: 'tr' },
-  'dubai': { name: 'ดูไบ', flagCode: 'ae' },
-  'singapore': { name: 'สิงคโปร์', flagCode: 'sg' },
-  'malaysia': { name: 'มาเลเซีย', flagCode: 'my' },
-  'laos': { name: 'ลาว', flagCode: 'la' },
-  'myanmar': { name: 'พม่า', flagCode: 'mm' },
-  'cambodia': { name: 'กัมพูชา', flagCode: 'kh' },
-  'russia': { name: 'รัสเซีย', flagCode: 'ru' },
-  'australia': { name: 'ออสเตรเลีย', flagCode: 'au' },
-  'newzealand': { name: 'นิวซีแลนด์', flagCode: 'nz' },
-  'egypt': { name: 'อียิปต์', flagCode: 'eg' },
-  'georgia': { name: 'จอร์เจีย', flagCode: 'ge' },
-  'usa': { name: 'อเมริกา', flagCode: 'us' },
-  'canada': { name: 'แคนาดา', flagCode: 'ca' },
-  'uk': { name: 'อังกฤษ', flagCode: 'gb' },
-  'france': { name: 'ฝรั่งเศส', flagCode: 'fr' },
-  'italy': { name: 'อิตาลี', flagCode: 'it' },
-  'switzerland': { name: 'สวิตเซอร์แลนด์', flagCode: 'ch' },
-  'spain': { name: 'สเปน', flagCode: 'es' },
-  'philippines': { name: 'ฟิลิปปินส์', flagCode: 'ph' },
-  'srilanka': { name: 'ศรีลังกา', flagCode: 'lk' },
-  'macau': { name: 'มาเก๊า', flagCode: 'mo' },
-};
-
-import { SUPPLIERS, getSupplierInfo } from '@/config/suppliers';
-const SUPPLIER_PRIORITY = SUPPLIERS; // alias for backward compat
 
 export default function CountryPage({ params }: { params: { slug: string } }) {
   const [tours, setTours] = useState<Tour[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeCity, setActiveCity] = useState<string | null>(null);
-  const countryInfo = COUNTRY_MAP[params.slug] || { name: params.slug, flagCode: '' };
+  const countryMeta = getCountryBySlug(params.slug);
+  const countryInfo = countryMeta || { slug: params.slug, name: params.slug, flagCode: '', regionKey: 'others', aliases: [] };
 
   // Read city from URL query param on mount
   useEffect(() => {
@@ -61,12 +28,16 @@ export default function CountryPage({ params }: { params: { slug: string } }) {
   }, []);
 
   useEffect(() => {
-    fetch(`/api/tours/list?country=${encodeURIComponent(countryInfo.name)}&limit=1000`)
+    fetch('/api/tours/list?limit=3000')
       .then(r => r.json())
-      .then(data => { if (data.tours) setTours(data.tours); })
-      .catch(() => {})
+      .then(data => {
+        const allTours = (data.tours || []) as Tour[];
+        const filtered = allTours.filter((tour) => resolveCountryMeta(tour.country, tour.title).slug === countryInfo.slug);
+        setTours(filtered);
+      })
+      .catch(() => setTours([]))
       .finally(() => setLoading(false));
-  }, [countryInfo.name]);
+  }, [countryInfo.slug]);
 
   // Get unique cities
   const cities = useMemo(() => {
@@ -106,20 +77,20 @@ export default function CountryPage({ params }: { params: { slug: string } }) {
         </div>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16 relative">
           <nav className="text-sm text-white/70 mb-4 flex items-center gap-2">
-            <Link href="/" className="hover:text-white transition-colors">หน้าหลัก</Link>
-            <span>›</span>
-            <Link href="/search" className="hover:text-white transition-colors">ค้นหาทัวร์</Link>
-            <span>›</span>
-            <span className="text-white font-medium">ทัวร์{countryInfo.name}</span>
+            <Link href="/" className="hover:text-white transition-colors">เธซเธเนเธฒเธซเธฅเธฑเธ</Link>
+            <span>โ€บ</span>
+            <Link href="/search" className="hover:text-white transition-colors">เธเนเธเธซเธฒเธ—เธฑเธงเธฃเน</Link>
+            <span>โ€บ</span>
+            <span className="text-white font-medium">เธ—เธฑเธงเธฃเน{countryInfo.name}</span>
           </nav>
           <div className="flex items-center gap-4">
             {countryInfo.flagCode && (
               <img src={`https://flagcdn.com/w80/${countryInfo.flagCode}.png`} width="56" height="42" alt={countryInfo.name} className="rounded shadow-lg" />
             )}
             <div>
-              <h1 className="text-3xl md:text-4xl font-black tracking-tight">ทัวร์{countryInfo.name}</h1>
+              <h1 className="text-3xl md:text-4xl font-black tracking-tight">เธ—เธฑเธงเธฃเน{countryInfo.name}</h1>
               <p className="text-white/80 text-base mt-1">
-                {loading ? 'กำลังค้นหาโปรแกรมทัวร์...' : `พบ ${tours.length} โปรแกรม จาก ${supplierGroups.length} โฮลเซล`}
+                {loading ? 'เธเธณเธฅเธฑเธเธเนเธเธซเธฒเนเธเธฃเนเธเธฃเธกเธ—เธฑเธงเธฃเน...' : `เธเธ ${tours.length} เนเธเธฃเนเธเธฃเธก เธเธฒเธ ${supplierGroups.length} เนเธฎเธฅเน€เธเธฅ`}
               </p>
             </div>
           </div>
@@ -130,9 +101,9 @@ export default function CountryPage({ params }: { params: { slug: string } }) {
         {/* City filter chips */}
         {cities.length > 0 && (
           <div className="mb-6">
-            <h2 className="text-sm font-bold text-slate-500 mb-3">📍 กรองตามเมือง</h2>
+            <h2 className="text-sm font-bold text-slate-500 mb-3">๐“ เธเธฃเธญเธเธ•เธฒเธกเน€เธกเธทเธญเธ</h2>
             <div className="flex flex-wrap gap-2">
-              <button onClick={() => setActiveCity(null)} className={`px-3 py-1.5 rounded-full text-xs font-bold border transition-all ${!activeCity ? 'bg-primary-500 text-white border-primary-500' : 'bg-white text-slate-600 border-slate-200 hover:border-primary-300'}`}>ทั้งหมด ({tours.length})</button>
+              <button onClick={() => setActiveCity(null)} className={`px-3 py-1.5 rounded-full text-xs font-bold border transition-all ${!activeCity ? 'bg-primary-500 text-white border-primary-500' : 'bg-white text-slate-600 border-slate-200 hover:border-primary-300'}`}>เธ—เธฑเนเธเธซเธกเธ” ({tours.length})</button>
               {cities.map(city => {
                 const cityCount = tours.filter(t => t.city === city || t.title.includes(city)).length;
                 return (
@@ -168,11 +139,11 @@ export default function CountryPage({ params }: { params: { slug: string } }) {
                         )}
                       </div>
                       <div>
-                        <h2 className="text-lg font-bold text-slate-900">ดีลจาก {display.name}</h2>
-                        <p className="text-sm text-slate-500">{supplierTours.length} โปรแกรม</p>
+                        <h2 className="text-lg font-bold text-slate-900">เธ”เธตเธฅเธเธฒเธ {display.name}</h2>
+                        <p className="text-sm text-slate-500">{supplierTours.length} เนเธเธฃเนเธเธฃเธก</p>
                       </div>
                     </div>
-                    <Link href={`/search?supplier=${encodeURIComponent(display.name)}`} className="text-xs font-bold text-primary-600 hover:text-primary-700">ดูทัวร์ทั้งหมดจาก {display.name} →</Link>
+                    <Link href={`/search?supplier=${encodeURIComponent(display.name)}`} className="text-xs font-bold text-primary-600 hover:text-primary-700">เธ”เธนเธ—เธฑเธงเธฃเนเธ—เธฑเนเธเธซเธกเธ”เธเธฒเธ {display.name} โ’</Link>
                   </div>
 
                   <div className="p-5 md:p-6">
@@ -189,20 +160,20 @@ export default function CountryPage({ params }: { params: { slug: string } }) {
         ) : (
           <div className="bg-white rounded-2xl p-16 text-center border border-slate-200">
             {countryInfo.flagCode && <img src={`https://flagcdn.com/w80/${countryInfo.flagCode}.png`} width="48" height="36" alt="" className="mx-auto rounded mb-4" />}
-            <h2 className="text-xl font-bold text-slate-900 mb-2">ยังไม่มีทัวร์{countryInfo.name}</h2>
-            <p className="text-slate-500 mb-6">กรุณากลับมาตรวจสอบใหม่ หรือค้นหาทัวร์อื่น</p>
-            <Link href="/search" className="btn-primary">ค้นหาทัวร์ทั้งหมด</Link>
+            <h2 className="text-xl font-bold text-slate-900 mb-2">เธขเธฑเธเนเธกเนเธกเธตเธ—เธฑเธงเธฃเน{countryInfo.name}</h2>
+            <p className="text-slate-500 mb-6">เธเธฃเธธเธ“เธฒเธเธฅเธฑเธเธกเธฒเธ•เธฃเธงเธเธชเธญเธเนเธซเธกเน เธซเธฃเธทเธญเธเนเธเธซเธฒเธ—เธฑเธงเธฃเนเธญเธทเนเธ</p>
+            <Link href="/search" className="btn-primary">เธเนเธเธซเธฒเธ—เธฑเธงเธฃเนเธ—เธฑเนเธเธซเธกเธ”</Link>
           </div>
         )}
 
         {/* FAQ */}
         <section className="mt-12 bg-white rounded-2xl p-6 md:p-8 border border-slate-200">
-          <h2 className="text-xl font-bold text-slate-900 mb-6">❓ คำถามที่พบบ่อย — ทัวร์{countryInfo.name}</h2>
+          <h2 className="text-xl font-bold text-slate-900 mb-6">โ“ เธเธณเธ–เธฒเธกเธ—เธตเนเธเธเธเนเธญเธข โ€” เธ—เธฑเธงเธฃเน{countryInfo.name}</h2>
           <div className="space-y-3">
             {[
-              { q: `ทัวร์${countryInfo.name}ปกติใช้เวลากี่วัน?`, a: 'โปรแกรมทัวร์ส่วนใหญ่มักจะจัดอยู่ที่ประมาณ 4-8 วัน ขึ้นอยู่กับเส้นทาง' },
-              { q: 'จองทัวร์ผ่าน Jongtour ปลอดภัยไหม?', a: 'ปลอดภัย 100% ครับ เราทำงานร่วมกับโฮลเซลล์ที่มีใบอนุญาตจากการท่องเที่ยวเท่านั้น' },
-              { q: `มีกรุ๊ปเหมาส่วนตัวไป${countryInfo.name}ไหม?`, a: 'มีครับ! ติดต่อเจ้าหน้าที่เพื่อจัดโปรแกรม Private Group เริ่มต้นที่ 8 ท่าน' },
+              { q: `เธ—เธฑเธงเธฃเน${countryInfo.name}เธเธเธ•เธดเนเธเนเน€เธงเธฅเธฒเธเธตเนเธงเธฑเธ?`, a: 'เนเธเธฃเนเธเธฃเธกเธ—เธฑเธงเธฃเนเธชเนเธงเธเนเธซเธเนเธกเธฑเธเธเธฐเธเธฑเธ”เธญเธขเธนเนเธ—เธตเนเธเธฃเธฐเธกเธฒเธ“ 4-8 เธงเธฑเธ เธเธถเนเธเธญเธขเธนเนเธเธฑเธเน€เธชเนเธเธ—เธฒเธ' },
+              { q: 'เธเธญเธเธ—เธฑเธงเธฃเนเธเนเธฒเธ Jongtour เธเธฅเธญเธ”เธ เธฑเธขเนเธซเธก?', a: 'เธเธฅเธญเธ”เธ เธฑเธข 100% เธเธฃเธฑเธ เน€เธฃเธฒเธ—เธณเธเธฒเธเธฃเนเธงเธกเธเธฑเธเนเธฎเธฅเน€เธเธฅเธฅเนเธ—เธตเนเธกเธตเนเธเธญเธเธธเธเธฒเธ•เธเธฒเธเธเธฒเธฃเธ—เนเธญเธเน€เธ—เธตเนเธขเธงเน€เธ—เนเธฒเธเธฑเนเธ' },
+              { q: `เธกเธตเธเธฃเธธเนเธเน€เธซเธกเธฒเธชเนเธงเธเธ•เธฑเธงเนเธ${countryInfo.name}เนเธซเธก?`, a: 'เธกเธตเธเธฃเธฑเธ! เธ•เธดเธ”เธ•เนเธญเน€เธเนเธฒเธซเธเนเธฒเธ—เธตเนเน€เธเธทเนเธญเธเธฑเธ”เนเธเธฃเนเธเธฃเธก Private Group เน€เธฃเธดเนเธกเธ•เนเธเธ—เธตเน 8 เธ—เนเธฒเธ' },
             ].map(faq => (
               <details key={faq.q} className="group bg-slate-50 rounded-xl border border-slate-100 open:bg-white open:border-primary-200 open:shadow-sm transition-all">
                 <summary className="flex items-center justify-between p-5 font-semibold text-slate-900 cursor-pointer list-none text-sm">
@@ -218,3 +189,4 @@ export default function CountryPage({ params }: { params: { slug: string } }) {
     </div>
   );
 }
+
