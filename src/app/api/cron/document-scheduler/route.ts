@@ -26,6 +26,8 @@ export async function GET(req: Request) {
     const sevenDaysLater = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
 
     const { generatePaymentReminder, generateTravelAppointment, generateInvoice, deliverDocument } = await import('@/services/documentService');
+    const fullName = (customer?: { firstName?: string | null; lastName?: string | null }) =>
+      [customer?.firstName, customer?.lastName].filter(Boolean).join(' ').trim();
 
     // === 1. PAYMENT REMINDERS (3 days before due) ===
     const unpaidInvoices = await prisma.invoice.findMany({
@@ -55,7 +57,7 @@ export async function GET(req: Request) {
             pdfUrl: reminder.pdfUrl,
             channels: ['EMAIL'],
             recipientEmail: inv.booking.customer.email,
-            customerName: inv.booking.customer.fullName,
+            customerName: fullName(inv.booking.customer),
           });
           results.push({ type: 'PAYMENT_REMINDER', invoiceNo: inv.invoiceNo, status: 'SENT' });
         }
@@ -92,7 +94,7 @@ export async function GET(req: Request) {
             pdfUrl: doc.pdfUrl,
             channels: ['EMAIL'],
             recipientEmail: booking.customer.email,
-            customerName: booking.customer.fullName,
+            customerName: fullName(booking.customer),
           });
           results.push({ type: 'TRAVEL_APPOINTMENT', bookingRef: booking.bookingRef, status: 'SENT' });
         }
@@ -124,7 +126,7 @@ export async function GET(req: Request) {
             pdfUrl: balanceInvoice.pdfUrl || '',
             channels: ['EMAIL'],
             recipientEmail: booking.customer.email,
-            customerName: booking.customer.fullName,
+            customerName: fullName(booking.customer),
           });
           results.push({ type: 'BALANCE_INVOICE', bookingRef: booking.bookingRef, status: 'SENT' });
         }

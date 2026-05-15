@@ -1,8 +1,19 @@
 import React from 'react';
-import { TourData } from './TourCard';
 
 interface FlashSaleCardProps {
-  data: TourData;
+  data: {
+    id: string;
+    title: string;
+    image: string;
+    supplier: string;
+    country: string;
+    city: string;
+    nextDeparture: string;
+    price: number;
+    originalPrice?: number;
+    availableSeats: number;
+    aiScore: number;
+  };
 }
 
 export default function FlashSaleCard({ data }: FlashSaleCardProps) {

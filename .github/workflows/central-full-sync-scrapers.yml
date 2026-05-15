@@ -1,0 +1,76 @@
+name: Central Full Sync (Scrapers)
+
+on:
+  schedule:
+    - cron: '30 6 * * *'
+    - cron: '30 18 * * *'
+  workflow_dispatch:
+    inputs:
+      targets:
+        description: 'Comma-separated wholesaler ids (default: worldconnection,itravels,bestintl,gs25)'
+        required: false
+        default: 'worldconnection,itravels,bestintl,gs25'
+      run_requeue:
+        description: 'Run requeue recoverable failed jobs before sync'
+        required: false
+        default: 'true'
+
+jobs:
+  central-full-sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install root dependencies
+        run: npm ci
+
+      - name: Install tour-scraper dependencies (for GS25 session fallback)
+        working-directory: tour-scraper
+        run: npm ci
+
+      - name: Requeue recoverable failed jobs
+        if: ${{ github.event.inputs.run_requeue != 'false' }}
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          CENTRAL_REQUEUE_TARGETS: ${{ github.event.inputs.targets || 'worldconnection,itravels,bestintl,gs25' }}
+        run: npx tsx scripts/requeue-recoverable-pdf-failures.ts
+
+      - name: Run central full sync
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          GS25_EMAIL: ${{ secrets.GS25_EMAIL }}
+          GS25_PASSWORD: ${{ secrets.GS25_PASSWORD }}
+          CENTRAL_SYNC_TARGETS: ${{ github.event.inputs.targets || 'worldconnection,itravels,bestintl,gs25' }}
+          CENTRAL_SYNC_MAX_WORKER_ROUNDS: '700'
+          CENTRAL_SYNC_PER_TARGET_MAX_MS: '10800000'
+          CENTRAL_SYNC_LIMIT_PER_SOURCE: '20000'
+          CENTRAL_SYNC_ENQUEUE_LIMIT: '200000'
+          CENTRAL_SYNC_QUEUE_BATCH_SIZE: '100'
+        run: npx tsx scripts/cron-central-full-sync.ts
+
+      - name: Export completeness + fail list
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          CENTRAL_EXPORT_TARGETS: ${{ github.event.inputs.targets || 'worldconnection,itravels,bestintl,gs25' }}
+        run: npx tsx scripts/export-central-completeness-fail-list.ts
+
+      - name: Upload reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: central-full-sync-reports
+          path: |
+            reports/*.json
+            reports/*.csv
+          if-no-files-found: warn

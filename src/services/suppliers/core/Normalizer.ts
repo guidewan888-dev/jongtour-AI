@@ -1,6 +1,38 @@
 import { RawDeparture, RawTour } from './SupplierAdapter';
 
 export class Normalizer {
+  private static asNumber(value: any): number {
+    if (value === null || value === undefined || value === '') return 0;
+    if (typeof value === 'number') return Number.isFinite(value) ? value : 0;
+    const cleaned = String(value).replace(/[^\d.-]/g, '');
+    if (!cleaned) return 0;
+    const parsed = Number(cleaned);
+    return Number.isFinite(parsed) ? parsed : 0;
+  }
+
+  private static pushPrice(params: {
+    prices: any[];
+    depId: string;
+    suffix: string;
+    paxType: string;
+    sellingPrice: number;
+    netPrice?: number;
+  }) {
+    const selling = this.asNumber(params.sellingPrice);
+    if (selling <= 0) return;
+
+    const net = this.asNumber(params.netPrice);
+    params.prices.push({
+      id: `pr_${params.suffix}_${params.depId}`,
+      departureId: params.depId,
+      paxType: params.paxType,
+      sellingPrice: selling,
+      netPrice: net > 0 ? net : selling,
+      currency: "THB",
+      updatedAt: new Date().toISOString()
+    });
+  }
+
   /**
    * Helper to slugify a string
    */
@@ -121,6 +153,25 @@ export class Normalizer {
       for (const p of periods) {
         if (!p.PeriodID || !p.PeriodStartDate || !p.PeriodEndDate) continue;
         const depId = `${prefix}_dep_${p.PeriodID}`;
+        const totalSeatsRaw = this.asNumber(p.GroupSize || p.group || p.seat);
+        const hasRemaining =
+          (p.Seat !== null && p.Seat !== undefined && p.Seat !== '')
+          || (p.available !== null && p.available !== undefined && p.available !== '');
+        const remainingFromPayload = hasRemaining ? this.asNumber(p.Seat ?? p.available) : null;
+        const booked = this.asNumber(p.Book || p.join || p.booked);
+        const totalSeats = totalSeatsRaw > 0 ? totalSeatsRaw : (remainingFromPayload && remainingFromPayload > 0 ? remainingFromPayload : 0);
+        let remainingSeats = remainingFromPayload;
+
+        if (remainingSeats === null) {
+          remainingSeats = totalSeats > 0 ? Math.max(totalSeats - booked, 0) : 0;
+        }
+        if (totalSeats > 0) {
+          remainingSeats = Math.min(Math.max(remainingSeats, 0), totalSeats);
+        }
+
+        const statusRaw = String(p.PeriodStatus || p.status || '').toLowerCase();
+        const isClosed = statusRaw.includes('close') || statusRaw.includes('full') || statusRaw.includes('cancel');
+
         departures.push({
           id: depId,
           tourId,
@@ -128,46 +179,116 @@ export class Normalizer {
           externalDepartureId: p.PeriodID.toString(),
           startDate: new Date(p.PeriodStartDate).toISOString(),
           endDate: new Date(p.PeriodEndDate).toISOString(),
-          totalSeats: p.GroupSize || 0,
-          remainingSeats: p.Seat || 0,
-          status: p.Seat > 0 ? "AVAILABLE" : "FULL",
+          totalSeats,
+          remainingSeats,
+          status: isClosed ? "FULL" : (remainingSeats > 0 ? "AVAILABLE" : "FULL"),
           updatedAt: new Date().toISOString()
         });
 
-        // Adult Price
-        if (p.Price) {
-          prices.push({
-            id: `pr_ad_${depId}`,
-            departureId: depId,
-            paxType: "ADULT",
-            sellingPrice: p.Price,
-            netPrice: p.Price_Agency || p.Price,
-            currency: "THB",
-            updatedAt: new Date().toISOString()
-          });
-        }
-        
-        // Child Price
-        if (p.Price_Child) {
-          prices.push({
-            id: `pr_ch_${depId}`,
-            departureId: depId,
-            paxType: "CHILD",
-            sellingPrice: p.Price_Child,
-            netPrice: p.Price_Child_Agency || p.Price_Child,
-            currency: "THB",
-            updatedAt: new Date().toISOString()
-          });
-        }
+        this.pushPrice({
+          prices,
+          depId,
+          suffix: 'ad',
+          paxType: "ADULT",
+          sellingPrice: p.Price,
+          netPrice: p.Price_Agency || p.Price
+        });
+
+        this.pushPrice({
+          prices,
+          depId,
+          suffix: 'ch',
+          paxType: "CHILD",
+          sellingPrice: p.Price_Child || p.Price_ChildNB || p.Price_Child_NB,
+          netPrice: p.Price_Child_Agency || p.Price_Child
+        });
+
+        this.pushPrice({
+          prices,
+          depId,
+          suffix: 'inf',
+          paxType: "INFANT",
+          sellingPrice: p.Price_Infant,
+          netPrice: p.Price_Infant_Agency || p.Price_Infant
+        });
+
+        // Single supplement and deposit are stored as dedicated pax types
+        this.pushPrice({
+          prices,
+          depId,
+          suffix: 'si',
+          paxType: "SINGLE_SUPP",
+          sellingPrice: p.Price_Single_Bed || p.Price_Single || p.PriceForOne
+        });
+
+        this.pushPrice({
+          prices,
+          depId,
+          suffix: 'dp',
+          paxType: "DEPOSIT",
+          sellingPrice: p.Deposit || p.Deposit_End
+        });
       }
     } else if (supplierId === 'SUP_GO365') {
-      // Mock for now
+      const periods = payload.periods || payload.Periods || [];
+      for (const p of periods) {
+        const depExternalId = p.period_id || p.id;
+        const start = p.period_date || p.start || p.startDate;
+        const end = p.period_back || p.end || p.endDate;
+        if (!depExternalId || !start || !end) continue;
+
+        const depId = `${prefix}_dep_${depExternalId}`;
+        const totalSeats = this.asNumber(p.period_total || p.period_quota || p.totalSeats || p.seat);
+        const remainingSeats = this.asNumber(p.period_available || p.available || p.seats_left);
+        const statusRaw = String(p.status || p.period_status || '').toLowerCase();
+        const isOpen = p.period_visible === 2 || statusRaw.includes('open') || statusRaw.includes('available') || remainingSeats > 0;
+
+        departures.push({
+          id: depId,
+          tourId,
+          supplierId,
+          externalDepartureId: depExternalId.toString(),
+          startDate: new Date(start).toISOString(),
+          endDate: new Date(end).toISOString(),
+          totalSeats,
+          remainingSeats,
+          status: isOpen ? "AVAILABLE" : "FULL",
+          updatedAt: new Date().toISOString()
+        });
+
+        this.pushPrice({
+          prices,
+          depId,
+          suffix: 'ad',
+          paxType: "ADULT",
+          sellingPrice: p.period_price_start || p.period_price_min || p.price
+        });
+
+        this.pushPrice({
+          prices,
+          depId,
+          suffix: 'si',
+          paxType: "SINGLE_SUPP",
+          sellingPrice: p.period_price_single || p.price_single || p.priceSingleRoomAdd
+        });
+
+        this.pushPrice({
+          prices,
+          depId,
+          suffix: 'dp',
+          paxType: "DEPOSIT",
+          sellingPrice: p.period_deposit || p.deposit || p.booking_fee
+        });
+      }
     } else {
       // TourFactory and CheckInGroup
       const periods = payload.periods || [];
       for (const p of periods) {
         if (!p.id || !p.start || !p.end) continue;
         const depId = `${prefix}_dep_${p.id}`;
+        const totalSeats = this.asNumber(p.seat || p.group || p.totalSeats);
+        const remainingSeats = this.asNumber(p.available || p.seats_left || p.seatAvailable);
+
         departures.push({
           id: depId,
           tourId,
@@ -175,24 +296,53 @@ export class Normalizer {
           externalDepartureId: p.id.toString(),
           startDate: new Date(p.start).toISOString(),
           endDate: new Date(p.end).toISOString(),
-          totalSeats: p.seat || 0,
-          remainingSeats: p.available || 0,
-          status: p.available > 0 ? "AVAILABLE" : "FULL",
+          totalSeats,
+          remainingSeats,
+          status: remainingSeats > 0 ? "AVAILABLE" : "FULL",
           updatedAt: new Date().toISOString()
         });
 
-        // Adult Price
-        if (p.price) {
-          prices.push({
-            id: `pr_ad_${depId}`,
-            departureId: depId,
-            paxType: "ADULT",
-            sellingPrice: p.price,
-            netPrice: p.netPrice || p.price,
-            currency: "THB",
-            updatedAt: new Date().toISOString()
-          });
-        }
+        this.pushPrice({
+          prices,
+          depId,
+          suffix: 'ad',
+          paxType: "ADULT",
+          sellingPrice: p.price,
+          netPrice: p.netPrice || p.price
+        });
+
+        this.pushPrice({
+          prices,
+          depId,
+          suffix: 'ch',
+          paxType: "CHILD",
+          sellingPrice: p.priceChild || p.price_child || p.price_childwithbed || p.priceChildNoBed || p.price_childnobed,
+          netPrice: p.netPriceChild || p.priceChild || p.price
+        });
+
+        this.pushPrice({
+          prices,
+          depId,
+          suffix: 'inf',
+          paxType: "INFANT",
+          sellingPrice: p.priceInfant || p.price_inf || p.price_infant
+        });
+
+        this.pushPrice({
+          prices,
+          depId,
+          suffix: 'si',
+          paxType: "SINGLE_SUPP",
+          sellingPrice: p.priceSingleRoomAdd || p.priceForOne || p.price_sgl
+        });
+
+        this.pushPrice({
+          prices,
+          depId,
+          suffix: 'dp',
+          paxType: "DEPOSIT",
+          sellingPrice: p.deposit || p.price_deposit || p.priceDeposit
+        });
       }
     }
 

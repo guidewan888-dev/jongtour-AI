@@ -91,20 +91,63 @@ export function extractDepositFromText(rawText: string, priceFrom = 0): number |
 
 const buildPdfHeaders = (site?: string) => {
   const lowerSite = String(site || '').toLowerCase();
-  if (lowerSite === 'gs25') {
-    return {
-      Referer: 'https://gs25travel.com/',
-      Origin: 'https://gs25travel.com',
-      Accept: 'application/pdf,*/*;q=0.8',
-      'User-Agent': 'Mozilla/5.0 (compatible; JongtourBot/1.0)',
-    };
-  }
-
-  return {
+  const headers: Record<string, string> = {
     Accept: 'application/pdf,*/*;q=0.8',
     'User-Agent': 'Mozilla/5.0 (compatible; JongtourBot/1.0)',
   };
+  if (lowerSite === 'gs25') {
+    headers.Referer = 'https://gs25travel.com/';
+    headers.Origin = 'https://gs25travel.com';
+  }
+  return headers;
 };
+
+const buildHtmlHeaders = (site?: string) => {
+  const lowerSite = String(site || '').toLowerCase();
+  const headers: Record<string, string> = {
+    Accept: 'text/html,application/xhtml+xml',
+    'User-Agent': 'Mozilla/5.0 (compatible; JongtourBot/1.0)',
+  };
+  if (lowerSite === 'gs25') {
+    headers.Referer = 'https://gs25travel.com/';
+    headers.Origin = 'https://gs25travel.com';
+  }
+  return headers;
+};
+
+async function extractDepositFromSourcePage(sourceUrl: string, priceFrom = 0, site?: string): Promise<number | null> {
+  const url = String(sourceUrl || '').trim();
+  if (!/^https?:\/\//i.test(url)) return null;
+
+  try {
+    const res = await fetch(url, {
+      method: 'GET',
+      redirect: 'follow',
+      headers: buildHtmlHeaders(site),
+      cache: 'no-store',
+    });
+    if (!res.ok) return null;
+
+    const html = await res.text();
+    if (!html) return null;
+
+    // Lightweight html-to-text extraction for keyword matching
+    const text = html
+      .replace(/<script[\s\S]*?<\/script>/gi, ' ')
+      .replace(/<style[\s\S]*?<\/style>/gi, ' ')
+      .replace(/<[^>]+>/g, ' ')
+      .replace(/&nbsp;/gi, ' ')
+      .replace(/&amp;/gi, '&')
+      .replace(/&#39;/gi, "'")
+      .replace(/&quot;/gi, '"')
+      .replace(/[ \t]+/g, ' ')
+      .replace(/\s*\n\s*/g, '\n');
+
+    return extractDepositFromText(text, priceFrom);
+  } catch {
+    return null;
+  }
+}
 
 export async function extractDepositFromPdfUrl(pdfUrl: string, priceFrom = 0, site?: string): Promise<number | null> {
   const normalizedUrl = String(pdfUrl || '').trim();
@@ -158,9 +201,10 @@ export async function extractDepositFromPdfUrl(pdfUrl: string, priceFrom = 0, si
   return pdfDepositCache.get(normalizedUrl)!;
 }
 
-async function refreshBestIntlPdfUrl(sourceUrl: string): Promise<string | null> {
+async function refreshPdfUrlFromSource(sourceUrl: string, site?: string): Promise<string | null> {
   const url = String(sourceUrl || '').trim();
   if (!/^https?:\/\//i.test(url)) return null;
+  const lowerSite = String(site || '').toLowerCase();
 
   try {
     const res = await fetch(url, {
@@ -176,6 +220,29 @@ async function refreshBestIntlPdfUrl(sourceUrl: string): Promise<string | null> 
 
     const html = await res.text();
     if (!html) return null;
+
+    if (lowerSite === 'go365') {
+      const go365FileHost = html.match(/https?:\/\/[^"'\s>]*(?:file4load|loadfileall)[^"'\s>]*(?:\.pdf|download)[^"'\s>]*/i);
+      if (go365FileHost?.[0]) return decodeHtmlEntities(go365FileHost[0]);
+    }
+
+    if (lowerSite === 'gs25') {
+      const gs25PdfView = html.match(/href=["']([^"']*documents\/pdfview\/[^"']*)["']/i);
+      if (gs25PdfView?.[1]) {
+        const href = decodeHtmlEntities(gs25PdfView[1]);
+        if (/^https?:\/\//i.test(href)) return href;
+        return new URL(href, url).toString();
+      }
+    }
+
+    if (lowerSite === 'itravels') {
+      const itravelPdf = html.match(/href=["']([^"']*(?:\.pdf|\/pdf[^"']*))["']/i);
+      if (itravelPdf?.[1]) {
+        const href = decodeHtmlEntities(itravelPdf[1]);
+        if (/^https?:\/\//i.test(href)) return href;
+        return new URL(href, url).toString();
+      }
+    }
 
     const cloudfrontMatch = html.match(/https?:\/\/[^"'\s>]*cloudfront[^"'\s>]*\.pdf[^"'\s>]*/i);
     if (cloudfrontMatch?.[0]) return decodeHtmlEntities(cloudfrontMatch[0]);
@@ -211,8 +278,13 @@ export async function resolveAndPersistScraperDeposit(params: ResolveScraperDepo
   let pdfUrl = String(params.pdfUrl || '').trim();
   let resolved = fromContext || await extractDepositFromPdfUrl(pdfUrl, Number(params.priceFrom || 0), params.site);
 
-  if (!resolved && String(params.site || '').toLowerCase() === 'bestintl' && params.sourceUrl) {
-    const refreshedPdfUrl = await refreshBestIntlPdfUrl(params.sourceUrl);
+  const site = String(params.site || '').toLowerCase();
+  const shouldRefreshPdfUrl = ['bestintl', 'go365', 'itravels', 'gs25'].includes(site);
+  if (!resolved && params.sourceUrl) {
+    resolved = await extractDepositFromSourcePage(params.sourceUrl, Number(params.priceFrom || 0), site);
+  }
+  if (!resolved && shouldRefreshPdfUrl && params.sourceUrl) {
+    const refreshedPdfUrl = await refreshPdfUrlFromSource(params.sourceUrl, site);
     if (refreshedPdfUrl) {
       pdfUrl = refreshedPdfUrl;
       resolved = await extractDepositFromPdfUrl(pdfUrl, Number(params.priceFrom || 0), params.site);

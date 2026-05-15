@@ -7,6 +7,7 @@ import { Go365Adapter } from '@/services/suppliers/adapters/Go365Adapter';
 import { prisma } from '@/lib/prisma';
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
 import { resolveSupplierForSync } from '@/lib/wholesale-sync';
+import { syncCentralWholesale } from '@/services/central-wholesale.service';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 300;
@@ -43,6 +44,33 @@ export async function POST(request: Request) {
     const startTime = new Date();
     const syncManager = new SyncManager();
     await syncManager.syncSupplierTours(adapterSupplierId);
+    let centralResult: any = null;
+    let go365CentralSync: any = null;
+    if (adapterSupplierId === 'SUP_GO365') {
+      const { POST: runGo365DirectSync } = await import('@/app/api/tours/go365-sync/route');
+      const req = new Request('http://localhost/api/tours/go365-sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          pageSize: 50,
+          maxPages: 50,
+          concurrency: 6,
+          runPdfWorker: true,
+        }),
+      });
+      const res = await runGo365DirectSync(req);
+      go365CentralSync = await res.json();
+      if (!res.ok || !go365CentralSync?.success) {
+        throw new Error(go365CentralSync?.error || 'SUP_GO365 direct central sync failed');
+      }
+    } else {
+      centralResult = await syncCentralWholesale({
+        wholesalerId: adapterSupplierId,
+        includeApi: true,
+        includeScraper: false,
+        limitPerSource: 5000,
+      });
+    }
     const endTime = new Date();
     const duration = Math.round((endTime.getTime() - startTime.getTime()) / 1000);
 
@@ -97,6 +125,8 @@ export async function POST(request: Request) {
       success: true,
       message: `Sync สำเร็จ! ${recordCount} โปรแกรม (${duration}s)`,
       recordCount,
+      centralNormalized: centralResult,
+      go365CentralSync,
       duration,
       syncedAt: endTime.toISOString(),
     });

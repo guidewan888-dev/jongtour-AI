@@ -1,6 +1,7 @@
 import { SupplierAdapter } from './SupplierAdapter';
 import { Normalizer } from './Normalizer';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { supabaseFetch } from '@/lib/supabaseFetch';
 
 // Simple ID generator for Prisma cuid equivalents
 const generateId = () => {
@@ -44,7 +45,10 @@ export class SyncManager {
     if (!supabaseUrl || !supabaseKey) {
       throw new Error('[SyncManager] Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY environment variables');
     }
-    this.supabase = createClient(supabaseUrl, supabaseKey);
+    this.supabase = createClient(supabaseUrl, supabaseKey, {
+      auth: { persistSession: false, autoRefreshToken: false },
+      global: { fetch: supabaseFetch as typeof fetch },
+    });
   }
 
   private async withRetry<T>(operation: () => Promise<T>, maxRetries = 3): Promise<T> {

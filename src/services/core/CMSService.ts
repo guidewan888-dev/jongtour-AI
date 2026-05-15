@@ -10,7 +10,7 @@ export class CMSService {
     try {
       return await prisma.banner.findMany({
         where: { isActive: true },
-        orderBy: { sortOrder: 'asc' },
+        orderBy: { createdAt: 'desc' },
       });
     } catch {
       return [];

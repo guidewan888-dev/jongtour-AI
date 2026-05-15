@@ -30,8 +30,13 @@ export interface TourCardProps {
 export default function TourCard({ tour }: { tour: TourCardProps }) {
   const hasImage = !!tour.imageUrl;
   const isUrgent = tour.availableSeats > 0 && tour.availableSeats <= 5;
-  const isScraperTour = !!tour.sourceUrl;
-  const href = isScraperTour ? `/tour/s/${tour.code.toLowerCase()}` : `/tour/${tour.slug}`;
+  const safeSlug = String(tour.slug || '').trim();
+  const safeCode = String(tour.code || '').trim().toLowerCase();
+  const href = safeSlug
+    ? `/tour/${safeSlug}`
+    : safeCode
+      ? `/tour/s/${safeCode}`
+      : '/search';
 
   return (
     <Link

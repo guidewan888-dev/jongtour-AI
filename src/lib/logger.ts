@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma';
+import type { Prisma } from '@prisma/client';
 
 // ============================================================
 // CENTRALIZED LOGGER
@@ -59,11 +60,10 @@ export async function auditLog(params: {
     await prisma.auditLog.create({
       data: {
         action: params.action,
-        userId: params.userId || 'SYSTEM',
-        targetType: params.targetType,
-        targetId: params.targetId,
-        details: params.details ? JSON.stringify(params.details) : undefined,
-        ipAddress: params.ipAddress,
+        userId: params.userId || null,
+        resource: params.targetType || 'system',
+        resourceId: params.targetId || 'N/A',
+        newValues: (params.details ? JSON.parse(JSON.stringify(params.details)) : undefined) as Prisma.InputJsonValue | undefined,
       },
     });
   } catch (err) {

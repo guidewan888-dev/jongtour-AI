@@ -77,7 +77,7 @@ export async function middleware(req: NextRequest) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 
-  let session: { user?: { user_metadata?: Record<string, string> } } | null = null;
+  let session: any = null;
 
   if (supabaseUrl && supabaseKey && supabaseKey.startsWith('ey')) {
     try {
@@ -95,7 +95,7 @@ export async function middleware(req: NextRequest) {
         },
       });
       const { data } = await supabase.auth.getSession();
-      session = data?.session as typeof session;
+      session = data?.session ?? null;
     } catch (_e) {
       // Continue without auth
     }

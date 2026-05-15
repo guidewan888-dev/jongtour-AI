@@ -12,13 +12,13 @@ export default async function BlogListPage() {
   let posts: { id: string; title: string; slug: string; excerpt: string | null; created_at: Date; category: string | null }[] = [];
   
   try {
-    const rawPosts = await prisma.cms_pages.findMany({
+    const rawPosts = await prisma.cmsPage.findMany({
       where: { page_type: "BLOG", status: "PUBLISHED" },
       select: { id: true, title: true, slug: true, meta_description: true, created_at: true, page_type: true },
       orderBy: { created_at: "desc" },
       take: 20,
     });
-    posts = rawPosts.map(p => ({
+    posts = rawPosts.map((p) => ({
       id: p.id,
       title: p.title,
       slug: p.slug,

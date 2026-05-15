@@ -5,20 +5,19 @@ const SUPPLIERS = [
   { id: 'SUP_LETGO', name: "Let's Go" },
   { id: 'SUP_CHECKIN', name: 'Checkin Group' },
   { id: 'SUP_TOURFACTORY', name: 'Tour Factory' },
-  { id: 'SUP_GO365', name: 'Go365', isScraper: true },
+  { id: 'SUP_GO365', name: 'Go365' },
 ];
 
 export default function SyncButtons() {
   const [syncing, setSyncing] = useState<Record<string, boolean>>({});
   const [results, setResults] = useState<Record<string, { ok: boolean; msg: string }>>({});
 
-  const handleSync = async (supplierId: string, isScraper = false) => {
+  const handleSync = async (supplierId: string) => {
     setSyncing(prev => ({ ...prev, [supplierId]: true }));
     setResults(prev => ({ ...prev, [supplierId]: { ok: true, msg: '⏳ กำลัง Sync...' } }));
     try {
-      // Go365 uses dedicated scraper sync endpoint
-      const url = isScraper ? '/api/tours/go365-sync' : '/api/admin/sync';
-      const body = isScraper ? {} : { supplierId };
+      const url = '/api/admin/sync';
+      const body = { supplierId };
       
       const res = await fetch(url, {
         method: 'POST',
@@ -54,14 +53,14 @@ export default function SyncButtons() {
 
   const handleSyncAll = async () => {
     for (const s of SUPPLIERS) {
-      await handleSync(s.id, (s as any).isScraper);
+      await handleSync(s.id);
     }
     // Hard reload to update server-rendered stats
     window.location.reload();
   };
 
-  const handleSyncOne = async (supplierId: string, isScraper = false) => {
-    await handleSync(supplierId, isScraper);
+  const handleSyncOne = async (supplierId: string) => {
+    await handleSync(supplierId);
     window.location.reload();
   };
 
@@ -93,7 +92,7 @@ export default function SyncButtons() {
                 <p className="text-xs text-slate-400 font-mono">{s.id}</p>
               </div>
               <button
-                onClick={() => handleSyncOne(s.id, (s as any).isScraper)}
+                onClick={() => handleSyncOne(s.id)}
                 disabled={syncing[s.id]}
                 className="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs px-4 py-2 rounded-lg disabled:opacity-50 transition-colors"
               >

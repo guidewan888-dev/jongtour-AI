@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getTourBySlug } from '@/services/tour.service';
+import { getCentralTourBySlug } from '@/services/central-wholesale.service';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -13,13 +13,12 @@ export async function GET(
   { params }: { params: { slug: string } }
 ) {
   try {
-    const tour = await getTourBySlug(params.slug);
-
-    if (!tour) {
-      return NextResponse.json({ error: 'Tour not found' }, { status: 404 });
+    const centralTour = await getCentralTourBySlug(params.slug);
+    if (!centralTour) {
+      return NextResponse.json({ error: 'Tour not found in central system' }, { status: 404 });
     }
 
-    return NextResponse.json({ tour }, {
+    return NextResponse.json({ tour: centralTour }, {
       headers: { 'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300' },
     });
   } catch (e: any) {

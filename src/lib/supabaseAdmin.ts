@@ -1,4 +1,5 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { supabaseFetch } from '@/lib/supabaseFetch';
 
 /**
  * Server-side Supabase REST client (service_role).
@@ -29,6 +30,7 @@ export function getSupabaseAdmin(): SupabaseClient {
 
   _client = createClient(url, key, {
     auth: { persistSession: false, autoRefreshToken: false },
+    global: { fetch: supabaseFetch as typeof fetch },
   });
 
   return _client;

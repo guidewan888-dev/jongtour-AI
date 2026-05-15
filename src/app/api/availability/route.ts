@@ -12,7 +12,7 @@ export async function GET(req: NextRequest) {
     if (!departureId) return NextResponse.json({ error: 'departureId required' }, { status: 400 });
 
     const result = await AvailabilityService.checkAvailability(departureId, seats);
-    return NextResponse.json({ success: true, ...result });
+    return NextResponse.json(result);
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
     if (!departureId) return NextResponse.json({ error: 'departureId required' }, { status: 400 });
 
     const result = await AvailabilityService.holdSeats(departureId, seats || 1, holdMinutes || 30);
-    return NextResponse.json({ success: true, ...result });
+    return NextResponse.json(result);
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });
   }

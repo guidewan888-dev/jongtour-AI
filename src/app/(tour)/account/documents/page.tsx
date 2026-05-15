@@ -104,7 +104,7 @@ export default async function CustomerDocumentsPage() {
                       documentNo={doc.no}
                       pdfUrl={doc.pdfUrl}
                       customerEmail={customer.email || user.email || ''}
-                      customerName={customer.fullName}
+                      customerName={`${customer.firstName || ''} ${customer.lastName || ''}`.trim() || customer.email || user.email || 'ลูกค้า'}
                     />
                   </div>
                 ) : (

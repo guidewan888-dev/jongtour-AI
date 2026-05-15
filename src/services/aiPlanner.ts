@@ -18,6 +18,7 @@ const openaiApiKey = process.env.OPENAI_API_KEY;
 const openai = openaiApiKey ? new OpenAI({ apiKey: openaiApiKey }) : null;
 
 export async function processAiQuery(userMessage: string) {
+  const supabase = getSupabase();
   let matchedTourIds: string[] = [];
   let isSemanticSearch = false;
   let keywords: string[] = [];
@@ -32,13 +33,13 @@ export async function processAiQuery(userMessage: string) {
 
       const query_embedding = embedResponse.data[0].embedding;
 
-      const { data: matches, error: matchError } = await supabase.rpc('match_tours', {
+      const { data: matches, error: matchError } = await (supabase as any).rpc('match_tours', {
         query_embedding,
         match_threshold: 0.25,
         match_count: 8
       });
 
-      if (!matchError && matches && matches.length > 0) {
+      if (!matchError && Array.isArray(matches) && matches.length > 0) {
         matchedTourIds = matches.map((m: any) => m.id);
         isSemanticSearch = true;
         keywords = ["ทัวร์ที่ตรงกับความต้องการของคุณ"];

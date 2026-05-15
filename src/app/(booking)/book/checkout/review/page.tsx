@@ -28,8 +28,11 @@ export default function ReviewPage() {
   }
 
   const childTitles = ["เด็กชาย", "เด็กหญิง", "Master", "Miss"];
-  const adults = session.travelers.filter(t => !childTitles.includes(t.titleTh));
-  const children = session.travelers.filter(t => childTitles.includes(t.titleTh));
+  const adultCount = session.adults || 1;
+  const childWithBedCount = session.childWithBedCount ?? session.children ?? 0;
+  const childWithoutBedCount = session.childWithoutBedCount ?? 0;
+  const infantCount = session.infantCount ?? 0;
+  const insurancePax = adultCount + childWithBedCount + childWithoutBedCount;
   const total = calculateTotal(session);
 
   return (
@@ -110,16 +113,28 @@ export default function ReviewPage() {
         <div className="g-card p-6">
           <h3 className="font-bold text-slate-900 mb-4">🧾 สรุปราคา</h3>
           <div className="space-y-2 text-sm">
-            {(session.adults || 1) > 0 && (
+            {adultCount > 0 && (
               <div className="flex justify-between">
-                <span className="text-slate-500">ผู้ใหญ่ ×{session.adults || 1}</span>
-                <span>฿{((session.adults || 1) * session.priceAdult).toLocaleString()}</span>
+                <span className="text-slate-500">ผู้ใหญ่ ×{adultCount}</span>
+                <span>฿{(adultCount * session.priceAdult).toLocaleString()}</span>
               </div>
             )}
-            {(session.children || 0) > 0 && (
+            {childWithBedCount > 0 && (
               <div className="flex justify-between">
-                <span className="text-slate-500">เด็ก ×{session.children}</span>
-                <span>฿{((session.children || 0) * (session.priceChild || session.priceAdult)).toLocaleString()}</span>
+                <span className="text-slate-500">เด็กมีเตียง ×{childWithBedCount}</span>
+                <span>฿{(childWithBedCount * (session.priceChildWithBed || session.priceChild || session.priceAdult)).toLocaleString()}</span>
+              </div>
+            )}
+            {childWithoutBedCount > 0 && (
+              <div className="flex justify-between">
+                <span className="text-slate-500">เด็กไม่มีเตียง ×{childWithoutBedCount}</span>
+                <span>฿{(childWithoutBedCount * (session.priceChildWithoutBed || session.priceChild || session.priceAdult)).toLocaleString()}</span>
+              </div>
+            )}
+            {infantCount > 0 && (
+              <div className="flex justify-between">
+                <span className="text-slate-500">ทารก ×{infantCount}</span>
+                <span>฿{(infantCount * (session.priceInfant || 0)).toLocaleString()}</span>
               </div>
             )}
             {(session.singleRooms || 0) > 0 && session.priceSingle && (
@@ -130,11 +145,11 @@ export default function ReviewPage() {
             )}
             {session.addOns?.includes('insurance') && (
               <div className="flex justify-between text-xs">
-                <span className="text-slate-400">ประกันภัยการเดินทาง ×{(session.adults || 1) + (session.children || 0)}</span>
-                <span className="text-slate-500">฿{(800 * ((session.adults || 1) + (session.children || 0))).toLocaleString()}</span>
+                <span className="text-slate-400">ประกันภัยการเดินทาง ×{insurancePax}</span>
+                <span className="text-slate-500">฿{(800 * insurancePax).toLocaleString()}</span>
               </div>
             )}
-            {session.addOns?.includes('airport') && (
+            {(session.addOns?.includes('airport_transfer') || session.addOns?.includes('airport')) && (
               <div className="flex justify-between text-xs">
                 <span className="text-slate-400">รถรับส่งสนามบิน</span>
                 <span className="text-slate-500">฿1,500</span>
@@ -171,3 +186,5 @@ export default function ReviewPage() {
     </div>
   );
 }
+
+

@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma';
+import Link from 'next/link';
 import AdminBookingsClient from './AdminBookingsClient';
 
 export const dynamic = 'force-dynamic';
@@ -27,5 +28,14 @@ export default async function AdminBookingsPage() {
     staff: 'SYS'
   }));
 
-  return <AdminBookingsClient initialData={formattedData} />;
+  return (
+    <div className="space-y-4">
+      <div className="flex justify-end">
+        <Link href="/bookings/snapshots" className="px-4 py-2 rounded-lg border border-slate-300 text-sm font-semibold hover:bg-slate-50">
+          Audit Snapshots
+        </Link>
+      </div>
+      <AdminBookingsClient initialData={formattedData} />
+    </div>
+  );
 }

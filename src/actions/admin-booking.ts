@@ -94,7 +94,7 @@ export async function assignBookingStaff(formData: FormData) {
 
   await prisma.booking.update({
     where: { id: bookingId },
-    data: { assignedToId: staffId },
+    data: { supplierContactName: staffId },
   });
 
   revalidatePath("/bookings");

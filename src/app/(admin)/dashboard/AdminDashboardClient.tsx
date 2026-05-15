@@ -282,11 +282,12 @@ function WorldConnectionWidget() {
       .catch(() => {});
 
     // Also fetch tour count
-    fetch('/api/tours/scraper-list?site=worldconnection&limit=1')
+    fetch('/api/tours/list?wholesalerId=worldconnection&limit=3000')
       .then(r => r.json())
       .then(d => {
-        if (d.total !== undefined) {
-          setStats(prev => prev ? { ...prev, tours: d.total } : { tours: d.total, lastSync: null, status: 'unknown' });
+        const tourCount = Number(d?.total || 0);
+        if (Number.isFinite(tourCount)) {
+          setStats(prev => prev ? { ...prev, tours: tourCount } : { tours: tourCount, lastSync: null, status: 'unknown' });
         }
       })
       .catch(() => {});

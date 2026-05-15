@@ -93,7 +93,7 @@ export class ReportService {
       select: {
         id: true, displayName: true, type: true, tier: true,
         totalRevenue: true, totalCommission: true, totalPaid: true,
-        _count: { select: { clicks: true, commissions: true } },
+        _count: { select: { clicks: true, ledgerEntries: true } },
       },
       orderBy: { totalRevenue: 'desc' },
       take: 20,

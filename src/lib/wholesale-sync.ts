@@ -28,7 +28,6 @@ const SCRAPER_SITES: ScraperSite[] = [
   { slug: 'itravels', name: 'iTravels Center', syncEndpoint: '/api/scraper/sync', syncBody: { site: 'itravels' } },
   { slug: 'bestintl', name: 'Best International', syncEndpoint: '/api/scraper/sync', syncBody: { site: 'bestintl' } },
   { slug: 'gs25', name: 'GS25 Travel', syncEndpoint: '/api/scraper/sync', syncBody: { site: 'gs25' } },
-  { slug: 'go365', name: 'Go365 Travel', syncEndpoint: '/api/tours/go365-sync', syncBody: {} },
 ];
 
 type ScraperRunRow = {
@@ -84,7 +83,6 @@ function getRunSiteKey(run: ScraperRunRow): string {
     bestinternational: 'bestintl',
     bestintl: 'bestintl',
     gs25: 'gs25',
-    go365: 'go365',
   };
   return alias[normalized] || raw;
 }

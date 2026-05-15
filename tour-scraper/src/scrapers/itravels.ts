@@ -7,6 +7,37 @@ import * as cheerio from 'cheerio';
 import { BaseScraper } from './base.js';
 import type { TourData, TourPeriod } from '../types.js';
 
+function extractDepositFromText(text: string, priceFrom = 0): number | undefined {
+  const clean = String(text || '');
+  if (!clean) return undefined;
+
+  const amountPatterns = [
+    /(?:ชำระ|วาง|จอง|สำรอง)?\s*(?:ค่ามัดจำ|ชำระมัดจำ|มัดจำ|deposit(?:\s*amount)?|down\s*payment|booking\s*fee)\s*(?:ต่อท่าน|ท่านละ|คนละ|ละ|per\s*person|person)?\s*[:\-–—]?\s*(?:฿|บาท|thb)?\s*([\d,]{3,7})/i,
+    /([\d,]{3,7})\s*(?:บาท|฿|thb)\s*(?:ต่อท่าน|ท่านละ|คนละ|ละ|per\s*person|person)?\s*(?:มัดจำ|deposit|down\s*payment|booking\s*fee)/i,
+    /(?:มัดจำ|deposit|down\s*payment|booking\s*fee)[^\d\n]{0,20}([\d,]{3,7})/i,
+  ];
+
+  for (const pattern of amountPatterns) {
+    const match = clean.match(pattern);
+    if (!match?.[1]) continue;
+    const parsed = Number(match[1].replace(/[^\d]/g, ''));
+    if (Number.isFinite(parsed) && parsed >= 500 && parsed <= 300000) {
+      return Math.round(parsed);
+    }
+  }
+
+  const percentMatch = clean.match(/(?:มัดจำ|deposit|down\s*payment|booking\s*fee)[^%\n]{0,40}?(\d{1,2})\s*%/i);
+  if (percentMatch && priceFrom > 0) {
+    const percent = Number(percentMatch[1]);
+    if (Number.isFinite(percent) && percent > 0 && percent <= 100) {
+      const fromPercent = Math.round((priceFrom * percent) / 100);
+      if (fromPercent >= 500 && fromPercent <= 300000) return fromPercent;
+    }
+  }
+
+  return undefined;
+}
+
 export class ITravelsScraper extends BaseScraper {
   private browser?: Browser;
 
@@ -155,14 +186,21 @@ export class ITravelsScraper extends BaseScraper {
       : (starDigitMatch ? parseInt(starDigitMatch[1]) : undefined);
 
     // ── PDF — button with "PDF" text or href containing pdf ──
-    const pdfUrl = $('a:contains("PDF")').first().attr('href')
+    const pdfHref = $('a:contains("PDF")').first().attr('href')
       || $('a[href*=".pdf"]').first().attr('href')
       || $('a[href*="/pdf"]').first().attr('href')
       || '';
+    let pdfUrl = '';
+    if (pdfHref) {
+      try {
+        pdfUrl = new URL(pdfHref, url).href;
+      } catch {
+        pdfUrl = pdfHref;
+      }
+    }
 
-    // ── Deposit — "มัดจำ XX,XXX" ──
-    const depositMatch = bodyText.match(/มัดจำ\s*[^\d]*([\d,]+)/);
-    const deposit = depositMatch ? parseInt(depositMatch[1].replace(/,/g, ''), 10) : undefined;
+    // ── Deposit ──
+    const deposit = extractDepositFromText(bodyText, priceFrom || 0);
 
     // ── Description ──
     const description = $('meta[name="description"]').attr('content') || '';

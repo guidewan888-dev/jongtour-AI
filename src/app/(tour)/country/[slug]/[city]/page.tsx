@@ -15,6 +15,7 @@ interface Tour {
   nextDeparture: string;
   price: number;
   availableSeats: number;
+  imageUrl?: string;
 }
 
 // Map URL slug → Thai city name for keyword search

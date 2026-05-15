@@ -1,14 +1,15 @@
 import React from "react";
 import Link from "next/link";
-import { Package, RefreshCw, AlertTriangle, Settings, ArrowRight } from "lucide-react";
+import { Package, RefreshCw, AlertTriangle, Settings, ArrowRight, Database } from "lucide-react";
 
 const cards = [
-  { title: "Wholesale Dashboard", desc: "‡∏†‡∏≤‡∏û‡∏£‡∏ß‡∏°‡∏Ç‡πâ‡∏≠‡∏°‡∏π‡∏• Wholesale ‡∏ó‡∏±‡πâ‡∏á‡∏´‡∏°‡∏î", icon: Package, href: "/wholesale/dashboard", color: "bg-blue-50 text-blue-600" },
-  { title: "Suppliers", desc: "‡∏à‡∏±‡∏î‡∏Å‡∏≤‡∏£ Wholesale Partners", icon: Settings, href: "/wholesale/suppliers", color: "bg-purple-50 text-purple-600" },
-  { title: "Sync Center", desc: "‡∏ã‡∏¥‡∏á‡∏Ñ‡πå‡∏Ç‡πâ‡∏≠‡∏°‡∏π‡∏•‡∏ó‡∏±‡∏ß‡∏£‡πå‡∏à‡∏≤‡∏Å API", icon: RefreshCw, href: "/wholesale/sync", color: "bg-emerald-50 text-emerald-600" },
-  { title: "Credentials", desc: "‡∏à‡∏±‡∏î‡∏Å‡∏≤‡∏£ API Keys & Tokens", icon: Settings, href: "/wholesale/credentials", color: "bg-amber-50 text-amber-600" },
-  { title: "Diagnostics", desc: "‡∏ï‡∏£‡∏ß‡∏à‡∏™‡∏≠‡∏ö‡∏™‡∏ñ‡∏≤‡∏ô‡∏∞‡∏£‡∏∞‡∏ö‡∏ö", icon: AlertTriangle, href: "/wholesale/diagnostics", color: "bg-red-50 text-red-600" },
-  { title: "Sync Logs", desc: "‡∏õ‡∏£‡∏∞‡∏ß‡∏±‡∏ï‡∏¥‡∏Å‡∏≤‡∏£‡∏ã‡∏¥‡∏á‡∏Ñ‡πå‡∏Ç‡πâ‡∏≠‡∏°‡∏π‡∏•", icon: RefreshCw, href: "/wholesale/sync-logs", color: "bg-slate-50 text-slate-600" },
+  { title: "Wholesale Dashboard", desc: "¿“æ√«¡¢ÈÕ¡Ÿ≈ Wholesale ∑—ÈßÀ¡¥", icon: Package, href: "/wholesale/dashboard", color: "bg-blue-50 text-blue-600" },
+  { title: "Central System", desc: "Raw/Normalize/Mapping ·≈– Review „π√–∫∫°≈“ß", icon: Database, href: "/wholesale/central", color: "bg-emerald-50 text-emerald-600" },
+  { title: "Suppliers", desc: "®—¥°“√ Wholesale Partners", icon: Settings, href: "/wholesale/suppliers", color: "bg-purple-50 text-purple-600" },
+  { title: "Sync Center", desc: "´‘ß§Ï¢ÈÕ¡Ÿ≈∑—«√Ï®“° API", icon: RefreshCw, href: "/wholesale/sync", color: "bg-emerald-50 text-emerald-600" },
+  { title: "Credentials", desc: "®—¥°“√ API Keys & Tokens", icon: Settings, href: "/wholesale/credentials", color: "bg-amber-50 text-amber-600" },
+  { title: "Diagnostics", desc: "µ√«® Õ∫ ∂“π–√–∫∫", icon: AlertTriangle, href: "/wholesale/diagnostics", color: "bg-red-50 text-red-600" },
+  { title: "Sync Logs", desc: "ª√–«—µ‘°“√´‘ß§Ï¢ÈÕ¡Ÿ≈", icon: RefreshCw, href: "/wholesale/sync-logs", color: "bg-slate-50 text-slate-600" },
 ];
 
 export default function WholesalePage() {
@@ -16,7 +17,7 @@ export default function WholesalePage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-slate-900">Wholesale Management</h1>
-        <p className="text-slate-500 text-sm mt-1">‡∏à‡∏±‡∏î‡∏Å‡∏≤‡∏£‡∏£‡∏∞‡∏ö‡∏ö Wholesale Partners, API Sync, ‡πÅ‡∏•‡∏∞‡∏Ç‡πâ‡∏≠‡∏°‡∏π‡∏•‡∏ó‡∏±‡∏ß‡∏£‡πå</p>
+        <p className="text-slate-500 text-sm mt-1">®—¥°“√√–∫∫ Wholesale Partners, API Sync, ·≈–¢ÈÕ¡Ÿ≈∑—«√Ï</p>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {cards.map((c) => (
@@ -27,7 +28,7 @@ export default function WholesalePage() {
             <h3 className="font-bold text-slate-900 mb-1">{c.title}</h3>
             <p className="text-sm text-slate-500 mb-3">{c.desc}</p>
             <span className="text-xs font-semibold text-primary flex items-center gap-1 group-hover:gap-2 transition-all">
-              ‡∏à‡∏±‡∏î‡∏Å‡∏≤‡∏£ <ArrowRight className="w-3 h-3" />
+              ®—¥°“√ <ArrowRight className="w-3 h-3" />
             </span>
           </Link>
         ))}

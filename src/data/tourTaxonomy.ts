@@ -1,4 +1,23 @@
-import { TourData } from '@/components/tour/TourCard';
+export interface TourData {
+  id: string;
+  slug?: string;
+  code: string;
+  title: string;
+  image: string;
+  supplier: string;
+  country: string;
+  city: string;
+  durationDays: number;
+  durationNights: number;
+  nextDeparture: string;
+  price: number;
+  originalPrice?: number;
+  isFlashSale?: boolean;
+  isConfirmed?: boolean;
+  availableSeats: number;
+  aiScore: number;
+  airline?: string;
+}
 
 export interface RegionData {
   slug: string;

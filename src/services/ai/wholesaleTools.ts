@@ -206,7 +206,7 @@ export async function executeWholesaleTool(
             tour: { select: { tourName: true, tourCode: true, externalTourId: true, bookingUrl: true } },
             departure: { select: { startDate: true, endDate: true, remainingSeats: true } },
             supplier: { select: { id: true, displayName: true, canonicalName: true } },
-            travelers: { select: { title: true, firstName: true, lastName: true, paxType: true, passportNo: true, dateOfBirth: true } },
+            travelers: { select: { title: true, firstName: true, lastName: true, paxType: true, passportNo: true, dob: true } },
             wholesaleRef: true,
           },
         });
@@ -363,5 +363,5 @@ export async function executeWholesaleTool(
  * Check if a tool name is a wholesale tool
  */
 export function isWholesaleTool(name: string): boolean {
-  return wholesaleTools.some(t => t.function.name === name);
+  return wholesaleTools.some((t: any) => t?.type === 'function' && t?.function?.name === name);
 }

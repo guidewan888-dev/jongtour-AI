@@ -85,6 +85,7 @@ export async function POST(req: Request) {
         where: { id: bookingId },
         include: { customer: true },
       }) : null;
+      const customerName = [booking?.customer?.firstName, booking?.customer?.lastName].filter(Boolean).join(' ').trim() || undefined;
 
       const deliveryResult = await deliverDocument({
         documentType: type,
@@ -94,7 +95,7 @@ export async function POST(req: Request) {
         channels: deliverTo.channels || ['EMAIL'],
         recipientEmail: deliverTo.email || booking?.customer?.email,
         recipientLineUserId: deliverTo.lineUserId,
-        customerName: booking?.customer?.fullName,
+        customerName,
       });
 
       return NextResponse.json({ success: true, document: result, delivery: deliveryResult });

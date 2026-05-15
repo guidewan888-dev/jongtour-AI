@@ -404,6 +404,10 @@ model Booking {
   supplierNote             String?   @db.Text
   internalNote             String?   @db.Text
   uploadedConfirmationFile String?
+  centralTourId            String?   @map("central_tour_id")
+  centralDepartureId       String?   @map("central_departure_id")
+  seatSnapshot             Json?     @map("seat_snapshot")
+  pdfUrl                   String?   @map("pdf_url")
   totalPrice               Float
   totalNetPrice            Float?
   createdAt                DateTime  @default(now())
@@ -427,6 +431,7 @@ model Booking {
   documents        CustomerDocument[]
   wholesaleRef     BookingWholesaleRef?
   wholesaleActions BookingWholesaleAction[]
+  centralSnapshot  BookingCentralSnapshot?
   rpaSessions      WholesaleRpaSession[]
   rpaActions       WholesaleRpaAction[]
   supportTickets   SupportTicket[]
@@ -480,6 +485,23 @@ model BookingExternalRef {
   booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
 
   @@map("booking_external_refs")
+}
+
+model BookingCentralSnapshot {
+  id                String   @id @default(cuid())
+  bookingId         String   @unique @map("booking_id")
+  centralTourId     String?  @map("central_tour_id")
+  centralDepartureId String? @map("central_departure_id")
+  wholesaleId       String?  @map("wholesale_id")
+  priceSnapshot     Json?    @map("price_snapshot")
+  seatSnapshot      Json?    @map("seat_snapshot")
+  pdfUrl            String?  @map("pdf_url")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@map("booking_central_snapshots")
 }
 
 // 24. payments

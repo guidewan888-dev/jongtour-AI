@@ -478,9 +478,13 @@ export default function SearchClient() {
           ) : filteredTours.length > 0 ? (
             <div className={`grid gap-4 ${viewMode === 'grid' ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3' : 'grid-cols-1'}`}>
               {filteredTours.map(tour => {
-                // Scraper tours (with sourceUrl) use /tour/s/CODE, wholesale uses /tour/SLUG
-                const isScraperTour = !!tour.sourceUrl;
-                const tourHref = isScraperTour ? `/tour/s/${tour.code.toLowerCase()}` : `/tour/${tour.slug}`;
+                const safeSlug = String(tour.slug || '').trim();
+                const safeCode = String(tour.code || '').trim().toLowerCase();
+                const tourHref = safeSlug
+                  ? `/tour/${safeSlug}`
+                  : safeCode
+                    ? `/tour/s/${safeCode}`
+                    : '/search';
                 const supplierLabel = tour.supplier;
                 return (
                 <Link key={tour.id} href={tourHref} className="group block bg-white rounded-xl border border-slate-200 hover:border-orange-200 hover:shadow-lg transition-all overflow-hidden">

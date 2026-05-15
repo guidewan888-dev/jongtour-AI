@@ -13,6 +13,10 @@ function generateRefundNo(): string {
   return `REF-${Date.now()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
 }
 
+function getCustomerFullName(customer?: { firstName?: string | null; lastName?: string | null }) {
+  return [customer?.firstName, customer?.lastName].filter(Boolean).join(' ').trim();
+}
+
 export async function POST(req: Request) {
   try {
     const body = await req.text();
@@ -90,7 +94,7 @@ export async function POST(req: Request) {
         } = await import('@/services/documentService');
 
         const email = booking.customer?.email;
-        const customerName = booking.customer?.fullName || '';
+        const customerName = getCustomerFullName(booking.customer);
 
         // 5a. Booking Confirmation PDF + delivery
         try {

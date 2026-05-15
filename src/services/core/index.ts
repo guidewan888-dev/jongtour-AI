@@ -18,3 +18,4 @@ export { AvailabilityService } from './AvailabilityService';
 export { CMSService } from './CMSService';
 export { SupplierService } from './SupplierService';
 export { UserService } from './UserService';
+export { LinkValidationService } from './LinkValidationService';

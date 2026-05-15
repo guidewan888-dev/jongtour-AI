@@ -1,13 +1,13 @@
-import { z } from 'zod';
+﻿import { z } from 'zod';
 
 // ============================================================
 // SHARED PRIMITIVES
 // ============================================================
 
-export const emailSchema = z.string().email('กรุณากรอกอีเมลที่ถูกต้อง');
-export const passwordSchema = z.string().min(8, 'รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร').max(128);
-export const phoneSchema = z.string().regex(/^(\+66|0)[0-9]{8,9}$/, 'เบอร์โทรไม่ถูกต้อง').optional();
-export const nameSchema = z.string().min(1, 'กรุณากรอกชื่อ').max(200).trim();
+export const emailSchema = z.string().email('เธเธฃเธธเธ“เธฒเธเธฃเธญเธเธญเธตเน€เธกเธฅเธ—เธตเนเธ–เธนเธเธ•เนเธญเธ');
+export const passwordSchema = z.string().min(8, 'เธฃเธซเธฑเธชเธเนเธฒเธเธ•เนเธญเธเธกเธตเธญเธขเนเธฒเธเธเนเธญเธข 8 เธ•เธฑเธงเธญเธฑเธเธฉเธฃ').max(128);
+export const phoneSchema = z.string().regex(/^(\+66|0)[0-9]{8,9}$/, 'เน€เธเธญเธฃเนเนเธ—เธฃเนเธกเนเธ–เธนเธเธ•เนเธญเธ').optional();
+export const nameSchema = z.string().min(1, 'เธเธฃเธธเธ“เธฒเธเธฃเธญเธเธเธทเนเธญ').max(200).trim();
 export const idParamSchema = z.string().min(1).max(100);
 export const dateSchema = z.string().datetime().or(z.string().regex(/^\d{4}-\d{2}-\d{2}$/));
 export const positiveIntSchema = z.number().int().positive();
@@ -38,7 +38,7 @@ export const resetPasswordSchema = z.object({
   password: passwordSchema,
   confirmPassword: z.string(),
 }).refine(d => d.password === d.confirmPassword, {
-  message: 'รหัสผ่านไม่ตรงกัน',
+  message: 'เธฃเธซเธฑเธชเธเนเธฒเธเนเธกเนเธ•เธฃเธเธเธฑเธ',
   path: ['confirmPassword'],
 });
 
@@ -52,7 +52,7 @@ export const changePasswordSchema = z.object({
 // ============================================================
 
 export const travelerSchema = z.object({
-  titleTh: z.enum(['นาย', 'นาง', 'นางสาว', 'เด็กชาย', 'เด็กหญิง', 'Mr', 'Mrs', 'Ms', 'Master', 'Miss']),
+  titleTh: z.enum(['เธเธฒเธข', 'เธเธฒเธ', 'เธเธฒเธเธชเธฒเธง', 'เน€เธ”เนเธเธเธฒเธข', 'เน€เธ”เนเธเธซเธเธดเธ', 'Mr', 'Mrs', 'Ms', 'Master', 'Miss', 'Mr.', 'Mrs.', 'Ms.', 'Miss.']),
   firstNameTh: nameSchema,
   lastNameTh: nameSchema,
   firstNameEn: nameSchema,
@@ -67,10 +67,31 @@ export const travelerSchema = z.object({
 export const createBookingSchema = z.object({
   tourId: idParamSchema,
   departureId: idParamSchema,
-  travelers: z.array(travelerSchema).min(1, 'ต้องมีผู้เดินทางอย่างน้อย 1 คน').max(50),
+  wholesaleId: idParamSchema.optional(),
+  periodId: idParamSchema.optional(),
+  selectedDate: z.string().optional(),
+  travelDate: z.string().optional(),
+  travelers: z.array(travelerSchema).min(1, 'เธ•เนเธญเธเธกเธตเธเธนเนเน€เธ”เธดเธเธ—เธฒเธเธญเธขเนเธฒเธเธเนเธญเธข 1 เธเธ').max(50),
   contactEmail: emailSchema,
   contactPhone: phoneSchema,
   specialRequests: z.string().max(1000).optional(),
+  paymentType: z.enum(['LATER', 'DEPOSIT', 'FULL']).optional(),
+  amountToPay: z.number().nonnegative().optional(),
+  adultCount: z.number().int().min(0).optional(),
+  childWithBedCount: z.number().int().min(0).optional(),
+  childWithoutBedCount: z.number().int().min(0).optional(),
+  infantCount: z.number().int().min(0).optional(),
+  singleRoomCount: z.number().int().min(0).optional(),
+  wantsSingleRoom: z.boolean().optional(),
+  pdfFileId: idParamSchema.optional(),
+  pdfUrl: z.string().url().optional(),
+  pricingMeta: z.object({
+    adultCount: z.number().int().min(0).optional(),
+    childWithBedCount: z.number().int().min(0).optional(),
+    childWithoutBedCount: z.number().int().min(0).optional(),
+    infantCount: z.number().int().min(0).optional(),
+    singleRoomCount: z.number().int().min(0).optional(),
+  }).optional(),
 });
 
 export const bookingStatusSchema = z.enum([
@@ -83,7 +104,7 @@ export const bookingStatusSchema = z.enum([
 
 export const createPaymentSchema = z.object({
   bookingId: idParamSchema,
-  amount: z.number().positive('จำนวนเงินต้องมากกว่า 0'),
+  amount: z.number().positive('เธเธณเธเธงเธเน€เธเธดเธเธ•เนเธญเธเธกเธฒเธเธเธงเนเธฒ 0'),
   currency: z.enum(['THB', 'USD']).default('THB'),
   method: z.enum(['STRIPE', 'BANK_TRANSFER', 'PROMPTPAY', 'CREDIT_CARD']),
 });
@@ -117,7 +138,7 @@ export const contactFormSchema = z.object({
   email: emailSchema,
   phone: phoneSchema,
   subject: z.string().min(1).max(200),
-  message: z.string().min(10, 'ข้อความต้องมีอย่างน้อย 10 ตัวอักษร').max(5000),
+  message: z.string().min(10, 'เธเนเธญเธเธงเธฒเธกเธ•เนเธญเธเธกเธตเธญเธขเนเธฒเธเธเนเธญเธข 10 เธ•เธฑเธงเธญเธฑเธเธฉเธฃ').max(5000),
 });
 
 // ============================================================
@@ -194,6 +215,9 @@ export function validateRequest<T>(schema: z.ZodSchema<T>, data: unknown): { suc
   if (result.success) {
     return { success: true, data: result.data };
   }
-  const errorMessages = result.error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ');
+  const errorMessages = result.error.issues.map((e) => `${e.path.join('.')}: ${e.message}`).join(', ');
   return { success: false, error: errorMessages };
 }
+
+
+

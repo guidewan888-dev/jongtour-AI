@@ -274,9 +274,9 @@ search_intent: ${JSON.stringify(intentExtracted)}
                     const tArgs = JSON.parse(tc.function.arguments);
                     let tData = await (await import("@/lib/prisma")).prisma.tour.findFirst({
                       where: { tourCode: tArgs.tourCode },
-                      include: { departures: { include: { prices: true } }, destinations: true, rawSources: { take: 1 } }
+                      include: { departures: { include: { prices: true } }, destinations: true }
                     });
-                    const highlights = (tData as any)?.rawSources?.[0]?.rawData ? JSON.stringify((tData as any).rawSources[0].rawData).substring(0, 500) : tData?.destinations?.map((d: any) => d.country).join(', ') || 'N/A';
+                    const highlights = tData?.destinations?.map((d: any) => d.country).join(', ') || 'N/A';
                     messages.push({ role: "tool", tool_call_id: tc.id, content: JSON.stringify(tData ? { code: tData.tourCode, title: tData.tourName, highlights, departures: tData.departures } : { error: "Tour not found" }) });
                   } else {
                     messages.push({ role: "tool", tool_call_id: tc.id, content: "{ \"status\": \"Tool executed but skipped deep logic for OCR flow\" }" });
@@ -301,14 +301,14 @@ search_intent: ${JSON.stringify(intentExtracted)}
           const { prisma } = await import("@/lib/prisma");
           let tData = await prisma.tour.findFirst({
             where: { OR: [{ id: tid }, { tourCode: tid }] },
-            include: { departures: { where: { startDate: { gte: new Date() } }, orderBy: { startDate: 'asc' }, include: { prices: true } }, destinations: true, rawSources: { take: 1 } }
+            include: { departures: { where: { startDate: { gte: new Date() } }, orderBy: { startDate: 'asc' }, include: { prices: true } }, destinations: true }
           });
           
           if (!tData) {
             messages.push({ role: "tool", tool_call_id: toolCall.id, content: JSON.stringify({ error: "Tour not found in database. Please ask user for clarification or search_tours again." }) });
           } else {
              if (toolCall.function.name === "get_tour_detail") {
-               const tourHighlights = (tData as any)?.rawSources?.[0]?.rawData ? JSON.stringify((tData as any).rawSources[0].rawData).substring(0, 800) : (tData as any)?.destinations?.map((d: any) => `${d.country}${d.city ? '/' + d.city : ''}`).join(', ') || 'N/A';
+               const tourHighlights = (tData as any)?.destinations?.map((d: any) => `${d.country}${d.city ? '/' + d.city : ''}`).join(', ') || 'N/A';
                messages.push({ role: "tool", tool_call_id: toolCall.id, content: JSON.stringify({ code: tData.tourCode, title: tData.tourName, highlights: tourHighlights, duration: `${tData.durationDays}D${tData.durationNights}N`, destinations: (tData as any)?.destinations?.map((d: any) => d.country), departures: tData.departures.slice(0, 5).map((d: any) => ({ id: d.id, startDate: d.startDate, endDate: d.endDate, seats: d.remainingSeats, status: d.status, prices: d.prices?.map((p: any) => ({ paxType: p.paxType, price: p.sellingPrice })) })) }) });
              } else if (toolCall.function.name === "check_availability") {
                const dep = args.departure_id ? tData.departures.find((d: any) => d.id === args.departure_id) : null;
@@ -589,20 +589,24 @@ search_intent: ${JSON.stringify(intentExtracted)}
             }) : null;
 
             const dep = tour?.departures[0];
+            const defaultAgent = await prisma.agent.findFirst({ select: { id: true } });
+            if (!dep || !defaultAgent?.id) {
+              throw new Error('Cannot create quotation: missing departure or agent');
+            }
             const adultPrice = dep?.prices?.find((p: any) => p.paxType === 'ADULT')?.sellingPrice || 0;
             const totalPrice = adultPrice * (args.pax_adult || args.pax || 1);
 
             const quotation = await prisma.quotation.create({
               data: {
                 quotationRef: `QT-AI-${Date.now().toString(36).toUpperCase()}`,
-                tourId: tour?.id,
-                departureId: dep?.id,
+                agentId: defaultAgent.id,
+                departureId: dep.id,
                 customerName: args.customer_name || userName || "ลูกค้า AI",
                 customerEmail: args.customer_email || null,
                 paxAdult: args.pax_adult || args.pax || 1,
                 paxChild: args.pax_child || 0,
-                totalPrice,
-                status: "DRAFT",
+                totalSellingPrice: totalPrice,
+                status: "ACTIVE",
                 notes: args.notes || `AI Generated — ${tour?.tourName || 'Custom Tour'}`,
                 validUntil: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
               }

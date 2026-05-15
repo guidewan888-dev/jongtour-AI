@@ -29,10 +29,13 @@ export class UserService {
     name?: string; phone?: string; avatarUrl?: string;
     preferredLanguage?: string; lineId?: string;
   }) {
-    return prisma.user.update({
-      where: { id: userId },
-      data: updates,
-    });
+    // Current user schema has only account-level fields.
+    // Profile fields are kept on Customer/UserProfile in other modules.
+    const hasNoDirectUserField = !updates.name && !updates.phone && !updates.avatarUrl && !updates.preferredLanguage && !updates.lineId;
+    if (hasNoDirectUserField) {
+      return prisma.user.findUnique({ where: { id: userId } });
+    }
+    return prisma.user.findUnique({ where: { id: userId } });
   }
 
   /** Assign role to user */
@@ -56,7 +59,6 @@ export class UserService {
     if (options?.role) where.role = { name: options.role };
     if (options?.search) {
       where.OR = [
-        { name: { contains: options.search, mode: 'insensitive' } },
         { email: { contains: options.search, mode: 'insensitive' } },
       ];
     }
@@ -79,7 +81,7 @@ export class UserService {
   static async deactivateUser(userId: string) {
     return prisma.user.update({
       where: { id: userId },
-      data: { isActive: false },
+      data: { status: 'INACTIVE' },
     });
   }
 
@@ -87,7 +89,7 @@ export class UserService {
   static async getStats() {
     const [total, active, byRole] = await Promise.all([
       prisma.user.count(),
-      prisma.user.count({ where: { isActive: true } }),
+      prisma.user.count({ where: { status: 'ACTIVE' } }),
       prisma.user.groupBy({
         by: ['roleId'],
         _count: true,

@@ -172,6 +172,13 @@ export interface TourDetailData {
   summary: string;
   highlights: string[];
   flight: { airline: string; details: string };
+  flights?: Array<{
+    route: string;
+    flightNo: string;
+    departure: string;
+    arrival: string;
+    airline: string;
+  }>;
   hotel: { name: string; rating: number; details: string };
   meals: string;
   included: string[];
@@ -221,6 +228,31 @@ export async function getTourList(options?: {
 }): Promise<TourListItem[]> {
   const { keyword, country, limit = 1000 } = options || {};
   const sb = getSupabaseAdmin();
+  const auxiliaryPriceTypes = new Set(['DEPOSIT', 'SINGLE_SUPP']);
+  const toNum = (value: any): number => {
+    if (value === null || value === undefined || value === '') return 0;
+    if (typeof value === 'number') return Number.isFinite(value) ? value : 0;
+    const cleaned = String(value).replace(/[^\d.-]/g, '');
+    if (!cleaned) return 0;
+    const parsed = Number(cleaned);
+    return Number.isFinite(parsed) ? parsed : 0;
+  };
+  const hasValue = (value: any) => value !== null && value !== undefined && value !== '';
+  const pickRawAdultPrice = (period: any): number => {
+    const candidates = [
+      period?.Price,
+      period?.price,
+      period?.priceAdult,
+      period?.price_adult,
+      period?.period_price_start,
+      period?.period_price_min,
+    ];
+    for (const candidate of candidates) {
+      const parsed = toNum(candidate);
+      if (parsed > 0) return parsed;
+    }
+    return 0;
+  };
 
   // 1. Get published tours
   let query = sb
@@ -358,16 +390,46 @@ export async function getTourList(options?: {
     if (depIdChunk.length === 0) continue;
     const { data: chunkPrices, error: priceError } = await sb
       .from('prices')
-      .select('"departureId", "sellingPrice"')
+      .select('"departureId", "paxType", "sellingPrice"')
       .in('departureId', depIdChunk);
     if (priceError) throw priceError;
     prices.push(...(chunkPrices || []));
   }
 
-  const priceMap: Record<string, number> = {};
+  const adultPriceMap: Record<string, number> = {};
+  const primaryFallbackPriceMap: Record<string, number> = {};
   (prices || []).forEach(p => {
-    if (!priceMap[p.departureId] || p.sellingPrice < priceMap[p.departureId]) {
-      priceMap[p.departureId] = p.sellingPrice;
+    const depId = String(p.departureId || '');
+    if (!depId) return;
+    const sellingPrice = toNum(p.sellingPrice);
+    if (sellingPrice <= 0) return;
+    const paxType = String(p.paxType || '').toUpperCase();
+
+    if (paxType === 'ADULT') {
+      if (!adultPriceMap[depId] || sellingPrice < adultPriceMap[depId]) {
+        adultPriceMap[depId] = sellingPrice;
+      }
+      return;
+    }
+
+    if (auxiliaryPriceTypes.has(paxType) || paxType === 'CHILD' || paxType === 'INFANT') return;
+    if (!primaryFallbackPriceMap[depId] || sellingPrice < primaryFallbackPriceMap[depId]) {
+      primaryFallbackPriceMap[depId] = sellingPrice;
+    }
+  });
+
+  const departurePriceMap: Record<string, number> = {};
+  depIds.forEach((depId: string) => {
+    departurePriceMap[depId] = adultPriceMap[depId] || primaryFallbackPriceMap[depId] || 0;
+  });
+
+  const minTourPriceMap: Record<string, number> = {};
+  (departures || []).forEach((departure: any) => {
+    const departurePrice = departurePriceMap[departure.id] || 0;
+    if (departurePrice <= 0) return;
+    const existing = minTourPriceMap[departure.tourId];
+    if (!existing || departurePrice < existing) {
+      minTourPriceMap[departure.tourId] = departurePrice;
     }
   });
 
@@ -411,11 +473,28 @@ export async function getTourList(options?: {
       
       const status = p.status || p.PeriodStatus || '';
       if (status === 'Close' || status === 'Closed') return false;
-      const seats = p.Seat || p.seat || p.GroupSize || p.group || 0;
-      const booked = p.Book || p.join || 0;
-      // Seat=0 means unlimited/unknown → treat as available
-      if (seats === 0) return true;
-      return (seats - booked) > 0;
+      const isLetgo = rs.supplierId === 'SUP_LETGO';
+
+      // Let’s Go payload semantics:
+      // - GroupSize = total seats
+      // - Seat = remaining seats
+      if (isLetgo) {
+        const total = toNum(p.GroupSize || p.group || p.seat);
+        const hasRemaining = hasValue(p.Seat) || hasValue(p.available);
+        const remaining = hasRemaining ? toNum(hasValue(p.Seat) ? p.Seat : p.available) : -1;
+        if (remaining > 0) return true;
+        if (total === 0) return true; // unknown capacity -> keep visible
+        const booked = toNum(p.Book || p.join);
+        return Math.max(total - booked, 0) > 0;
+      }
+
+      // Other suppliers: prefer explicit remaining field first, fallback to total-booked
+      const remaining = toNum(p.available || p.seats_left);
+      if (remaining > 0) return true;
+      const seats = toNum(p.seat || p.Seat || p.GroupSize || p.group);
+      const booked = toNum(p.join || p.Book || p.booked);
+      if (seats === 0) return true; // unknown capacity -> keep visible
+      return Math.max(seats - booked, 0) > 0;
     });
     // If no future periods exist at all, don't mark as unavailable
     const hasFuturePeriods = periods.some((p: any) => {
@@ -441,14 +520,14 @@ export async function getTourList(options?: {
   return availableTours.map(t => {
     const dep = depMap[t.id];
     const dest = destMap[t.id];
-    const price = dep ? (priceMap[dep.id] || 0) : 0;
+    const price = minTourPriceMap[t.id] || 0;
     // Try rawPayload starting price if DB price is 0
     let startingPrice = Number(price);
     if (!startingPrice) {
       const rs = (rawSources || []).find((r: any) => r.supplierId === t.supplierId && String(r.externalTourId) === String(t.externalTourId));
       if (rs?.rawPayload) {
         const periods = rs.rawPayload.Periods || rs.rawPayload.periods || [];
-        const rawPrices = periods.map((p: any) => p.Price || p.price || 0).filter((p: number) => p > 0);
+        const rawPrices = periods.map((p: any) => pickRawAdultPrice(p)).filter((p: number) => p > 0);
         if (rawPrices.length > 0) startingPrice = Math.min(...rawPrices);
       }
     }
@@ -588,7 +667,7 @@ export async function getTourBySlug(slug: string): Promise<TourDetailData | null
     sb.from('tour_policies').select('"policyType", description').eq('tourId', tour.id),
     sb.from('tour_pdfs').select('"pdfUrl"').eq('tourId', tour.id).limit(1),
     sb.from('departures')
-      .select('id, "startDate", "endDate", status, "remainingSeats"')
+      .select('id, "startDate", "endDate", status, "remainingSeats", "totalSeats"')
       .eq('tourId', tour.id)
       .gte('startDate', new Date().toISOString())
       .order('startDate', { ascending: true }),
@@ -644,6 +723,15 @@ export async function getTourBySlug(slug: string): Promise<TourDetailData | null
     }
   };
 
+  const asNumber = (value: any): number => {
+    if (value === null || value === undefined || value === '') return 0;
+    if (typeof value === 'number') return Number.isFinite(value) ? value : 0;
+    const cleaned = String(value).replace(/[^\d.-]/g, '');
+    if (!cleaned) return 0;
+    const parsed = Number(cleaned);
+    return Number.isFinite(parsed) ? parsed : 0;
+  };
+
   const normalizePeriodStatus = (value: any) => {
     const status = String(value || '').toLowerCase();
     if (!status) return '';
@@ -689,11 +777,14 @@ export async function getTourBySlug(slug: string): Promise<TourDetailData | null
 
   // 5. Calculate starting price from real departure prices first
   let startingPrice = 0;
-  const allPrices = (prices || []).map(p => p.sellingPrice).filter(p => p > 0);
+  const allPrices = (prices || [])
+    .filter((p: any) => String(p.paxType || '').toUpperCase() === 'ADULT')
+    .map((p: any) => p.sellingPrice)
+    .filter((p: number) => p > 0);
   if (allPrices.length > 0) {
     startingPrice = Math.min(...allPrices);
   } else if (rawPeriods.length > 0) {
-    const rawPrices = rawPeriods.map((p: any) => p.Price || p.price || 0).filter((p: number) => p > 0);
+    const rawPrices = rawPeriods.map((p: any) => asNumber(p.Price || p.price)).filter((p: number) => p > 0);
     startingPrice = rawPrices.length > 0 ? Math.min(...rawPrices) : 0;
   }
 
@@ -704,26 +795,65 @@ export async function getTourBySlug(slug: string): Promise<TourDetailData | null
   // then merge richer period metadata from raw payload when available.
   const enrichedDeps = (departures || []).map((d: any) => {
     const raw = findMatchingRawPeriod(d.startDate, d.endDate) || {};
-    const seatRaw = Number(raw.Seat || raw.seat || raw.GroupSize || raw.group || 0);
-    const bookedRaw = Number(raw.Book || raw.join || 0);
-    const rawRemaining = seatRaw > 0 ? Math.max(seatRaw - bookedRaw, 0) : null;
-    const dbRemaining = Number(d.remainingSeats || 0);
-    const remainingSeats = Math.max(dbRemaining || rawRemaining || 0, 0);
+    const isLetgo = tour.supplierId === 'SUP_LETGO';
+    const rawTotalSeats = isLetgo
+      ? asNumber(raw.GroupSize || raw.group)
+      : asNumber(raw.seat || raw.Seat || raw.GroupSize || raw.group);
+    const rawBookedCandidate = asNumber(raw.Book || raw.join || raw.booked);
+    const rawRemainingCandidate = isLetgo
+      ? asNumber(raw.Seat || raw.available || raw.seat)
+      : asNumber(raw.available || raw.seats_left);
 
-    const dbAdult = Number(pricesByDep[d.id]?.ADULT || 0);
-    const dbChild = Number(pricesByDep[d.id]?.CHILD || 0);
-    const dbSingle = Number(pricesByDep[d.id]?.SINGLE_SUPP || 0);
+    const hasRawTotal = rawTotalSeats > 0;
+    const hasRawRemaining =
+      rawRemainingCandidate >= 0 &&
+      (rawRemainingCandidate > 0 || raw.Seat === 0 || raw.Seat === '0' || raw.available === 0 || raw.available === '0');
 
-    const rawAdult = Number(raw.Price || raw.price || 0);
-    const rawChild = Number(raw.Price_Child || raw.priceChild || 0);
-    const rawSingle = Number(raw.Price_Single_Bed || raw.priceSingleRoomAdd || raw.priceForOne || 0);
-    const rawInfant = Number(raw.Price_Infant || raw.priceInfant || 0);
-    const rawJoinLand = Number(raw.Price_JoinLand || 0);
-    const rawDeposit = Number(raw.Deposit || raw.deposit || 0);
+    const hasDbTotal = d.totalSeats !== null && d.totalSeats !== undefined && Number.isFinite(Number(d.totalSeats));
+    const hasDbRemaining = d.remainingSeats !== null && d.remainingSeats !== undefined && Number.isFinite(Number(d.remainingSeats));
+    const dbTotal = hasDbTotal ? Math.max(Number(d.totalSeats), 0) : null;
+    const dbRemaining = hasDbRemaining ? Math.max(Number(d.remainingSeats), 0) : null;
+
+    const normalizedTotalSeats = hasRawTotal ? rawTotalSeats : dbTotal;
+
+    let normalizedRemaining: number | null = null;
+    if (hasRawTotal && hasRawRemaining) {
+      normalizedRemaining = Math.min(Math.max(rawRemainingCandidate, 0), rawTotalSeats);
+    } else if (hasRawRemaining) {
+      normalizedRemaining = Math.max(rawRemainingCandidate, 0);
+    } else if (dbRemaining !== null) {
+      normalizedRemaining = dbRemaining;
+    } else if (hasRawTotal) {
+      normalizedRemaining = Math.max(rawTotalSeats - Math.max(rawBookedCandidate, 0), 0);
+    }
+
+    let normalizedBookedRaw: number | null = null;
+    if (normalizedTotalSeats !== null && normalizedRemaining !== null) {
+      normalizedBookedRaw = Math.max(normalizedTotalSeats - normalizedRemaining, 0);
+    } else if (normalizedTotalSeats !== null && rawBookedCandidate > 0) {
+      normalizedBookedRaw = Math.min(rawBookedCandidate, normalizedTotalSeats);
+    }
+
+    const remainingSeats = normalizedRemaining ?? 0;
+
+    const dbAdult = asNumber(pricesByDep[d.id]?.ADULT);
+    const dbChild = asNumber(pricesByDep[d.id]?.CHILD);
+    const dbSingle = asNumber(pricesByDep[d.id]?.SINGLE_SUPP);
+    const dbDeposit = asNumber(pricesByDep[d.id]?.DEPOSIT);
+
+    const rawAdult = asNumber(raw.Price || raw.price);
+    const rawChild = asNumber(raw.Price_Child || raw.Price_ChildNB || raw.priceChild || raw.price_child || raw.price_childwithbed || raw.priceChildNoBed || raw.price_childnobed);
+    const rawSingle = asNumber(raw.Price_Single_Bed || raw.Price_Single || raw.priceSingleRoomAdd || raw.price_single_room_add || raw.priceForOne || raw.price_sgl);
+    const rawInfant = asNumber(raw.Price_Infant || raw.priceInfant || raw.price_inf || raw.price_infant);
+    const rawJoinLand = asNumber(raw.Price_JoinLand);
+    const rawDeposit = asNumber(raw.Deposit || raw.deposit || raw.price_deposit || raw.priceDeposit);
 
     const rawStatus = normalizePeriodStatus(raw.status || raw.PeriodStatus || '');
     const dbStatus = String(d.status || '').toUpperCase();
-    const status = dbStatus || rawStatus || (remainingSeats > 0 ? 'AVAILABLE' : 'FULL');
+    const status =
+      dbStatus === 'AVAILABLE' || dbStatus === 'ON_REQUEST' || dbStatus === 'FULL' || dbStatus === 'CANCELLED'
+        ? dbStatus
+        : rawStatus || (remainingSeats > 0 ? 'AVAILABLE' : 'FULL');
 
     return {
       id: d.id,
@@ -734,9 +864,9 @@ export async function getTourBySlug(slug: string): Promise<TourDetailData | null
       priceSingle: dbSingle || rawSingle || 0,
       priceInfant: rawInfant || 0,
       priceJoinLand: rawJoinLand || 0,
-      deposit: rawDeposit || 0,
-      totalSeats: seatRaw > 0 ? seatRaw : Math.max(remainingSeats, 0),
-      booked: seatRaw > 0 ? bookedRaw : 0,
+      deposit: dbDeposit || rawDeposit || 0,
+      totalSeats: normalizedTotalSeats ?? undefined,
+      booked: normalizedBookedRaw ?? undefined,
       remainingSeats,
       status,
       bus: raw.Bus || raw.bus || '',

@@ -14,7 +14,13 @@ export async function submitB2BBooking(formData: FormData) {
   const contactPhone = formData.get("contactPhone") as string;
 
   // Extract passengers
-  const travelers = [];
+  const travelers: Array<{
+    firstName: string;
+    lastName: string;
+    passportNo: string;
+    paxType: string;
+    title: string;
+  }> = [];
   for (let i = 0; i < paxCount; i++) {
     travelers.push({
       firstName: formData.get(`pax_${i}_firstName`) as string,
@@ -31,7 +37,7 @@ export async function submitB2BBooking(formData: FormData) {
       // 1. Check remaining seats
       const departure = await tx.departure.findUnique({
         where: { id: departureId },
-        select: { remainingSeats: true, totalSeats: true, status: true, tourId: true },
+        select: { remainingSeats: true, totalSeats: true, status: true, tourId: true, supplierId: true },
       });
 
       if (!departure || departure.remainingSeats < paxCount) {
@@ -76,16 +82,14 @@ export async function submitB2BBooking(formData: FormData) {
       const newBooking = await tx.booking.create({
         data: {
           bookingRef,
+          supplierId: departure.supplierId,
           departureId,
           tourId: departure.tourId,
           customerId: customer.id,
           agentId,
           status: "PENDING",
-          paxAdult: paxCount,
+          bookingSource: "AGENT",
           totalPrice,
-          paymentStatus: "UNPAID",
-          wholesaleType: "API",
-          wholesaleStatus: "PENDING",
         },
       });
 

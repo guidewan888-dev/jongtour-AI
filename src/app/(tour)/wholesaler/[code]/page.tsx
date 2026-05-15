@@ -132,9 +132,21 @@ const SUPPLIER_CODE_ALIAS: Record<string, string> = {
   go365: 'go365',
 };
 
+const CENTRAL_WHOLESALER_BY_CODE: Record<string, string> = {
+  letsgo: 'SUP_LETGO',
+  checkin: 'SUP_CHECKIN',
+  'tour-factory': 'SUP_TOURFACTORY',
+  worldconnection: 'worldconnection',
+  itravels: 'itravels',
+  bestinternational: 'bestintl',
+  gs25: 'gs25',
+  go365: 'SUP_GO365',
+};
+
 export default function WholesalePage({ params }: { params: { code: string } }) {
   const normalizedCode = SUPPLIER_CODE_ALIAS[(params.code || '').toLowerCase()] || 'letsgo';
   const config = SUPPLIER_CONFIG[normalizedCode] || SUPPLIER_CONFIG.letsgo;
+  const wholesalerId = CENTRAL_WHOLESALER_BY_CODE[normalizedCode] || CENTRAL_WHOLESALER_BY_CODE.letsgo;
 
   const [tours, setTours] = useState<Tour[]>([]);
   const [loading, setLoading] = useState(true);
@@ -144,33 +156,20 @@ export default function WholesalePage({ params }: { params: { code: string } }) 
   const [activeCity, setActiveCity] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
-  const isScraperSite = ['worldconnection', 'itravels', 'bestinternational', 'gs25', 'go365'].includes(normalizedCode);
-
   useEffect(() => {
     setLoading(true);
 
-    const url = isScraperSite
-      ? `/api/tours/scraper-list?site=${config.name}&limit=500`
-      : '/api/tours/list?limit=2000';
+    const url = `/api/tours/list?wholesalerId=${encodeURIComponent(wholesalerId)}&limit=2000`;
 
     fetch(url)
       .then((response) => response.json())
       .then((payload) => {
         if (!payload.tours) return;
-
-        if (isScraperSite) {
-          setTours(payload.tours as Tour[]);
-          return;
-        }
-
-        const filtered = (payload.tours as Tour[]).filter((tour) =>
-          tour.supplier.toLowerCase().replace(/['\s\-]/g, '').includes(config.name.replace(/['\s\-]/g, '')),
-        );
-        setTours(filtered);
+        setTours(payload.tours as Tour[]);
       })
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, [config.name, isScraperSite]);
+  }, [wholesalerId]);
 
   const taxonomy = useMemo(() => {
     const result: Record<

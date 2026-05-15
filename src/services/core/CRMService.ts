@@ -1,83 +1,84 @@
 /**
- * CRMService — Sales pipeline, lead management, telesales follow-ups
+ * CRMService - Sales pipeline and lead management
  */
 import { prisma } from '@/lib/prisma';
 import { NotificationService } from './NotificationService';
 
+function buildContactInfo(data: { phone?: string; email?: string; lineId?: string }) {
+  const parts = [data.phone && `phone:${data.phone}`, data.email && `email:${data.email}`, data.lineId && `line:${data.lineId}`].filter(
+    Boolean,
+  );
+  return parts.join(' | ') || '-';
+}
+
 export class CRMService {
-
-  /** Capture lead from any source (Web, LINE, Facebook, AI Chat) */
-  static async captureLead(source: string, data: {
-    name: string; phone?: string; email?: string; lineId?: string;
-    interest?: string; tourId?: string; message?: string;
-  }) {
-    // Check existing customer
+  /** Capture lead from any source */
+  static async captureLead(
+    source: string,
+    data: {
+      name: string;
+      phone?: string;
+      email?: string;
+      lineId?: string;
+      interest?: string;
+      tourId?: string;
+      message?: string;
+    },
+  ) {
     let customer = null;
-    if (data.email) {
-      customer = await prisma.customer.findFirst({ where: { email: data.email } });
-    }
-    if (!customer && data.phone) {
-      customer = await prisma.customer.findFirst({ where: { phone: data.phone } });
-    }
+    if (data.email) customer = await prisma.customer.findFirst({ where: { email: data.email } });
+    if (!customer && data.phone) customer = await prisma.customer.findFirst({ where: { phone: data.phone } });
 
-    // Create customer if new
     if (!customer) {
-      const nameParts = data.name.split(' ');
+      const nameParts = String(data.name || '').trim().split(/\s+/);
       customer = await prisma.customer.create({
         data: {
-          firstName: nameParts[0] || data.name,
+          firstName: nameParts[0] || 'Guest',
           lastName: nameParts.slice(1).join(' ') || '-',
           email: data.email || `lead_${Date.now()}@temp.jongtour.com`,
           phone: data.phone || '-',
           lineId: data.lineId,
+          tags: [],
         },
       });
     }
 
-    // Create lead
     const lead = await prisma.lead.create({
       data: {
-        customerId: customer.id,
-        source,
-        interest: data.interest || 'GENERAL',
-        tourId: data.tourId,
-        message: data.message,
+        customerName: data.name || `${customer.firstName} ${customer.lastName}`,
+        contactInfo: buildContactInfo(data),
+        source: source || 'WEB',
         status: 'NEW',
-        priority: source === 'AI_CHAT' ? 'HIGH' : 'NORMAL',
       },
     });
 
-    // Auto-assign to sales rep (round-robin)
-    await this.autoAssignLead(lead.id);
+    if (data.message || data.interest || data.tourId) {
+      const extra = [data.interest && `interest=${data.interest}`, data.tourId && `tourId=${data.tourId}`, data.message].filter(Boolean).join(' | ');
+      await prisma.leadActivity.create({
+        data: { leadId: lead.id, type: 'CHAT', note: extra || 'Lead captured' },
+      });
+    }
 
-    // Notify admin
-    await NotificationService.adminAlert(
-      `New Lead: ${data.name} (${source}) — ${data.interest || 'General'}`,
-      'INFO'
-    );
+    await this.autoAssignLead(lead.id);
+    await NotificationService.adminAlert(`New Lead: ${data.name} (${source})`, 'INFO');
 
     return { leadId: lead.id, customerId: customer.id };
   }
 
-  /** Auto-assign lead to sales rep (round-robin) */
+  /** Auto-assign lead to sales rep */
   private static async autoAssignLead(leadId: string) {
-    try {
-      const salesReps = await prisma.user.findMany({
-        where: { role: { name: { in: ['SALE_STAFF', 'SALE_MANAGER'] } } },
-        select: { id: true, _count: { select: { assignedLeads: true } } },
-        orderBy: { assignedLeads: { _count: 'asc' } },
-        take: 1,
-      });
+    const salesRep = await prisma.user.findFirst({
+      where: { role: { name: { in: ['SALE_STAFF', 'SALE_MANAGER'] } }, status: 'ACTIVE' },
+      orderBy: { createdAt: 'asc' },
+      select: { id: true },
+    });
 
-      if (salesReps.length > 0) {
-        await prisma.lead.update({
-          where: { id: leadId },
-          data: { assignedToId: salesReps[0].id, status: 'ASSIGNED' },
-        });
-      }
-    } catch {
-      // If relation doesn't exist yet, skip
-    }
+    if (!salesRep) return;
+
+    await prisma.lead.update({
+      where: { id: leadId },
+      data: { saleId: salesRep.id, status: 'CONTACTED' },
+    });
   }
 
   /** Move lead through pipeline stages */
@@ -87,10 +88,9 @@ export class CRMService {
       data: { status: newStage },
     });
 
-    // Log activity
     await prisma.leadActivity.create({
-      data: { leadId, type: 'STAGE_CHANGE', description: `Stage → ${newStage}${note ? ': ' + note : ''}` },
-    }).catch(() => {});
+      data: { leadId, type: 'STAGE_CHANGE', note: `Stage -> ${newStage}${note ? `: ${note}` : ''}` },
+    });
 
     return lead;
   }
@@ -98,15 +98,12 @@ export class CRMService {
   /** Add follow-up note */
   static async addFollowUp(leadId: string, userId: string, note: string, nextFollowUp?: Date) {
     await prisma.leadActivity.create({
-      data: { leadId, type: 'FOLLOW_UP', description: note, userId },
-    }).catch(() => {});
-
-    if (nextFollowUp) {
-      await prisma.lead.update({
-        where: { id: leadId },
-        data: { nextFollowUp },
-      }).catch(() => {});
-    }
+      data: {
+        leadId,
+        type: 'FOLLOW_UP',
+        note: `${note}${nextFollowUp ? ` | next=${nextFollowUp.toISOString()}` : ''} | by=${userId}`,
+      },
+    });
 
     return true;
   }
@@ -119,10 +116,10 @@ export class CRMService {
     });
 
     const totalLeads = await prisma.lead.count();
-    const hotLeads = await prisma.lead.count({ where: { priority: 'HIGH' } });
+    const hotLeads = await prisma.lead.count({ where: { source: 'AI_CHAT' } });
 
     return {
-      stages: stages.map(s => ({ stage: s.status, count: s._count })),
+      stages: stages.map((s) => ({ stage: s.status, count: s._count })),
       totalLeads,
       hotLeads,
     };
@@ -133,24 +130,23 @@ export class CRMService {
     return prisma.lead.findMany({
       where: {
         ...(filters?.status && { status: filters.status }),
-        ...(filters?.assignedTo && { assignedToId: filters.assignedTo }),
+        ...(filters?.assignedTo && { saleId: filters.assignedTo }),
         ...(filters?.source && { source: filters.source }),
       },
       include: {
-        customer: { select: { firstName: true, lastName: true, email: true, phone: true } },
-        tour: { select: { tourName: true, tourCode: true } },
+        sale: { select: { id: true, email: true } },
+        activities: { orderBy: { createdAt: 'desc' }, take: 5 },
       },
-      orderBy: [{ priority: 'desc' }, { createdAt: 'desc' }],
+      orderBy: { createdAt: 'desc' },
       take: limit,
     });
   }
 
-  /** Convert lead to booking */
+  /** Convert lead to booking-ready stage */
   static async convertToBooking(leadId: string) {
-    const lead = await prisma.lead.update({
+    return prisma.lead.update({
       where: { id: leadId },
-      data: { status: 'CONVERTED', convertedAt: new Date() },
+      data: { status: 'WON' },
     });
-    return lead;
   }
 }

@@ -142,6 +142,37 @@ function normalizeStatus(text: string): string {
   return text.toLowerCase().trim() || 'unknown';
 }
 
+function extractDepositFromText(text: string, priceFrom = 0): number | undefined {
+  const clean = String(text || '');
+  if (!clean) return undefined;
+
+  const amountPatterns = [
+    /(?:ชำระ|วาง|จอง|สำรอง)?\s*(?:ค่ามัดจำ|ชำระมัดจำ|มัดจำ|deposit(?:\s*amount)?|down\s*payment|booking\s*fee)\s*(?:ต่อท่าน|ท่านละ|คนละ|ละ|per\s*person|person)?\s*[:\-–—]?\s*(?:฿|บาท|thb)?\s*([\d,]{3,7})/i,
+    /([\d,]{3,7})\s*(?:บาท|฿|thb)\s*(?:ต่อท่าน|ท่านละ|คนละ|ละ|per\s*person|person)?\s*(?:มัดจำ|deposit|down\s*payment|booking\s*fee)/i,
+    /(?:มัดจำ|deposit|down\s*payment|booking\s*fee)[^\d\n]{0,20}([\d,]{3,7})/i,
+  ];
+
+  for (const pattern of amountPatterns) {
+    const match = clean.match(pattern);
+    if (!match?.[1]) continue;
+    const parsed = Number(match[1].replace(/[^\d]/g, ''));
+    if (Number.isFinite(parsed) && parsed >= 500 && parsed <= 300000) {
+      return Math.round(parsed);
+    }
+  }
+
+  const percentMatch = clean.match(/(?:มัดจำ|deposit|down\s*payment|booking\s*fee)[^%\n]{0,40}?(\d{1,2})\s*%/i);
+  if (percentMatch && priceFrom > 0) {
+    const percent = Number(percentMatch[1]);
+    if (Number.isFinite(percent) && percent > 0 && percent <= 100) {
+      const fromPercent = Math.round((priceFrom * percent) / 100);
+      if (fromPercent >= 500 && fromPercent <= 300000) return fromPercent;
+    }
+  }
+
+  return undefined;
+}
+
 
 export class GS25Scraper extends BaseScraper {
   private browser: Browser | null = null;
@@ -476,6 +507,8 @@ export class GS25Scraper extends BaseScraper {
       const bodyText = $('body').text();
       const hotelMatch = bodyText.match(/(\d)\s*(?:ดาว|star|★)/i);
       if (hotelMatch) tourData.hotelRating = parseInt(hotelMatch[1]);
+      const deposit = extractDepositFromText(bodyText, prog.lowestPrice || 0);
+      if (deposit) tourData.deposit = deposit;
 
       tourData.highlights = highlights.slice(0, 8);
 

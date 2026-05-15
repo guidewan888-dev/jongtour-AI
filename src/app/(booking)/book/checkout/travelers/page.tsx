@@ -57,7 +57,9 @@ export default function TravelersPage() {
   if (!session) return <div className="bg-slate-50 min-h-[60vh] flex items-center justify-center"><p className="text-slate-500">กำลังโหลด...</p></div>;
 
   const adults = session.adults || 1;
-  const children = session.children || 0;
+  const childWithBedCount = session.childWithBedCount ?? session.children ?? 0;
+  const childWithoutBedCount = session.childWithoutBedCount ?? 0;
+  const infantCount = session.infantCount ?? 0;
   const singleRooms = session.singleRooms || 0;
 
   return (
@@ -201,19 +203,27 @@ export default function TravelersPage() {
                   <span className="text-slate-500">ผู้ใหญ่ ×{adults}</span>
                   <span className="font-medium">{fmt(session.priceAdult * adults)}</span>
                 </div>
-                {children > 0 && <div className="flex justify-between">
-                  <span className="text-slate-500">เด็ก ×{children}</span>
-                  <span className="font-medium">{fmt((session.priceChild || session.priceAdult) * children)}</span>
+                {childWithBedCount > 0 && <div className="flex justify-between">
+                  <span className="text-slate-500">เด็กมีเตียง ×{childWithBedCount}</span>
+                  <span className="font-medium">{fmt((session.priceChildWithBed || session.priceChild || session.priceAdult) * childWithBedCount)}</span>
+                </div>}
+                {childWithoutBedCount > 0 && <div className="flex justify-between">
+                  <span className="text-slate-500">เด็กไม่มีเตียง ×{childWithoutBedCount}</span>
+                  <span className="font-medium">{fmt((session.priceChildWithoutBed || session.priceChild || session.priceAdult) * childWithoutBedCount)}</span>
+                </div>}
+                {infantCount > 0 && <div className="flex justify-between">
+                  <span className="text-slate-500">ทารก ×{infantCount}</span>
+                  <span className="font-medium">{fmt((session.priceInfant || 0) * infantCount)}</span>
                 </div>}
                 {singleRooms > 0 && session.priceSingle && <div className="flex justify-between">
                   <span className="text-slate-500">พักเดี่ยว ×{singleRooms}</span>
                   <span className="font-medium">{fmt(session.priceSingle * singleRooms)}</span>
                 </div>}
                 {session.addOns?.includes('insurance') && <div className="flex justify-between text-xs">
-                  <span className="text-slate-400">ประกันภัย ×{adults + children}</span>
-                  <span className="text-slate-500">{fmt(800 * (adults + children))}</span>
+                  <span className="text-slate-400">ประกันภัย ×{adults + childWithBedCount + childWithoutBedCount}</span>
+                  <span className="text-slate-500">{fmt(800 * (adults + childWithBedCount + childWithoutBedCount))}</span>
                 </div>}
-                {session.addOns?.includes('airport') && <div className="flex justify-between text-xs">
+                {(session.addOns?.includes('airport_transfer') || session.addOns?.includes('airport')) && <div className="flex justify-between text-xs">
                   <span className="text-slate-400">รถรับส่งสนามบิน</span>
                   <span className="text-slate-500">{fmt(1500)}</span>
                 </div>}
@@ -236,3 +246,5 @@ export default function TravelersPage() {
     </div>
   );
 }
+
+
